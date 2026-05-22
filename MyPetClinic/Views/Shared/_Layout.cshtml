@@ -3,187 +3,41 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="MyPetClinic - Phòng khám thú y uy tín, chăm sóc toàn diện cho thú cưng của bạn. Đặt lịch khám dễ dàng, nhanh chóng." />
-    <title>@ViewData["Title"] - MyPetClinic 🐾</title>
-
-    <!-- Google Fonts: Nunito -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-
-    <!-- Bootstrap (giữ lại để dùng các tiện ích nhỏ) -->
+    <title>@ViewData["Title"] - MyPetClinic</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-
-    <!-- Site CSS (design system chính) -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/MyPetClinic.styles.css" asp-append-version="true" />
-
-    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-
-    <!-- ===================== HEADER ===================== -->
-    <header class="site-header" id="site-header">
-        <div class="nav-container">
-
-            <!-- Logo -->
-            <a class="nav-logo" asp-controller="Home" asp-action="Index" id="nav-logo">
-                <div class="nav-logo-icon">
-                    <i class="fa-solid fa-paw"></i>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">MyPetClinic</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Trang chủ</a>
+                        </li>
+                    </ul>
                 </div>
-                <div class="nav-logo-text">
-                    My<span>Pet</span>Clinic
-                </div>
-            </a>
-
-            <!-- Nav Links (desktop) -->
-            <ul class="nav-links" id="nav-links">
-                <li>
-                    <a asp-controller="Home" asp-action="Index"
-                       class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
-                        <i class="fa-solid fa-house"></i> Trang chủ
-                    </a>
-                </li>
-                <li>
-                    <a href="#services">
-                        <i class="fa-solid fa-stethoscope"></i> Dịch vụ
-                    </a>
-                </li>
-                <li>
-                    <a href="#whyus">
-                        <i class="fa-solid fa-user-doctor"></i> Bác sĩ
-                    </a>
-                </li>
-                <li>
-                    <a href="#footer">
-                        <i class="fa-solid fa-envelope"></i> Liên hệ
-                    </a>
-                </li>
-            </ul>
-
-            <!-- Auth Buttons (desktop) -->
-            <div class="nav-auth">
-                <a asp-controller="Account" asp-action="Login" class="btn-login" id="btn-login">
-                    <i class="fa-regular fa-user"></i> Đăng nhập
-                </a>
-                <a asp-controller="Account" asp-action="Register" class="btn-register" id="btn-register">
-                    <i class="fa-solid fa-user-plus"></i> Đăng ký
-                </a>
             </div>
-
-            <!-- Hamburger (mobile) -->
-            <button class="nav-toggle" id="nav-toggle" aria-label="Mở menu điều hướng">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-        </div>
+        </nav>
     </header>
-
-    <!-- Mobile Menu -->
-    <div class="mobile-menu" id="mobile-menu">
-        <a asp-controller="Home" asp-action="Index"><i class="fa-solid fa-house"></i> Trang chủ</a>
-        <a href="#services"><i class="fa-solid fa-stethoscope"></i> Dịch vụ</a>
-        <a href="#whyus"><i class="fa-solid fa-user-doctor"></i> Bác sĩ</a>
-        <a href="#footer"><i class="fa-solid fa-envelope"></i> Liên hệ</a>
-        <div class="mobile-menu-auth">
-            <a asp-controller="Account" asp-action="Login" class="btn-login">Đăng nhập</a>
-            <a asp-controller="Account" asp-action="Register" class="btn-register">Đăng ký</a>
-        </div>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
     </div>
-    <!-- ===================== END HEADER ===================== -->
 
-    <!-- Page Content -->
-    <main role="main" id="main-content">
-        @RenderBody()
-    </main>
-
-    <!-- ===================== FOOTER ===================== -->
-    <footer class="site-footer" id="footer">
-        <div class="footer-container">
-            <div class="footer-top">
-
-                <!-- Brand -->
-                <div class="footer-brand">
-                    <a class="nav-logo" asp-controller="Home" asp-action="Index">
-                        <div class="nav-logo-icon">
-                            <i class="fa-solid fa-paw"></i>
-                        </div>
-                        <div class="nav-logo-text">
-                            My<span>Pet</span>Clinic
-                        </div>
-                    </a>
-                    <p>Phòng khám thú y uy tín hàng đầu — nơi thú cưng của bạn được yêu thương và chăm sóc tận tình bởi đội ngũ bác sĩ chuyên nghiệp.</p>
-                    <div class="footer-socials">
-                        <a href="#" class="social-btn" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
-                        <a href="#" class="social-btn" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                        <a href="#" class="social-btn" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-                        <a href="#" class="social-btn" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
-                    </div>
-                </div>
-
-                <!-- Dịch vụ -->
-                <div class="footer-col">
-                    <h4>Dịch vụ</h4>
-                    <ul>
-                        <li><a href="#">Khám tổng quát</a></li>
-                        <li><a href="#">Tiêm chủng & Vaccine</a></li>
-                        <li><a href="#">Phẫu thuật</a></li>
-                        <li><a href="#">Spa & Grooming</a></li>
-                        <li><a href="#">Xét nghiệm</a></li>
-                    </ul>
-                </div>
-
-                <!-- Liên kết -->
-                <div class="footer-col">
-                    <h4>Liên kết</h4>
-                    <ul>
-                        <li><a href="#">Về chúng tôi</a></li>
-                        <li><a href="#">Đội ngũ bác sĩ</a></li>
-                        <li><a href="#">Đặt lịch hẹn</a></li>
-                        <li><a href="#">Tin tức & Blog</a></li>
-                        <li><a href="#">Chính sách bảo mật</a></li>
-                    </ul>
-                </div>
-
-                <!-- Liên hệ -->
-                <div class="footer-col">
-                    <h4>Liên hệ</h4>
-                    <div class="footer-contact-item">
-                        <i class="fa-solid fa-location-dot"></i>
-                        <span>123 Đường Thú Cưng, Q.1, TP. HCM</span>
-                    </div>
-                    <div class="footer-contact-item">
-                        <i class="fa-solid fa-phone"></i>
-                        <span>(028) 1234 5678</span>
-                    </div>
-                    <div class="footer-contact-item">
-                        <i class="fa-solid fa-envelope"></i>
-                        <span>hello&#64;mypetclinic.vn</span>
-                    </div>
-                    <div class="footer-contact-item">
-                        <i class="fa-regular fa-clock"></i>
-                        <span>Thứ 2 – CN: 7:00 – 21:00</span>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="footer-bottom">
-                <p>&copy; 2026 MyPetClinic. Bảo lưu mọi quyền.</p>
-                <div class="footer-bottom-links">
-                    <a href="#">Điều khoản</a>
-                    <a href="#">Bảo mật</a>
-                    <a href="#">Cookie</a>
-                </div>
-            </div>
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - MyPetClinic
         </div>
     </footer>
-    <!-- ===================== END FOOTER ===================== -->
-
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
