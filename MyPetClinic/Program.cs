@@ -12,6 +12,9 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Add MemoryCache for OTP storage
+builder.Services.AddMemoryCache();
+
 // Add Infrastructure Services (Clean Architecture)
 builder.Services.AddInfrastructureServices();
 

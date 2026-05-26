@@ -15,11 +15,15 @@ namespace MyPetClinic.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IGoogleAuthService _googleAuthService;
+        private readonly IEmailService _emailService;
+        private readonly IOtpService _otpService;
 
-        public AccountController(ApplicationDbContext context, IGoogleAuthService googleAuthService)
+        public AccountController(ApplicationDbContext context, IGoogleAuthService googleAuthService, IEmailService emailService, IOtpService otpService)
         {
             _context = context;
             _googleAuthService = googleAuthService;
+            _emailService = emailService;
+            _otpService = otpService;
         }
 
         // ==========================================
@@ -46,11 +50,20 @@ namespace MyPetClinic.Controllers
             }
 
             // Kiểm tra email trùng lặp
-            bool emailExists = await _context.Users.AnyAsync(u => u.Email == model.Email.Trim().ToLower());
-            if (emailExists)
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email.Trim().ToLower());
+            if (existingUser != null)
             {
-                ModelState.AddModelError("Email", "Email này đã được sử dụng trong hệ thống.");
-                return View(model);
+                if (existingUser.IsActive)
+                {
+                    ModelState.AddModelError("Email", "Email này đã được sử dụng trong hệ thống.");
+                    return View(model);
+                }
+                else
+                {
+                    // Nếu tài khoản chưa active, xoá đi tạo lại để cấp OTP mới
+                    _context.Users.Remove(existingUser);
+                    await _context.SaveChangesAsync();
+                }
             }
 
             // Lấy thông tin quyền mặc định (customer)
@@ -66,7 +79,7 @@ namespace MyPetClinic.Controllers
             // Băm mật khẩu bằng BCrypt
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(model.Password);
 
-            // Tạo đối tượng User mới
+            // Tạo đối tượng User mới (IsActive = false)
             var user = new User
             {
                 FullName = model.FullName,
@@ -75,20 +88,73 @@ namespace MyPetClinic.Controllers
                 PasswordHash = hashedPassword,
                 Address = model.Address,
                 RoleId = customerRole.Id,
-                IsActive = true,
+                IsActive = false,
                 CreatedAt = DateTime.UtcNow
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("RegisterSuccess");
+            // Tạo OTP và gửi Email
+            string emailKey = user.Email.ToLower();
+            string otp = _otpService.GenerateOtp(emailKey);
+            string emailBody = $@"
+                <h3>Xin chào {user.FullName},</h3>
+                <p>Cảm ơn bạn đã đăng ký tài khoản tại MyPetClinic.</p>
+                <p>Mã OTP của bạn là: <strong><span style='font-size:24px;color:blue;'>{otp}</span></strong></p>
+                <p>Mã OTP này sẽ hết hạn trong vòng 5 phút.</p>";
+            
+            await _emailService.SendEmailAsync(user.Email, "Xác thực tài khoản MyPetClinic", emailBody);
+
+            return RedirectToAction("VerifyOtp", new { email = user.Email });
+
         }
 
         [HttpGet]
         public IActionResult RegisterSuccess()
         {
             return View();
+        }
+
+        [HttpGet]
+        public IActionResult VerifyOtp(string email)
+        {
+            if (string.IsNullOrEmpty(email)) return RedirectToAction("Register");
+            ViewBag.Email = email;
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyOtp(string email, string otpCode)
+        {
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(otpCode))
+            {
+                ModelState.AddModelError(string.Empty, "Vui lòng nhập mã OTP.");
+                ViewBag.Email = email;
+                return View();
+            }
+
+            bool isValid = _otpService.ValidateOtp(email.ToLower(), otpCode);
+            if (!isValid)
+            {
+                ModelState.AddModelError(string.Empty, "Mã OTP không hợp lệ hoặc đã hết hạn.");
+                ViewBag.Email = email;
+                return View();
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email.ToLower());
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Không tìm thấy người dùng.");
+                ViewBag.Email = email;
+                return View();
+            }
+
+            user.IsActive = true;
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("RegisterSuccess");
         }
 
         // ==========================================
