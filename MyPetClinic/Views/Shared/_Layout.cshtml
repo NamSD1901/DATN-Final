@@ -10,42 +10,207 @@
     <link rel="stylesheet" href="~/MyPetClinic.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">MyPetClinic</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-premium navbar-light">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-heart-pulse-fill brand-accent"></i>
+                    MyPet<span class="brand-accent">Clinic</span>
+                </a>
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-center">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Trang chủ</a>
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
                         </li>
-                    </ul>
-                    <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark fw-semibold" asp-controller="Account" asp-action="Register">
-                                <i class="bi bi-person-plus-fill text-primary me-1"></i>Đăng ký
+                        
+                        <!-- Dropdown Giới thiệu -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Giới thiệu
                             </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#intro"><i class="bi bi-file-person me-2"></i>Lịch sử phát triển</a></li>
+                                <li><a class="dropdown-item" href="#team"><i class="bi bi-people-fill me-2"></i>Đội ngũ nhân viên</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Dropdown Dịch Vụ (Cơ cấu theo petcare.vn) -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Dịch vụ thú y
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item fw-bold d-flex justify-content-between align-items-center" href="#khamDieuTriSubmenu" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="khamDieuTriSubmenu" onclick="event.stopPropagation();">
+                                        <span><i class="bi bi-search-heart text-primary me-2"></i>Khám và điều trị</span>
+                                        <i class="bi bi-chevron-down small text-muted ms-2"></i>
+                                    </a>
+                                    <div class="collapse" id="khamDieuTriSubmenu">
+                                        <ul class="list-unstyled ps-1 py-1 my-1" style="background-color: var(--primary-cream); border-radius: var(--radius-sm);">
+                                            <li><a class="dropdown-item ps-4 py-1 text-muted small" href="#services"><i class="bi bi-arrow-return-right me-2 text-success"></i>Khám tổng quát</a></li>
+                                            <li><a class="dropdown-item ps-4 py-1 text-muted small" href="#services"><i class="bi bi-arrow-return-right me-2 text-warning"></i>Khám chuyên khoa</a></li>
+                                            <li><a class="dropdown-item ps-4 py-1 text-muted small" href="#services"><i class="bi bi-arrow-return-right me-2 text-primary"></i>Chẩn đoán hình ảnh</a></li>
+                                            <li><a class="dropdown-item ps-4 py-1 text-muted small" href="#services"><i class="bi bi-arrow-return-right me-2 text-danger"></i>Điều trị bệnh</a></li>
+                                            <li><a class="dropdown-item ps-4 py-1 text-muted small" href="#services"><i class="bi bi-arrow-return-right me-2 text-info"></i>Chăm sóc sau điều trị</a></li>
+                                            <li><a class="dropdown-item ps-4 py-1 text-muted small" href="#services"><i class="bi bi-arrow-return-right me-2 text-secondary"></i>Phẫu thuật ngoại khoa</a></li>
+                                            <li><a class="dropdown-item ps-4 py-1 text-muted small" href="#services"><i class="bi bi-arrow-return-right me-2 text-dark"></i>Xét nghiệm & Siêu âm</a></li>
+                                        </ul>
+                                    </div>
+                                </li>
+                                <li><a class="dropdown-item" href="#services"><i class="bi bi-patch-check text-info me-2"></i>Tiêm phòng bệnh</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#services"><i class="bi bi-scissors text-secondary me-2"></i>Spa & Thẩm mỹ cắt tỉa</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Dropdown Tin tức -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Kiến thức
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#news"><i class="bi bi-newspaper me-2"></i>Tin tức sự kiện</a></li>
+                                <li><a class="dropdown-item" href="#news"><i class="bi bi-journal-medical me-2"></i>Sức khỏe thú cưng</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#contact">Liên hệ</a>
                         </li>
                     </ul>
+
+                    <!-- User Actions -->
+                    <div class="d-flex align-items-center gap-2">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="dropdown">
+                                <a class="btn btn-premium-outline dropdown-toggle d-flex align-items-center gap-2 shadow-sm py-2 px-3 border-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-color: var(--primary-gold);">
+                                    <i class="bi bi-person-circle fs-5 text-warning"></i>
+                                    <span class="fw-bold text-dark">@User.Identity.Name</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end mt-2">
+                                    <li><a class="dropdown-item" href="#intro"><i class="bi bi-person me-2"></i>Hồ sơ cá nhân</a></li>
+                                    <li><a class="dropdown-item" href="#contact"><i class="bi bi-calendar-check me-2"></i>Lịch hẹn của tôi</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item text-danger border-0 bg-transparent w-100 text-start">
+                                                <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account" asp-action="Login" class="btn btn-premium-outline py-2 px-3">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Đăng Nhập
+                            </a>
+                            <a asp-controller="Account" asp-action="Register" class="btn btn-premium-outline py-2 px-3 d-none d-sm-inline-block">
+                                <i class="bi bi-person-plus me-1"></i>Đăng Ký
+                            </a>
+                        }
+
+                        <a href="#contact" class="btn btn-premium shadow-sm ms-2">
+                            <i class="bi bi-calendar-check me-1"></i>Đặt Lịch Ngay
+                        </a>
+                    </div>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
+
+    <div class="container-fluid p-0">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <!-- Premium Footer matching petcare.vn info structure -->
+    <footer class="footer-premium bg-footer-dark reveal-fade">
         <div class="container">
-            &copy; 2026 - MyPetClinic
+            <div class="row g-4">
+                <!-- Col 1: Brand Info -->
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="navbar-brand text-white mb-3">
+                        <i class="bi bi-heart-pulse-fill text-warning"></i>
+                        MyPet<span class="text-warning">Clinic</span>
+                    </h5>
+                    <p class="text-white-50 small mb-3">
+                        Bệnh viện thú y chất lượng hàng đầu Việt Nam. Nơi chăm sóc toàn diện, chẩn đoán chính xác và điều trị tận tâm bằng tình yêu thương lớn nhất dành cho thú cưng của bạn.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <a href="https://facebook.com" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-facebook"></i></a>
+                        <a href="https://youtube.com" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-youtube"></i></a>
+                        <a href="https://instagram.com" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-instagram"></i></a>
+                    </div>
+                </div>
+
+                <!-- Col 2: Locations & Hotlines -->
+                <div class="col-lg-3 col-md-6" id="contact">
+                    <h6 class="footer-title">Hệ Thống Cơ Sở</h6>
+                    <div class="small text-white-50">
+                        <p class="mb-2">
+                            <strong class="text-warning">Cơ sở 1 (Trụ sở):</strong><br />
+                            124A Xuân Thủy, P. An Khánh, TP. HCM<br />
+                            <i class="bi bi-telephone-fill me-1"></i> Hotline: 0918 271 246
+                        </p>
+                        <p class="mb-2">
+                            <strong class="text-warning">Cơ sở 2:</strong><br />
+                            S8-1 đường số 6, Phường Tân Hưng, TP. HCM<br />
+                            <i class="bi bi-telephone-fill me-1"></i> Hotline: 0917 941 246
+                        </p>
+                        <p class="mb-0">
+                            <strong class="text-warning">Cơ sở 3:</strong><br />
+                            25 Nguyễn Thái Học, P. Tam Thắng, TP. HCM<br />
+                            <i class="bi bi-telephone-fill me-1"></i> Hotline: 0914 764 246
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="footer-title">Giờ Làm Việc</h6>
+                    <div class="small text-white-50">
+                        <p class="mb-2">
+                            <strong class="text-white">Thứ 2 - Thứ 7:</strong><br />
+                            Sáng: 08:00 - 12:00 | Chiều: 14:00 - 19:00
+                        </p>
+                        <p class="mb-3">
+                            <strong class="text-white">Chủ nhật & Ngày Lễ:</strong><br />
+                            Sáng: 08:00 - 12:00 (Chiều nghỉ)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Col 4: Quick Map -->
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="footer-title">Bản Đồ Chỉ Đường</h6>
+                    <div class="rounded-3 overflow-hidden border border-secondary border-opacity-50 shadow-sm" style="height: 150px;">
+                        <iframe style="border: 0; width: 100%; height: 100%;" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3920.0531119583807!2d106.70744515079734!3d10.73038709231523!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f91a2a96ad1%3A0xc19a98cc93ec317e!2sPetcare+Veterinary+Hospital!5e0!3m2!1sen!2s!4v1465265330727" frameborder="0" allowfullscreen="allowfullscreen"></iframe>
+                    </div>
+                    <p class="mt-2 text-end mb-0">
+                        <a href="mailto:info@petcare.vn" class="text-warning small text-decoration-none"><i class="bi bi-envelope-at me-1"></i>info@petcare.vn</a>
+                    </p>
+                </div>
+            </div>
+            <hr class="border-secondary border-opacity-50 my-4" />
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start small text-white-50">
+                    &copy; 2026 - <strong class="text-white">MyPetClinic.vn</strong>. Tất cả quyền được bảo lưu.
+                </div>
+                <div class="col-md-6 text-center text-md-end small text-white-50 mt-2 mt-md-0">
+                    <a href="#" class="text-white-50 text-decoration-none me-3">Quy định sử dụng</a> | <a href="#" class="text-white-50 text-decoration-none ms-3">Chính sách bảo mật</a>
+                </div>
+            </div>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

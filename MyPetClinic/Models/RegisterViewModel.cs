@@ -4,42 +4,37 @@ namespace MyPetClinic.Models
 {
     public class RegisterViewModel
     {
-        [Required(ErrorMessage = "Họ và tên không được để trống")]
-        [StringLength(255, ErrorMessage = "Họ và tên không vượt quá 255 ký tự")]
+        [Required(ErrorMessage = "Họ và tên là bắt buộc")]
+        [StringLength(100, ErrorMessage = "Họ tên không được vượt quá 100 ký tự")]
         [Display(Name = "Họ và tên")]
         public string FullName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Email không được để trống")]
-        [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
-        [StringLength(255, ErrorMessage = "Email không vượt quá 255 ký tự")]
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Địa chỉ Email không hợp lệ")]
+        [StringLength(255, ErrorMessage = "Email không được vượt quá 255 ký tự")]
         [Display(Name = "Email")]
         public string Email { get; set; } = string.Empty;
 
-        [Phone(ErrorMessage = "Số điện thoại không đúng định dạng")]
-        [StringLength(20, ErrorMessage = "Số điện thoại không vượt quá 20 ký tự")]
+        [Required(ErrorMessage = "Số điện thoại là bắt buộc")]
+        [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
+        [RegularExpression(@"^(0[3|5|7|8|9])+([0-9]{8})\b$", ErrorMessage = "Số điện thoại không đúng định dạng Việt Nam (10 chữ số)")]
         [Display(Name = "Số điện thoại")]
-        public string? Phone { get; set; }
+        public string Phone { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Mật khẩu không được để trống")]
+        [Required(ErrorMessage = "Mật khẩu là bắt buộc")]
         [MinLength(6, ErrorMessage = "Mật khẩu phải từ 6 ký tự trở lên")]
         [DataType(DataType.Password)]
         [Display(Name = "Mật khẩu")]
         public string Password { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Xác nhận mật khẩu không được để trống")]
-        [DataType(DataType.Password)]
+        [Required(ErrorMessage = "Xác nhận mật khẩu là bắt buộc")]
         [Compare("Password", ErrorMessage = "Mật khẩu xác nhận không khớp")]
+        [DataType(DataType.Password)]
         [Display(Name = "Xác nhận mật khẩu")]
         public string ConfirmPassword { get; set; } = string.Empty;
 
-        [Display(Name = "Giới tính")]
-        public short? Gender { get; set; } // 0: không rõ, 1: nam, 2: nữ
-
-        [DataType(DataType.Date)]
-        [Display(Name = "Ngày sinh")]
-        public DateTime? DateOfBirth { get; set; }
-
         [Display(Name = "Địa chỉ")]
+        [StringLength(500, ErrorMessage = "Địa chỉ không được vượt quá 500 ký tự")]
         public string? Address { get; set; }
     }
 }

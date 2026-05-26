@@ -1,153 +1,114 @@
 @model MyPetClinic.Models.RegisterViewModel
 @{
-    ViewData["Title"] = "Đăng ký tài khoản";
+    ViewData["Title"] = "Đăng Ký Tài Khoản - MyPetClinic";
 }
 
-<div class="row justify-content-center my-5">
-    <div class="col-md-8 col-lg-6">
-        <!-- Premium glassmorphic registration card -->
-        <div class="card border-0 shadow-lg registration-card">
-            <div class="card-header border-0 bg-gradient text-white text-center py-4 rounded-top-4" style="background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);">
-                <h3 class="mb-1 fw-bold text-uppercase tracking-wide">MyPetClinic</h3>
-                <p class="mb-0 text-white-50 fs-6">Đăng ký tài khoản thành viên mới</p>
-            </div>
-            
-            <div class="card-body p-4 p-md-5 bg-white rounded-bottom-4">
-                <form asp-action="Register" method="post" class="needs-validation" novalidate>
-                    @Html.AntiForgeryToken()
-
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3" role="alert"></div>
-
-                    <h5 class="text-secondary fw-semibold border-bottom pb-2 mb-4">
-                        <i class="bi bi-person-fill me-2"></i>Thông tin bắt buộc
-                    </h5>
-
-                    <!-- Full Name Field -->
-                    <div class="form-floating mb-3">
-                        <input asp-for="FullName" class="form-control rounded-3 border-light-subtle shadow-sm input-premium" placeholder="Nguyễn Văn A" required />
-                        <label asp-for="FullName" class="text-muted"><i class="bi bi-person me-1"></i>Họ và tên</label>
-                        <span asp-validation-for="FullName" class="text-danger fs-7 mt-1 d-block"></span>
+<section class="py-5 bg-gold-gradient min-vh-100 d-flex align-items-center position-relative overflow-hidden">
+    <!-- Floating background decorative elements -->
+    <div class="hero-shape-1"></div>
+    <div class="hero-shape-2"></div>
+    
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 reveal">
+                <div class="card border-0 glass-card p-4 p-md-5 shadow-lg">
+                    <!-- Logo / Brand Branding -->
+                    <div class="text-center mb-4">
+                        <a class="navbar-brand justify-content-center text-dark fs-2 mb-2 d-inline-flex text-decoration-none" asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-heart-pulse-fill brand-accent"></i>
+                            MyPet<span class="brand-accent">Clinic</span>
+                        </a>
+                        <h4 class="fw-bold text-dark mt-2">Đăng Ký Thành Viên</h4>
+                        <p class="text-muted small">Hãy tạo tài khoản để trải nghiệm các dịch vụ chăm sóc thú cưng đẳng cấp</p>
                     </div>
 
-                    <!-- Email Field -->
-                    <div class="form-floating mb-3">
-                        <input asp-for="Email" class="form-control rounded-3 border-light-subtle shadow-sm input-premium" placeholder="name@example.com" type="email" required />
-                        <label asp-for="Email" class="text-muted"><i class="bi bi-envelope me-1"></i>Địa chỉ Email</label>
-                        <span asp-validation-for="Email" class="text-danger fs-7 mt-1 d-block"></span>
-                    </div>
+                    <form asp-action="Register" method="post">
+                        @Html.AntiForgeryToken()
 
-                    <!-- Password Field & Confirm Password in 2 columns -->
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="form-floating">
-                                <input asp-for="Password" class="form-control rounded-3 border-light-subtle shadow-sm input-premium" placeholder="Mật khẩu" type="password" required />
-                                <label asp-for="Password" class="text-muted"><i class="bi bi-lock me-1"></i>Mật khẩu</label>
-                                <span asp-validation-for="Password" class="text-danger fs-7 mt-1 d-block"></span>
+                        @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+                        {
+                            <div class="alert alert-danger border-0 rounded-3 shadow-sm py-2 px-3 mb-3 small d-flex align-items-center gap-2">
+                                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                                <div>
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger list-unstyled mb-0 p-0" })
+                                </div>
+                            </div>
+                        }
+
+                        <div class="row g-3">
+                            <!-- Họ và tên -->
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <input asp-for="FullName" class="form-control input-premium rounded-3" placeholder="Nguyễn Văn A" required />
+                                    <label asp-for="FullName"><i class="bi bi-person me-1 text-muted"></i> Họ và tên</label>
+                                    <span asp-validation-for="FullName" class="text-danger small mt-1 d-block"></span>
+                                </div>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Email" class="form-control input-premium rounded-3" placeholder="name@example.com" required />
+                                    <label asp-for="Email"><i class="bi bi-envelope me-1 text-muted"></i> Địa chỉ Email</label>
+                                    <span asp-validation-for="Email" class="text-danger small mt-1 d-block"></span>
+                                </div>
+                            </div>
+
+                            <!-- Số điện thoại -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Phone" class="form-control input-premium rounded-3" placeholder="0912345678" required />
+                                    <label asp-for="Phone"><i class="bi bi-telephone me-1 text-muted"></i> Số điện thoại</label>
+                                    <span asp-validation-for="Phone" class="text-danger small mt-1 d-block"></span>
+                                </div>
+                            </div>
+
+                            <!-- Mật khẩu -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Password" class="form-control input-premium rounded-3" placeholder="Mật khẩu" required />
+                                    <label asp-for="Password"><i class="bi bi-lock me-1 text-muted"></i> Mật khẩu</label>
+                                    <span asp-validation-for="Password" class="text-danger small mt-1 d-block"></span>
+                                </div>
+                            </div>
+
+                            <!-- Xác nhận mật khẩu -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="ConfirmPassword" class="form-control input-premium rounded-3" placeholder="Xác nhận mật khẩu" required />
+                                    <label asp-for="ConfirmPassword"><i class="bi bi-shield-lock me-1 text-muted"></i> Xác nhận mật khẩu</label>
+                                    <span asp-validation-for="ConfirmPassword" class="text-danger small mt-1 d-block"></span>
+                                </div>
+                            </div>
+
+                            <!-- Địa chỉ -->
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <input asp-for="Address" class="form-control input-premium rounded-3" placeholder="Địa chỉ" />
+                                    <label asp-for="Address"><i class="bi bi-geo-alt me-1 text-muted"></i> Địa chỉ liên hệ</label>
+                                    <span asp-validation-for="Address" class="text-danger small mt-1 d-block"></span>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="form-floating">
-                                <input asp-for="ConfirmPassword" class="form-control rounded-3 border-light-subtle shadow-sm input-premium" placeholder="Xác nhận mật khẩu" type="password" required />
-                                <label asp-for="ConfirmPassword" class="text-muted"><i class="bi bi-check2-circle me-1"></i>Xác nhận lại</label>
-                                <span asp-validation-for="ConfirmPassword" class="text-danger fs-7 mt-1 d-block"></span>
-                            </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-premium w-100 py-3 shadow-md mt-4 mb-3">
+                            Đăng Ký Thành Viên <i class="bi bi-person-plus-fill ms-1 fs-5"></i>
+                        </button>
+
+                        <!-- Go to login link -->
+                        <div class="text-center mt-3 small">
+                            <span class="text-muted">Bạn đã có tài khoản thành viên? </span>
+                            <a asp-action="Login" class="text-warning fw-bold text-decoration-none hover-text-warning">Đăng nhập ngay</a>
                         </div>
-                    </div>
-
-                    <h5 class="text-secondary fw-semibold border-bottom pb-2 my-4">
-                        <i class="bi bi-card-list me-2"></i>Thông tin bổ sung (Demo)
-                    </h5>
-
-                    <!-- Phone and Gender -->
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="form-floating">
-                                <input asp-for="Phone" class="form-control rounded-3 border-light-subtle shadow-sm input-premium" placeholder="Số điện thoại" />
-                                <label asp-for="Phone" class="text-muted"><i class="bi bi-telephone me-1"></i>Số điện thoại</label>
-                                <span asp-validation-for="Phone" class="text-danger fs-7 mt-1 d-block"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="form-floating">
-                                <select asp-for="Gender" class="form-select rounded-3 border-light-subtle shadow-sm input-premium">
-                                    <option value="">-- Chọn giới tính --</option>
-                                    <option value="1">Nam</option>
-                                    <option value="2">Nữ</option>
-                                    <option value="0">Khác</option>
-                                </select>
-                                <label asp-for="Gender" class="text-muted"><i class="bi bi-gender-ambiguous me-1"></i>Giới tính</label>
-                                <span asp-validation-for="Gender" class="text-danger fs-7 mt-1 d-block"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Date of Birth -->
-                    <div class="form-floating mb-3">
-                        <input asp-for="DateOfBirth" class="form-control rounded-3 border-light-subtle shadow-sm input-premium" type="date" />
-                        <label asp-for="DateOfBirth" class="text-muted"><i class="bi bi-calendar-event me-1"></i>Ngày sinh</label>
-                        <span asp-validation-for="DateOfBirth" class="text-danger fs-7 mt-1 d-block"></span>
-                    </div>
-
-                    <!-- Address -->
-                    <div class="form-floating mb-4">
-                        <textarea asp-for="Address" class="form-control rounded-3 border-light-subtle shadow-sm input-premium" placeholder="Địa chỉ liên hệ" style="height: 100px;"></textarea>
-                        <label asp-for="Address" class="text-muted"><i class="bi bi-geo-alt me-1"></i>Địa chỉ hiện tại</label>
-                        <span asp-validation-for="Address" class="text-danger fs-7 mt-1 d-block"></span>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <button type="submit" class="btn btn-premium w-100 py-3 rounded-3 fw-bold text-uppercase fs-6 shadow-md transition-all">
-                        Đăng Ký Thành Viên <i class="bi bi-arrow-right-circle ms-2"></i>
-                    </button>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 }
-
-<style>
-    /* Styling definitions for a highly premium, modern interface */
-    .registration-card {
-        border-radius: 1rem;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        overflow: hidden;
-    }
-    .registration-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.15) !important;
-    }
-    .input-premium {
-        border: 1px solid #e2e8f0;
-        transition: all 0.25s ease-in-out;
-    }
-    .input-premium:focus {
-        border-color: #4f46e5;
-        box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.15) !important;
-    }
-    .btn-premium {
-        background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
-        color: white;
-        border: none;
-        letter-spacing: 0.5px;
-    }
-    .btn-premium:hover {
-        background: linear-gradient(135deg, #4338ca 0%, #0891b2 100%);
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 0.5rem 1rem rgba(79, 70, 229, 0.3) !important;
-    }
-    .btn-premium:active {
-        transform: translateY(1px);
-    }
-    .fs-7 {
-        font-size: 0.85rem;
-    }
-    .transition-all {
-        transition: all 0.2s ease-in-out;
-    }
-</style>

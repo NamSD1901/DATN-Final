@@ -1,175 +1,41 @@
-@model MyPetClinic.Domain.Entities.User
 @{
-    ViewData["Title"] = "Đăng ký thành công";
+    ViewData["Title"] = "Đăng Ký Thành Công - MyPetClinic";
 }
 
-<div class="row justify-content-center my-5 animate-fade-in">
-    <div class="col-md-9 col-lg-7">
-        <div class="card border-0 shadow-lg success-card">
-            <!-- Animated Success Header -->
-            <div class="card-header border-0 bg-success-gradient text-white text-center py-5 position-relative rounded-top-4" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                <div class="success-icon-container mb-3">
-                    <i class="bi bi-check-circle-fill success-icon"></i>
-                </div>
-                <h2 class="fw-bold tracking-wide mb-1 text-uppercase">Đăng Ký Thành Công!</h2>
-                <p class="mb-0 text-white-50">Tài khoản đã được khởi tạo và lưu trữ an toàn trong Database.</p>
-            </div>
-
-            <div class="card-body p-4 p-md-5 bg-white rounded-bottom-4">
-                <h5 class="text-secondary fw-semibold border-bottom pb-2 mb-4">
-                    <i class="bi bi-database me-2 text-success"></i>Thông tin thực tế ghi nhận trong Database (Supabase PostgreSQL)
-                </h5>
-
-                <div class="table-responsive rounded-3 border border-light-subtle shadow-sm mb-4">
-                    <table class="table table-hover table-striped mb-0 align-middle">
-                        <tbody>
-                            <tr>
-                                <th class="w-30 ps-3 text-secondary text-uppercase fs-7"><i class="bi bi-key-fill text-warning me-2"></i>User ID (UUID)</th>
-                                <td class="font-monospace text-primary fw-bold">@Model.Id</td>
-                            </tr>
-                            <tr>
-                                <th class="ps-3 text-secondary text-uppercase fs-7"><i class="bi bi-person-fill text-primary me-2"></i>Họ và tên</th>
-                                <td class="fw-semibold">@Model.FullName</td>
-                            </tr>
-                            <tr>
-                                <th class="ps-3 text-secondary text-uppercase fs-7"><i class="bi bi-envelope-fill text-danger me-2"></i>Địa chỉ Email</th>
-                                <td class="fw-semibold">@Model.Email</td>
-                            </tr>
-                            <tr>
-                                <th class="ps-3 text-secondary text-uppercase fs-7"><i class="bi bi-shield-lock-fill text-success me-2"></i>Password Hash</th>
-                                <td class="font-monospace text-secondary fs-7 break-all">
-                                    <span class="badge bg-secondary mb-1">BCrypt.Net-Next (Mã hóa một chiều)</span>
-                                    <br />
-                                    @Model.PasswordHash
-                                </td>
-                            </tr>
-                            <tr>
-                                <th class="ps-3 text-secondary text-uppercase fs-7"><i class="bi bi-telephone-fill text-info me-2"></i>Số điện thoại</th>
-                                <td>@(Model.Phone ?? "Không cung cấp")</td>
-                            </tr>
-                            <tr>
-                                <th class="ps-3 text-secondary text-uppercase fs-7"><i class="bi bi-gender-ambiguous text-dark me-2"></i>Giới tính</th>
-                                <td>
-                                    @if (Model.Gender == 1)
-                                    {
-                                        <span class="badge bg-primary">Nam</span>
-                                    }
-                                    else if (Model.Gender == 2)
-                                    {
-                                        <span class="badge bg-danger">Nữ</span>
-                                    }
-                                    else if (Model.Gender == 0)
-                                    {
-                                        <span class="badge bg-secondary">Khác</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">Không thiết lập</span>
-                                    }
-                                </td>
-                            </tr>
-                            <tr>
-                                <th class="ps-3 text-secondary text-uppercase fs-7"><i class="bi bi-calendar-check-fill text-muted me-2"></i>Ngày sinh</th>
-                                <td>@(Model.DateOfBirth?.ToString("dd/MM/yyyy") ?? "Không cung cấp")</td>
-                            </tr>
-                            <tr>
-                                <th class="ps-3 text-secondary text-uppercase fs-7"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Địa chỉ</th>
-                                <td>@(Model.Address ?? "Không cung cấp")</td>
-                            </tr>
-                            <tr>
-                                <th class="ps-3 text-secondary text-uppercase fs-7"><i class="bi bi-tag-fill text-success me-2"></i>Vai trò (Role)</th>
-                                <td>
-                                    <span class="badge bg-success text-uppercase py-2 px-3 fw-bold shadow-sm">
-                                        @Model.Role?.Name
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th class="ps-3 text-secondary text-uppercase fs-7"><i class="bi bi-clock-history text-muted me-2"></i>Thời gian khởi tạo</th>
-                                <td>@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="row g-3">
-                    <div class="col-sm-6">
-                        <a asp-action="Register" class="btn btn-outline-success w-100 py-3 rounded-3 fw-semibold">
-                            <i class="bi bi-plus-circle me-2"></i>Đăng ký thêm tài khoản
-                        </a>
+<section class="py-5 bg-gold-gradient min-vh-100 d-flex align-items-center position-relative overflow-hidden">
+    <!-- Floating background decorative elements -->
+    <div class="hero-shape-1"></div>
+    <div class="hero-shape-2"></div>
+    
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5 reveal">
+                <div class="card border-0 glass-card p-4 p-md-5 shadow-lg text-center">
+                    
+                    <!-- Celebration Icon -->
+                    <div class="d-inline-flex align-items-center justify-content-center bg-warning bg-opacity-25 text-warning rounded-circle mb-4 shadow-sm" style="width: 100px; height: 100px;">
+                        <i class="bi bi-party-fill fs-1"></i>
                     </div>
-                    <div class="col-sm-6">
-                        <a asp-controller="Home" asp-action="Index" class="btn btn-success w-100 py-3 rounded-3 fw-bold text-uppercase shadow-sm">
-                            <i class="bi bi-house-door me-2"></i>Quay lại Trang Chủ
+
+                    <!-- Welcome Brand Logo -->
+                    <h2 class="fw-bold text-dark mb-3">Đăng Ký Thành Công!</h2>
+                    
+                    <p class="text-muted mb-4 fs-6">
+                        Chúc mừng bạn đã trở thành thành viên của bệnh viện thú y <strong class="text-dark">MyPetClinic</strong>! 
+                        Bây giờ bạn đã có thể đăng nhập tài khoản để đặt lịch khám và nhận cẩm nang sức khỏe dành riêng cho thú cưng của mình.
+                    </p>
+
+                    <!-- CTA Buttons -->
+                    <div class="d-grid gap-2">
+                        <a asp-action="Login" class="btn btn-premium py-3 shadow-md">
+                            Đăng Nhập Ngay <i class="bi bi-box-arrow-in-right ms-2 fs-5"></i>
+                        </a>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-premium-outline py-3">
+                            <i class="bi bi-house-door me-2"></i> Quay về Trang chủ
                         </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-@section Scripts {
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-}
-
-<style>
-    .success-card {
-        border-radius: 1rem;
-        overflow: hidden;
-    }
-    .success-icon-container {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 70px;
-        height: 70px;
-        background-color: rgba(255, 255, 255, 0.2);
-        border-radius: 50%;
-        animation: pulse 2s infinite;
-    }
-    .success-icon {
-        font-size: 3rem;
-        color: #ffffff;
-    }
-    .fs-7 {
-        font-size: 0.85rem;
-    }
-    .w-30 {
-        width: 30%;
-    }
-    .break-all {
-        word-break: break-all;
-    }
-    
-    /* Elegant animations */
-    .animate-fade-in {
-        animation: fadeIn 0.6s ease-out;
-    }
-    
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @@keyframes pulse {
-        0% {
-            transform: scale(0.95);
-            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
-        }
-        70% {
-            transform: scale(1);
-            box-shadow: 0 0 0 15px rgba(255, 255, 255, 0);
-        }
-        100% {
-            transform: scale(0.95);
-            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-        }
-    }
-</style>
+</section>
