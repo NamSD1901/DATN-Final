@@ -112,6 +112,55 @@ namespace MyPetClinic.Controllers
             return View();
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendOtp(string email, string type)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return RedirectToAction("Login");
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email.ToLower());
+            if (user == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            string emailKey = "";
+            string emailTitle = "";
+            string messageBody = "";
+            string redirectAction = "";
+
+            if (type == "register")
+            {
+                if (user.IsActive) return RedirectToAction("Login");
+                emailKey = user.Email.ToLower();
+                emailTitle = "Xác thực tài khoản MyPetClinic";
+                messageBody = "Cảm ơn bạn đã đăng ký tài khoản tại hệ thống của chúng tôi. Để hoàn tất việc đăng ký, vui lòng nhập mã xác thực (OTP) mới bên dưới:";
+                redirectAction = "VerifyOtp";
+            }
+            else if (type == "forgot")
+            {
+                if (!user.IsActive) return RedirectToAction("Login");
+                emailKey = "reset_" + user.Email.ToLower();
+                emailTitle = "Yêu cầu đặt lại mật khẩu MyPetClinic";
+                messageBody = "Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng sử dụng mã xác thực (OTP) mới bên dưới để tiến hành đổi mật khẩu:";
+                redirectAction = "ResetPassword";
+            }
+            else
+            {
+                return RedirectToAction("Login");
+            }
+
+            string otp = _otpService.GenerateOtp(emailKey);
+            string emailHtml = GenerateOtpEmailHtml(user.FullName ?? "Khách hàng", otp, messageBody);
+            await _emailService.SendEmailAsync(user.Email, emailTitle, emailHtml);
+
+            TempData["SuccessMessage"] = "Đã gửi lại mã OTP mới vào email của bạn.";
+            return RedirectToAction(redirectAction, new { email = user.Email });
+        }
+
         [HttpGet]
         public IActionResult VerifyOtp(string email)
         {
