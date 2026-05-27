@@ -117,34 +117,9 @@
                             </a>
                         }
 
-                        <div class="dropdown ms-2 d-inline-block">
-                            <button class="btn btn-premium shadow-sm dropdown-toggle" type="button" id="contactAdviceDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-chat-dots-fill me-1"></i>Liên Hệ Tư Vấn
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end mt-2 shadow-lg border-0 rounded-3 overflow-hidden" aria-labelledby="contactAdviceDropdown">
-                                <li>
-                                    <a class="dropdown-item py-2" href="https://zalo.me/0918271246" target="_blank">
-                                        <i class="bi bi-chat-text-fill text-primary me-2"></i>Zalo Tư Vấn (0918 271 246)
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item py-2" href="https://m.me/mypetclinic" target="_blank">
-                                        <i class="bi bi-messenger text-primary me-2"></i>Facebook Messenger
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item py-2" href="tel:0918271246">
-                                        <i class="bi bi-telephone-fill text-success me-2"></i>Gọi Hotline: 0918 271 246
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider my-1"></li>
-                                <li>
-                                    <a class="dropdown-item py-2" asp-controller="Home" asp-action="Contact">
-                                        <i class="bi bi-envelope-fill text-warning me-2"></i>Gửi đánh giá góp ý dịch vụ
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
+                        <button class="btn btn-premium shadow-sm ms-2" type="button" data-bs-toggle="modal" data-bs-target="#contactAdviceModal">
+                            <i class="bi bi-chat-dots-fill me-1"></i>Liên Hệ Tư Vấn
+                        </button>
                     </div>
                 </div>
             </div>
@@ -230,5 +205,41 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Modal Liên Hệ Tư Vấn -->
+    <div class="modal fade" id="contactAdviceModal" tabindex="-1" aria-labelledby="contactAdviceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header bg-warning text-dark border-0 py-3 rounded-top-4">
+                    <h5 class="modal-title fw-bold" id="contactAdviceModalLabel">
+                        <i class="bi bi-chat-heart-fill me-2"></i>Liên Hệ Tư Vấn
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-4">
+                        Vui lòng để lại thông tin của bạn. Đội ngũ bác sĩ thú y của MyPetClinic sẽ liên hệ hỗ trợ bạn trong thời gian sớm nhất!
+                    </p>
+                    <form method="post" id="modalAdviceForm">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control input-premium rounded-3" id="modalName" required placeholder="Nguyễn Văn A" />
+                            <label for="modalName"><i class="bi bi-person me-1 text-muted"></i> Họ và tên của bạn *</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="tel" class="form-control input-premium rounded-3" id="modalPhone" required placeholder="0901234567" />
+                            <label for="modalPhone"><i class="bi bi-telephone me-1 text-muted"></i> Số điện thoại *</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <textarea class="form-control input-premium rounded-3" id="modalMessage" style="height: 120px;" required placeholder="Nội dung cần tư vấn..."></textarea>
+                            <label for="modalMessage"><i class="bi bi-chat-left-dots me-1 text-muted"></i> Nội dung cần tư vấn *</label>
+                        </div>
+                        <button type="submit" class="btn btn-premium w-100 py-3 shadow-md">
+                            <i class="bi bi-send-fill me-1"></i> Gửi Yêu Cầu Tư Vấn
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

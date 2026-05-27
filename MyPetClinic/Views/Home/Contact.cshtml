@@ -57,65 +57,34 @@
             <!-- Right Column: Contact/Booking Form -->
             <div class="col-lg-7">
                 <div class="card border-0 glass-card p-4 shadow-md">
-                    <h3 class="fw-bold mb-3 text-dark">Gửi Đánh Giá & Góp Ý Dịch Vụ</h3>
+                    <h3 class="fw-bold mb-3 text-dark">Liên Hệ Tư Vấn</h3>
                     <p class="text-muted small mb-4">
-                        Ý kiến đóng góp của bạn là vô cùng quan trọng, giúp MyPetClinic không ngừng nâng cao chất lượng phục vụ và mang lại trải nghiệm tốt nhất cho các bé cưng.
+                        Vui lòng điền thông tin dưới đây. Đội ngũ bác sĩ thú y của MyPetClinic sẽ liên hệ hỗ trợ bạn trong thời gian sớm nhất!
                     </p>
 
-                    <form method="post" id="feedbackForm">
+                    <form method="post" id="contactAdviceForm">
                         <div class="row g-3">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <div class="form-floating">
-                                    <input type="text" class="form-control input-premium rounded-3" id="feedbackName" required placeholder="Nguyễn Văn A" />
-                                    <label for="feedbackName"><i class="bi bi-person me-1 text-muted"></i> Họ và tên của bạn *</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="tel" class="form-control input-premium rounded-3" id="feedbackPhone" required placeholder="0901234567" />
-                                    <label for="feedbackPhone"><i class="bi bi-telephone me-1 text-muted"></i> Số điện thoại *</label>
+                                    <input type="text" class="form-control input-premium rounded-3" id="adviceName" required placeholder="Nguyễn Văn A" />
+                                    <label for="adviceName"><i class="bi bi-person me-1 text-muted"></i> Họ và tên của bạn *</label>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-floating">
-                                    <input type="email" class="form-control input-premium rounded-3" id="feedbackEmail" placeholder="name@example.com" />
-                                    <label for="feedbackEmail"><i class="bi bi-envelope me-1 text-muted"></i> Địa chỉ Email</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <select class="form-select input-premium rounded-3" id="feedbackRating">
-                                        <option value="5">★★★★★ - Rất hài lòng</option>
-                                        <option value="4">★★★★☆ - Hài lòng</option>
-                                        <option value="3">★★★☆☆ - Bình thường</option>
-                                        <option value="2">★★☆☆☆ - Chưa hài lòng</option>
-                                        <option value="1">★☆☆☆☆ - Rất không hài lòng</option>
-                                    </select>
-                                    <label for="feedbackRating"><i class="bi bi-star-fill me-1 text-muted"></i> Mức độ hài lòng *</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <select class="form-select input-premium rounded-3" id="feedbackSubject">
-                                        <option value="kham-chua">Dịch vụ Khám & Điều trị bệnh</option>
-                                        <option value="tiem-phong">Dịch vụ Tiêm phòng thú cưng</option>
-                                        <option value="spa-grooming">Dịch vụ Spa & Cắt tỉa thẩm mỹ</option>
-                                        <option value="thai-do">Thái độ phục vụ của nhân viên</option>
-                                        <option value="co-so-vat-chat">Cơ sở vật chất / Vệ sinh phòng khám</option>
-                                        <option value="khac">Ý kiến đóng góp khác</option>
-                                    </select>
-                                    <label for="feedbackSubject"><i class="bi bi-tag-fill me-1 text-muted"></i> Dịch vụ cần góp ý *</label>
+                                    <input type="tel" class="form-control input-premium rounded-3" id="advicePhone" required placeholder="0901234567" />
+                                    <label for="advicePhone"><i class="bi bi-telephone me-1 text-muted"></i> Số điện thoại *</label>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-floating">
-                                    <textarea class="form-control input-premium rounded-3" id="feedbackMessage" style="height: 120px;" required placeholder="Vui lòng nhập chi tiết ý kiến đóng góp..."></textarea>
-                                    <label for="feedbackMessage"><i class="bi bi-chat-left-dots me-1 text-muted"></i> Chi tiết ý kiến đóng góp / Phản ánh dịch vụ *</label>
+                                    <textarea class="form-control input-premium rounded-3" id="adviceMessage" style="height: 150px;" required placeholder="Nội dung cần tư vấn..."></textarea>
+                                    <label for="adviceMessage"><i class="bi bi-chat-left-dots me-1 text-muted"></i> Nội dung cần tư vấn *</label>
                                 </div>
                             </div>
                             <div class="col-md-12 text-end">
                                 <button type="submit" class="btn btn-premium w-100 py-3 shadow-md mt-2">
-                                    <i class="bi bi-send-fill me-1"></i> Gửi Ý Kiến Đóng Góp Ngay
+                                    <i class="bi bi-send-fill me-1"></i> Gửi Yêu Cầu Tư Vấn Ngay
                                 </button>
                             </div>
                         </div>
