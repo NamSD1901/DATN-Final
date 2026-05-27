@@ -61,8 +61,16 @@
 
                     <div class="text-center mt-3 small">
                         <span class="text-muted">Không nhận được email? </span>
-                        <!-- Optionally you can implement Resend OTP link -->
-                        <a href="javascript:history.back()" class="text-warning fw-bold text-decoration-none hover-text-warning">Quay lại trang Đăng ký</a>
+                        <form asp-action="ResendOtp" asp-controller="Account" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="email" value="@email" />
+                            <input type="hidden" name="type" value="register" />
+                            <button type="submit" class="btn btn-link text-warning fw-bold text-decoration-none hover-text-warning p-0 align-baseline border-0 bg-transparent">Gửi lại mã OTP</button>
+                        </form>
+                    </div>
+                    
+                    <div class="text-center mt-2 small">
+                        <a asp-action="Register" class="text-secondary fw-bold text-decoration-none hover-text-warning"><i class="bi bi-arrow-left"></i> Dùng email khác</a>
                     </div>
                 </div>
             </div>
