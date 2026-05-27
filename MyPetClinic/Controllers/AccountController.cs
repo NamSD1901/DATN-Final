@@ -98,11 +98,7 @@ namespace MyPetClinic.Controllers
             // Tạo OTP và gửi Email
             string emailKey = user.Email.ToLower();
             string otp = _otpService.GenerateOtp(emailKey);
-            string emailBody = $@"
-                <h3>Xin chào {user.FullName},</h3>
-                <p>Cảm ơn bạn đã đăng ký tài khoản tại MyPetClinic.</p>
-                <p>Mã OTP của bạn là: <strong><span style='font-size:24px;color:blue;'>{otp}</span></strong></p>
-                <p>Mã OTP này sẽ hết hạn trong vòng 5 phút.</p>";
+            string emailBody = GenerateOtpEmailHtml(user.FullName ?? "Khách hàng", otp, "Cảm ơn bạn đã đăng ký tài khoản tại hệ thống của chúng tôi. Để hoàn tất việc đăng ký, vui lòng nhập mã xác thực (OTP) bên dưới:");
             
             await _emailService.SendEmailAsync(user.Email, "Xác thực tài khoản MyPetClinic", emailBody);
 
@@ -114,6 +110,55 @@ namespace MyPetClinic.Controllers
         public IActionResult RegisterSuccess()
         {
             return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendOtp(string email, string type)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return RedirectToAction("Login");
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email.ToLower());
+            if (user == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            string emailKey = "";
+            string emailTitle = "";
+            string messageBody = "";
+            string redirectAction = "";
+
+            if (type == "register")
+            {
+                if (user.IsActive) return RedirectToAction("Login");
+                emailKey = user.Email.ToLower();
+                emailTitle = "Xác thực tài khoản MyPetClinic";
+                messageBody = "Cảm ơn bạn đã đăng ký tài khoản tại hệ thống của chúng tôi. Để hoàn tất việc đăng ký, vui lòng nhập mã xác thực (OTP) mới bên dưới:";
+                redirectAction = "VerifyOtp";
+            }
+            else if (type == "forgot")
+            {
+                if (!user.IsActive) return RedirectToAction("Login");
+                emailKey = "reset_" + user.Email.ToLower();
+                emailTitle = "Yêu cầu đặt lại mật khẩu MyPetClinic";
+                messageBody = "Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng sử dụng mã xác thực (OTP) mới bên dưới để tiến hành đổi mật khẩu:";
+                redirectAction = "ResetPassword";
+            }
+            else
+            {
+                return RedirectToAction("Login");
+            }
+
+            string otp = _otpService.GenerateOtp(emailKey);
+            string emailHtml = GenerateOtpEmailHtml(user.FullName ?? "Khách hàng", otp, messageBody);
+            await _emailService.SendEmailAsync(user.Email, emailTitle, emailHtml);
+
+            TempData["SuccessMessage"] = "Đã gửi lại mã OTP mới vào email của bạn.";
+            return RedirectToAction(redirectAction, new { email = user.Email });
         }
 
         [HttpGet]
@@ -205,8 +250,14 @@ namespace MyPetClinic.Controllers
             // Kiểm tra trạng thái kích hoạt tài khoản
             if (!user.IsActive)
             {
-                ModelState.AddModelError(string.Empty, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
-                return View(model);
+                // Tài khoản chưa kích hoạt -> Gửi lại OTP và chuyển đến trang nhập OTP
+                string emailKey = user.Email!.ToLower();
+                string otp = _otpService.GenerateOtp(emailKey);
+                string emailBody = GenerateOtpEmailHtml(user.FullName ?? "Khách hàng", otp, "Tài khoản của bạn chưa được kích hoạt. Vui lòng sử dụng mã xác thực (OTP) bên dưới để tiến hành kích hoạt tài khoản:");
+                await _emailService.SendEmailAsync(user.Email, "Xác thực tài khoản MyPetClinic", emailBody);
+
+                TempData["SuccessMessage"] = "Tài khoản chưa kích hoạt. Chúng tôi vừa gửi lại mã OTP mới vào email của bạn.";
+                return RedirectToAction("VerifyOtp", new { email = user.Email });
             }
 
             // Thiết lập các Claim danh tính
@@ -302,7 +353,96 @@ namespace MyPetClinic.Controllers
         }
 
         // ==========================================
-        // 3. ĐĂNG XUẤT (LOGOUT)
+        // 3. QUÊN MẬT KHẨU (FORGOT PASSWORD)
+        // ==========================================
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                ModelState.AddModelError(string.Empty, "Vui lòng nhập địa chỉ Email.");
+                return View();
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email.Trim().ToLower());
+            if (user == null || !user.IsActive)
+            {
+                ModelState.AddModelError(string.Empty, "Email không hợp lệ hoặc tài khoản chưa kích hoạt.");
+                return View();
+            }
+
+            string emailKey = "reset_" + user.Email.ToLower();
+            string otp = _otpService.GenerateOtp(emailKey);
+            string emailBody = GenerateOtpEmailHtml(user.FullName ?? "Khách hàng", otp, "Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng sử dụng mã xác thực (OTP) bên dưới để tiến hành đổi mật khẩu mới:");
+
+            await _emailService.SendEmailAsync(user.Email, "Yêu cầu đặt lại mật khẩu MyPetClinic", emailBody);
+
+            return RedirectToAction("ResetPassword", new { email = user.Email });
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword(string email)
+        {
+            if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
+            ViewBag.Email = email;
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(string email, string otpCode, string newPassword, string confirmPassword)
+        {
+            ViewBag.Email = email;
+
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(otpCode) || string.IsNullOrEmpty(newPassword))
+            {
+                ModelState.AddModelError(string.Empty, "Vui lòng điền đầy đủ thông tin.");
+                return View();
+            }
+
+            if (newPassword.Length < 8)
+            {
+                ModelState.AddModelError(string.Empty, "Mật khẩu mới phải có tối thiểu 8 ký tự.");
+                return View();
+            }
+
+            if (newPassword != confirmPassword)
+            {
+                ModelState.AddModelError(string.Empty, "Mật khẩu xác nhận không khớp.");
+                return View();
+            }
+
+            bool isValid = _otpService.ValidateOtp("reset_" + email.ToLower(), otpCode);
+            if (!isValid)
+            {
+                ModelState.AddModelError(string.Empty, "Mã OTP không hợp lệ hoặc đã hết hạn.");
+                return View();
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email.ToLower());
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Không tìm thấy người dùng.");
+                return View();
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.";
+            return RedirectToAction("Login");
+        }
+
+        // ==========================================
+        // 4. ĐĂNG XUẤT (LOGOUT)
         // ==========================================
 
         [HttpPost]
@@ -319,6 +459,39 @@ namespace MyPetClinic.Controllers
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Index", "Home");
+        }
+
+        // ==========================================
+        // UTILS
+        // ==========================================
+
+        private string GenerateOtpEmailHtml(string fullName, string otp, string messageBody)
+        {
+            return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>MyPetClinic OTP</title>
+</head>
+<body style='font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 20px; margin: 0;'>
+    <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 10px; border-top: 5px solid #f1c40f; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+        <div style='text-align: center; margin-bottom: 20px;'>
+            <h2 style='color: #2c3e50; margin: 0; font-size: 28px;'>MyPet<span style='color: #f1c40f;'>Clinic</span></h2>
+        </div>
+        <h3 style='color: #2c3e50; font-size: 18px;'>Xin chào {fullName},</h3>
+        <p style='color: #555; line-height: 1.6; font-size: 15px;'>{messageBody}</p>
+        <div style='text-align: center; margin: 30px 0;'>
+            <div style='display: inline-block; padding: 15px 40px; background-color: #fef9e7; border: 2px dashed #f1c40f; border-radius: 8px; font-size: 32px; font-weight: bold; color: #d4ac0d; letter-spacing: 8px;'>
+                {otp}
+            </div>
+        </div>
+        <p style='color: #555; line-height: 1.6; font-size: 15px;'>Mã OTP này sẽ hết hạn trong vòng <strong>5 phút</strong>. Vui lòng không chia sẻ mã này với bất kỳ ai để đảm bảo an toàn.</p>
+        <hr style='border: none; border-top: 1px solid #eeeeee; margin: 30px 0 20px 0;'>
+        <p style='color: #95a5a6; font-size: 13px; text-align: center; margin: 0;'>Email này được gửi tự động từ hệ thống MyPetClinic.<br>Vui lòng không trả lời thư này.</p>
+    </div>
+</body>
+</html>";
         }
     }
 }

@@ -25,6 +25,16 @@
                     <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
                         @Html.AntiForgeryToken()
 
+                        @if (TempData["SuccessMessage"] != null)
+                        {
+                            <div class="alert alert-success border-0 rounded-3 shadow-sm py-2 px-3 mb-3 small d-flex align-items-center gap-2">
+                                <i class="bi bi-check-circle-fill fs-5"></i>
+                                <div>
+                                    @TempData["SuccessMessage"]
+                                </div>
+                            </div>
+                        }
+
                         @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
                         {
                             <div class="alert alert-danger border-0 rounded-3 shadow-sm py-2 px-3 mb-3 small d-flex align-items-center gap-2">
@@ -55,7 +65,7 @@
                                 <input asp-for="RememberMe" class="form-check-input" />
                                 <label asp-for="RememberMe" class="form-check-label text-muted">Ghi nhớ đăng nhập</label>
                             </div>
-                            <a href="#" class="text-warning fw-bold text-decoration-none hover-text-warning">Quên mật khẩu?</a>
+                            <a asp-action="ForgotPassword" asp-controller="Account" class="text-warning fw-bold text-decoration-none hover-text-warning">Quên mật khẩu?</a>
                         </div>
 
                         <!-- Submit Button -->
