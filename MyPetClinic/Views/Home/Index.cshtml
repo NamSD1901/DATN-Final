@@ -19,9 +19,34 @@
                     Tại <strong class="text-dark">MyPetClinic</strong>, chúng tôi hiểu rằng thú cưng là thành viên vô giá trong gia đình bạn. Với đội ngũ bác sĩ thú y giàu y đức, tay nghề cao cùng trang thiết bị hiện đại chuẩn quốc tế, chúng tôi cam kết mang lại dịch vụ chăm sóc sức khỏe tốt nhất.
                 </p>
                 <div class="d-flex flex-column flex-sm-row justify-content-center justify-content-lg-start gap-3">
-                    <a asp-controller="Home" asp-action="Contact" class="btn btn-premium btn-lg shadow">
-                        <i class="bi bi-calendar2-check-fill me-2"></i>Đặt Lịch Khám Ngay
-                    </a>
+                    <div class="dropdown d-inline-block">
+                        <button class="btn btn-premium btn-lg shadow dropdown-toggle" type="button" id="heroContactAdviceDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-chat-dots-fill me-2"></i>Liên Hệ Tư Vấn
+                        </button>
+                        <ul class="dropdown-menu mt-2 shadow-lg border-0 rounded-3 overflow-hidden" aria-labelledby="heroContactAdviceDropdown">
+                            <li>
+                                <a class="dropdown-item py-2" href="https://zalo.me/0918271246" target="_blank">
+                                    <i class="bi bi-chat-text-fill text-primary me-2"></i>Zalo Tư Vấn (0918 271 246)
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="https://m.me/mypetclinic" target="_blank">
+                                    <i class="bi bi-messenger text-primary me-2"></i>Facebook Messenger
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="tel:0918271246">
+                                    <i class="bi bi-telephone-fill text-success me-2"></i>Gọi Hotline: 0918 271 246
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li>
+                                <a class="dropdown-item py-2" asp-controller="Home" asp-action="Contact">
+                                    <i class="bi bi-envelope-fill text-warning me-2"></i>Gửi biểu mẫu liên hệ
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                     <a href="#services" class="btn btn-premium-outline btn-lg">
                         Tìm Hiểu Dịch Vụ <i class="bi bi-arrow-down-circle ms-2"></i>
                     </a>

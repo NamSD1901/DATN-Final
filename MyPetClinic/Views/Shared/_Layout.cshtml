@@ -117,9 +117,34 @@
                             </a>
                         }
 
-                        <a asp-controller="Home" asp-action="Contact" class="btn btn-premium shadow-sm ms-2">
-                            <i class="bi bi-calendar-check me-1"></i>Đặt Lịch Ngay
-                        </a>
+                        <div class="dropdown ms-2 d-inline-block">
+                            <button class="btn btn-premium shadow-sm dropdown-toggle" type="button" id="contactAdviceDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-chat-dots-fill me-1"></i>Liên Hệ Tư Vấn
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end mt-2 shadow-lg border-0 rounded-3 overflow-hidden" aria-labelledby="contactAdviceDropdown">
+                                <li>
+                                    <a class="dropdown-item py-2" href="https://zalo.me/0918271246" target="_blank">
+                                        <i class="bi bi-chat-text-fill text-primary me-2"></i>Zalo Tư Vấn (0918 271 246)
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="https://m.me/mypetclinic" target="_blank">
+                                        <i class="bi bi-messenger text-primary me-2"></i>Facebook Messenger
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="tel:0918271246">
+                                        <i class="bi bi-telephone-fill text-success me-2"></i>Gọi Hotline: 0918 271 246
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider my-1"></li>
+                                <li>
+                                    <a class="dropdown-item py-2" asp-controller="Home" asp-action="Contact">
+                                        <i class="bi bi-envelope-fill text-warning me-2"></i>Gửi biểu mẫu liên hệ
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
