@@ -1,0 +1,184 @@
+@{
+    ViewData["Title"] = "Liên Hệ - MyPetClinic";
+}
+
+<section class="py-5 bg-gold-gradient position-relative text-center">
+    <div class="hero-shape-1"></div>
+    <div class="container py-4">
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3 shadow-sm text-uppercase">
+            <i class="bi bi-telephone-inbound me-1"></i> Kết Nối Với Chúng Tôi
+        </span>
+        <h1 class="display-4 fw-bold mb-3 gradient-text-gold">LIÊN HỆ & ĐẶT LỊCH</h1>
+        <p class="fs-5 text-muted max-w-2xl mx-auto">
+            Hệ thống 3 cơ sở chính sẵn sàng hỗ trợ thăm khám, tư vấn chăm sóc sức khỏe cho bé cưng mọi lúc bạn cần.
+        </p>
+    </div>
+</section>
+
+<section class="py-5 bg-white">
+    <div class="container">
+        <div class="row g-5">
+            <!-- Left Column: Location details and Working Hours -->
+            <div class="col-lg-5">
+                <h3 class="fw-bold mb-4">Hệ Thống Cơ Sở</h3>
+                
+                <!-- Branch 1 -->
+                <div class="d-flex align-items-start gap-3 mb-4">
+                    <div class="bg-warning bg-opacity-25 text-warning rounded-3 p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-geo-alt-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1 text-dark">Cơ sở 1 (Trụ sở chính)</h6>
+                        <p class="small text-muted mb-1">124A Xuân Thủy, Phường An Khánh, TP. Hồ Chí Minh</p>
+                        <p class="small mb-0 text-warning fw-bold"><i class="bi bi-telephone-fill me-1"></i> Hotline: 0918 271 246</p>
+                    </div>
+                </div>
+
+                <!-- Branch 2 -->
+                <div class="d-flex align-items-start gap-3 mb-4">
+                    <div class="bg-warning bg-opacity-25 text-warning rounded-3 p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-geo-alt-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1 text-dark">Cơ sở 2</h6>
+                        <p class="small text-muted mb-1">S8-1 đường số 6, Phường Tân Hưng, TP. Hồ Chí Minh</p>
+                        <p class="small mb-0 text-warning fw-bold"><i class="bi bi-telephone-fill me-1"></i> Hotline: 0917 941 246</p>
+                    </div>
+                </div>
+
+                <!-- Branch 3 -->
+                <div class="d-flex align-items-start gap-3 mb-4">
+                    <div class="bg-warning bg-opacity-25 text-warning rounded-3 p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-geo-alt-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1 text-dark">Cơ sở 3</h6>
+                        <p class="small text-muted mb-1">25 Nguyễn Thái Học, Phường Tam Thắng, TP. Hồ Chí Minh</p>
+                        <p class="small mb-0 text-warning fw-bold"><i class="bi bi-telephone-fill me-1"></i> Hotline: 0914 764 246</p>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <h4 class="fw-bold mb-3">Giờ Làm Việc</h4>
+                <div class="card bg-light border-0 p-3 rounded-4 mb-4">
+                    <div class="d-flex justify-content-between mb-2 small text-muted">
+                        <span>Thứ 2 - Thứ 7:</span>
+                        <strong class="text-dark">Sáng: 08:00 - 12:00 | Chiều: 14:00 - 19:00</strong>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span>Chủ nhật & Lễ:</span>
+                        <strong class="text-dark">Sáng: 08:00 - 12:00 (Chiều nghỉ)</strong>
+                    </div>
+                </div>
+
+                <h4 class="fw-bold mb-3">Bản Đồ</h4>
+                <div class="rounded-4 overflow-hidden border shadow-sm" style="height: 220px;">
+                    <iframe style="border: 0; width: 100%; height: 100%;" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3920.0531119583807!2d106.70744515079734!3d10.73038709231523!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f91a2a96ad1%3A0xc19a98cc93ec317e!2sPetcare+Veterinary+Hospital!5e0!3m2!1sen!2s!4v1465265330727" frameborder="0" allowfullscreen="allowfullscreen"></iframe>
+                </div>
+            </div>
+
+            <!-- Right Column: Contact/Booking Form -->
+            <div class="col-lg-7">
+                <div class="card border-0 glass-card p-4 shadow-md">
+                    <h3 class="fw-bold mb-3 text-dark">Gửi Tin Nhắn Cho Chúng Tôi</h3>
+                    <p class="text-muted small mb-4">
+                        Nếu bạn có bất kỳ câu hỏi nào về sức khỏe của thú cưng hoặc muốn đặt lịch khám trước để tiết kiệm thời gian, vui lòng điền thông tin vào form dưới đây.
+                    </p>
+
+                    <form method="post" id="contactForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control input-premium rounded-3" id="contactName" required placeholder="Nguyễn Văn A" />
+                                    <label for="contactName"><i class="bi bi-person me-1 text-muted"></i> Họ và tên của bạn *</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="tel" class="form-control input-premium rounded-3" id="contactPhone" required placeholder="0901234567" />
+                                    <label for="contactPhone"><i class="bi bi-telephone me-1 text-muted"></i> Số điện thoại *</label>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <input type="email" class="form-control input-premium rounded-3" id="contactEmail" placeholder="name@example.com" />
+                                    <label for="contactEmail"><i class="bi bi-envelope me-1 text-muted"></i> Địa chỉ Email</label>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <select class="form-select input-premium rounded-3" id="contactSubject">
+                                        <option value="tu-van">Tư vấn sức khỏe / Dinh dưỡng</option>
+                                        <option value="dat-lich">Đặt lịch khám định kỳ / tiêm phòng</option>
+                                        <option value="spa">Đặt lịch Spa / Cắt tỉa lông</option>
+                                        <option value="gop-y">Ý kiến đóng góp / Phản ánh dịch vụ</option>
+                                    </select>
+                                    <label for="contactSubject"><i class="bi bi-tag me-1 text-muted"></i> Chủ đề cần hỗ trợ *</label>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <textarea class="form-control input-premium rounded-3" id="contactMessage" style="height: 120px;" required placeholder="Vui lòng nhập chi tiết lời nhắn..."></textarea>
+                                    <label for="contactMessage"><i class="bi bi-chat-left-dots me-1 text-muted"></i> Nội dung tin nhắn / Ghi chú đặt lịch *</label>
+                                </div>
+                            </div>
+                            <div class="col-md-12 text-end">
+                                <button type="submit" class="btn btn-premium w-100 py-3 shadow-md mt-2">
+                                    <i class="bi bi-send-fill me-1"></i> Gửi Tin Nhắn Ngay
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="mt-5 pt-4">
+            <h3 class="fw-bold text-center mb-5">Câu Hỏi Thường Gặp (FAQs)</h3>
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-10">
+                    <div class="accordion accordion-flush" id="accordionFAQ">
+                        <div class="accordion-item border-bottom py-2">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button collapsed fw-bold text-dark bg-transparent border-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                    1. Tôi có cần đặt lịch khám trước khi đưa thú cưng tới không?
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionFAQ">
+                                <div class="accordion-body text-muted small">
+                                    MyPetClinic khuyến khích khách hàng đặt lịch khám trực tuyến hoặc gọi hotline trước khi đến để được ưu tiên sắp xếp bác sĩ và hạn chế thời gian chờ đợi. Tuy nhiên, chúng tôi vẫn tiếp nhận các ca khám trực tiếp trong giờ làm việc.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-bottom py-2">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed fw-bold text-dark bg-transparent border-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    2. Chi phí điều trị nội trú tại bệnh viện được tính thế nào?
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionFAQ">
+                                <div class="accordion-body text-muted small">
+                                    Chi phí chăm sóc nội trú bao gồm phí lưu chuồng theo ngày, tiền thuốc theo phác đồ điều trị, dinh dưỡng đặc thù và công theo dõi sát sao của các điều dưỡng. Bác sĩ sẽ luôn trao đổi chi tiết và đưa ra bảng ước tính chi phí trước khi làm thủ tục nhập viện cho thú cưng.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 py-2">
+                            <h2 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed fw-bold text-dark bg-transparent border-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    3. Bệnh viện có tiếp nhận cấp cứu ngoài giờ hành chính không?
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionFAQ">
+                                <div class="accordion-body text-muted small">
+                                    Hiện tại, MyPetClinic hoạt động phục vụ theo khung giờ hành chính cố định được niêm yết (Thứ 2 - Thứ 7: 8h00 - 19h00; Chủ nhật: 8h00 - 12h00). Đối với các sự cố khẩn cấp phát sinh ngoài giờ làm việc trên, quý khách vui lòng liên hệ các trung tâm cấp cứu 24/7 chuyên biệt.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

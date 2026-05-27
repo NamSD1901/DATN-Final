@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using MyPetClinic.Models;
 
@@ -7,6 +7,46 @@ namespace MyPetClinic.Controllers;
 public class HomeController : Controller
 {
     public IActionResult Index()
+    {
+        return View();
+    }
+
+    public IActionResult History()
+    {
+        return View();
+    }
+
+    public IActionResult Team()
+    {
+        return View();
+    }
+
+    public IActionResult KhamDieuTri()
+    {
+        return View();
+    }
+
+    public IActionResult TiemPhong()
+    {
+        return View();
+    }
+
+    public IActionResult SpaGrooming()
+    {
+        return View();
+    }
+
+    public IActionResult TinTuc()
+    {
+        return View();
+    }
+
+    public IActionResult SucKhoe()
+    {
+        return View();
+    }
+
+    public IActionResult Contact()
     {
         return View();
     }

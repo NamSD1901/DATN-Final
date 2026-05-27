@@ -38,8 +38,14 @@ body {
     font-family: 'Quicksand', sans-serif;
     color: var(--text-dark);
     background-color: #faf9f6;
-    margin-bottom: 350px; /* Adjusted to fit the taller premium footer */
     line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    padding-bottom: 5rem !important; /* Generous separation from footer */
 }
 
 /* Typography elements */
@@ -171,18 +177,20 @@ p {
 
 /* Glassmorphic Panel/Card */
 .glass-card {
-    background: var(--bg-pure);
-    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
-    transition: all var(--transition-speed) ease;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     overflow: hidden;
 }
 
 .glass-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--primary-gold);
+    transform: translateY(-8px);
+    box-shadow: 0 30px 60px rgba(217, 119, 6, 0.15), 0 0 40px rgba(245, 158, 11, 0.05) !important;
+    border-color: rgba(245, 158, 11, 0.5) !important;
 }
 
 /* Custom Gradients */
@@ -191,19 +199,65 @@ p {
 }
 
 .bg-footer-dark {
-    background-color: #1c1917; /* Deep Charcoal Brown */
+    background-color: transparent !important;
 }
 
-/* Footer structure */
+/* Footer structure - Light Gold Theme */
 .footer-premium {
-    position: absolute;
-    bottom: 0;
+    position: relative;
     width: 100%;
-    height: auto;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    color: #e7e5e4;
+    margin-top: auto !important; /* Pushes footer to the bottom on short pages */
+    background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 100%) !important; /* Light gold gradient */
+    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+    color: var(--text-dark) !important;
     padding-top: 4rem;
     padding-bottom: 2rem;
+}
+
+/* Contrast enhancement for footer elements on light background */
+.footer-premium p, 
+.footer-premium span, 
+.footer-premium div,
+.footer-premium .text-white-50 {
+    color: #4b5563 !important; /* Dark gray text for high legibility */
+}
+
+.footer-premium h5,
+.footer-premium h5 span,
+.footer-premium h6.footer-title,
+.footer-premium strong {
+    color: #1f2937 !important; /* Dark slate text for headers */
+    font-weight: 700 !important;
+}
+
+.footer-premium h6.footer-title::after {
+    background: var(--primary-gold) !important; /* Golden underline under titles */
+}
+
+/* Social media buttons styling for light background */
+.footer-premium .btn-outline-light {
+    border-color: #9ca3af !important;
+    color: #4b5563 !important;
+}
+
+.footer-premium .btn-outline-light:hover {
+    background-color: var(--primary-gold) !important;
+    border-color: var(--primary-gold) !important;
+    color: #fff !important;
+}
+
+/* Links and maps in footer */
+.footer-premium a {
+    color: #78350f !important; /* Rich amber-brown for theme harmony and high legibility */
+    font-weight: 600;
+}
+
+.footer-premium a:hover {
+    color: var(--primary-gold) !important;
+}
+
+.footer-premium .border-top {
+    border-top-color: rgba(0, 0, 0, 0.08) !important;
 }
 
 .footer-title {
@@ -256,24 +310,38 @@ p {
     overflow: hidden;
 }
 
+@keyframes floatShape1 {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-30px, 40px) scale(1.1); }
+    100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes floatShape2 {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(40px, -30px) scale(0.95); }
+    100% { transform: translate(0, 0) scale(1); }
+}
+
 .hero-shape-1 {
     position: absolute;
     top: -20%;
     right: -10%;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(254, 243, 199, 0.6) 0%, rgba(254, 243, 199, 0) 70%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(254, 243, 199, 0.7) 0%, rgba(254, 243, 199, 0) 70%);
     z-index: -1;
+    animation: floatShape1 20s ease-in-out infinite;
 }
 
 .hero-shape-2 {
     position: absolute;
     bottom: -10%;
     left: -10%;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(254, 243, 199, 0.4) 0%, rgba(254, 243, 199, 0) 70%);
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(254, 243, 199, 0.5) 0%, rgba(254, 243, 199, 0) 70%);
     z-index: -1;
+    animation: floatShape2 16s ease-in-out infinite;
 }
 
 .gradient-text-gold {
@@ -289,13 +357,23 @@ p {
 }
 
 .input-premium {
-    border: 1px solid var(--border-color) !important;
-    background-color: var(--bg-pure) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
 }
 
 .input-premium:focus {
+    background-color: var(--bg-pure) !important;
     border-color: var(--primary-gold) !important;
-    box-shadow: 0 0 0 0.25rem rgba(245, 158, 11, 0.15) !important;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15), 0 4px 10px rgba(245, 158, 11, 0.05) !important;
+}
+
+/* Premium focused state for form-floating labels */
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-select:focus ~ label {
+    color: var(--primary-dark) !important;
+    font-weight: 600;
 }
 
 .hover-text-warning {
