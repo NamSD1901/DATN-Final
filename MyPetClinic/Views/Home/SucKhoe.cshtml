@@ -1,0 +1,126 @@
+@{
+    ViewData["Title"] = "Cẩm Nang Sức Khỏe Thú Cưng - MyPetClinic";
+}
+
+<section class="py-5 bg-gold-gradient position-relative text-center">
+    <div class="hero-shape-1"></div>
+    <div class="container py-4">
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3 shadow-sm text-uppercase">
+            <i class="bi bi-journal-medical me-1"></i> Góc Y Khoa & Đời Sống
+        </span>
+        <h1 class="display-4 fw-bold mb-3 gradient-text-gold">SỨC KHỎE THÚ CƯNG</h1>
+        <p class="fs-5 text-muted max-w-2xl mx-auto">
+            Trang bị kiến thức chăm sóc khoa học, nhận biết sớm các triệu chứng bệnh lý thường gặp dưới sự cố vấn chuyên môn từ bác sĩ.
+        </p>
+    </div>
+</section>
+
+<section class="py-5 bg-white">
+    <div class="container">
+        <div class="row g-4">
+            <!-- Sidebar widgets -->
+            <div class="col-lg-3">
+                <!-- Search box widget -->
+                <div class="card border-0 glass-card p-3 mb-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-search me-2"></i>Tìm kiếm bài viết</h6>
+                    <div class="input-group">
+                        <input type="text" class="form-control form-control-sm border-end-0 input-premium" placeholder="Nhập từ khóa..." />
+                        <button class="btn btn-warning btn-sm text-white" type="button"><i class="bi bi-search"></i></button>
+                    </div>
+                </div>
+
+                <!-- Categories Widget -->
+                <div class="card border-0 glass-card p-3 mb-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-tags-fill me-2"></i>Chuyên Mục</h6>
+                    <div class="nav flex-column nav-pills gap-1">
+                        <a class="nav-link py-2 text-start text-dark small bg-light" href="#"><i class="bi bi-chevron-right me-1"></i>Tất cả bài viết</a>
+                        <a class="nav-link py-2 text-start text-dark small" href="#"><i class="bi bi-chevron-right me-1"></i>Dinh Dưỡng Thú Cưng</a>
+                        <a class="nav-link py-2 text-start text-dark small" href="#"><i class="bi bi-chevron-right me-1"></i>Bệnh Học Chó Mèo</a>
+                        <a class="nav-link py-2 text-start text-dark small" href="#"><i class="bi bi-chevron-right me-1"></i>Kinh Nghiệm Nuôi Dạy</a>
+                        <a class="nav-link py-2 text-start text-dark small" href="#"><i class="bi bi-chevron-right me-1"></i>Y Học Dự Phòng</a>
+                    </div>
+                </div>
+
+                <!-- Popular Articles Widget -->
+                <div class="card border-0 glass-card p-3">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-star-fill text-warning me-2"></i>Đọc Nhiều Nhất</h6>
+                    <div class="small">
+                        <a href="#" class="text-decoration-none text-dark d-block mb-3 hover-text-warning">
+                            <span class="text-muted d-block" style="font-size: 10px;">25/05/2026</span>
+                            <strong>Nấm da ở chó mèo có lây sang người không?</strong>
+                        </a>
+                        <a href="#" class="text-decoration-none text-dark d-block mb-3 hover-text-warning">
+                            <span class="text-muted d-block" style="font-size: 10px;">24/05/2026</span>
+                            <strong>Tại sao chó bị rụng lông & điều trị thế nào?</strong>
+                        </a>
+                        <a href="#" class="text-decoration-none text-dark d-block hover-text-warning">
+                            <span class="text-muted d-block" style="font-size: 10px;">20/05/2026</span>
+                            <strong>Chó bị táo bón: Cách chữa trị tại nhà</strong>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Articles Grid -->
+            <div class="col-lg-9">
+                <div class="row g-4">
+                    <!-- Article 1 -->
+                    <div class="col-md-6">
+                        <div class="card border-0 glass-card h-100 overflow-hidden shadow-sm">
+                            <img src="https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Nấm da ở chó mèo" style="height: 180px; object-fit: cover;" />
+                            <div class="card-body p-4">
+                                <span class="badge bg-danger mb-2">Bệnh Học</span>
+                                <h5 class="card-title fw-bold mb-2">Nấm da ở chó mèo có lây sang người không?</h5>
+                                <p class="card-text small text-muted">
+                                    Tìm hiểu nguyên nhân gây nấm da (Microsporum canis), các triệu chứng điển hình ở người khi bị lây nhiễm (vết đỏ tròn như đồng xu, ngứa ngáy) và biện pháp phòng ngừa triệt để tại nhà...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Article 2 -->
+                    <div class="col-md-6">
+                        <div class="card border-0 glass-card h-100 overflow-hidden shadow-sm">
+                            <img src="https://images.unsplash.com/photo-1581888227599-779811939961?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Chó bị rụng lông" style="height: 180px; object-fit: cover;" />
+                            <div class="card-body p-4">
+                                <span class="badge bg-warning text-dark mb-2">Kinh Nghiệm</span>
+                                <h5 class="card-title fw-bold mb-2">Tại sao chó bị rụng lông và cách điều trị hiệu quả</h5>
+                                <p class="card-text small text-muted">
+                                    Phân biệt rụng lông sinh lý tự nhiên và rụng lông bệnh lý do ký sinh trùng (ghẻ demodex, xà mâu, bọ chét) hoặc dị ứng thức ăn để có hướng can thiệp y khoa kịp thời...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Article 3 -->
+                    <div class="col-md-6">
+                        <div class="card border-0 glass-card h-100 overflow-hidden shadow-sm">
+                            <img src="https://images.unsplash.com/photo-1544568100-847a948585b9?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Chó bị táo bón" style="height: 180px; object-fit: cover;" />
+                            <div class="card-body p-4">
+                                <span class="badge bg-info mb-2">Dinh Dưỡng</span>
+                                <h5 class="card-title fw-bold mb-2">Chó bị táo bón: Biểu hiện và cách điều trị tại nhà</h5>
+                                <p class="card-text small text-muted">
+                                    Hướng dẫn bổ sung chất xơ hòa tan, men vi sinh đường ruột và thay đổi thói quen cho chó uống nước nhằm điều trị dứt điểm chứng táo bón, khó tiêu ở thú cưng...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Article 4 -->
+                    <div class="col-md-6">
+                        <div class="card border-0 glass-card h-100 overflow-hidden shadow-sm">
+                            <img src="https://images.unsplash.com/photo-1533738363-b7f9aef128ce?q=80&w=400&auto=format&fit=crop" class="card-img-top" alt="Dinh duong cho mèo" style="height: 180px; object-fit: cover;" />
+                            <div class="card-body p-4">
+                                <span class="badge bg-info mb-2">Dinh Dưỡng</span>
+                                <h5 class="card-title fw-bold mb-2">Chế độ dinh dưỡng khoa học cho mèo dưới 1 năm tuổi</h5>
+                                <p class="card-text small text-muted">
+                                    Thời kỳ phát triển vàng quyết định tầm vóc và đề kháng của bé mèo. Những thành phần dinh dưỡng bắt buộc (Taurine, Canxi, Protein dễ tiêu) và các thực phẩm tuyệt đối cấm kỵ...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

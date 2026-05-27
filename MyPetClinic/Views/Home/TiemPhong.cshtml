@@ -1,0 +1,156 @@
+@{
+    ViewData["Title"] = "Dịch Vụ Tiêm Phòng Bệnh - MyPetClinic";
+}
+
+<section class="py-5 bg-gold-gradient position-relative text-center">
+    <div class="hero-shape-1"></div>
+    <div class="container py-4">
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3 shadow-sm text-uppercase">
+            <i class="bi bi-shield-fill-check me-1"></i> Y Học Dự Phòng
+        </span>
+        <h1 class="display-4 fw-bold mb-3 gradient-text-gold">TIÊM PHÒNG BỆNH ĐỊNH KỲ</h1>
+        <p class="fs-5 text-muted max-w-2xl mx-auto">
+            Cách đơn giản, hiệu quả và kinh tế nhất để bảo vệ thú cưng khỏi các căn bệnh truyền nhiễm nguy hiểm gây tử vong cao.
+        </p>
+    </div>
+</section>
+
+<section class="py-5 bg-white">
+    <div class="container">
+        <!-- Importance Section -->
+        <div class="row g-5 align-items-center mb-5">
+            <div class="col-lg-6">
+                <h3 class="fw-bold mb-3">Tại sao cần tiêm vaccine đúng lịch?</h3>
+                <p class="text-muted mb-4">
+                    Vaccine huấn luyện hệ miễn dịch của thú cưng nhận biết và tiêu diệt nhanh chóng virus, vi khuẩn gây hại khi chúng xâm nhập. Bỏ lỡ lịch tiêm phòng hoặc tiêm không đủ liều có thể khiến bé cưng mất đi lớp bảo vệ trước các dịch bệnh chết người như Parvo, Care ở chó hay giảm bạch cầu ở mèo.
+                </p>
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <div class="bg-warning bg-opacity-25 text-warning p-2 rounded-circle">
+                        <i class="bi bi-check-lg fs-5"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Bảo vệ cá thể thú cưng</h6>
+                        <p class="small text-muted mb-0">Ngăn ngừa các bệnh lý nguy hại đến tính mạng.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <div class="bg-warning bg-opacity-25 text-warning p-2 rounded-circle">
+                        <i class="bi bi-check-lg fs-5"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Tránh lây sang người</h6>
+                        <p class="small text-muted mb-0">Các bệnh nguy hiểm như dại hay xoắn khuẩn Leptospira có thể lây sang người nuôi.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <img src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?q=80&w=600&auto=format&fit=crop" class="img-fluid rounded-4 shadow-lg" alt="Puppy getting examined by a vet" />
+            </div>
+        </div>
+
+        <!-- Vaccination Schedule Tables -->
+        <h3 class="fw-bold text-center mb-5">Lịch Tiêm Vaccine Tham Khảo</h3>
+        <div class="row g-4 mb-5">
+            <!-- Dog Schedule -->
+            <div class="col-md-6">
+                <div class="card border-0 glass-card p-4 h-100">
+                    <h4 class="fw-bold text-warning mb-3 text-center"><i class="bi bi-gender-ambiguous me-2"></i>Lịch Tiêm Cho Chó</h4>
+                    <div class="table-responsive">
+                        <table class="table table-sm text-muted small">
+                            <thead>
+                                <tr class="table-light">
+                                    <th>Độ tuổi</th>
+                                    <th>Mũi tiêm</th>
+                                    <th>Phòng bệnh</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>6 - 8 tuần tuổi</strong></td>
+                                    <td>Mũi 1 (5-in-1 hoặc 7-in-1)</td>
+                                    <td>Care, Parvo, Viêm gan, Ho cũi chó...</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>10 - 12 tuần tuổi</strong></td>
+                                    <td>Mũi 2 (7-in-1)</td>
+                                    <td>Nhắc lại và bổ sung xoắn khuẩn Leptospira.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>14 - 16 tuần tuổi</strong></td>
+                                    <td>Mũi 3 (7-in-1) + Tiêm Dại</td>
+                                    <td>Mũi nhắc lại cuối cùng của năm đầu + phòng bệnh Dại.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Hàng năm</strong></td>
+                                    <td>Nhắc lại 1 mũi 7-in-1 + Dại</td>
+                                    <td>Duy trì kháng thể bảo vệ suốt đời.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cat Schedule -->
+            <div class="col-md-6">
+                <div class="card border-0 glass-card p-4 h-100">
+                    <h4 class="fw-bold text-warning mb-3 text-center"><i class="bi bi-github me-2"></i>Lịch Tiêm Cho Mèo</h4>
+                    <div class="table-responsive">
+                        <table class="table table-sm text-muted small">
+                            <thead>
+                                <tr class="table-light">
+                                    <th>Độ tuổi</th>
+                                    <th>Mũi tiêm</th>
+                                    <th>Phòng bệnh</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>8 - 10 tuần tuổi</strong></td>
+                                    <td>Mũi 1 (4-in-1)</td>
+                                    <td>Giảm bạch cầu, Viêm mũi - khí quản, Calicivirus...</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>12 - 14 tuần tuổi</strong></td>
+                                    <td>Mũi 2 (4-in-1)</td>
+                                    <td>Nhắc lại tạo kháng thể chủ động.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>16 - 18 tuần tuổi</strong></td>
+                                    <td>Mũi 3 (4-in-1) + Tiêm Dại</td>
+                                    <td>Nhắc lại lần 3 bảo đảm an toàn + phòng bệnh Dại.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Hàng năm</strong></td>
+                                    <td>Nhắc lại 1 mũi 4-in-1 + Dại</td>
+                                    <td>Duy trì miễn dịch chống lại virus giảm bạch cầu nguy hiểm.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning & Care Alert Box -->
+        <div class="card bg-warning bg-opacity-10 border border-warning rounded-4 p-4">
+            <h5 class="fw-bold text-warning mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i>Lưu Ý Quan Trọng Cho Chủ Nuôi</h5>
+            <div class="row g-3 small text-muted">
+                <div class="col-md-6">
+                    <h6 class="fw-bold text-dark mb-1">Trước khi tiêm:</h6>
+                    <ul class="ps-3 mb-0">
+                        <li>Thú cưng phải hoàn toàn khỏe mạnh, không bị sốt, bỏ ăn hay tiêu chảy.</li>
+                        <li>Nên tẩy giun trước khi tiêm vaccine khoảng 1 tuần để vaccine đạt hiệu quả cao nhất.</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="fw-bold text-dark mb-1">Sau khi tiêm:</h6>
+                    <ul class="ps-3 mb-0">
+                        <li>Kiêng tắm cho thú cưng ít nhất 7 ngày sau tiêm để tránh sốc nhiệt hoặc nhiễm trùng.</li>
+                        <li>Theo dõi các biểu hiện sốc phản vệ (sưng mặt, nôn mửa liên tục) để đưa ngay đến bệnh viện xử lý kịp thời.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
