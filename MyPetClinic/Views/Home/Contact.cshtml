@@ -54,33 +54,95 @@
                 </div>
             </div>
 
-            <!-- Right Column: Contact Channels -->
+            <!-- Right Column: Booking Form -->
             <div class="col-lg-7">
                 <div class="card border-0 glass-card p-4 shadow-md">
                     <h3 class="fw-bold mb-3 text-dark">Đặt Lịch Ngay</h3>
                     <p class="text-muted small mb-4">
-                        Quý khách vui lòng chọn một trong các phương thức liên hệ dưới đây để đặt lịch khám nhanh chóng hoặc nhận tư vấn trực tiếp từ các bác sĩ thú y tại MyPetClinic:
+                        Quý khách vui lòng điền đầy đủ thông tin bên dưới để đăng ký lịch hẹn khám cho thú cưng của bạn tại MyPetClinic:
                     </p>
 
-                    <div class="d-grid gap-3">
-                        <!-- Zalo Option -->
-                        <a href="https://zalo.me/0905090629" target="_blank" class="btn btn-lg btn-outline-primary d-flex align-items-center justify-content-center gap-2 py-3 rounded-3 hover-scale border-2" style="border-color: #0068ff; color: #0068ff;">
-                            <i class="bi bi-chat-text-fill fs-4"></i>
-                            <span class="fw-bold">Zalo Tư Vấn (0905 090 629)</span>
-                        </a>
+                    <form id="bookingFormContact" onsubmit="handleBookingContactSubmit(event)">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control input-premium rounded-3" id="contactOwnerName" required placeholder="Nguyễn Văn A" />
+                                    <label for="contactOwnerName"><i class="bi bi-person me-1 text-muted"></i> Họ và tên *</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="tel" class="form-control input-premium rounded-3" id="contactPhone" required placeholder="0901234567" />
+                                    <label for="contactPhone"><i class="bi bi-telephone me-1 text-muted"></i> Số điện thoại *</label>
+                                </div>
+                            </div>
 
-                        <!-- Messenger Option -->
-                        <a href="https://m.me/mypetclinic" target="_blank" class="btn btn-lg btn-outline-info d-flex align-items-center justify-content-center gap-2 py-3 rounded-3 hover-scale border-2" style="border-color: #0084ff; color: #0084ff;">
-                            <i class="bi bi-messenger fs-4"></i>
-                            <span class="fw-bold">Facebook Messenger</span>
-                        </a>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control input-premium rounded-3" id="contactPetName" required placeholder="Milu" />
+                                    <label for="contactPetName"><i class="bi bi-heart me-1 text-muted"></i> Tên thú cưng *</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select input-premium rounded-3" id="contactPetType" required>
+                                        <option value="Chó">Chó</option>
+                                        <option value="Mèo">Mèo</option>
+                                        <option value="Khác">Khác</option>
+                                    </select>
+                                    <label for="contactPetType"><i class="bi bi-gender-ambiguous me-1 text-muted"></i> Loại thú cưng</label>
+                                </div>
+                            </div>
 
-                        <!-- Hotline Option -->
-                        <a href="tel:0905090629" class="btn btn-lg btn-outline-success d-flex align-items-center justify-content-center gap-2 py-3 rounded-3 hover-scale border-2" style="border-color: #198754; color: #198754;">
-                            <i class="bi bi-telephone-fill fs-4"></i>
-                            <span class="fw-bold">Gọi Hotline: 0905 090 629</span>
-                        </a>
-                    </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select input-premium rounded-3" id="contactService" required>
+                                        <option value="Khám & Điều trị">Khám & Điều trị</option>
+                                        <option value="Tiêm phòng">Tiêm phòng Vaccine</option>
+                                        <option value="Spa & Grooming">Spa & Làm đẹp</option>
+                                        <option value="Dịch vụ khác">Dịch vụ khác</option>
+                                    </select>
+                                    <label for="contactService"><i class="bi bi-journal-medical me-1 text-muted"></i> Chọn dịch vụ *</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="date" class="form-control input-premium rounded-3" id="contactDate" required />
+                                    <label for="contactDate"><i class="bi bi-calendar me-1 text-muted"></i> Ngày đặt lịch *</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <select class="form-select input-premium rounded-3" id="contactTime" required>
+                                        <option value="08:00 - 09:00">Ca sáng: 08:00 - 09:00</option>
+                                        <option value="09:00 - 10:00">Ca sáng: 09:00 - 10:00</option>
+                                        <option value="10:00 - 11:00">Ca sáng: 10:00 - 11:00</option>
+                                        <option value="11:00 - 12:00">Ca sáng: 11:00 - 12:00</option>
+                                        <option value="14:00 - 15:00">Ca chiều: 14:00 - 15:00</option>
+                                        <option value="15:00 - 16:00">Ca chiều: 15:00 - 16:00</option>
+                                        <option value="16:00 - 17:00">Ca chiều: 16:00 - 17:00</option>
+                                        <option value="17:00 - 18:00">Ca chiều: 17:00 - 18:00</option>
+                                        <option value="18:00 - 19:00">Ca chiều: 18:00 - 19:00</option>
+                                    </select>
+                                    <label for="contactTime"><i class="bi bi-clock me-1 text-muted"></i> Giờ hẹn mong muốn *</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <textarea class="form-control input-premium rounded-3" id="contactNotes" style="height: 120px;" placeholder="Triệu chứng hoặc yêu cầu đặc biệt..."></textarea>
+                                    <label for="contactNotes"><i class="bi bi-chat-left-text me-1 text-muted"></i> Triệu chứng / Ghi chú thêm</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12 text-end">
+                                <button type="submit" class="btn btn-premium w-100 py-3 shadow-md mt-2">
+                                    <i class="bi bi-calendar-check-fill me-1"></i> Xác Nhận Đặt Lịch Hẹn
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -133,3 +195,27 @@
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        function handleBookingContactSubmit(event) {
+            event.preventDefault();
+            const ownerName = document.getElementById('contactOwnerName').value;
+            const phone = document.getElementById('contactPhone').value;
+            const petName = document.getElementById('contactPetName').value;
+            const petType = document.getElementById('contactPetType').value;
+            const service = document.getElementById('contactService').value;
+            const date = document.getElementById('contactDate').value;
+            const time = document.getElementById('contactTime').value;
+
+            alert(`Đặt lịch thành công!\n\nThông tin lịch hẹn:\n- Khách hàng: ${ownerName}\n- SĐT: ${phone}\n- Thú cưng: ${petName} (${petType})\n- Dịch vụ: ${service}\n- Thời gian: ${time} ngày ${date}\n\nMyPetClinic sẽ liên hệ lại với bạn sớm nhất để xác nhận lịch hẹn.`);
+            
+            document.getElementById('bookingFormContact').reset();
+            const today = new Date().toISOString().split('T')[0];
+            const contactDate = document.getElementById('contactDate');
+            if (contactDate) {
+                contactDate.value = today;
+            }
+        }
+    </script>
+}

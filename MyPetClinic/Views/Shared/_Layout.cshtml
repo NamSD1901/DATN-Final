@@ -215,32 +215,138 @@
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-4 text-center">
-                    <p class="text-muted small mb-4">
-                        Vui lòng chọn một trong các phương thức liên hệ dưới đây để kết nối trực tiếp với MyPetClinic:
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-4 text-center">
+                        Vui lòng điền đầy đủ thông tin bên dưới để đăng ký lịch hẹn cho thú cưng của bạn tại MyPetClinic.
                     </p>
-                    <div class="d-grid gap-3">
-                        <!-- Zalo Option -->
-                        <a href="https://zalo.me/0905090629" target="_blank" class="btn btn-lg btn-outline-primary d-flex align-items-center justify-content-center gap-2 py-3 rounded-3 hover-scale border-2" style="border-color: #0068ff; color: #0068ff;">
-                            <i class="bi bi-chat-text-fill fs-4"></i>
-                            <span class="fw-bold">Zalo Tư Vấn (0905 090 629)</span>
-                        </a>
+                    <form id="bookingFormModal" onsubmit="handleBookingSubmit(event)">
+                        <div class="row g-2">
+                            <!-- Họ tên & SĐT -->
+                            <div class="col-md-6">
+                                <div class="form-floating mb-2">
+                                    <input type="text" class="form-control input-premium rounded-3" id="bookingOwnerName" required placeholder="Nguyễn Văn A" />
+                                    <label for="bookingOwnerName"><i class="bi bi-person me-1 text-muted"></i> Họ và tên *</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-2">
+                                    <input type="tel" class="form-control input-premium rounded-3" id="bookingPhone" required placeholder="0901234567" />
+                                    <label for="bookingPhone"><i class="bi bi-telephone me-1 text-muted"></i> Số điện thoại *</label>
+                                </div>
+                            </div>
 
-                        <!-- Messenger Option -->
-                        <a href="https://m.me/mypetclinic" target="_blank" class="btn btn-lg btn-outline-info d-flex align-items-center justify-content-center gap-2 py-3 rounded-3 hover-scale border-2" style="border-color: #0084ff; color: #0084ff;">
-                            <i class="bi bi-messenger fs-4"></i>
-                            <span class="fw-bold">Facebook Messenger</span>
-                        </a>
+                            <!-- Tên Pet & Loại Pet -->
+                            <div class="col-md-6">
+                                <div class="form-floating mb-2">
+                                    <input type="text" class="form-control input-premium rounded-3" id="bookingPetName" required placeholder="Milu" />
+                                    <label for="bookingPetName"><i class="bi bi-heart me-1 text-muted"></i> Tên thú cưng *</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-2">
+                                    <select class="form-select input-premium rounded-3" id="bookingPetType" required>
+                                        <option value="Chó">Chó</option>
+                                        <option value="Mèo">Mèo</option>
+                                        <option value="Khác">Khác</option>
+                                    </select>
+                                    <label for="bookingPetType"><i class="bi bi-gender-ambiguous me-1 text-muted"></i> Loại thú cưng</label>
+                                </div>
+                            </div>
 
-                        <!-- Hotline Option -->
-                        <a href="tel:0905090629" class="btn btn-lg btn-outline-success d-flex align-items-center justify-content-center gap-2 py-3 rounded-3 hover-scale border-2" style="border-color: #198754; color: #198754;">
-                            <i class="bi bi-telephone-fill fs-4"></i>
-                            <span class="fw-bold">Gọi Hotline: 0905 090 629</span>
-                        </a>
-                    </div>
+                            <!-- Dịch vụ & Ngày hẹn -->
+                            <div class="col-md-6">
+                                <div class="form-floating mb-2">
+                                    <select class="form-select input-premium rounded-3" id="bookingService" required>
+                                        <option value="Khám & Điều trị">Khám & Điều trị</option>
+                                        <option value="Tiêm phòng">Tiêm phòng Vaccine</option>
+                                        <option value="Spa & Grooming">Spa & Làm đẹp</option>
+                                        <option value="Dịch vụ khác">Dịch vụ khác</option>
+                                    </select>
+                                    <label for="bookingService"><i class="bi bi-journal-medical me-1 text-muted"></i> Chọn dịch vụ *</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-2">
+                                    <input type="date" class="form-control input-premium rounded-3" id="bookingDate" required />
+                                    <label for="bookingDate"><i class="bi bi-calendar me-1 text-muted"></i> Ngày đặt lịch *</label>
+                                </div>
+                            </div>
+
+                            <!-- Giờ hẹn -->
+                            <div class="col-md-12">
+                                <div class="form-floating mb-2">
+                                    <select class="form-select input-premium rounded-3" id="bookingTime" required>
+                                        <option value="08:00 - 09:00">Ca sáng: 08:00 - 09:00</option>
+                                        <option value="09:00 - 10:00">Ca sáng: 09:00 - 10:00</option>
+                                        <option value="10:00 - 11:00">Ca sáng: 10:00 - 11:00</option>
+                                        <option value="11:00 - 12:00">Ca sáng: 11:00 - 12:00</option>
+                                        <option value="14:00 - 15:00">Ca chiều: 14:00 - 15:00</option>
+                                        <option value="15:00 - 16:00">Ca chiều: 15:00 - 16:00</option>
+                                        <option value="16:00 - 17:00">Ca chiều: 16:00 - 17:00</option>
+                                        <option value="17:00 - 18:00">Ca chiều: 17:00 - 18:00</option>
+                                        <option value="18:00 - 19:00">Ca chiều: 18:00 - 19:00</option>
+                                    </select>
+                                    <label for="bookingTime"><i class="bi bi-clock me-1 text-muted"></i> Giờ hẹn mong muốn *</label>
+                                </div>
+                            </div>
+
+                            <!-- Triệu chứng / Ghi chú -->
+                            <div class="col-md-12">
+                                <div class="form-floating mb-3">
+                                    <textarea class="form-control input-premium rounded-3" id="bookingNotes" style="height: 80px;" placeholder="Ví dụ: Bé bị ho, cần tắm spa..."></textarea>
+                                    <label for="bookingNotes"><i class="bi bi-chat-left-text me-1 text-muted"></i> Triệu chứng / Ghi chú thêm</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-premium w-100 py-3 shadow-md">
+                            <i class="bi bi-calendar-check-fill me-1"></i> Xác Nhận Đặt Lịch
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const today = new Date().toISOString().split('T')[0];
+            const bookingDateModal = document.getElementById('bookingDate');
+            if (bookingDateModal) {
+                bookingDateModal.min = today;
+                bookingDateModal.value = today;
+            }
+            const contactDate = document.getElementById('contactDate');
+            if (contactDate) {
+                contactDate.min = today;
+                contactDate.value = today;
+            }
+        });
+
+        function handleBookingSubmit(event) {
+            event.preventDefault();
+            const ownerName = document.getElementById('bookingOwnerName').value;
+            const phone = document.getElementById('bookingPhone').value;
+            const petName = document.getElementById('bookingPetName').value;
+            const petType = document.getElementById('bookingPetType').value;
+            const service = document.getElementById('bookingService').value;
+            const date = document.getElementById('bookingDate').value;
+            const time = document.getElementById('bookingTime').value;
+
+            alert(`Đặt lịch thành công!\n\nThông tin lịch hẹn:\n- Khách hàng: ${ownerName}\n- SĐT: ${phone}\n- Thú cưng: ${petName} (${petType})\n- Dịch vụ: ${service}\n- Thời gian: ${time} ngày ${date}\n\nMyPetClinic sẽ liên hệ lại với bạn sớm nhất để xác nhận lịch hẹn.`);
+            
+            const modalEl = document.getElementById('contactAdviceModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) {
+                modal.hide();
+            }
+            document.getElementById('bookingFormModal').reset();
+            const today = new Date().toISOString().split('T')[0];
+            const bookingDateModal = document.getElementById('bookingDate');
+            if (bookingDateModal) {
+                bookingDateModal.value = today;
+            }
+        }
+    </script>
 </body>
 </html>
