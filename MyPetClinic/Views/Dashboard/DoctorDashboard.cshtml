@@ -1,0 +1,40 @@
+@{
+    ViewData["Title"] = "Doctor Dashboard";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h4 class="card-title text-success"><i class="fas fa-stethoscope me-2"></i>Trang làm việc Bác Sĩ</h4>
+                <p class="text-muted">Bs. <strong>@ViewBag.UserName</strong> - Chúc bạn một ngày làm việc hiệu quả!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-calendar-check text-primary me-2"></i>Lịch khám hôm nay</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-center text-muted my-3">Bạn có 5 ca khám đang chờ</p>
+                <button class="btn btn-outline-primary w-100">Xem danh sách ca khám</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-notes-medical text-success me-2"></i>Bệnh án đang xử lý</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-center text-muted my-3">Không có bệnh án nào đang mở</p>
+                <button class="btn btn-outline-success w-100">Tra cứu bệnh án</button>
+            </div>
+        </div>
+    </div>
+</div>

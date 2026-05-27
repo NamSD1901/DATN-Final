@@ -238,3 +238,21 @@ CREATE TABLE Notifications (
     Created_at TIMESTAMPTZ DEFAULT now(),
     Deleted_at TIMESTAMPTZ -- [UPDATE] Cột xóa mềm
 );
+
+-- ==========================================
+-- SEED DATA
+-- ==========================================
+
+-- Seed Roles
+INSERT INTO Roles (Name) VALUES 
+('Admin'), 
+('Doctor'), 
+('Receptionist'), 
+('Customer');
+
+-- Seed Users (Mật khẩu mặc định là: 123456)
+INSERT INTO Users (Role_id, Full_name, Email, Password_hash, Is_active) 
+VALUES 
+((SELECT ID FROM Roles WHERE Name = 'Receptionist' LIMIT 1), 'Lễ Tân Test', 'letan_test@mypetclinic.com', '$2a$11$CjLSSTa34.1I.E.Qn2196.o6q/M8d14rFqF7z7Y6U00u1XqfV33fG', true),
+((SELECT ID FROM Roles WHERE Name = 'Customer' LIMIT 1), 'Khách Hàng Test', 'khachhang_test@mypetclinic.com', '$2a$11$CjLSSTa34.1I.E.Qn2196.o6q/M8d14rFqF7z7Y6U00u1XqfV33fG', true),
+((SELECT ID FROM Roles WHERE Name = 'Doctor' LIMIT 1), 'Bác Sĩ Test', 'bacsi_test@mypetclinic.com', '$2a$11$CjLSSTa34.1I.E.Qn2196.o6q/M8d14rFqF7z7Y6U00u1XqfV33fG', true);

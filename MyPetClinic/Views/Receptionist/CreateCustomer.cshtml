@@ -1,0 +1,83 @@
+@{
+    ViewData["Title"] = "Thêm Khách Hàng Mới";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .form-card { border: none; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+    .section-header { font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: #f39c12; letter-spacing: 0.05em; border-bottom: 2px solid #fef9e7; padding-bottom: 8px; margin-bottom: 16px; }
+    .form-label { font-size: 0.88rem; font-weight: 600; color: #444; }
+    .btn-gold { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; font-weight: 600; border: none; border-radius: 10px; }
+    .btn-gold:hover { filter: brightness(1.08); color: #fff; }
+    .form-control:focus, .form-select:focus { border-color: #f1c40f; box-shadow: 0 0 0 3px rgba(241,196,15,0.15); }
+</style>
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Customers" class="text-warning text-decoration-none">Khách hàng</a></li>
+        <li class="breadcrumb-item active">Thêm mới</li>
+    </ol>
+</nav>
+
+<h4 class="fw-bold mb-4"><i class="bi bi-person-plus-fill text-warning me-2"></i>Thêm Khách Hàng Mới</h4>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]</div>
+}
+
+<div class="card form-card p-4">
+    <form asp-action="CreateCustomer" method="post" id="createCustomerForm">
+        @Html.AntiForgeryToken()
+
+        <!-- Thông tin cơ bản -->
+        <div class="section-header"><i class="bi bi-person me-2"></i>Thông Tin Khách Hàng</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                <input type="text" name="FullName" class="form-control" placeholder="VD: Nguyễn Văn A" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-phone-fill text-warning"></i></span>
+                    <input type="tel" name="Phone" class="form-control" placeholder="VD: 0901234567" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-envelope-fill text-warning"></i></span>
+                    <input type="email" name="Email" class="form-control" placeholder="VD: khachhang@email.com">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Giới tính</label>
+                <select name="Gender" class="form-select">
+                    <option value="">— Chọn —</option>
+                    <option value="1">Nam</option>
+                    <option value="0">Nữ</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Ngày sinh</label>
+                <input type="date" name="DateOfBirth" class="form-control">
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">Địa chỉ</label>
+                <input type="text" name="Address" class="form-control" placeholder="Số nhà, đường, phường/xã, quận/huyện...">
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="d-flex gap-3">
+            <button type="submit" class="btn btn-gold px-5 py-2">
+                <i class="bi bi-check-circle-fill me-2"></i>Lưu Hồ Sơ
+            </button>
+            <a asp-action="Customers" class="btn btn-outline-secondary px-4 py-2">
+                <i class="bi bi-x-circle me-2"></i>Hủy
+            </a>
+        </div>
+    </form>
+</div>

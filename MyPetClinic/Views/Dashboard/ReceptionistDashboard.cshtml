@@ -1,0 +1,48 @@
+@{
+    ViewData["Title"] = "Receptionist Dashboard";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h4 class="card-title text-info"><i class="fas fa-desktop me-2"></i>Khu vực Lễ Tân</h4>
+                <p class="text-muted">Chào mừng <strong>@ViewBag.UserName</strong>. Hãy bắt đầu tiếp đón khách hàng nhé!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4 text-center">
+            <div class="card-body">
+                <div class="display-4 text-info mb-3"><i class="fas fa-qrcode"></i></div>
+                <h5 class="card-title">Quét QR Tiếp Nhận</h5>
+                <p class="text-muted small">Check-in nhanh cho khách đã đặt lịch</p>
+                <button class="btn btn-info text-white w-100">Mở Máy Quét</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4 text-center">
+            <div class="card-body">
+                <div class="display-4 text-primary mb-3"><i class="fas fa-user-plus"></i></div>
+                <h5 class="card-title">Khách Vãng Lai</h5>
+                <p class="text-muted small">Thêm mới Khách hàng & Thú cưng</p>
+                <a asp-controller="Receptionist" asp-action="Customers" class="btn btn-primary w-100">Quản lý Khách hàng</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4 text-center">
+            <div class="card-body">
+                <div class="display-4 text-success mb-3"><i class="fas fa-file-invoice-dollar"></i></div>
+                <h5 class="card-title">Thanh Toán</h5>
+                <p class="text-muted small">Xử lý hóa đơn chờ thanh toán</p>
+                <button class="btn btn-success w-100">Xem Hóa Đơn</button>
+            </div>
+        </div>
+    </div>
+</div>
