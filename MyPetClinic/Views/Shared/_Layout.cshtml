@@ -92,9 +92,8 @@
                                     <i class="bi bi-person-circle fs-5 text-warning"></i>
                                     <span class="fw-bold text-dark">@User.Identity.Name</span>
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end mt-2">
-                                    <li><a class="dropdown-item" href="#intro"><i class="bi bi-person me-2"></i>Hồ sơ cá nhân</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Home" asp-action="Contact"><i class="bi bi-calendar-check me-2"></i>Lịch hẹn của tôi</a></li>
+                                <ul class="dropdown-menu dropdown-menu-end mt-2 border-0 shadow">
+                                    <li><a class="dropdown-item py-2" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-grid-1x2-fill text-warning me-2"></i>Dashboard</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
