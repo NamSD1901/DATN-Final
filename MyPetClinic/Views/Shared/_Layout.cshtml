@@ -93,8 +93,27 @@
                                     <span class="fw-bold text-dark">@User.Identity.Name</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end mt-2 border-0 shadow">
-                                    <li><a class="dropdown-item py-2" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-grid-1x2-fill text-warning me-2"></i>Dashboard</a></li>
-                                    <li><hr class="dropdown-divider"></li>
+                                    @{ var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value?.ToLower(); }
+                                    @if(userRole == "customer")
+                                    {
+                                        <li><a class="dropdown-item py-2" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-grid-1x2-fill text-warning me-2"></i>Hồ sơ Khách Hàng</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    }
+                                    
+                                    @if(userRole == "doctor")
+                                    {
+                                        <li><a class="dropdown-item py-2" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-person text-danger me-2"></i>Hồ sơ của tôi</a></li>
+                                        <li><a class="dropdown-item py-2" asp-controller="Veterinarian" asp-action="Index"><i class="bi bi-heart-pulse text-danger me-2"></i>Lịch Khám Bác Sĩ</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    }
+
+                                    @if(userRole == "admin")
+                                    {
+                                        <li><a class="dropdown-item py-2" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-person text-primary me-2"></i>Hồ sơ của tôi</a></li>
+                                        <li><a class="dropdown-item py-2" asp-controller="Admin" asp-action="Index"><i class="bi bi-gear-fill text-primary me-2"></i>Trang Quản Trị</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    }
+
                                     <li>
                                         <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()

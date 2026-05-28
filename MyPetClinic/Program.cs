@@ -57,5 +57,15 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+app.MapGet("/fix-role", async (MyPetClinic.Infrastructure.Persistence.ApplicationDbContext db) => {
+    var doctorRole = db.Roles.FirstOrDefault(r => r.Name == "doctor");
+    var user = db.Users.FirstOrDefault(u => u.Email == "doctor@mypetclinic.com");
+    if (user != null && doctorRole != null) {
+        user.RoleId = doctorRole.Id;
+        await db.SaveChangesAsync();
+        return $"OK - Role set to {doctorRole.Name} (Id: {doctorRole.Id}) for user {user.Email}";
+    }
+    return $"Error: User (found: {user != null}) or Role (found: {doctorRole != null}) not found";
+});
 
 app.Run();

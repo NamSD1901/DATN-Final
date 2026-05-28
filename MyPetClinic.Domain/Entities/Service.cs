@@ -13,6 +13,5 @@ namespace MyPetClinic.Domain.Entities
         public bool IsActive { get; set; } = true;
 
         public ServiceCategory? Category { get; set; }
-        public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     }
 }

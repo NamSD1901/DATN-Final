@@ -12,11 +12,13 @@ namespace MyPetClinic.Infrastructure
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
         {
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IAppointmentRepository, AppointmentRepository>();
             
             // Nếu muốn để logic Service ở Application Layer, ta chỉ cần đăng ký tại đây
             // Hoặc có thể tạo AddApplicationServices riêng biệt bên Application, 
             // nhưng để gọn thì ta đăng ký cả ở đây.
             services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+            services.AddScoped<IAppointmentService, AppointmentService>();
 
             // Đăng ký Email và OTP Service
             services.AddTransient<IEmailService, EmailService>();

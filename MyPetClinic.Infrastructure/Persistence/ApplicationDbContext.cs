@@ -136,7 +136,6 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.PetId).HasColumnName("pet_id");
                 entity.Property(e => e.CustomerId).HasColumnName("customer_id");
                 entity.Property(e => e.DoctorId).HasColumnName("doctor_id");
-                entity.Property(e => e.ServiceId).HasColumnName("service_id");
                 entity.Property(e => e.AppointmentDate).HasColumnName("appointment_date");
                 entity.Property(e => e.StartTime).HasColumnName("start_time");
                 entity.Property(e => e.EndTime).HasColumnName("end_time");
@@ -149,7 +148,6 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.HasOne(d => d.Pet).WithMany(p => p.Appointments).HasForeignKey(d => d.PetId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Customer).WithMany().HasForeignKey(d => d.CustomerId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Doctor).WithMany().HasForeignKey(d => d.DoctorId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(d => d.Service).WithMany(p => p.Appointments).HasForeignKey(d => d.ServiceId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Creator).WithMany().HasForeignKey(d => d.CreatedBy).OnDelete(DeleteBehavior.SetNull);
             });
 

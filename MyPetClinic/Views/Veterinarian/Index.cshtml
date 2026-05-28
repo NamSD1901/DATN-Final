@@ -1,0 +1,75 @@
+@model IEnumerable<MyPetClinic.Domain.Entities.Appointment>
+
+@{
+    ViewData["Title"] = "Lịch Khám Hôm Nay";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary"><i class="fas fa-calendar-alt"></i> Lịch Khám & Chăm Sóc Thú Cưng Thú Y</h2>
+    <p>Hôm nay: @DateTime.Now.ToString("dd/MM/yyyy")</p>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Giờ Khám</th>
+                        <th>Khách Hàng</th>
+                        <th>Thú Cưng</th>
+                        <th>Lý Do / Triệu Chứng</th>
+                        <th>Trạng Thái</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.StartTime.ToString(@"hh\:mm")</td>
+                            <td>@(item.Customer?.FullName ?? "Unknown")</td>
+                            <td>@(item.Pet?.Name ?? "Unknown")</td>
+                            <td>@item.Symptom</td>
+                            <td>
+                                @if(item.Status.ToLower() == "pending") {
+                                    <span class="badge bg-warning text-dark">Chờ Khám</span>
+                                } else if (item.Status.ToLower() == "confirmed") {
+                                    <span class="badge bg-info text-dark">Đã Xác Nhận</span>
+                                } else if (item.Status.ToLower() == "completed") {
+                                    <span class="badge bg-success">Đã Hoàn Thành</span>
+                                } else {
+                                    <span class="badge bg-secondary">@item.Status</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.Status.ToLower() == "pending")
+                                {
+                                    <form asp-action="UpdateStatus" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="status" value="confirmed" />
+                                        <button type="submit" class="btn btn-sm btn-primary">Xác Nhận (Tiếp nhận)</button>
+                                    </form>
+                                }
+                                else if (item.Status.ToLower() == "confirmed")
+                                {
+                                    <form asp-action="UpdateStatus" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="status" value="completed" />
+                                        <button type="submit" class="btn btn-sm btn-success">Hoàn Thành</button>
+                                    </form>
+                                }
+                                <a href="#" class="btn btn-sm btn-outline-info">Hồ Sơ</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            Bạn không có lịch khám nào trong hôm nay!
+        </div>
+    }
+</div>
