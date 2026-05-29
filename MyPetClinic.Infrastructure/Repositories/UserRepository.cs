@@ -22,6 +22,19 @@ namespace MyPetClinic.Infrastructure.Repositories
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
         }
 
+        public async Task<User?> GetUserByIdAsync(Guid id)
+        {
+            return await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Id == id);
+        }
+
+        public async Task UpdateUserAsync(User user)
+        {
+            _context.Users.Update(user);
+            await Task.CompletedTask;
+        }
+
         public async Task<Role?> GetRoleByNameAsync(string roleName)
         {
             return await _context.Roles
