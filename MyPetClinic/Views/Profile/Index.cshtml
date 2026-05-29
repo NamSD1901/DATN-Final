@@ -1,0 +1,183 @@
+@model MyPetClinic.Application.DTOs.UpdateProfileDto
+@{
+    ViewData["Title"] = "Hồ sơ của tôi";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    var profile = ViewBag.Profile as MyPetClinic.Application.DTOs.UserProfileDto;
+    var activeTab = Context.Request.Query["tab"] == "password" || ViewBag.ActiveTab == "password" ? "password" : "info";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show rounded-4" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show rounded-4" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Sidebar Profile info -->
+        <div class="col-lg-4 col-md-5 mb-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body text-center p-4">
+                    <div class="position-relative d-inline-block mb-3">
+                        @{
+                            var avatarUrl = string.IsNullOrEmpty(profile?.Avatar) 
+                                ? $"https://ui-avatars.com/api/?name={profile?.FullName ?? profile?.Email}&background=f1c40f&color=fff&size=120" 
+                                : profile.Avatar;
+                        }
+                        <img src="@avatarUrl" alt="Avatar" class="rounded-circle img-thumbnail shadow-sm" style="width: 120px; height: 120px; object-fit: cover;">
+                        
+                        <form id="avatarForm" asp-controller="Profile" asp-action="UpdateAvatar" method="post" enctype="multipart/form-data">
+                            <input type="file" id="avatarFileInput" name="avatarFile" accept="image/jpeg, image/png, image/gif, image/jpg" style="display: none;" />
+                            <button type="button" onclick="document.getElementById('avatarFileInput').click();" class="btn btn-sm btn-light position-absolute bottom-0 end-0 rounded-circle shadow" title="Đổi ảnh đại diện">
+                                <i class="bi bi-camera-fill text-dark"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <h5 class="fw-bold mb-1">@(profile?.FullName ?? "Người dùng")</h5>
+                    <p class="text-muted small mb-3">@(profile?.RoleName == "customer" ? "Khách hàng" : profile?.RoleName)</p>
+                    
+                    <ul class="list-group list-group-flush text-start mt-4">
+                        <li class="list-group-item px-0 border-0 d-flex align-items-center">
+                            <i class="bi bi-envelope-fill text-warning opacity-75 me-3 fs-5"></i>
+                            <div>
+                                <small class="text-muted d-block">Email</small>
+                                <span class="fw-medium">@profile?.Email</span>
+                            </div>
+                        </li>
+                        <li class="list-group-item px-0 border-0 d-flex align-items-center">
+                            <i class="bi bi-telephone-fill text-warning opacity-75 me-3 fs-5"></i>
+                            <div>
+                                <small class="text-muted d-block">Số điện thoại</small>
+                                <span class="fw-medium">@(profile?.Phone ?? "Chưa cập nhật")</span>
+                            </div>
+                        </li>
+                        <li class="list-group-item px-0 border-0 d-flex align-items-center">
+                            <i class="bi bi-geo-alt-fill text-warning opacity-75 me-3 fs-5"></i>
+                            <div>
+                                <small class="text-muted d-block">Địa chỉ</small>
+                                <span class="fw-medium">@(profile?.Address ?? "Chưa cập nhật")</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content (Tabs) -->
+        <div class="col-lg-8 col-md-7 mb-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4 rounded-top-4">
+                    <ul class="nav nav-tabs border-bottom-0" id="profileTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(activeTab == "info" ? "active fw-bold text-dark border-warning border-bottom-0 border-2 rounded-top" : "text-muted border-0") bg-transparent px-4 py-2" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="@(activeTab == "info" ? "true" : "false")">
+                                <i class="bi bi-person-lines-fill me-2"></i> Thông tin cá nhân
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(activeTab == "password" ? "active fw-bold text-dark border-warning border-bottom-0 border-2 rounded-top" : "text-muted border-0") bg-transparent px-4 py-2" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="@(activeTab == "password" ? "true" : "false")">
+                                <i class="bi bi-shield-lock-fill me-2"></i> Đổi mật khẩu
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body p-4">
+                    <div class="tab-content" id="profileTabsContent">
+                        <!-- Tab Thông tin cá nhân -->
+                        <div class="tab-pane fade @(activeTab == "info" ? "show active" : "")" id="info" role="tabpanel" aria-labelledby="info-tab">
+                            <form asp-controller="Profile" asp-action="UpdateProfile" method="post">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label asp-for="FullName" class="form-label text-muted small fw-bold">Họ và tên</label>
+                                        <input asp-for="FullName" class="form-control rounded-3 py-2" placeholder="Nhập họ và tên..." />
+                                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="Phone" class="form-label text-muted small fw-bold">Số điện thoại</label>
+                                        <input asp-for="Phone" class="form-control rounded-3 py-2" placeholder="Nhập số điện thoại..." />
+                                        <span asp-validation-for="Phone" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="Gender" class="form-label text-muted small fw-bold">Giới tính</label>
+                                        <select asp-for="Gender" class="form-select rounded-3 py-2">
+                                            <option value="">Chọn giới tính</option>
+                                            <option value="1">Nam</option>
+                                            <option value="2">Nữ</option>
+                                            <option value="3">Khác</option>
+                                        </select>
+                                        <span asp-validation-for="Gender" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="DateOfBirth" class="form-label text-muted small fw-bold">Ngày sinh</label>
+                                        <input asp-for="DateOfBirth" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control rounded-3 py-2" />
+                                        <span asp-validation-for="DateOfBirth" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-12">
+                                        <label asp-for="Address" class="form-label text-muted small fw-bold">Địa chỉ</label>
+                                        <input asp-for="Address" class="form-control rounded-3 py-2" placeholder="Nhập địa chỉ của bạn..." />
+                                        <span asp-validation-for="Address" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-12 mt-4 text-end">
+                                        <button type="submit" class="btn btn-warning fw-bold px-4 rounded-3 text-dark shadow-sm">
+                                            <i class="bi bi-floppy-fill me-2"></i> Lưu thay đổi
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Tab Đổi mật khẩu -->
+                        <div class="tab-pane fade @(activeTab == "password" ? "show active" : "")" id="password" role="tabpanel" aria-labelledby="password-tab">
+                            <form asp-controller="Profile" asp-action="ChangePassword" method="post">
+                                @Html.AntiForgeryToken()
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="CurrentPassword" class="form-label text-muted small fw-bold">Mật khẩu hiện tại</label>
+                                        <input type="password" id="CurrentPassword" name="CurrentPassword" class="form-control rounded-3 py-2" placeholder="Nhập mật khẩu hiện tại" required />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="NewPassword" class="form-label text-muted small fw-bold">Mật khẩu mới</label>
+                                        <input type="password" id="NewPassword" name="NewPassword" class="form-control rounded-3 py-2" placeholder="Mật khẩu mới (tối thiểu 8 ký tự)" required minlength="8" />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="ConfirmNewPassword" class="form-label text-muted small fw-bold">Xác nhận mật khẩu mới</label>
+                                        <input type="password" id="ConfirmNewPassword" name="ConfirmNewPassword" class="form-control rounded-3 py-2" placeholder="Nhập lại mật khẩu mới" required minlength="8" />
+                                    </div>
+                                    <div class="col-12 mt-4 text-end">
+                                        <button type="submit" class="btn btn-dark fw-bold px-4 rounded-3 shadow-sm">
+                                            <i class="bi bi-key-fill me-2"></i> Đổi mật khẩu
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.getElementById('avatarFileInput').addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                // Có thể thêm code preview ảnh ở đây nếu muốn
+                document.getElementById('avatarForm').submit();
+            }
+        });
+    </script>
+}
