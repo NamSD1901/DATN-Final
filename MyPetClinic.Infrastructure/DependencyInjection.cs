@@ -14,6 +14,9 @@ namespace MyPetClinic.Infrastructure
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IUserService, UserService>();
             
+            services.AddScoped<IPetRepository, PetRepository>();
+            services.AddScoped<IPetService, PetService>();
+            
             // Nếu muốn để logic Service ở Application Layer, ta chỉ cần đăng ký tại đây
             // Hoặc có thể tạo AddApplicationServices riêng biệt bên Application, 
             // nhưng để gọn thì ta đăng ký cả ở đây.
