@@ -19,9 +19,18 @@
                     Tại <strong class="text-dark">MyPetClinic</strong>, chúng tôi hiểu rằng thú cưng là thành viên vô giá trong gia đình bạn. Với đội ngũ bác sĩ thú y giàu y đức, tay nghề cao cùng trang thiết bị hiện đại chuẩn quốc tế, chúng tôi cam kết mang lại dịch vụ chăm sóc sức khỏe tốt nhất.
                 </p>
                 <div class="d-flex flex-column flex-sm-row justify-content-center justify-content-lg-start gap-3">
-                    <button class="btn btn-premium btn-lg shadow" type="button" data-bs-toggle="modal" data-bs-target="#contactAdviceModal">
-                        <i class="bi bi-calendar-check me-2"></i>Đặt Lịch Ngay
-                    </button>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <button class="btn btn-premium btn-lg shadow" type="button" data-bs-toggle="modal" data-bs-target="#contactAdviceModal">
+                            <i class="bi bi-calendar-check me-2"></i>Đặt Lịch Ngay
+                        </button>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" class="btn btn-premium btn-lg shadow">
+                            <i class="bi bi-calendar-check me-2"></i>Đặt Lịch Ngay
+                        </a>
+                    }
                     <a href="#services" class="btn btn-premium-outline btn-lg">
                         Tìm Hiểu Dịch Vụ <i class="bi bi-arrow-down-circle ms-2"></i>
                     </a>
@@ -174,15 +183,20 @@
                             <span>•</span>
                             <span><i class="bi bi-person-fill me-1"></i> Bác sĩ MyPetClinic</span>
                         </div>
-                        <h5 class="card-title fw-bold mb-3">
-                            <a href="#news" class="text-decoration-none text-dark hover-text-warning">
+                        <h5 class="card-title fw-bold mb-2">
+                            <a asp-controller="Home" asp-action="Article" asp-route-id="1" class="text-decoration-none text-dark hover-text-warning">
                                 Nấm da ở chó mèo có lây sang người không?
                             </a>
                         </h5>
+                        <div class="mb-3">
+                            <span class="badge bg-light text-secondary border fw-normal me-1"><i class="bi bi-tag-fill me-1"></i>Nấm da</span>
+                            <span class="badge bg-light text-secondary border fw-normal me-1"><i class="bi bi-tag-fill me-1"></i>Lây nhiễm</span>
+                            <span class="badge bg-light text-secondary border fw-normal"><i class="bi bi-tag-fill me-1"></i>Bệnh da liễu</span>
+                        </div>
                         <p class="card-text small text-muted mb-4">
                             Bạn thấy thú cưng rụng lông từng mảng tròn, ngứa liên tục... vài ngày sau chính bạn cũng xuất hiện vết đỏ. Tìm hiểu nguyên nhân và phác đồ điều trị dứt điểm...
                         </p>
-                        <a href="#news" class="text-warning fw-bold text-decoration-none small hover-arrow">
+                        <a asp-controller="Home" asp-action="Article" asp-route-id="1" class="text-warning fw-bold text-decoration-none small hover-arrow">
                             Đọc thêm <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>
@@ -202,15 +216,20 @@
                             <span>•</span>
                             <span><i class="bi bi-person-fill me-1"></i> Bác sĩ MyPetClinic</span>
                         </div>
-                        <h5 class="card-title fw-bold mb-3">
-                            <a href="#news" class="text-decoration-none text-dark hover-text-warning">
+                        <h5 class="card-title fw-bold mb-2">
+                            <a asp-controller="Home" asp-action="Article" asp-route-id="2" class="text-decoration-none text-dark hover-text-warning">
                                 Tại sao chó bị rụng lông và cách điều trị hiệu quả
                             </a>
                         </h5>
+                        <div class="mb-3">
+                            <span class="badge bg-light text-secondary border fw-normal me-1"><i class="bi bi-tag-fill me-1"></i>Rụng lông</span>
+                            <span class="badge bg-light text-secondary border fw-normal me-1"><i class="bi bi-tag-fill me-1"></i>Kinh nghiệm</span>
+                            <span class="badge bg-light text-secondary border fw-normal"><i class="bi bi-tag-fill me-1"></i>Chăm sóc chó</span>
+                        </div>
                         <p class="card-text small text-muted mb-4">
                             Chó rụng lông là hiện tượng sinh lý bình thường nhưng rụng quá nhiều kèm theo ngứa, lở loét có thể là biểu hiện của viêm da, ghẻ Demodex hoặc dị ứng...
                         </p>
-                        <a href="#news" class="text-warning fw-bold text-decoration-none small hover-arrow">
+                        <a asp-controller="Home" asp-action="Article" asp-route-id="2" class="text-warning fw-bold text-decoration-none small hover-arrow">
                             Đọc thêm <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>
@@ -230,17 +249,41 @@
                             <span>•</span>
                             <span><i class="bi bi-person-fill me-1"></i> Bác sĩ MyPetClinic</span>
                         </div>
-                        <h5 class="card-title fw-bold mb-3">
-                            <a href="#news" class="text-decoration-none text-dark hover-text-warning">
+                        <h5 class="card-title fw-bold mb-2">
+                            <a asp-controller="Home" asp-action="Article" asp-route-id="3" class="text-decoration-none text-dark hover-text-warning">
                                 Chó bị táo bón: Biểu hiện và cách điều trị tại nhà
                             </a>
                         </h5>
-                        <p class="card-text small text-muted mb-4">
-                            Táo bón khiến thú cưng rặn khó khăn, lười ăn, bụng phình to và ảnh hưởng nghiêm trọng đến sức khỏe đường ruột. Hướng dẫn cách xử lý an toàn từ bác sĩ...
-                        </p>
-                        <a href="#news" class="text-warning fw-bold text-decoration-none small hover-arrow">
-                            Đọc thêm <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
+                        <div class="mb-3">
+                            <span class="badge bg-light text-secondary border fw-normal me-1"><i class="bi bi-tag-fill me-1"></i>Táo bón</span>
+                            <span class="badge bg-light text-secondary border fw-normal me-1"><i class="bi bi-tag-fill me-1"></i>Tiêu hóa</span>
+                            <span class="badge bg-light text-secondary border fw-no- Gợi ý bài viết mới -->
+                    <div class="mt-5 pt-4 border-top">
+                        <h5 class="fw-bold mb-4"><i class="bi bi-stars text-warning me-2"></i>Gợi ý bài viết liên quan</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#articleModal1" class="text-decoration-none">
+                                    <div class="d-flex gap-3 align-items-center bg-light p-3 rounded hover-bg-white hover-shadow transition-all border">
+                                        <img src="https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?q=80&w=150&auto=format&fit=crop" class="rounded" style="width: 70px; height: 70px; object-fit: cover;" alt="Gợi ý">
+                                        <div>
+                                            <h6 class="text-dark fw-bold mb-1 lh-sm hover-text-warning">Nấm da ở chó mèo lây sang người?</h6>
+                                            <small class="text-muted"><i class="bi bi-clock me-1"></i>3 phút đọc</small>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="#" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#articleModal2" class="text-decoration-none">
+                                    <div class="d-flex gap-3 align-items-center bg-light p-3 rounded hover-bg-white hover-shadow transition-all border">
+                                        <img src="https://images.unsplash.com/photo-1581888227599-779811939961?q=80&w=150&auto=format&fit=crop" class="rounded" style="width: 70px; height: 70px; object-fit: cover;" alt="Gợi ý">
+                                        <div>
+                                            <h6 class="text-dark fw-bold mb-1 lh-sm hover-text-warning">Tại sao chó bị rụng lông nhiều?</h6>
+                                            <small class="text-muted"><i class="bi bi-clock me-1"></i>3 phút đọc</small>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
