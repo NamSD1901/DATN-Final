@@ -19,9 +19,18 @@
                     Tại <strong class="text-dark">MyPetClinic</strong>, chúng tôi hiểu rằng thú cưng là thành viên vô giá trong gia đình bạn. Với đội ngũ bác sĩ thú y giàu y đức, tay nghề cao cùng trang thiết bị hiện đại chuẩn quốc tế, chúng tôi cam kết mang lại dịch vụ chăm sóc sức khỏe tốt nhất.
                 </p>
                 <div class="d-flex flex-column flex-sm-row justify-content-center justify-content-lg-start gap-3">
-                    <button class="btn btn-premium btn-lg shadow" type="button" data-bs-toggle="modal" data-bs-target="#contactAdviceModal">
-                        <i class="bi bi-calendar-check me-2"></i>Đặt Lịch Ngay
-                    </button>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <button class="btn btn-premium btn-lg shadow" type="button" data-bs-toggle="modal" data-bs-target="#contactAdviceModal">
+                            <i class="bi bi-calendar-check me-2"></i>Đặt Lịch Ngay
+                        </button>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" class="btn btn-premium btn-lg shadow">
+                            <i class="bi bi-calendar-check me-2"></i>Đặt Lịch Ngay
+                        </a>
+                    }
                     <a href="#services" class="btn btn-premium-outline btn-lg">
                         Tìm Hiểu Dịch Vụ <i class="bi bi-arrow-down-circle ms-2"></i>
                     </a>
