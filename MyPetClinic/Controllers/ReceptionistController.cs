@@ -5,16 +5,33 @@ using MyPetClinic.Domain.Entities;
 using MyPetClinic.Infrastructure.Persistence;
 using System.Security.Claims;
 
+using MyPetClinic.Application.DTOs;
+using MyPetClinic.Application.Interfaces.Services;
+using MyPetClinic.Application.Interfaces.Repositories;
+
 namespace MyPetClinic.Controllers
 {
     [Authorize(Roles = "Receptionist,Admin")]
     public class ReceptionistController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICustomerService _customerService;
+        private readonly IPetRepository _petRepository;
+        private readonly IAppointmentService _appointmentService;
+        private readonly IReceptionistService _receptionistService;
 
-        public ReceptionistController(ApplicationDbContext context)
+        public ReceptionistController(
+            ApplicationDbContext context, 
+            ICustomerService customerService, 
+            IPetRepository petRepository, 
+            IAppointmentService appointmentService,
+            IReceptionistService receptionistService)
         {
             _context = context;
+            _customerService = customerService;
+            _petRepository = petRepository;
+            _appointmentService = appointmentService;
+            _receptionistService = receptionistService;
         }
 
         // ==========================================
@@ -23,26 +40,10 @@ namespace MyPetClinic.Controllers
         public async Task<IActionResult> Customers(string? search)
         {
             ViewBag.Search = search;
-
-            // Lấy Role "customer"
-            var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name.ToLower() == "customer");
-            if (customerRole == null)
-                return View(new List<User>());
-
-            var query = _context.Users
-                .Where(u => u.RoleId == customerRole.Id && u.IsActive);
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                string keyword = search.Trim().ToLower();
-                query = query.Where(u =>
-                    (u.FullName != null && u.FullName.ToLower().Contains(keyword)) ||
-                    (u.Phone != null && u.Phone.Contains(keyword)) ||
-                    (u.Email != null && u.Email.ToLower().Contains(keyword))
-                );
-            }
-
-            var customers = await query.OrderByDescending(u => u.CreatedAt).ToListAsync();
+            var customers = string.IsNullOrWhiteSpace(search) 
+                ? await _customerService.GetAllCustomersAsync() 
+                : await _customerService.SearchCustomersAsync(search);
+                
             return View(customers);
         }
 
@@ -51,16 +52,27 @@ namespace MyPetClinic.Controllers
         // ==========================================
         public async Task<IActionResult> CustomerDetail(Guid id)
         {
-            var customer = await _context.Users.FindAsync(id);
+            var customer = await _customerService.GetCustomerDetailAsync(id);
             if (customer == null) return NotFound();
 
-            var pets = await _context.Pets
-                .Where(p => p.OwnerId == id)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
+            var pets = await _customerService.GetPetsByCustomerAsync(id);
 
             ViewBag.Customer = customer;
             ViewBag.Pets = pets;
+
+            var doctors = await _context.Users
+                .Include(u => u.Role)
+                .Where(u => u.Role != null && u.Role.Name == "Doctor" && u.IsActive && u.DeletedAt == null)
+                .ToListAsync();
+                
+            var services = await _context.Services
+                .Include(s => s.Category)
+                .OrderBy(s => s.Category != null ? s.Category.Name : "")
+                .ToListAsync();
+
+            ViewBag.Doctors = doctors;
+            ViewBag.Services = services;
+            
             return View();
         }
 
@@ -75,59 +87,50 @@ namespace MyPetClinic.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateCustomer(User model)
+        public async Task<IActionResult> CreateCustomer([FromBody] CustomerCreateDto model)
         {
-            // Kiểm tra SĐT hoặc Email trùng
-            if (!string.IsNullOrEmpty(model.Phone))
+            if (!ModelState.IsValid)
             {
-                var existPhone = await _context.Users.AnyAsync(u => u.Phone == model.Phone);
-                if (existPhone)
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return Json(new { success = false, message = string.Join("<br/>", errors) });
+            }
+
+            try
+            {
+                var customerId = await _customerService.CreateCustomerWithPetsAsync(model);
+                return Json(new { success = true, customerId = customerId, message = $"Đã tạo hồ sơ cho khách hàng {model.FullName} thành công!" });
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException != null ? ex.InnerException.Message : "";
+                Console.WriteLine($"[ERROR] CreateCustomer failed: {ex.Message} | Inner: {inner}");
+                return Json(new { success = false, message = "Đã xảy ra lỗi khi tạo hồ sơ. Chi tiết: " + ex.Message + " " + inner });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateAppointment([FromBody] AppointmentCreateDto dto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
                 {
-                    TempData["Error"] = "Số điện thoại này đã tồn tại trong hệ thống.";
-                    return View(model);
+                    return Json(new { success = false, message = "Vui lòng nhập đủ thông tin bắt buộc." });
                 }
+
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                var createdBy = userIdClaim != null ? Guid.Parse(userIdClaim.Value) : Guid.Empty;
+
+                var appointmentId = await _appointmentService.CreateAppointmentAsync(dto, createdBy);
+
+                return Json(new { success = true, message = "Đã tạo phiếu tiếp nhận khám thành công!", id = appointmentId });
             }
-
-            if (!string.IsNullOrEmpty(model.Email))
+            catch (Exception ex)
             {
-                var existEmail = await _context.Users.AnyAsync(u => u.Email == model.Email.Trim().ToLower());
-                if (existEmail)
-                {
-                    TempData["Error"] = "Email này đã tồn tại trong hệ thống.";
-                    return View(model);
-                }
+                var inner = ex.InnerException != null ? ex.InnerException.Message : "";
+                Console.WriteLine($"[ERROR] CreateAppointment failed: {ex.Message} | Inner: {inner}");
+                return Json(new { success = false, message = "Đã xảy ra lỗi khi tạo phiếu khám. Chi tiết: " + ex.Message });
             }
-
-            // Lấy Role "customer"
-            var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name.ToLower() == "customer");
-            if (customerRole == null)
-            {
-                TempData["Error"] = "Không tìm thấy Role Customer trong hệ thống.";
-                return View(model);
-            }
-
-            // Tạo mật khẩu ngẫu nhiên tạm thời
-            string tempPassword = BCrypt.Net.BCrypt.HashPassword("123456");
-
-            var newUser = new User
-            {
-                FullName = model.FullName?.Trim(),
-                Email = model.Email?.Trim().ToLower(),
-                Phone = model.Phone?.Trim(),
-                Address = model.Address?.Trim(),
-                Gender = model.Gender,
-                DateOfBirth = model.DateOfBirth,
-                RoleId = customerRole.Id,
-                PasswordHash = tempPassword,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.Users.Add(newUser);
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = $"Đã tạo hồ sơ cho khách hàng {newUser.FullName} thành công!";
-            return RedirectToAction("CustomerDetail", new { id = newUser.Id });
         }
 
         // ==========================================
@@ -237,6 +240,91 @@ namespace MyPetClinic.Controllers
                 phone = user.Phone,
                 email = user.Email,
                 pets
+            });
+        }
+        // ==========================================
+        // 7. THÊM WORKFLOW API (OmniSearch, CheckIn, Queue, WalkIn)
+        // ==========================================
+        [HttpGet]
+        public async Task<IActionResult> OmniSearch(string q)
+        {
+            var results = await _receptionistService.OmniSearchAsync(q);
+            return Json(results);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CheckIn([FromBody] CheckInRequestDto request)
+        {
+            var success = await _receptionistService.CheckInAsync(request);
+            if (success)
+                return Json(new { success = true, message = "Check-in thành công. Đã xếp vào hàng đợi." });
+            return Json(new { success = false, message = "Check-in thất bại. Vui lòng kiểm tra lại trạng thái ca khám." });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTodayQueue()
+        {
+            var queue = await _receptionistService.GetTodayQueueAsync();
+            return Json(queue);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateWalkIn([FromBody] WalkInRequestDto request)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Dữ liệu Walk-in không hợp lệ." });
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var createdBy = userIdClaim != null ? Guid.Parse(userIdClaim.Value) : Guid.Empty;
+
+            try
+            {
+                var appointmentId = await _receptionistService.CreateWalkInAsync(request, createdBy);
+                return Json(new { success = true, message = "Đã tạo ca Walk-in thành công và xếp vào hàng đợi.", appointmentId });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi tạo ca Walk-in: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateQueueStatus(long appointmentId, string status)
+        {
+            var success = await _receptionistService.UpdateQueueStatusAsync(appointmentId, status);
+            return Json(new { success = success });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetDoctors()
+        {
+            var doctors = await _context.Users
+                .Include(u => u.Role)
+                .Where(u => u.IsActive && u.Role != null && u.Role.Name == "Doctor")
+                .Select(u => new { u.Id, u.FullName })
+                .ToListAsync();
+            return Json(doctors);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCustomerByPhone(string phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone)) return Json(new { success = false });
+
+            var customer = await _context.Users
+                .FirstOrDefaultAsync(u => u.Phone == phone && u.IsActive);
+            
+            if (customer == null) return Json(new { success = false });
+
+            var pets = await _context.Pets
+                .Where(p => p.OwnerId == customer.Id && !p.IsDeceased)
+                .Select(p => new { p.Id, p.Name, p.Species })
+                .ToListAsync();
+
+            return Json(new { 
+                success = true, 
+                customer = new { customer.Id, customer.FullName },
+                pets = pets
             });
         }
     }

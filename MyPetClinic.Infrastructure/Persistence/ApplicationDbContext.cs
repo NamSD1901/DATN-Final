@@ -78,7 +78,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.Weight).HasColumnName("weight");
                 entity.Property(e => e.Color).HasColumnName("color").HasMaxLength(100);
                 entity.Property(e => e.BloodType).HasColumnName("blood_type").HasMaxLength(20);
-                entity.Property(e => e.Sterilized).HasColumnName("sterilized").HasDefaultValue(false);
+                entity.Property(e => e.Sterilized).HasColumnName("sterilized");
                 entity.Property(e => e.MicrochipCode).HasColumnName("microchip_code").HasMaxLength(100);
                 entity.Property(e => e.AllergyNote).HasColumnName("allergy_note");
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");

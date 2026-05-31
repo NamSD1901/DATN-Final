@@ -18,7 +18,11 @@ namespace MyPetClinic.Domain.Entities
         public bool Sterilized { get; set; } = false;
         public string? MicrochipCode { get; set; }
         public string? AllergyNote { get; set; }
+        public string? Avatar { get; set; }
+        public bool IsDeceased { get; set; } = false;
+        public bool IsAggressive { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? DeletedAt { get; set; }
 
         public User? Owner { get; set; }
         public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();

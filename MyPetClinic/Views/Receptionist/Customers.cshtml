@@ -220,9 +220,20 @@ async function quickSearch() {
     }
 }
 
-// Nhấn Enter trong input cũng tìm kiếm
+let debounceTimer;
+document.getElementById('quickPhoneInput').addEventListener('input', function(e) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        quickSearch();
+    }, 400); // 400ms debounce
+});
+
+// Nhấn Enter trong input cũng tìm kiếm (phòng hờ)
 document.getElementById('quickPhoneInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') quickSearch();
+    if (e.key === 'Enter') {
+        clearTimeout(debounceTimer);
+        quickSearch();
+    }
 });
 </script>
 }

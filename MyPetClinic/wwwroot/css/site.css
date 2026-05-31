@@ -466,3 +466,88 @@ p {
 .delay-500 { transition-delay: 500ms !important; }
 .delay-600 { transition-delay: 600ms !important; }
 .delay-700 { transition-delay: 700ms !important; }
+
+/* ==========================================================================
+   Kanban Board Styles (Receptionist Dashboard)
+   ========================================================================== */
+.kanban-board {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-gold) #f0f0f0;
+}
+
+.kanban-wrapper {
+    flex: 1 1 0px;
+    min-width: 320px;
+}
+
+.kanban-board::-webkit-scrollbar {
+    height: 8px;
+}
+.kanban-board::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+.kanban-board::-webkit-scrollbar-thumb {
+    background: var(--primary-gold);
+    border-radius: 10px;
+}
+
+.kanban-column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.kanban-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.kanban-list::-webkit-scrollbar {
+    width: 6px;
+}
+.kanban-list::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+}
+
+.kanban-card {
+    cursor: grab;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 4px solid var(--primary-gold) !important;
+}
+
+.kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md) !important;
+}
+
+.kanban-card:active {
+    cursor: grabbing;
+}
+
+.kanban-card-ghost {
+    opacity: 0.4;
+    background-color: #f8f9fa;
+    border: 2px dashed #adb5bd;
+}
+
+.kanban-card-chosen {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-lg) !important;
+}
+
+.kanban-card-drag {
+    opacity: 1 !important;
+}
+
+/* Omni Search Results */
+.search-result-item:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}

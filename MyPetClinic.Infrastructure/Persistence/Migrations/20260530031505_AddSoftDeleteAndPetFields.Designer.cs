@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyPetClinic.Infrastructure.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyPetClinic.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260530031505_AddSoftDeleteAndPetFields")]
+    partial class AddSoftDeleteAndPetFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,12 +37,6 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("AppointmentDate")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("appointment_date");
-
-                    b.Property<DateTime?>("CheckInTime")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<DateTime?>("CheckOutTime")
-                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -63,12 +60,6 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasColumnType("interval")
                         .HasColumnName("end_time");
 
-                    b.Property<bool>("IsEmergency")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsWalkIn")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Note")
                         .HasColumnType("text")
                         .HasColumnName("note");
@@ -76,9 +67,6 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.Property<long>("PetId")
                         .HasColumnType("bigint")
                         .HasColumnName("pet_id");
-
-                    b.Property<int>("QueueNumber")
-                        .HasColumnType("integer");
 
                     b.Property<long>("ServiceId")
                         .HasColumnType("bigint")
@@ -433,9 +421,6 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("gender");
 
-                    b.Property<bool>("IsAggressive")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsDeceased")
                         .HasColumnType("boolean");
 
@@ -459,7 +444,9 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasColumnName("species");
 
                     b.Property<bool>("Sterilized")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(false)
                         .HasColumnName("sterilized");
 
                     b.Property<decimal?>("Weight")

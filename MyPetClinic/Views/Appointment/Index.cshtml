@@ -1,0 +1,555 @@
+@{
+    ViewData["Title"] = "Quản lý Lịch hẹn";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+
+<div class="container-fluid py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h3 class="fw-bold text-primary mb-0"><i class="bi bi-calendar-check me-2"></i> Lịch Hẹn & Điều Phối</h3>
+            <p class="text-muted mb-0">Quản lý toàn bộ lịch trình khám chữa bệnh tại phòng khám</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <!-- Filter by Doctor -->
+            <div class="d-inline-block me-3" style="width: 250px;">
+                <select id="doctorFilter" class="form-select border-primary shadow-sm">
+                    <option value="">-- Tất cả bác sĩ --</option>
+                </select>
+            </div>
+            <button class="btn btn-primary rounded-pill shadow-sm px-4" id="btnNewAppointment">
+                <i class="bi bi-plus-lg me-2"></i> Tạo lịch hẹn
+            </button>
+        </div>
+    </div>
+
+    <!-- Color Legend -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body py-2">
+            <div class="d-flex justify-content-center gap-4 text-sm fw-bold">
+                <span class="text-warning"><i class="bi bi-circle-fill"></i> Chờ duyệt (Pending)</span>
+                <span class="text-info"><i class="bi bi-circle-fill"></i> Đã xác nhận</span>
+                <span class="text-primary"><i class="bi bi-circle-fill"></i> Đang chờ (Kanban)</span>
+                <span class="text-success"><i class="bi bi-circle-fill"></i> Hoàn thành</span>
+                <span class="text-danger"><i class="bi bi-circle-fill"></i> Đã hủy</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Container -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chi tiết Lịch hẹn -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary"><i class="bi bi-info-circle me-2"></i> Chi tiết Ca khám</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="bg-light p-3 rounded-3 mb-3">
+                    <div class="row mb-2">
+                        <div class="col-4 text-muted fw-bold">Thú cưng:</div>
+                        <div class="col-8 fw-bold text-danger" id="eventPetName"></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 text-muted fw-bold">Chủ nuôi:</div>
+                        <div class="col-8" id="eventCustomerName"></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 text-muted fw-bold">Điện thoại:</div>
+                        <div class="col-8"><a href="#" id="eventPhone" class="text-decoration-none"></a></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 text-muted fw-bold">Bác sĩ:</div>
+                        <div class="col-8 text-primary" id="eventDoctorName"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-4 text-muted fw-bold">Triệu chứng:</div>
+                        <div class="col-8 text-dark" id="eventSymptom"></div>
+                    </div>
+                </div>
+                
+                <input type="hidden" id="eventId">
+                
+                <div id="actionButtons" class="d-flex gap-2 justify-content-center mt-4">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tạo Lịch hẹn mới -->
+<div class="modal fade" id="createEventModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary"><i class="bi bi-calendar-plus me-2"></i> Tạo Lịch Hẹn Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createAppointmentForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Số điện thoại Khách hàng <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" id="newAptPhone" class="form-control border-start-0" placeholder="Nhập SĐT để tìm...">
+                                <button type="button" class="btn btn-primary" id="btnSearchCustomer">Tìm</button>
+                            </div>
+                            <small class="text-danger d-none" id="searchError">Không tìm thấy khách hàng!</small>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2 d-none" id="btnShowQuickAdd">
+                                <i class="bi bi-person-plus"></i> + Tạo Khách Hàng & Thú Cưng mới
+                            </button>
+                        </div>
+                        <div class="col-md-6" id="oldCustomerNameSection">
+                            <label class="form-label fw-bold">Tên Khách hàng</label>
+                            <input type="text" id="newAptCustomerName" class="form-control bg-light" readonly>
+                            <input type="hidden" id="newAptCustomerId" name="CustomerId">
+                        </div>
+                    </div>
+
+                    <!-- VÙNG TẠO NHANH KHÁCH HÀNG (MẶC ĐỊNH ẨN) -->
+                    <div id="quickCreateCustomerSection" class="d-none bg-light p-3 rounded-3 mb-3 border border-primary border-opacity-50">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold text-primary mb-0"><i class="bi bi-person-lines-fill me-2"></i>Hồ sơ Khách Hàng Mới</h6>
+                            <button type="button" class="btn-close btn-sm" id="btnHideQuickAdd" aria-label="Close"></button>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Tên Khách hàng mới <span class="text-danger">*</span></label>
+                                <input type="text" id="quickCustomerName" class="form-control" placeholder="Nguyễn Văn A">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Tên Thú cưng <span class="text-danger">*</span></label>
+                                <input type="text" id="quickPetName" class="form-control" placeholder="Milo">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Loài (Giống) <span class="text-danger">*</span></label>
+                                <select id="quickSpecies" class="form-select">
+                                    <option value="Chó">Chó</option>
+                                    <option value="Mèo">Mèo</option>
+                                    <option value="Khác">Khác</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Cân nặng (kg)</label>
+                                <input type="number" step="0.1" id="quickWeight" class="form-control" placeholder="VD: 5.5">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3" id="oldPetSection">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Chọn Thú cưng <span class="text-danger">*</span></label>
+                            <select id="newAptPetId" name="PetId" class="form-select" required disabled>
+                                <option value="">-- Vui lòng tìm khách hàng trước --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Ngày & Giờ hẹn <span class="text-danger">*</span></label>
+                            <input type="datetime-local" id="newAptDate" name="AppointmentDate" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Bác sĩ phụ trách <span class="text-danger">*</span></label>
+                            <select id="newAptDoctorId" name="DoctorId" class="form-select" required>
+                                <option value="">-- Chọn Bác sĩ --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Dịch vụ <span class="text-danger">*</span></label>
+                            <select id="newAptServiceId" name="ServiceId" class="form-select" required>
+                                <option value="">-- Chọn Dịch vụ --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Triệu chứng / Lý do khám <span class="text-danger">*</span></label>
+                        <textarea id="newAptSymptom" name="Symptom" class="form-control" rows="2" placeholder="Ví dụ: Bỏ ăn 2 ngày, nôn mửa..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ghi chú thêm (Nếu có)</label>
+                        <textarea id="newAptNote" name="Note" class="form-control" rows="1" placeholder="Ghi chú nội bộ..."></textarea>
+                    </div>
+
+                    <div class="text-end mt-4">
+                        <button type="button" class="btn btn-light px-4 rounded-pill me-2" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary px-4 rounded-pill shadow-sm" id="btnSaveAppointment">
+                            <i class="bi bi-save me-1"></i> Lưu Lịch Hẹn
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var doctorFilter = document.getElementById('doctorFilter');
+            
+            // Load Doctors for filter and create form
+            $.get('/Receptionist/GetDoctors', function(res) {
+                res.forEach(doc => {
+                    $('#doctorFilter').append(`<option value="${doc.id}">Bs. ${doc.fullName}</option>`);
+                    $('#newAptDoctorId').append(`<option value="${doc.id}">Bs. ${doc.fullName}</option>`);
+                });
+            });
+
+            // Load Services for create form
+            $.get('/Appointment/GetServices', function(res) {
+                res.forEach(srv => {
+                    $('#newAptServiceId').append(`<option value="${srv.id}">${srv.name} (${srv.price.toLocaleString('vi-VN')}đ)</option>`);
+                });
+            });
+
+            // Initialize Calendar
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                locale: 'vi',
+                buttonText: {
+                    today: 'Hôm nay',
+                    month: 'Tháng',
+                    week: 'Tuần',
+                    day: 'Ngày'
+                },
+                slotMinTime: '08:00:00',
+                slotMaxTime: '20:00:00',
+                allDaySlot: false, // Ẩn cột all-day cho gọn
+                editable: true, // Cho phép kéo thả
+                selectable: true, // Cho phép click/kéo chọn giờ trống để đặt lịch
+                selectMirror: true,
+                eventDurationEditable: false, // Không cho kéo dài thời gian (mặc định 30p)
+                events: function(info, successCallback, failureCallback) {
+                    var docId = doctorFilter.value;
+                    $.get('/Appointment/GetEvents', {
+                        start: info.startStr,
+                        end: info.endStr,
+                        doctorId: docId ? docId : null
+                    }).done(function(data) {
+                        successCallback(data);
+                    }).fail(function() {
+                        failureCallback();
+                    });
+                },
+                select: function(info) {
+                    // Mở popup tạo lịch hẹn khi click vào ô trống
+                    $('#createAppointmentForm')[0].reset();
+                    $('#newAptPetId').empty().append('<option value="">-- Vui lòng tìm khách hàng trước --</option>').prop('disabled', true);
+                    $('#newAptCustomerName').val('');
+                    $('#newAptCustomerId').val('');
+                    $('#searchError').addClass('d-none');
+                    $('#btnShowQuickAdd').addClass('d-none');
+                    hideQuickAdd();
+                    
+                    // Lấy giờ mà user vừa bôi đen trên lịch (cắt bỏ phần timezone Z nếu có)
+                    var selectedStr = info.startStr.substring(0, 16);
+                    $('#newAptDate').val(selectedStr);
+
+                    var modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+                    modal.show();
+                    
+                    calendar.unselect(); // Bỏ bôi đen
+                },
+                eventClick: function(info) {
+                    var props = info.event.extendedProps;
+                    $('#eventId').val(info.event.id);
+                    $('#eventPetName').text(props.petName);
+                    $('#eventCustomerName').text(props.customerName);
+                    $('#eventPhone').text(props.phone).attr('href', 'tel:' + props.phone);
+                    $('#eventDoctorName').text(props.doctorName || 'Chưa xếp');
+                    $('#eventSymptom').text(props.symptom || 'Không có');
+                    
+                    renderActionButtons(props.status, info.event.id);
+                    
+                    var modal = new bootstrap.Modal(document.getElementById('eventModal'));
+                    modal.show();
+                },
+                eventDrop: function(info) {
+                    // Hỏi xác nhận khi kéo thả đổi giờ
+                    Swal.fire({
+                        title: 'Xác nhận dời lịch?',
+                        text: `Bạn muốn dời ca khám của bé ${info.event.extendedProps.petName} sang ngày ${info.event.start.toLocaleString('vi-VN')}?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Đồng ý',
+                        cancelButtonText: 'Hủy'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.post('/Appointment/Reschedule', {
+                                id: info.event.id,
+                                newStart: info.event.start.toISOString()
+                            }, function(res) {
+                                if(res.success) {
+                                    Swal.fire('Thành công', 'Đã đổi giờ hẹn', 'success');
+                                } else {
+                                    Swal.fire('Lỗi', 'Không thể đổi giờ', 'error');
+                                    info.revert();
+                                }
+                            });
+                        } else {
+                            info.revert();
+                        }
+                    });
+                }
+            });
+
+            calendar.render();
+
+            // Lọc theo Bác sĩ
+            doctorFilter.addEventListener('change', function() {
+                calendar.refetchEvents();
+            });
+
+            // Hàm render Nút thao tác
+            function renderActionButtons(status, id) {
+                var html = '';
+                if (status === 'pending') {
+                    html += `<button class="btn btn-info text-white px-4 rounded-pill" onclick="updateStatus(${id}, 'confirmed')"><i class="bi bi-check2"></i> Duyệt ca</button>`;
+                    html += `<button class="btn btn-outline-danger px-4 rounded-pill" onclick="updateStatus(${id}, 'cancelled')"><i class="bi bi-x-lg"></i> Hủy ca</button>`;
+                } else if (status === 'confirmed') {
+                    html += `<button class="btn btn-primary px-4 rounded-pill" onclick="updateStatus(${id}, 'waiting')"><i class="bi bi-box-arrow-in-right"></i> Check-in & Đẩy vào Kanban</button>`;
+                    html += `<button class="btn btn-outline-danger px-4 rounded-pill" onclick="updateStatus(${id}, 'cancelled')"><i class="bi bi-x-lg"></i> Hủy ca</button>`;
+                } else if (status === 'waiting') {
+                    html += `<span class="badge bg-primary fs-6 p-2 rounded-pill"><i class="bi bi-person-workspace"></i> Đang chờ khám (Trong Kanban)</span>`;
+                } else if (status === 'in_progress') {
+                    html += `<span class="badge bg-warning text-dark fs-6 p-2 rounded-pill"><i class="bi bi-heart-pulse"></i> Đang khám</span>`;
+                } else if (status === 'cancelled') {
+                    html += `<span class="badge bg-danger fs-6 p-2 rounded-pill"><i class="bi bi-x-circle"></i> Đã hủy</span>`;
+                } else {
+                    html += `<span class="badge bg-success fs-6 p-2 rounded-pill"><i class="bi bi-check-circle"></i> Đã hoàn thành</span>`;
+                }
+                $('#actionButtons').html(html);
+            }
+
+            // Gắn function ra global window để button gọi được
+            window.updateStatus = function(id, newStatus) {
+                Swal.fire({
+                    title: 'Xác nhận thao tác?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Đồng ý',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.post('/Appointment/UpdateStatus', { id: id, status: newStatus }, function(res) {
+                            if (res.success) {
+                                $('#eventModal').modal('hide');
+                                calendar.refetchEvents();
+                                if(newStatus === 'waiting') {
+                                    Swal.fire('Thành công', 'Đã Check-in và đẩy vào Kanban chờ khám!', 'success');
+                                } else {
+                                    Swal.fire('Thành công', 'Cập nhật thành công', 'success');
+                                }
+                            }
+                        });
+                    }
+                });
+            };
+            
+            
+            $('#btnNewAppointment').click(function() {
+                // Reset form
+                $('#createAppointmentForm')[0].reset();
+                $('#newAptPetId').empty().append('<option value="">-- Vui lòng tìm khách hàng trước --</option>').prop('disabled', true);
+                $('#newAptCustomerName').val('');
+                $('#newAptCustomerId').val('');
+                $('#searchError').addClass('d-none');
+                $('#btnShowQuickAdd').addClass('d-none');
+                hideQuickAdd();
+                
+                // Set default time to now + 30 mins
+                var now = new Date();
+                now.setMinutes(now.getMinutes() + 30 - (now.getMinutes() % 30));
+                now.setHours(now.getHours() + 7); // Múi giờ VN
+                var isoDateTime = now.toISOString().slice(0, 16);
+                $('#newAptDate').val(isoDateTime);
+
+                var modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+                modal.show();
+            });
+
+            // --- QUICK ADD LOGIC ---
+            var isQuickAddMode = false;
+
+            function hideQuickAdd() {
+                isQuickAddMode = false;
+                $('#quickCreateCustomerSection').addClass('d-none');
+                $('#oldCustomerNameSection').removeClass('d-none');
+                $('#oldPetSection').removeClass('d-none');
+                $('#newAptPetId').prop('required', true);
+            }
+
+            $('#btnShowQuickAdd').click(function() {
+                isQuickAddMode = true;
+                $('#quickCreateCustomerSection').removeClass('d-none');
+                $('#oldCustomerNameSection').addClass('d-none');
+                $('#oldPetSection').addClass('d-none');
+                $('#newAptPetId').prop('required', false);
+            });
+
+            $('#btnHideQuickAdd').click(function() {
+                hideQuickAdd();
+            });
+
+            // Auto-fill Customer and Pets
+            $('#btnSearchCustomer').click(function() {
+                var phone = $('#newAptPhone').val().trim();
+                if(!phone) {
+                    $('#searchError').text('Vui lòng nhập số điện thoại').removeClass('d-none');
+                    $('#btnShowQuickAdd').addClass('d-none');
+                    hideQuickAdd();
+                    return;
+                }
+                
+                $('#btnSearchCustomer').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+                
+                $.get('/Receptionist/GetCustomerByPhone?phone=' + phone, function(res) {
+                    $('#btnSearchCustomer').prop('disabled', false).text('Tìm');
+                    
+                    if(res.success) {
+                        $('#searchError').addClass('d-none');
+                        $('#btnShowQuickAdd').addClass('d-none');
+                        hideQuickAdd();
+                        
+                        $('#newAptCustomerId').val(res.customer.id);
+                        $('#newAptCustomerName').val(res.customer.fullName);
+                        
+                        var petSelect = $('#newAptPetId');
+                        petSelect.empty().prop('disabled', false).prop('required', true);
+                        if(res.pets && res.pets.length > 0) {
+                            petSelect.append('<option value="">-- Chọn Thú cưng --</option>');
+                            res.pets.forEach(p => {
+                                petSelect.append(`<option value="${p.id}">${p.name} (${p.species})</option>`);
+                            });
+                        } else {
+                            petSelect.append('<option value="">Khách hàng chưa có thú cưng</option>').prop('disabled', true);
+                        }
+                    } else {
+                        $('#searchError').text('Không tìm thấy khách hàng!').removeClass('d-none');
+                        $('#btnShowQuickAdd').removeClass('d-none'); // HIỆN NÚT TẠO MỚI
+                        
+                        $('#newAptCustomerId').val('');
+                        $('#newAptCustomerName').val('');
+                        $('#newAptPetId').empty().append('<option value="">-- Vui lòng tìm khách hàng trước --</option>').prop('disabled', true);
+                    }
+                });
+            });
+
+            // Submit form
+            $('#createAppointmentForm').submit(function(e) {
+                e.preventDefault();
+                
+                $('#btnSaveAppointment').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Đang lưu...');
+
+                if (isQuickAddMode) {
+                    var quickData = {
+                        CustomerPhone: $('#newAptPhone').val().trim(),
+                        CustomerName: $('#quickCustomerName').val().trim(),
+                        PetName: $('#quickPetName').val().trim(),
+                        Species: $('#quickSpecies').val(),
+                        PetWeight: $('#quickWeight').val() ? parseFloat($('#quickWeight').val()) : null,
+                        DoctorId: $('#newAptDoctorId').val(),
+                        ServiceId: parseInt($('#newAptServiceId').val()),
+                        AppointmentDate: $('#newAptDate').val(),
+                        Symptom: $('#newAptSymptom').val(),
+                        Note: $('#newAptNote').val()
+                    };
+
+                    if(!quickData.CustomerPhone || !quickData.CustomerName || !quickData.PetName) {
+                        Swal.fire('Lỗi', 'Vui lòng điền đủ Tên Khách Hàng, Số điện thoại và Tên Thú Cưng!', 'error');
+                        $('#btnSaveAppointment').prop('disabled', false).html('<i class="bi bi-save me-1"></i> Lưu Lịch Hẹn');
+                        return;
+                    }
+
+                    $.ajax({
+                        url: '/Appointment/CreateWithNewCustomer',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(quickData),
+                        success: function(res) {
+                            $('#btnSaveAppointment').prop('disabled', false).html('<i class="bi bi-save me-1"></i> Lưu Lịch Hẹn');
+                            if(res.success) {
+                                $('#createEventModal').modal('hide');
+                                hideQuickAdd();
+                                calendar.refetchEvents();
+                                Swal.fire('Thành công!', 'Đã tạo Hồ sơ & Đặt lịch thành công!', 'success');
+                            } else {
+                                Swal.fire('Lỗi!', res.message, 'error');
+                            }
+                        },
+                        error: function() {
+                            $('#btnSaveAppointment').prop('disabled', false).html('<i class="bi bi-save me-1"></i> Lưu Lịch Hẹn');
+                            Swal.fire('Lỗi hệ thống!', 'Không thể kết nối đến máy chủ.', 'error');
+                        }
+                    });
+                } 
+                else 
+                {
+                    var data = {
+                        CustomerId: $('#newAptCustomerId').val(),
+                        PetId: parseInt($('#newAptPetId').val()),
+                        DoctorId: $('#newAptDoctorId').val(),
+                        ServiceId: parseInt($('#newAptServiceId').val()),
+                        AppointmentDate: $('#newAptDate').val(),
+                        Symptom: $('#newAptSymptom').val(),
+                        Note: $('#newAptNote').val()
+                    };
+
+                    if(!data.CustomerId || !data.PetId) {
+                        Swal.fire('Lỗi', 'Vui lòng tìm khách hàng và chọn thú cưng hợp lệ!', 'error');
+                        $('#btnSaveAppointment').prop('disabled', false).html('<i class="bi bi-save me-1"></i> Lưu Lịch Hẹn');
+                        return;
+                    }
+
+                    $.ajax({
+                        url: '/Appointment/Create',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(data),
+                        success: function(res) {
+                            $('#btnSaveAppointment').prop('disabled', false).html('<i class="bi bi-save me-1"></i> Lưu Lịch Hẹn');
+                            if(res.success) {
+                                $('#createEventModal').modal('hide');
+                                calendar.refetchEvents();
+                                Swal.fire('Thành công!', res.message || 'Đã tạo lịch hẹn thành công', 'success');
+                            } else {
+                                Swal.fire('Lỗi!', res.message, 'error');
+                            }
+                        },
+                        error: function() {
+                            $('#btnSaveAppointment').prop('disabled', false).html('<i class="bi bi-save me-1"></i> Lưu Lịch Hẹn');
+                            Swal.fire('Lỗi hệ thống!', 'Không thể kết nối đến máy chủ.', 'error');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}
