@@ -1,0 +1,115 @@
+@model MyPetClinic.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Đăng Nhập - MyPetClinic";
+}
+
+<section class="py-5 bg-gold-gradient min-vh-100 d-flex align-items-center position-relative overflow-hidden">
+    <!-- Floating background decorative elements -->
+    <div class="hero-shape-1"></div>
+    <div class="hero-shape-2"></div>
+    
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5 reveal">
+                <div class="card border-0 glass-card p-4 p-md-5 shadow-lg">
+                    <!-- Logo / Brand Branding -->
+                    <div class="text-center mb-4">
+                        <a class="navbar-brand justify-content-center text-dark fs-2 mb-2 d-inline-flex text-decoration-none" asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-heart-pulse-fill brand-accent"></i>
+                            MyPet<span class="brand-accent">Clinic</span>
+                        </a>
+                        <h4 class="fw-bold text-dark mt-2">Chào Mừng Trở Lại</h4>
+                        <p class="text-muted small">Đăng nhập tài khoản để quản lý lịch hẹn và chăm sóc sức khỏe thú cưng</p>
+
+                        <!-- Khung tài khoản Demo -->
+                        <div class="alert alert-info border-0 rounded-3 shadow-sm py-2 px-3 mb-3 small text-start">
+                            <strong class="d-block mb-1"><i class="bi bi-info-circle me-1"></i> Tài khoản Demo (Mật khẩu: 123456)</strong>
+                            <ul class="list-unstyled mb-0 mt-2">
+                                <li><strong>Quản trị viên:</strong> admindemo@gmail.com</li>
+                                <li><strong>Lễ tân:</strong> letandemo@gmail.com</li>
+                                <li><strong>Khách hàng:</strong> khachhangdemo@gmail.com</li>
+                                <li><strong>Bác sĩ:</strong> bacsi_test@gmail.com</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+                        @Html.AntiForgeryToken()
+
+                        @if (TempData["SuccessMessage"] != null)
+                        {
+                            <div class="alert alert-success border-0 rounded-3 shadow-sm py-2 px-3 mb-3 small d-flex align-items-center gap-2">
+                                <i class="bi bi-check-circle-fill fs-5"></i>
+                                <div>
+                                    @TempData["SuccessMessage"]
+                                </div>
+                            </div>
+                        }
+
+                        @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+                        {
+                            <div class="alert alert-danger border-0 rounded-3 shadow-sm py-2 px-3 mb-3 small d-flex align-items-center gap-2">
+                                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                                <div>
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger list-unstyled mb-0 p-0" })
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Floating Input Email -->
+                        <div class="form-floating mb-3">
+                            <input asp-for="Email" class="form-control input-premium rounded-3" placeholder="name@example.com" required />
+                            <label asp-for="Email"><i class="bi bi-envelope me-1 text-muted"></i> Địa chỉ Email</label>
+                            <span asp-validation-for="Email" class="text-danger small mt-1 d-block"></span>
+                        </div>
+
+                        <!-- Floating Input Password -->
+                        <div class="form-floating mb-3">
+                            <input asp-for="Password" class="form-control input-premium rounded-3" placeholder="Mật khẩu" required />
+                            <label asp-for="Password"><i class="bi bi-lock me-1 text-muted"></i> Mật khẩu</label>
+                            <span asp-validation-for="Password" class="text-danger small mt-1 d-block"></span>
+                        </div>
+
+                        <!-- Remember Me and Forget Password -->
+                        <div class="d-flex align-items-center justify-content-between mb-4 small">
+                            <div class="form-check">
+                                <input asp-for="RememberMe" class="form-check-input" />
+                                <label asp-for="RememberMe" class="form-check-label text-muted">Ghi nhớ đăng nhập</label>
+                            </div>
+                            <a asp-action="ForgotPassword" asp-controller="Account" class="text-warning fw-bold text-decoration-none hover-text-warning">Quên mật khẩu?</a>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-premium w-100 py-3 shadow-md mb-3">
+                            Đăng Nhập <i class="bi bi-box-arrow-in-right ms-1 fs-5"></i>
+                        </button>
+
+                        <!-- Divider -->
+                        <div class="d-flex align-items-center my-4">
+                            <hr class="flex-grow-1 text-muted">
+                            <span class="mx-3 text-muted small">hoặc</span>
+                            <hr class="flex-grow-1 text-muted">
+                        </div>
+
+                        <!-- Google Login Button -->
+                        <a asp-action="GoogleLogin" class="btn btn-outline-dark w-100 py-2 mb-4 d-flex align-items-center justify-content-center shadow-sm rounded-3 hover-shadow-md transition-all">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" width="20" height="20" class="me-2" />
+                            Tiếp tục với Google
+                        </a>
+
+                        <!-- Go to register link -->
+                        <div class="text-center mt-3 small">
+                            <span class="text-muted">Bạn chưa có tài khoản? </span>
+                            <a asp-action="Register" class="text-warning fw-bold text-decoration-none hover-text-warning">Đăng ký ngay</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}

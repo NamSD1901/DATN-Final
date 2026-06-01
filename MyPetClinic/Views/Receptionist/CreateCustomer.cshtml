@@ -1,0 +1,231 @@
+@{
+    ViewData["Title"] = "Thêm Khách Hàng Mới";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .form-card { border: none; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+    .section-header { font-size: 0.85rem; text-transform: uppercase; font-weight: 700; color: #d4ac0d; border-bottom: 2px solid #fef9e7; padding-bottom: 8px; margin-bottom: 20px; }
+    .form-label { font-size: 0.88rem; font-weight: 600; color: #444; }
+    .btn-gold { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; font-weight: 600; border: none; border-radius: 10px; }
+    .btn-gold:hover { filter: brightness(1.08); color: #fff; }
+    .form-control:focus, .form-select:focus { border-color: #f1c40f; box-shadow: 0 0 0 3px rgba(241,196,15,0.15); }
+    .pet-card { background: #fdfaf0; border: 1px dashed #f1c40f; border-radius: 12px; position: relative; }
+    .btn-remove-pet { position: absolute; top: 10px; right: 10px; }
+</style>
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Customers" class="text-warning text-decoration-none">Khách hàng</a></li>
+        <li class="breadcrumb-item active">Thêm mới</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-person-plus-fill text-warning me-2"></i>Thêm Khách Hàng & Thú Cưng</h4>
+</div>
+
+<div class="alert alert-danger d-none" id="errorAlert"><i class="bi bi-exclamation-triangle-fill me-2"></i><span id="errorMessage"></span></div>
+<div class="alert alert-success d-none" id="successAlert"><i class="bi bi-check-circle-fill me-2"></i><span id="successMessage"></span></div>
+
+<div class="card form-card p-4 mb-4">
+    <form id="createCustomerForm">
+        @Html.AntiForgeryToken()
+
+        <!-- Thông tin Khách hàng -->
+        <div class="section-header"><i class="bi bi-person-badge me-2"></i>Thông Tin Khách Hàng</div>
+        <div class="row g-3 mb-5">
+            <div class="col-md-6">
+                <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                <input type="text" id="FullName" class="form-control" placeholder="VD: Nguyễn Văn A" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-phone-fill text-warning"></i></span>
+                    <input type="tel" id="Phone" class="form-control" placeholder="VD: 0901234567" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-envelope-fill text-warning"></i></span>
+                    <input type="email" id="Email" class="form-control" placeholder="VD: khachhang@email.com">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Giới tính</label>
+                <select id="Gender" class="form-select">
+                    <option value="">— Chọn —</option>
+                    <option value="1">Nam</option>
+                    <option value="0">Nữ</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Ngày sinh</label>
+                <input type="date" id="DateOfBirth" class="form-control">
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">Địa chỉ</label>
+                <input type="text" id="Address" class="form-control" placeholder="Số nhà, đường, phường/xã, quận/huyện...">
+            </div>
+        </div>
+
+        <!-- Thông tin Thú cưng -->
+        <div class="d-flex justify-content-between align-items-center section-header mb-3">
+            <div><i class="bi bi-heart-pulse me-2"></i>Thông Tin Thú Cưng</div>
+            <button type="button" class="btn btn-sm btn-outline-warning rounded-pill" onclick="addPetForm()">
+                <i class="bi bi-plus-lg me-1"></i>Thêm Thú Cưng
+            </button>
+        </div>
+        
+        <div id="petsContainer">
+            <!-- JS sẽ render các form thú cưng vào đây -->
+        </div>
+
+        <hr class="my-4 text-warning">
+
+        <!-- Buttons -->
+        <div class="d-flex justify-content-end gap-3">
+            <a asp-action="Customers" class="btn btn-outline-secondary px-4 py-2 rounded-pill">Hủy</a>
+            <button type="submit" class="btn btn-gold px-5 py-2 rounded-pill shadow-sm" id="btnSubmit">
+                <i class="bi bi-check2-circle me-2"></i>Hoàn tất Tạo Mới
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    let petIndex = 0;
+
+    function addPetForm() {
+        const container = document.getElementById('petsContainer');
+        const html = `
+            <div class="pet-card p-3 mb-3" id="petRow_${petIndex}">
+                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-pet rounded-circle" onclick="removePetForm(${petIndex})" title="Xóa thú cưng này">
+                    <i class="bi bi-trash3"></i>
+                </button>
+                <h6 class="text-warning fw-bold mb-3">Thú cưng #${petIndex + 1}</h6>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Tên thú cưng <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control pet-name" required placeholder="Tên gọi">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Giống loài</label>
+                        <select class="form-select pet-species">
+                            <option value="Chó">Chó</option>
+                            <option value="Mèo">Mèo</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Cân nặng (kg)</label>
+                        <input type="number" step="0.1" class="form-control pet-weight">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Giới tính</label>
+                        <select class="form-select pet-gender">
+                            <option value="">— Chọn —</option>
+                            <option value="1">Đực</option>
+                            <option value="0">Cái</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Màu lông</label>
+                        <input type="text" class="form-control pet-color">
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mt-4 pt-1">
+                            <input class="form-check-input pet-sterilized" type="checkbox" id="sterilized_${petIndex}">
+                            <label class="form-check-label fw-semibold" for="sterilized_${petIndex}">
+                                Đã triệt sản
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+        petIndex++;
+    }
+
+    function removePetForm(index) {
+        document.getElementById(`petRow_${index}`).remove();
+    }
+
+    // Khởi tạo sẵn 1 form thú cưng
+    addPetForm();
+
+    document.getElementById('createCustomerForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const btnSubmit = document.getElementById('btnSubmit');
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...';
+        
+        document.getElementById('errorAlert').classList.add('d-none');
+        document.getElementById('successAlert').classList.add('d-none');
+
+        // Build DTO
+        const customerData = {
+            fullName: document.getElementById('FullName').value,
+            phone: document.getElementById('Phone').value,
+            email: document.getElementById('Email').value || null,
+            address: document.getElementById('Address').value || null,
+            gender: document.getElementById('Gender').value ? parseInt(document.getElementById('Gender').value) : null,
+            dateOfBirth: document.getElementById('DateOfBirth').value || null,
+            pets: []
+        };
+
+        const petCards = document.querySelectorAll('.pet-card');
+        petCards.forEach(card => {
+            const petData = {
+                name: card.querySelector('.pet-name').value,
+                species: card.querySelector('.pet-species').value,
+                weight: card.querySelector('.pet-weight').value ? parseFloat(card.querySelector('.pet-weight').value) : null,
+                gender: card.querySelector('.pet-gender').value ? parseInt(card.querySelector('.pet-gender').value) : null,
+                color: card.querySelector('.pet-color').value || null,
+                sterilized: card.querySelector('.pet-sterilized').checked
+            };
+            customerData.pets.push(petData);
+        });
+
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const response = await fetch('/Receptionist/CreateCustomer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify(customerData)
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                document.getElementById('successMessage').innerHTML = result.message;
+                document.getElementById('successAlert').classList.remove('d-none');
+                
+                // Redirect sau 1.5s
+                setTimeout(() => {
+                    window.location.href = '/Receptionist/CustomerDetail/' + result.customerId;
+                }, 1500);
+            } else {
+                document.getElementById('errorMessage').innerHTML = result.message;
+                document.getElementById('errorAlert').classList.remove('d-none');
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="bi bi-check2-circle me-2"></i>Hoàn tất Tạo Mới';
+            }
+        } catch (error) {
+            document.getElementById('errorMessage').innerText = 'Có lỗi xảy ra, vui lòng thử lại sau.';
+            document.getElementById('errorAlert').classList.remove('d-none');
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="bi bi-check2-circle me-2"></i>Hoàn tất Tạo Mới';
+        }
+    });
+</script>
+}
