@@ -22,7 +22,7 @@ namespace MyPetClinic.Application.DTOs
 
         // Appointment Info
         public long ServiceId { get; set; }
-        public Guid DoctorId { get; set; }
+        public Guid? DoctorId { get; set; }
         public string? Symptom { get; set; }
         public bool IsEmergency { get; set; }
     }

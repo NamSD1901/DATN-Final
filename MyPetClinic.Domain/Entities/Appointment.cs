@@ -22,6 +22,7 @@ namespace MyPetClinic.Domain.Entities
         public int QueueNumber { get; set; } = 0;
         public Guid? CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public string? QrToken { get; set; }
 
         public Pet? Pet { get; set; }
         public User? Customer { get; set; }

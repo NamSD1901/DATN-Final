@@ -50,7 +50,8 @@ namespace MyPetClinic.Infrastructure.Services
                 Status = "waiting", // Khám ngay / Chờ khám
                 CreatedBy = createdBy,
                 CreatedAt = DateTime.UtcNow,
-                AppointmentDate = appointmentDate
+                AppointmentDate = appointmentDate,
+                QrToken = "QR-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()
             };
 
             // Nếu thời gian lớn hơn hiện tại 1 giờ thì là đặt lịch trước
@@ -126,10 +127,11 @@ namespace MyPetClinic.Infrastructure.Services
                     DoctorId = dto.DoctorId,
                     Symptom = dto.Symptom?.Trim(),
                     Note = dto.Note?.Trim(),
-                    Status = "waiting", 
+                    Status = "waiting", // Khám ngay / Chờ khám
                     CreatedBy = createdBy,
                     CreatedAt = DateTime.UtcNow,
-                    AppointmentDate = appointmentDate
+                    AppointmentDate = appointmentDate,
+                    QrToken = "QR-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()
                 };
 
                 if (appointment.AppointmentDate > DateTime.UtcNow.AddHours(1))
@@ -177,14 +179,22 @@ namespace MyPetClinic.Infrastructure.Services
                 else if (a.Status == "ready_to_pay" || a.Status == "completed") color = "#198754"; // green
                 else if (a.Status == "cancelled") color = "#dc3545"; // red
 
+                var startDateTime = a.AppointmentDate;
+                if (startDateTime.TimeOfDay == TimeSpan.Zero)
+                {
+                    // If time is 00:00:00 UTC (created from month view without setting time), 
+                    // default to 08:00 Local Time (01:00 UTC for VN)
+                    startDateTime = startDateTime.AddHours(1);
+                }
+
                 events.Add(new CalendarEventDto
                 {
                     Id = a.Id.ToString(),
                     Title = $"{a.Pet?.Name} - {a.Customer?.FullName}",
-                    Start = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss"),
-                    End = a.AppointmentDate.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss"), // Default 30 min block
+                    Start = startDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + "Z",
+                    End = startDateTime.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss") + "Z", // Default 30 min block
                     Color = color,
-                    AllDay = a.AppointmentDate.TimeOfDay == TimeSpan.Zero,
+                    AllDay = false,
                     ExtendedProps = new
                     {
                         status = a.Status,
@@ -192,7 +202,8 @@ namespace MyPetClinic.Infrastructure.Services
                         customerName = a.Customer?.FullName,
                         phone = a.Customer?.Phone,
                         symptom = a.Symptom,
-                        doctorName = a.Doctor?.FullName
+                        doctorName = a.Doctor?.FullName,
+                        qrToken = a.QrToken
                     }
                 });
             }

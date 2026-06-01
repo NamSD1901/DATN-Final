@@ -35,6 +35,14 @@ namespace MyPetClinic.Controllers
         }
 
         // ==========================================
+        // 0. HÀNG KHÁM (KANBAN)
+        // ==========================================
+        public IActionResult Queue()
+        {
+            return View();
+        }
+
+        // ==========================================
         // 1. DANH SÁCH KHÁCH HÀNG (có tìm kiếm)
         // ==========================================
         public async Task<IActionResult> Customers(string? search)
@@ -255,10 +263,21 @@ namespace MyPetClinic.Controllers
         [HttpPost]
         public async Task<IActionResult> CheckIn([FromBody] CheckInRequestDto request)
         {
-            var success = await _receptionistService.CheckInAsync(request);
-            if (success)
-                return Json(new { success = true, message = "Check-in thành công. Đã xếp vào hàng đợi." });
-            return Json(new { success = false, message = "Check-in thất bại. Vui lòng kiểm tra lại trạng thái ca khám." });
+            try
+            {
+                var success = await _receptionistService.CheckInAsync(request);
+                if (success)
+                    return Json(new { success = true, message = "Check-in thành công. Đã xếp vào hàng đợi." });
+                return Json(new { success = false, message = "Check-in thất bại. Lỗi không xác định." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return Json(new { success = false, message = "Lỗi hệ thống. Vui lòng thử lại sau." });
+            }
         }
 
         [HttpGet]
@@ -326,6 +345,17 @@ namespace MyPetClinic.Controllers
                 customer = new { customer.Id, customer.FullName },
                 pets = pets
             });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateEmergencyCustomer(long appointmentId, Guid customerId, long petId)
+        {
+            var success = await _receptionistService.UpdateEmergencyCustomerAsync(appointmentId, customerId, petId);
+            if (success)
+            {
+                return Json(new { success = true });
+            }
+            return Json(new { success = false, message = "Không thể ghép nối hồ sơ. Ca khám có thể không tồn tại hoặc không phải ca cấp cứu ẩn danh." });
         }
     }
 }

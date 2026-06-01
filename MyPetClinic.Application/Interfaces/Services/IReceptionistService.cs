@@ -20,5 +20,8 @@ namespace MyPetClinic.Application.Interfaces.Services
         
         // Cập nhật trạng thái kéo thả (Drag and Drop)
         Task<bool> UpdateQueueStatusAsync(long appointmentId, string newStatus);
+
+        // Ghép nối ca cấp cứu ẩn danh với khách hàng thật
+        Task<bool> UpdateEmergencyCustomerAsync(long appointmentId, System.Guid customerId, long petId);
     }
 }

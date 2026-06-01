@@ -75,12 +75,37 @@ namespace MyPetClinic.Infrastructure.Services
 
         public async Task<bool> CheckInAsync(CheckInRequestDto request)
         {
-            var appointment = await _context.Appointments
-                .Include(a => a.Pet)
-                .FirstOrDefaultAsync(a => a.Id == request.AppointmentId);
+            Appointment? appointment = null;
+            if (!string.IsNullOrEmpty(request.QrToken))
+            {
+                appointment = await _context.Appointments
+                    .Include(a => a.Pet)
+                    .FirstOrDefaultAsync(a => a.QrToken == request.QrToken);
+            }
+            else if (request.AppointmentId.HasValue)
+            {
+                appointment = await _context.Appointments
+                    .Include(a => a.Pet)
+                    .FirstOrDefaultAsync(a => a.Id == request.AppointmentId.Value);
+            }
 
-            if (appointment == null || appointment.Status != "pending")
-                return false;
+            if (appointment == null)
+                throw new InvalidOperationException("Không tìm thấy Lịch hẹn.");
+
+            if (appointment.Status == "cancelled")
+                throw new InvalidOperationException("Lịch hẹn này đã bị hủy, không thể Check-in.");
+
+            if (appointment.Status == "completed")
+                throw new InvalidOperationException("Lịch hẹn này đã hoàn thành.");
+
+            if (appointment.Status == "waiting" || appointment.Status == "in_progress" || appointment.Status == "ready_to_pay")
+                throw new InvalidOperationException("Khách hàng này đã nằm trong hàng đợi rồi.");
+
+            // Kiểm tra ngày khám
+            var localNow = DateTime.UtcNow.AddHours(7).Date; // Giả sử múi giờ Việt Nam (UTC+7)
+            var apptDate = appointment.AppointmentDate.AddHours(7).Date;
+            if (apptDate != localNow)
+                throw new InvalidOperationException($"Lịch hẹn này dành cho ngày {apptDate:dd/MM/yyyy}. Không thể Check-in hôm nay.");
 
             // 1. Nếu có cân nặng mới thì cập nhật luôn cho Pet
             if (request.CurrentWeight.HasValue && appointment.Pet != null)
@@ -205,18 +230,34 @@ namespace MyPetClinic.Infrastructure.Services
                 await _queueSemaphore.WaitAsync();
                 try
                 {
-                    // 3. Sinh số Queue an toàn
+                    // 3. Xử lý DoctorId (tự động phân công nếu để trống)
+                    var finalDoctorId = request.DoctorId ?? Guid.Empty;
+                    if (finalDoctorId == Guid.Empty)
+                    {
+                        var doctor = await _context.Users
+                            .Include(u => u.Role)
+                            .Where(u => u.Role != null && u.Role.Name == "Doctor" && u.IsActive)
+                            .FirstOrDefaultAsync();
+                            
+                        if (doctor != null) {
+                            finalDoctorId = doctor.Id;
+                        } else {
+                            throw new Exception("Hệ thống hiện không có bác sĩ nào đang trực để phân công!");
+                        }
+                    }
+
+                    // 4. Sinh số Queue an toàn
                     var today = DateTime.UtcNow.Date;
                     var maxQueueToday = await _context.Appointments
                         .Where(a => a.AppointmentDate.Date == today && a.QueueNumber > 0)
                         .MaxAsync(a => (int?)a.QueueNumber) ?? 0;
 
-                    // 4. Tạo Appointment với trạng thái Waiting luôn
+                    // 5. Tạo Appointment với trạng thái Waiting luôn
                     var appointment = new Appointment
                     {
                         PetId = pet.Id,
                         CustomerId = customer.Id,
-                        DoctorId = request.DoctorId,
+                        DoctorId = finalDoctorId,
                         ServiceId = request.ServiceId,
                         AppointmentDate = DateTime.UtcNow,
                         StartTime = DateTime.UtcNow.TimeOfDay,
@@ -268,6 +309,48 @@ namespace MyPetClinic.Infrastructure.Services
             }
             
             await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateEmergencyCustomerAsync(long appointmentId, System.Guid customerId, long petId)
+        {
+            var appointment = await _context.Appointments
+                .Include(a => a.Customer)
+                .Include(a => a.Pet)
+                .FirstOrDefaultAsync(a => a.Id == appointmentId);
+
+            if (appointment == null) return false;
+
+            // Kiểm tra xem đây có phải là ca cấp cứu đang cần update không
+            if (!appointment.IsEmergency || appointment.Customer.FullName != "Khách Cấp Cứu")
+            {
+                return false; 
+            }
+
+            var realCustomer = await _context.Users.FindAsync(customerId);
+            var realPet = await _context.Pets.FindAsync(petId);
+
+            if (realCustomer == null || realPet == null) return false;
+
+            // Xóa Khách ẩn danh / Thú cưng ẩn danh cũ (nếu muốn dọn rác DB)
+            var dummyCustomer = appointment.Customer;
+            var dummyPet = appointment.Pet;
+
+            // Gán lại
+            appointment.CustomerId = customerId;
+            appointment.PetId = petId;
+
+            // Lưu thay đổi Appointment
+            await _context.SaveChangesAsync();
+
+            // Dọn dẹp dữ liệu rác (tùy chọn)
+            if (dummyCustomer.FullName == "Khách Cấp Cứu")
+            {
+                _context.Pets.Remove(dummyPet);
+                _context.Users.Remove(dummyCustomer);
+                await _context.SaveChangesAsync();
+            }
+
             return true;
         }
     }
