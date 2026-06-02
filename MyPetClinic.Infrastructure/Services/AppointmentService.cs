@@ -158,6 +158,7 @@ namespace MyPetClinic.Infrastructure.Services
                 .Include(a => a.Pet)
                 .Include(a => a.Customer)
                 .Include(a => a.Doctor)
+                .Include(a => a.Service)
                 .Where(a => a.AppointmentDate >= start && a.AppointmentDate <= end);
 
             if (doctorId.HasValue)
@@ -199,10 +200,16 @@ namespace MyPetClinic.Infrastructure.Services
                     {
                         status = a.Status,
                         petName = a.Pet?.Name,
+                        species = a.Pet?.Species,
+                        breed = a.Pet?.Breed,
+                        weight = a.Pet?.Weight,
+                        isAggressive = a.Pet?.IsAggressive ?? false,
                         customerName = a.Customer?.FullName,
                         phone = a.Customer?.Phone,
                         symptom = a.Symptom,
+                        note = a.Note,
                         doctorName = a.Doctor?.FullName,
+                        serviceName = a.Service?.Name,
                         qrToken = a.QrToken
                     }
                 });
