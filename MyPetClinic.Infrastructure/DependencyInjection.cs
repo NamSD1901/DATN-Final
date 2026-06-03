@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using MyPetClinic.Application.Interfaces.Repositories;
+using MyPetClinic.Application.Interfaces;
 using MyPetClinic.Application.Interfaces.Services;
 using MyPetClinic.Application.Services;
 using MyPetClinic.Infrastructure.Repositories;
@@ -29,6 +30,9 @@ namespace MyPetClinic.Infrastructure
             // Đăng ký Email và OTP Service
             services.AddTransient<IEmailService, EmailService>();
             services.AddSingleton<IOtpService, OtpService>();
+
+            // Đăng ký AI Chatbot Service
+            services.AddScoped<IAiChatbotService, AiChatbotService>();
 
             return services;
         }
