@@ -116,7 +116,7 @@
                             </a>
                         }
 
-                        @if (User.Identity.IsAuthenticated)
+                        @if (User.Identity?.IsAuthenticated == true)
                         {
                             <button class="btn btn-premium shadow-sm ms-2" type="button" data-bs-toggle="modal" data-bs-target="#contactAdviceModal">
                                 <i class="bi bi-calendar-check me-1"></i>Đặt Lịch Ngay
@@ -352,5 +352,6 @@
             }
         }
     </script>
+    <partial name="_ChatbotWidget" />
 </body>
 </html>
