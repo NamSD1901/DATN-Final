@@ -58,14 +58,14 @@ namespace MyPetClinic.Infrastructure.Repositories
         public async Task<IEnumerable<User>> GetUsersByRoleAsync(long roleId)
         {
             return await _context.Users
-                .Where(u => u.RoleId == roleId && u.IsActive && u.DeletedAt == null)
+                .Where(u => u.RoleId == roleId && u.IsActive == true && u.DeletedAt == null)
                 .OrderByDescending(u => u.CreatedAt)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<User>> SearchUsersAsync(string keyword, long? roleId = null)
         {
-            var query = _context.Users.Where(u => u.IsActive && u.DeletedAt == null).AsQueryable();
+            var query = _context.Users.Where(u => u.IsActive == true && u.DeletedAt == null).AsQueryable();
             
             if (roleId.HasValue)
             {

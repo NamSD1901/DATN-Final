@@ -53,7 +53,7 @@ namespace MyPetClinic.Controllers
             var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email.Trim().ToLower());
             if (existingUser != null)
             {
-                if (existingUser.IsActive)
+                if (existingUser.IsActive == true)
                 {
                     ModelState.AddModelError("Email", "Email này đã được sử dụng trong hệ thống.");
                     return View(model);
@@ -134,7 +134,7 @@ namespace MyPetClinic.Controllers
 
             if (type == "register")
             {
-                if (user.IsActive) return RedirectToAction("Login");
+                if (user.IsActive == true) return RedirectToAction("Login");
                 emailKey = user.Email.ToLower();
                 emailTitle = "Xác thực tài khoản MyPetClinic";
                 messageBody = "Cảm ơn bạn đã đăng ký tài khoản tại hệ thống của chúng tôi. Để hoàn tất việc đăng ký, vui lòng nhập mã xác thực (OTP) mới bên dưới:";
@@ -142,7 +142,7 @@ namespace MyPetClinic.Controllers
             }
             else if (type == "forgot")
             {
-                if (!user.IsActive) return RedirectToAction("Login");
+                if (user.IsActive != true) return RedirectToAction("Login");
                 emailKey = "reset_" + user.Email.ToLower();
                 emailTitle = "Yêu cầu đặt lại mật khẩu MyPetClinic";
                 messageBody = "Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng sử dụng mã xác thực (OTP) mới bên dưới để tiến hành đổi mật khẩu:";
@@ -248,7 +248,7 @@ namespace MyPetClinic.Controllers
             }
 
             // Kiểm tra trạng thái kích hoạt tài khoản
-            if (!user.IsActive)
+            if (user.IsActive != true)
             {
                 // Tài khoản chưa kích hoạt -> Gửi lại OTP và chuyển đến trang nhập OTP
                 string emailKey = user.Email!.ToLower();
@@ -373,7 +373,7 @@ namespace MyPetClinic.Controllers
             }
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email.Trim().ToLower());
-            if (user == null || !user.IsActive)
+            if (user == null || user.IsActive != true)
             {
                 ModelState.AddModelError(string.Empty, "Email không hợp lệ hoặc tài khoản chưa kích hoạt.");
                 return View();

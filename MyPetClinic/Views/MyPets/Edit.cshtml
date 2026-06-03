@@ -1,0 +1,196 @@
+@model MyPetClinic.Application.DTOs.UpdatePetDto
+@{
+    ViewData["Title"] = "Cập nhật thú cưng";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+@{
+    var predefinedSpecies = new List<string> { "Chó", "Mèo", "Chim", "Chuột" };
+    var isOtherSpecies = !string.IsNullOrEmpty(Model.Species) && !predefinedSpecies.Contains(Model.Species);
+}
+
+<style>
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 1px solid #ced4da;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.2s ease-in-out;
+        background-color: #f8f9fa;
+    }
+    .form-control:focus, .form-select:focus {
+        background-color: #ffffff;
+        border-color: #f1c40f;
+        box-shadow: 0 0 0 4px rgba(241, 196, 15, 0.1);
+    }
+    .card-clean {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        background: #ffffff;
+    }
+    .custom-switch-container {
+        border: 1px solid #ced4da;
+        border-radius: 10px;
+        padding: 0.75rem 1.25rem;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 100%;
+    }
+    .btn-submit {
+        background-color: #f1c40f;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 0.8rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.2s;
+    }
+    .btn-submit:hover {
+        background-color: #e6b700;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(241, 196, 15, 0.3);
+        color: #fff;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center mb-4">
+                <a asp-action="Index" class="btn btn-white rounded-circle shadow-sm me-3" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center; background: white; border: 1px solid #eee;">
+                    <i class="bi bi-arrow-left text-dark"></i>
+                </a>
+                <h4 class="fw-bold mb-0 text-dark">Cập nhật hồ sơ thú cưng</h4>
+            </div>
+
+            <div class="card card-clean">
+                <div class="card-body p-4 p-md-5">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label asp-for="Name" class="form-label">Tên thú cưng <span class="text-danger">*</span></label>
+                                <input asp-for="Name" class="form-control" placeholder="Ví dụ: Milu..." />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="Species" class="form-label">Giống loài <span class="text-danger">*</span></label>
+                                <select id="Species" name="@(!isOtherSpecies ? "Species" : "")" class="form-select" onchange="toggleOtherSpecies()">
+                                    <option value="">-- Chọn giống loài --</option>
+                                    <option value="Chó" selected="@(Model.Species == "Chó")">Chó</option>
+                                    <option value="Mèo" selected="@(Model.Species == "Mèo")">Mèo</option>
+                                    <option value="Chim" selected="@(Model.Species == "Chim")">Chim</option>
+                                    <option value="Chuột" selected="@(Model.Species == "Chuột")">Chuột / Hamster</option>
+                                    <option value="Khác" selected="@isOtherSpecies">Khác</option>
+                                </select>
+                                <input type="text" id="otherSpeciesInput" name="@(isOtherSpecies ? "Species" : "")" 
+                                       class="form-control mt-2" 
+                                       placeholder="Nhập tên giống loài khác..." 
+                                       style="@(isOtherSpecies ? "display: block;" : "display: none;")" 
+                                       value="@(isOtherSpecies ? Model.Species : "")" />
+                                <span asp-validation-for="Species" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Breed" class="form-label">Giống (Loại)</label>
+                                <input asp-for="Breed" class="form-control" placeholder="Ví dụ: Poodle..." />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Gender" class="form-label">Giới tính</label>
+                                <select asp-for="Gender" class="form-select">
+                                    <option value="">-- Chọn giới tính --</option>
+                                    <option value="1">Đực</option>
+                                    <option value="2">Cái</option>
+                                    <option value="3">Khác</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="BirthDate" class="form-label">Ngày sinh (Ước tính)</label>
+                                <input asp-for="BirthDate" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Weight" class="form-label">Cân nặng (kg)</label>
+                                <input asp-for="Weight" type="number" step="0.1" class="form-control" placeholder="Cân nặng..." />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Color" class="form-label">Màu sắc</label>
+                                <input asp-for="Color" class="form-control" placeholder="Màu sắc..." />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="BloodType" class="form-label">Nhóm máu</label>
+                                <input asp-for="BloodType" class="form-control" placeholder="Nhóm máu..." />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="MicrochipCode" class="form-label">Mã Microchip</label>
+                                <input asp-for="MicrochipCode" class="form-control" placeholder="Mã Microchip..." />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label d-block text-transparent" style="color: transparent; user-select: none;">Trạng thái</label>
+                                <div class="custom-switch-container">
+                                    <label class="form-check-label fw-semibold text-dark mb-0" for="sterilizedCheck" style="cursor:pointer;">Đã triệt sản</label>
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input fs-5 m-0" type="checkbox" asp-for="Sterilized" role="switch" id="sterilizedCheck" style="cursor:pointer;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mt-4">
+                                <label asp-for="AllergyNote" class="form-label">Ghi chú dị ứng / Sức khỏe</label>
+                                <textarea asp-for="AllergyNote" class="form-control" rows="3" placeholder="Nhập các lưu ý về sức khỏe..."></textarea>
+                            </div>
+
+                            <div class="col-12 mt-5 pt-3 border-top d-flex justify-content-end gap-3">
+                                <a asp-action="Index" class="btn btn-light px-4 py-2 fw-semibold" style="border-radius: 10px;">Hủy</a>
+                                <button type="submit" class="btn btn-submit">
+                                    <i class="bi bi-floppy-fill me-1"></i> Lưu cập nhật
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        function toggleOtherSpecies() {
+            var select = document.getElementById('Species');
+            var input = document.getElementById('otherSpeciesInput');
+            if (select.value === 'Khác') {
+                input.style.display = 'block';
+                input.setAttribute('name', 'Species');
+                select.removeAttribute('name');
+                input.required = true;
+            } else {
+                input.style.display = 'none';
+                input.removeAttribute('name');
+                select.setAttribute('name', 'Species');
+                input.required = false;
+            }
+        }
+        
+        window.onload = function() {
+            toggleOtherSpecies();
+        };
+    </script>
+}

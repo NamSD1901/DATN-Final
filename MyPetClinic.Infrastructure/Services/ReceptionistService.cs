@@ -32,7 +32,7 @@ namespace MyPetClinic.Infrastructure.Services
             // Lấy danh sách khách hàng khớp thông tin khách HẶC có thú cưng khớp thông tin
             var users = await _context.Users
                 .Include(u => u.Role)
-                .Where(u => u.IsActive && u.Role != null && u.Role.Name == "Customer")
+                .Where(u => u.IsActive == true && u.Role != null && u.Role.Name == "Customer")
                 .Where(u => 
                     (u.FullName != null && u.FullName.ToLower().Contains(lowerQuery)) ||
                     (u.Phone != null && u.Phone.Contains(lowerQuery)) ||
@@ -181,7 +181,7 @@ namespace MyPetClinic.Infrastructure.Services
             {
                 // 1. Tìm hoặc tạo Customer
                 var customer = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Phone == request.Phone && u.IsActive);
+                    .FirstOrDefaultAsync(u => u.Phone == request.Phone && u.IsActive == true);
                     
                 if (customer == null)
                 {
@@ -236,7 +236,7 @@ namespace MyPetClinic.Infrastructure.Services
                     {
                         var doctor = await _context.Users
                             .Include(u => u.Role)
-                            .Where(u => u.Role != null && u.Role.Name == "Doctor" && u.IsActive)
+                            .Where(u => u.Role != null && u.Role.Name == "Doctor" && u.IsActive == true)
                             .FirstOrDefaultAsync();
                             
                         if (doctor != null) {

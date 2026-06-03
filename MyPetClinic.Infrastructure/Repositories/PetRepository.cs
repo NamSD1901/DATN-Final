@@ -1,11 +1,11 @@
-using Microsoft.EntityFrameworkCore;
-using MyPetClinic.Application.Interfaces.Repositories;
-using MyPetClinic.Domain.Entities;
-using MyPetClinic.Infrastructure.Persistence;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using MyPetClinic.Application.Interfaces.Repositories;
+using MyPetClinic.Domain.Entities;
+using MyPetClinic.Infrastructure.Persistence;
 
 namespace MyPetClinic.Infrastructure.Repositories
 {
@@ -32,7 +32,6 @@ namespace MyPetClinic.Infrastructure.Repositories
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
         }
-
         public async Task CreatePetAsync(Pet pet)
         {
             _context.Pets.Add(pet);

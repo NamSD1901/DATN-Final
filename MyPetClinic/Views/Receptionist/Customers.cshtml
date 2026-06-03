@@ -154,7 +154,7 @@
                                     }
                                 </td>
                                 <td class="text-muted small">@(customer.Address ?? "—")</td>
-                                <td class="text-muted small">@customer.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                                <td class="text-muted small">@(customer.CreatedAt.HasValue ? customer.CreatedAt.Value.ToLocalTime().ToString("dd/MM/yyyy") : "—")</td>
                                 <td class="text-center">
                                     <a asp-action="CustomerDetail" asp-route-id="@customer.Id"
                                        class="btn btn-sm btn-outline-warning fw-bold rounded-pill">

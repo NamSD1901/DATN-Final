@@ -51,7 +51,6 @@ namespace MyPetClinic.Controllers
             var customers = string.IsNullOrWhiteSpace(search) 
                 ? await _customerService.GetAllCustomersAsync() 
                 : await _customerService.SearchCustomersAsync(search);
-                
             return View(customers);
         }
 
@@ -229,7 +228,7 @@ namespace MyPetClinic.Controllers
 
             var user = await _context.Users
                 .Include(u => u.Role)
-                .Where(u => u.Phone == phone.Trim() && u.IsActive)
+                .Where(u => u.Phone == phone.Trim() && u.IsActive == true)
                 .FirstOrDefaultAsync();
 
             if (user == null)

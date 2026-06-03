@@ -88,7 +88,7 @@ namespace MyPetClinic.Infrastructure.Services
             try
             {
                 // 1. Kiểm tra sđt đã tồn tại chưa
-                var customer = await _context.Users.FirstOrDefaultAsync(u => u.Phone == dto.CustomerPhone && u.IsActive);
+                var customer = await _context.Users.FirstOrDefaultAsync(u => u.Phone == dto.CustomerPhone && u.IsActive == true);
                 if (customer == null)
                 {
                     var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name.ToLower() == "customer");
