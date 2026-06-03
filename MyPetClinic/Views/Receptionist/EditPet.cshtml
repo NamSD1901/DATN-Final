@@ -90,7 +90,7 @@
             <div class="col-md-6 d-flex align-items-end">
                 <div class="form-check form-switch ms-2">
                     <input class="form-check-input" type="checkbox" name="Sterilized" value="true" id="sterilizedCheck"
-                           @(Model.Sterilized ? "checked" : "")>
+                           @(Model.Sterilized == true ? "checked" : "")>
                     <label class="form-check-label fw-semibold" for="sterilizedCheck">Đã triệt sản</label>
                 </div>
             </div>

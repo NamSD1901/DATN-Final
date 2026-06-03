@@ -91,7 +91,7 @@
                 </div>
                 <div class="col-md-3">
                     <div class="info-label">Tham gia</div>
-                    <div>@customer?.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                    <div>@(customer?.CreatedAt.HasValue == true ? customer.CreatedAt.Value.ToLocalTime().ToString("dd/MM/yyyy") : "—")</div>
                 </div>
                 <div class="col-md-3">
                     <div class="info-label">Số thú cưng</div>

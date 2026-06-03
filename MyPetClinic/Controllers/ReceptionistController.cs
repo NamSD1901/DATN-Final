@@ -30,7 +30,7 @@ namespace MyPetClinic.Controllers
                 return View(new List<User>());
 
             var query = _context.Users
-                .Where(u => u.RoleId == customerRole.Id && u.IsActive);
+                .Where(u => u.RoleId == customerRole.Id && u.IsActive == true);
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -218,7 +218,7 @@ namespace MyPetClinic.Controllers
 
             var user = await _context.Users
                 .Include(u => u.Role)
-                .Where(u => u.Phone == phone.Trim() && u.IsActive)
+                .Where(u => u.Phone == phone.Trim() && u.IsActive == true)
                 .FirstOrDefaultAsync();
 
             if (user == null)

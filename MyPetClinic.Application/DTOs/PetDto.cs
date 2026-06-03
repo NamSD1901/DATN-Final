@@ -14,9 +14,9 @@ namespace MyPetClinic.Application.DTOs
         public decimal? Weight { get; set; }
         public string? Color { get; set; }
         public string? BloodType { get; set; }
-        public bool Sterilized { get; set; }
+        public bool? Sterilized { get; set; }
         public string? MicrochipCode { get; set; }
         public string? AllergyNote { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
     }
 }

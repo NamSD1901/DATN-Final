@@ -47,9 +47,15 @@
             {
                 <div class="col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden">
-                        <div class="position-absolute top-0 end-0 p-3">
+                        <div class="position-absolute top-0 end-0 p-3 d-flex gap-2">
+                            <a asp-action="Details" asp-route-id="@pet.Id" class="btn btn-sm btn-light rounded-circle shadow-sm text-info" title="Xem chi tiết">
+                                <i class="bi bi-info-circle-fill"></i>
+                            </a>
                             <a asp-action="Edit" asp-route-id="@pet.Id" class="btn btn-sm btn-light rounded-circle shadow-sm text-primary" title="Sửa thông tin">
                                 <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@pet.Id" class="btn btn-sm btn-light rounded-circle shadow-sm text-danger" title="Xóa thú cưng">
+                                <i class="bi bi-trash-fill"></i>
                             </a>
                         </div>
                         <div class="card-body p-4 text-center">
@@ -84,7 +90,41 @@
                                 <li class="list-group-item px-0 border-0 py-1">
                                     <span class="text-muted"><i class="bi bi-calendar-heart me-2"></i>Tuổi:</span> 
                                     <span class="fw-medium float-end">
-                                        @(pet.BirthDate.HasValue ? (DateTime.Now.Year - pet.BirthDate.Value.Year).ToString() + " tuổi" : "Chưa cập nhật")
+                                        @{
+                                            string ageDisplay = "Chưa cập nhật";
+                                            if (pet.BirthDate.HasValue)
+                                            {
+                                                var now = DateTime.Now;
+                                                var birthDate = pet.BirthDate.Value;
+                                                int years = now.Year - birthDate.Year;
+                                                if (now.Month < birthDate.Month || (now.Month == birthDate.Month && now.Day < birthDate.Day))
+                                                {
+                                                    years--;
+                                                }
+                                                
+                                                if (years > 0)
+                                                {
+                                                    ageDisplay = years + " tuổi";
+                                                }
+                                                else
+                                                {
+                                                    int months = (now.Year - birthDate.Year) * 12 + now.Month - birthDate.Month;
+                                                    if (now.Day < birthDate.Day)
+                                                    {
+                                                        months--;
+                                                    }
+                                                    if (months > 0)
+                                                    {
+                                                        ageDisplay = months + " tháng";
+                                                    }
+                                                    else
+                                                    {
+                                                        ageDisplay = "Dưới 1 tháng";
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        @ageDisplay
                                     </span>
                                 </li>
                                 <li class="list-group-item px-0 border-0 py-1">
@@ -94,8 +134,8 @@
                             </ul>
                         </div>
                         <div class="card-footer bg-transparent border-top-0 p-3 text-center">
-                            <span class="badge @(pet.Sterilized ? "bg-success" : "bg-secondary") rounded-pill">
-                                @(pet.Sterilized ? "Đã triệt sản" : "Chưa triệt sản")
+                            <span class="badge @(pet.Sterilized == true ? "bg-success" : "bg-secondary") rounded-pill">
+                                @(pet.Sterilized == true ? "Đã triệt sản" : "Chưa triệt sản")
                             </span>
                         </div>
                     </div>

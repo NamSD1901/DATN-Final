@@ -97,7 +97,7 @@ namespace MyPetClinic.Controllers
                     Weight = pet.Weight,
                     Color = pet.Color,
                     BloodType = pet.BloodType,
-                    Sterilized = pet.Sterilized,
+                    Sterilized = pet.Sterilized ?? false,
                     MicrochipCode = pet.MicrochipCode,
                     AllergyNote = pet.AllergyNote
                 };
@@ -131,6 +131,66 @@ namespace MyPetClinic.Controllers
             {
                 TempData["ErrorMessage"] = "Lỗi khi cập nhật thú cưng: " + ex.Message;
                 return View(dto);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(long id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var pet = await _petService.GetPetByIdAsync(id, userId);
+                if (pet == null)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy thú cưng.";
+                    return RedirectToAction(nameof(Index));
+                }
+                return View(pet);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Delete(long id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var pet = await _petService.GetPetByIdAsync(id, userId);
+                if (pet == null)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy thú cưng.";
+                    return RedirectToAction(nameof(Index));
+                }
+                return View(pet);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(long id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                await _petService.DeletePetAsync(id, userId);
+                TempData["SuccessMessage"] = "Đã xóa thú cưng thành công.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi khi xóa thú cưng: " + ex.Message;
+                return RedirectToAction(nameof(Index));
             }
         }
     }

@@ -15,10 +15,10 @@ namespace MyPetClinic.Domain.Entities
         public decimal? Weight { get; set; }
         public string? Color { get; set; }
         public string? BloodType { get; set; }
-        public bool Sterilized { get; set; } = false;
+        public bool? Sterilized { get; set; } = false;
         public string? MicrochipCode { get; set; }
         public string? AllergyNote { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
 
         public User? Owner { get; set; }
         public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
