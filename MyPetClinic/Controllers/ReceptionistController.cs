@@ -69,7 +69,7 @@ namespace MyPetClinic.Controllers
 
             var doctors = await _context.Users
                 .Include(u => u.Role)
-                .Where(u => u.Role != null && u.Role.Name == "Doctor" && u.IsActive && u.DeletedAt == null)
+                .Where(u => u.Role != null && u.Role.Name == "Doctor" && u.IsActive == true && u.DeletedAt == null)
                 .ToListAsync();
                 
             var services = await _context.Services
@@ -318,7 +318,7 @@ namespace MyPetClinic.Controllers
         {
             var doctors = await _context.Users
                 .Include(u => u.Role)
-                .Where(u => u.IsActive && u.Role != null && u.Role.Name == "Doctor")
+                .Where(u => u.IsActive == true && u.Role != null && u.Role.Name == "Doctor")
                 .Select(u => new { u.Id, u.FullName })
                 .ToListAsync();
             return Json(doctors);
@@ -330,7 +330,7 @@ namespace MyPetClinic.Controllers
             if (string.IsNullOrWhiteSpace(phone)) return Json(new { success = false });
 
             var customer = await _context.Users
-                .FirstOrDefaultAsync(u => u.Phone == phone && u.IsActive);
+                .FirstOrDefaultAsync(u => u.Phone == phone && u.IsActive == true);
             
             if (customer == null) return Json(new { success = false });
 
