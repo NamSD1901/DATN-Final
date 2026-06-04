@@ -1,0 +1,97 @@
+@model IEnumerable<MyPetClinic.Domain.Entities.Appointment>
+
+@{
+    ViewData["Title"] = "Danh Sách Ca Khám";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary"><i class="fas fa-list"></i> Danh Sách Ca Khám</h2>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại Dashboard
+        </a>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>STT</th>
+                                <th>Tên người đặt lịch</th>
+                                <th>Giống/Loài thú cưng</th>
+                                <th>Ngày giờ khám</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                int index = 1;
+                            }
+                            @foreach (var item in Model.OrderByDescending(a => a.AppointmentDate).ThenBy(a => a.StartTime))
+                            {
+                                <tr>
+                                    <td>@index</td>
+                                    <td>@(item.Customer?.FullName ?? "Unknown")</td>
+                                    <td>
+                                        @(item.Pet?.Species ?? "Unknown")
+                                        @if (!string.IsNullOrEmpty(item.Pet?.Breed))
+                                        {
+                                            <span class="text-muted">(@item.Pet.Breed)</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @item.AppointmentDate.ToString("dd/MM/yyyy") 
+                                        <strong>@item.StartTime.ToString(@"hh\:mm")</strong>
+                                    </td>
+                                    <td>
+                                        @if (item.Status?.ToLower() == "pending")
+                                        {
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> Đang chờ</span>
+                                        }
+                                        else if (item.Status?.ToLower() == "confirmed")
+                                        {
+                                            <span class="badge bg-info text-dark"><i class="bi bi-check-circle"></i> Đã tiếp nhận</span>
+                                        }
+                                        else if (item.Status?.ToLower() == "completed")
+                                        {
+                                            <span class="badge bg-success"><i class="bi bi-check2-all"></i> Đã hoàn thành</span>
+                                        }
+                                        else if (item.Status?.ToLower() == "cancelled")
+                                        {
+                                            if (item.CancelledByRole?.ToLower() == "customer")
+                                            {
+                                                <span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Khách hàng hủy</span>
+                                            }
+                                            else if (item.CancelledByRole?.ToLower() == "doctor")
+                                            {
+                                                <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Bác sĩ hủy</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-dark"><i class="bi bi-x-circle"></i> Đã hủy</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-light text-dark">@item.Status</span>
+                                        }
+                                    </td>
+                                </tr>
+                                index++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-light border text-center text-muted">Không có ca khám nào.</div>
+    }
+</div>

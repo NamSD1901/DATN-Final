@@ -2,74 +2,283 @@
 
 @{
     ViewData["Title"] = "Lịch Khám Hôm Nay";
+    var pendingAppointments = Model?.Where(a => a.Status.ToLower() == "pending").ToList() ?? new List<MyPetClinic.Domain.Entities.Appointment>();
+    var acceptedAppointments = Model?.Where(a => a.Status.ToLower() == "confirmed" || a.Status.ToLower() == "completed").ToList() ?? new List<MyPetClinic.Domain.Entities.Appointment>();
+    var cancelledAppointments = Model?.Where(a => a.Status.ToLower() == "cancelled").ToList() ?? new List<MyPetClinic.Domain.Entities.Appointment>();
 }
 
 <div class="container mt-4">
     <h2 class="mb-4 text-primary"><i class="fas fa-calendar-alt"></i> Lịch Khám & Chăm Sóc Thú Cưng Thú Y</h2>
     <p>Hôm nay: @DateTime.Now.ToString("dd/MM/yyyy")</p>
 
-    @if (Model != null && Model.Any())
+    @if (TempData["SuccessMessage"] != null)
     {
-        <div class="table-responsive">
-            <table class="table table-hover table-bordered align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Giờ Khám</th>
-                        <th>Khách Hàng</th>
-                        <th>Thú Cưng</th>
-                        <th>Lý Do / Triệu Chứng</th>
-                        <th>Trạng Thái</th>
-                        <th>Hành Động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
-                        <tr>
-                            <td>@item.StartTime.ToString(@"hh\:mm")</td>
-                            <td>@(item.Customer?.FullName ?? "Unknown")</td>
-                            <td>@(item.Pet?.Name ?? "Unknown")</td>
-                            <td>@item.Symptom</td>
-                            <td>
-                                @if(item.Status.ToLower() == "pending") {
-                                    <span class="badge bg-warning text-dark">Chờ Khám</span>
-                                } else if (item.Status.ToLower() == "confirmed") {
-                                    <span class="badge bg-info text-dark">Đã Xác Nhận</span>
-                                } else if (item.Status.ToLower() == "completed") {
-                                    <span class="badge bg-success">Đã Hoàn Thành</span>
-                                } else {
-                                    <span class="badge bg-secondary">@item.Status</span>
-                                }
-                            </td>
-                            <td>
-                                @if (item.Status.ToLower() == "pending")
-                                {
-                                    <form asp-action="UpdateStatus" method="post" style="display:inline;">
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <input type="hidden" name="status" value="confirmed" />
-                                        <button type="submit" class="btn btn-sm btn-primary">Xác Nhận (Tiếp nhận)</button>
-                                    </form>
-                                }
-                                else if (item.Status.ToLower() == "confirmed")
-                                {
-                                    <form asp-action="UpdateStatus" method="post" style="display:inline;">
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <input type="hidden" name="status" value="completed" />
-                                        <button type="submit" class="btn btn-sm btn-success">Hoàn Thành</button>
-                                    </form>
-                                }
-                                <a href="#" class="btn btn-sm btn-outline-info">Hồ Sơ</a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-    else
-    {
-        <div class="alert alert-info">
-            Bạn không có lịch khám nào trong hôm nay!
+
+    <!-- Tabs Navs -->
+    <ul class="nav nav-tabs mb-3" id="appointmentTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold text-warning" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="true">
+                <i class="bi bi-hourglass-split"></i> Ca khám đang chờ (@pendingAppointments.Count)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-success" id="accepted-tab" data-bs-toggle="tab" data-bs-target="#accepted" type="button" role="tab" aria-controls="accepted" aria-selected="false">
+                <i class="bi bi-check-circle"></i> Ca khám đã tiếp nhận (@acceptedAppointments.Count)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-danger" id="cancelled-tab" data-bs-toggle="tab" data-bs-target="#cancelled" type="button" role="tab" aria-controls="cancelled" aria-selected="false">
+                <i class="bi bi-x-circle"></i> Ca khám đã hủy (@cancelledAppointments.Count)
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tabs Content -->
+    <div class="tab-content" id="appointmentTabsContent">
+        
+        <!-- Tab: Đang chờ -->
+        <div class="tab-pane fade show active" id="pending" role="tabpanel" aria-labelledby="pending-tab">
+            @if (pendingAppointments.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Giờ Khám</th>
+                                <th>Khách Hàng</th>
+                                <th>Thú Cưng</th>
+                                <th>Lý Do / Triệu Chứng</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in pendingAppointments)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@item.StartTime.ToString(@"hh\:mm")</td>
+                                    <td>@(item.Customer?.FullName ?? "Unknown")</td>
+                                    <td>@(item.Pet?.Name ?? "Unknown")</td>
+                                    <td>@item.Symptom</td>
+                                    <td>
+                                        <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="status" value="confirmed" />
+                                            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-check-lg"></i> Tiếp nhận</button>
+                                        </form>
+                                        <button type="button" class="btn btn-sm btn-outline-danger ms-1" onclick="openCancelModal(@item.Id, '@(item.Customer?.FullName)', '@(item.Pet?.Name)', '@item.StartTime.ToString(@"hh\:mm")')">
+                                            <i class="bi bi-x-lg"></i> Hủy lịch
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-light border border-warning text-center text-muted">Không có ca khám nào đang chờ.</div>
+            }
         </div>
-    }
+
+        <!-- Tab: Đã tiếp nhận -->
+        <div class="tab-pane fade" id="accepted" role="tabpanel" aria-labelledby="accepted-tab">
+            @if (acceptedAppointments.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Giờ Khám</th>
+                                <th>Khách Hàng</th>
+                                <th>Thú Cưng</th>
+                                <th>Triệu Chứng</th>
+                                <th>Trạng Thái</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in acceptedAppointments)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@item.StartTime.ToString(@"hh\:mm")</td>
+                                    <td>@(item.Customer?.FullName ?? "Unknown")</td>
+                                    <td>@(item.Pet?.Name ?? "Unknown")</td>
+                                    <td>@item.Symptom</td>
+                                    <td>
+                                        @if(item.Status.ToLower() == "confirmed") {
+                                            <span class="badge bg-info text-dark">Đã Xác Nhận</span>
+                                        } else if (item.Status.ToLower() == "completed") {
+                                            <span class="badge bg-success">Đã Hoàn Thành</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.Status.ToLower() == "confirmed")
+                                        {
+                                            <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                                <input type="hidden" name="id" value="@item.Id" />
+                                                <input type="hidden" name="status" value="completed" />
+                                                <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check2-all"></i> Hoàn Thành</button>
+                                            </form>
+                                            <button type="button" class="btn btn-sm btn-outline-danger ms-1" onclick="openCancelModal(@item.Id, '@(item.Customer?.FullName)', '@(item.Pet?.Name)', '@item.StartTime.ToString(@"hh\:mm")')">
+                                                <i class="bi bi-x-lg"></i> Hủy lịch
+                                            </button>
+                                        }
+                                        <a href="#" class="btn btn-sm btn-outline-info ms-1"><i class="bi bi-journal-medical"></i> Hồ Sơ</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-light border border-success text-center text-muted">Chưa có ca khám nào được tiếp nhận.</div>
+            }
+        </div>
+
+        <!-- Tab: Đã hủy -->
+        <div class="tab-pane fade" id="cancelled" role="tabpanel" aria-labelledby="cancelled-tab">
+            @if (cancelledAppointments.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Giờ Khám (Dự kiến)</th>
+                                <th>Khách Hàng</th>
+                                <th>Thú Cưng</th>
+                                <th>Người Hủy</th>
+                                <th>Lý Do Hủy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in cancelledAppointments)
+                            {
+                                <tr>
+                                    <td class="text-muted">@item.StartTime.ToString(@"hh\:mm")</td>
+                                    <td class="text-muted">@(item.Customer?.FullName ?? "Unknown")</td>
+                                    <td class="text-muted">@(item.Pet?.Name ?? "Unknown")</td>
+                                    <td>
+                                        @if(item.CancelledByRole?.ToLower() == "doctor") {
+                                            <span class="badge bg-danger">Bác sĩ hủy</span>
+                                        } else if(item.CancelledByRole?.ToLower() == "customer") {
+                                            <span class="badge bg-secondary">Khách hủy</span>
+                                        } else {
+                                            <span class="badge bg-dark">@item.CancelledByRole</span>
+                                        }
+                                    </td>
+                                    <td class="text-danger fst-italic">@item.CancellationReason</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-light border border-danger text-center text-muted">Không có ca khám nào bị hủy.</div>
+            }
+        </div>
+
+    </div>
 </div>
+
+<!-- Modal Hủy Lịch -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="CancelAppointment" method="post">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="cancelModalLabel"><i class="bi bi-exclamation-triangle-fill"></i> Xác nhận hủy lịch khám</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bạn đang hủy ca khám lúc <strong id="modalTime"></strong> của thú cưng <strong id="modalPet"></strong> (Khách: <strong id="modalCustomer"></strong>).</p>
+                    
+                    <input type="hidden" name="id" id="modalAppointmentId" />
+                    
+                    <div class="mb-3">
+                        <label for="cancelReasonSelect" class="form-label fw-bold">Chọn lý do hủy *</label>
+                        <select class="form-select" id="cancelReasonSelect" name="reason" onchange="toggleCustomReason()" required>
+                            <option value="" disabled selected>-- Chọn lý do --</option>
+                            <option value="Bác sĩ có việc đột xuất">Bác sĩ có việc đột xuất</option>
+                            <option value="Thiết bị y tế gặp sự cố">Thiết bị y tế gặp sự cố</option>
+                            <option value="Thú cưng không đủ điều kiện khám">Thú cưng không đủ điều kiện khám</option>
+                            <option value="Khách hàng không đến">Khách hàng không đến</option>
+                            <option value="other">Lý do khác...</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3 d-none" id="customReasonDiv">
+                        <label for="customReasonInput" class="form-label">Nhập lý do cụ thể *</label>
+                        <textarea class="form-control" id="customReasonInput" rows="3" placeholder="Nhập lý do hủy..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger" onclick="submitCancelForm(event)">Xác nhận Hủy</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openCancelModal(id, customer, pet, time) {
+            document.getElementById('modalAppointmentId').value = id;
+            document.getElementById('modalCustomer').innerText = customer;
+            document.getElementById('modalPet').innerText = pet;
+            document.getElementById('modalTime').innerText = time;
+            
+            // Reset form
+            document.getElementById('cancelReasonSelect').value = "";
+            document.getElementById('customReasonDiv').classList.add('d-none');
+            document.getElementById('customReasonInput').value = "";
+
+            var myModal = new bootstrap.Modal(document.getElementById('cancelModal'));
+            myModal.show();
+        }
+
+        function toggleCustomReason() {
+            var select = document.getElementById('cancelReasonSelect');
+            var customDiv = document.getElementById('customReasonDiv');
+            var customInput = document.getElementById('customReasonInput');
+            
+            if (select.value === "other") {
+                customDiv.classList.remove('d-none');
+                customInput.setAttribute("required", "required");
+                select.removeAttribute("name"); // We will submit the custom input
+                customInput.setAttribute("name", "reason");
+            } else {
+                customDiv.classList.add('d-none');
+                customInput.removeAttribute("required");
+                customInput.removeAttribute("name");
+                select.setAttribute("name", "reason");
+            }
+        }
+
+        function submitCancelForm(event) {
+            var select = document.getElementById('cancelReasonSelect');
+            var customInput = document.getElementById('customReasonInput');
+
+            if (select.value === "") {
+                event.preventDefault();
+                alert("Vui lòng chọn lý do hủy.");
+                return;
+            }
+            if (select.value === "other" && customInput.value.trim() === "") {
+                event.preventDefault();
+                alert("Vui lòng nhập lý do cụ thể.");
+                return;
+            }
+        }
+    </script>
+}

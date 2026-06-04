@@ -33,5 +33,19 @@ namespace MyPetClinic.Infrastructure.Services
             await _appointmentRepository.UpdateAsync(appointment);
             return true;
         }
+        public async Task<bool> CancelAppointmentAsync(long appointmentId, string reason, string cancelledByRole)
+        {
+            var appointment = await _appointmentRepository.GetByIdAsync(appointmentId);
+            if (appointment == null)
+            {
+                return false;
+            }
+
+            appointment.Status = "cancelled";
+            appointment.CancellationReason = reason;
+            appointment.CancelledByRole = cancelledByRole;
+            await _appointmentRepository.UpdateAsync(appointment);
+            return true;
+        }
     }
 }

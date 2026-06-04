@@ -14,6 +14,8 @@ namespace MyPetClinic.Domain.Entities
         public string Status { get; set; } = "pending";
         public string? Symptom { get; set; }
         public string? Note { get; set; }
+        public string? CancellationReason { get; set; }
+        public string? CancelledByRole { get; set; }
         public Guid? CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

@@ -142,6 +142,8 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.Status).HasColumnName("status").HasDefaultValue("pending").HasMaxLength(50);
                 entity.Property(e => e.Symptom).HasColumnName("symptom");
                 entity.Property(e => e.Note).HasColumnName("note");
+                entity.Property(e => e.CancellationReason).HasColumnName("cancellation_reason");
+                entity.Property(e => e.CancelledByRole).HasColumnName("cancelled_by_role").HasMaxLength(50);
                 entity.Property(e => e.CreatedBy).HasColumnName("created_by");
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
 
