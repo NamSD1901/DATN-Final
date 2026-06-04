@@ -4,7 +4,7 @@ using MyPetClinic.Domain.Entities;
 using System;
 using System.Threading.Tasks;
 
-namespace MyPetClinic.Application.Services
+namespace MyPetClinic.Infrastructure.Services
 {
     public class GoogleAuthService : IGoogleAuthService
     {

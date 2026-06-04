@@ -14,6 +14,7 @@ namespace MyPetClinic.Application.Interfaces.Repositories
         Task<IEnumerable<User>> GetUsersByRoleAsync(long roleId);
         Task<IEnumerable<User>> SearchUsersAsync(string keyword, long? roleId = null);
         Task SoftDeleteUserAsync(Guid id);
+        Task HardDeleteUserAsync(User user);
         Task SaveChangesAsync();
     }
 }

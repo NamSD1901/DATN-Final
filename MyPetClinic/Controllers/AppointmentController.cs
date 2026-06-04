@@ -66,103 +66,34 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetServices([FromServices] MyPetClinic.Infrastructure.Persistence.ApplicationDbContext context)
+        public async Task<IActionResult> GetServices()
         {
-            var services = await context.Services.OrderBy(s => s.Name).ToListAsync();
+            var services = await _appointmentService.GetServicesAsync();
             return Json(services);
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAppointmentStats([FromServices] MyPetClinic.Infrastructure.Persistence.ApplicationDbContext context)
+        public async Task<IActionResult> GetAppointmentStats()
         {
-            var today = DateTime.UtcNow.Date;
-            var todayAppointments = await context.Appointments
-                .Where(a => a.AppointmentDate.Date == today)
-                .ToListAsync();
-
-            var total = todayAppointments.Count;
-            var pending = todayAppointments.Count(a => a.Status == "pending");
-            var confirmed = todayAppointments.Count(a => a.Status == "confirmed");
-            var waiting = todayAppointments.Count(a => a.Status == "waiting");
-            var inProgress = todayAppointments.Count(a => a.Status == "in_progress");
-            var completed = todayAppointments.Count(a => a.Status == "completed" || a.Status == "ready_to_pay");
-            var cancelled = todayAppointments.Count(a => a.Status == "cancelled");
-
-            return Json(new { total, pending, confirmed, waiting, inProgress, completed, cancelled });
+            var stats = await _appointmentService.GetAppointmentStatsAsync();
+            return Json(stats);
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetPendingAppointments([FromServices] MyPetClinic.Infrastructure.Persistence.ApplicationDbContext context)
+        public async Task<IActionResult> GetPendingAppointments()
         {
-            var pendingAppointments = await context.Appointments
-                .Include(a => a.Pet)
-                .Include(a => a.Customer)
-                .Include(a => a.Doctor)
-                .Include(a => a.Service)
-                .Where(a => a.Status == "pending")
-                .OrderBy(a => a.AppointmentDate)
-                .ToListAsync();
-
-            var result = pendingAppointments.Select(a => new
-            {
-                id = a.Id,
-                petId = a.PetId,
-                petName = a.Pet?.Name,
-                species = a.Pet?.Species,
-                breed = a.Pet?.Breed,
-                weight = a.Pet?.Weight,
-                isAggressive = a.Pet?.IsAggressive ?? false,
-                customerId = a.CustomerId,
-                customerName = a.Customer?.FullName,
-                customerPhone = a.Customer?.Phone,
-                serviceId = a.ServiceId,
-                serviceName = a.Service?.Name,
-                servicePrice = a.Service?.Price ?? 0,
-                doctorId = a.DoctorId,
-                doctorName = a.Doctor?.FullName,
-                appointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss") + "Z",
-                symptom = a.Symptom,
-                note = a.Note,
-                qrToken = a.QrToken
-            });
-
-            return Json(result);
+            var pendingAppointments = await _appointmentService.GetPendingAppointmentsAsync();
+            return Json(pendingAppointments);
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetDetail(long id, [FromServices] MyPetClinic.Infrastructure.Persistence.ApplicationDbContext context)
+        public async Task<IActionResult> GetDetail(long id)
         {
-            var appt = await context.Appointments
-                .Include(a => a.Pet)
-                .Include(a => a.Customer)
-                .Include(a => a.Doctor)
-                .Include(a => a.Service)
-                .FirstOrDefaultAsync(a => a.Id == id);
+            var appt = await _appointmentService.GetAppointmentDetailAsync(id);
                 
             if (appt == null) return NotFound();
             
-            return Json(new {
-                id = appt.Id,
-                petId = appt.PetId,
-                petName = appt.Pet?.Name,
-                species = appt.Pet?.Species,
-                breed = appt.Pet?.Breed,
-                weight = appt.Pet?.Weight,
-                isAggressive = appt.Pet?.IsAggressive ?? false,
-                customerId = appt.CustomerId,
-                customerName = appt.Customer?.FullName,
-                customerPhone = appt.Customer?.Phone,
-                serviceId = appt.ServiceId,
-                serviceName = appt.Service?.Name,
-                servicePrice = appt.Service?.Price ?? 0,
-                doctorId = appt.DoctorId,
-                doctorName = appt.Doctor?.FullName,
-                appointmentDate = appt.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss") + "Z",
-                symptom = appt.Symptom,
-                note = appt.Note,
-                status = appt.Status,
-                qrToken = appt.QrToken
-            });
+            return Json(appt);
         }
 
         [HttpPost]

@@ -3,6 +3,7 @@ using MyPetClinic.Application.Interfaces.Repositories;
 using MyPetClinic.Application.Interfaces;
 using MyPetClinic.Application.Interfaces.Services;
 using MyPetClinic.Application.Services;
+using MyPetClinic.Application.Services;
 using MyPetClinic.Infrastructure.Repositories;
 using MyPetClinic.Infrastructure.Services;
 
@@ -12,11 +13,16 @@ namespace MyPetClinic.Infrastructure
     {
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
         {
+            // Register Generic Repository & Unit of Work
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IPetRepository, PetRepository>();
             services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IAppointmentService, AppointmentService>();
             services.AddScoped<IReceptionistService, ReceptionistService>();

@@ -93,7 +93,14 @@ namespace MyPetClinic.Infrastructure.Repositories
                 user.DeletedAt = System.DateTime.UtcNow;
                 user.IsActive = false; // Tùy logic, nếu đã xóa thì deactive luôn
                 _context.Users.Update(user);
+                await _context.SaveChangesAsync();
             }
+        }
+
+        public Task HardDeleteUserAsync(User user)
+        {
+            _context.Users.Remove(user);
+            return Task.CompletedTask;
         }
 
         public async Task SaveChangesAsync()

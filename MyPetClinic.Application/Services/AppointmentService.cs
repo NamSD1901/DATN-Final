@@ -2,23 +2,19 @@ using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Repositories;
 using MyPetClinic.Application.Interfaces.Services;
 using MyPetClinic.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MyPetClinic.Infrastructure.Services
+namespace MyPetClinic.Application.Services
 {
     public class AppointmentService : IAppointmentService
     {
-        private readonly IAppointmentRepository _appointmentRepository;
-        // DbContext is needed for advanced queries, better to inject DbContext here since AppointmentRepository is simple
-        private readonly MyPetClinic.Infrastructure.Persistence.ApplicationDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public AppointmentService(IAppointmentRepository appointmentRepository, MyPetClinic.Infrastructure.Persistence.ApplicationDbContext context)
+        public AppointmentService(IUnitOfWork unitOfWork)
         {
-            _appointmentRepository = appointmentRepository;
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<long> CreateAppointmentAsync(AppointmentCreateDto dto, Guid createdBy)
@@ -28,7 +24,7 @@ namespace MyPetClinic.Infrastructure.Services
                 : DateTime.UtcNow;
 
             // Chặn đặt lịch nếu Bác sĩ đã có lịch trong khoảng +/- 30 phút
-            var isDoubleBooked = await _context.Appointments
+            var isDoubleBooked = await _unitOfWork.Appointments
                 .AnyAsync(a => a.DoctorId == dto.DoctorId 
                             && a.Status != "cancelled"
                             && a.AppointmentDate >= appointmentDate.AddMinutes(-30) 
@@ -60,8 +56,8 @@ namespace MyPetClinic.Infrastructure.Services
                 appointment.Status = "pending"; 
             }
 
-            await _appointmentRepository.CreateAppointmentAsync(appointment);
-            await _appointmentRepository.SaveChangesAsync();
+            await _unitOfWork.Appointments.AddAsync(appointment);
+            await _unitOfWork.SaveChangesAsync();
 
             return appointment.Id;
         }
@@ -73,7 +69,7 @@ namespace MyPetClinic.Infrastructure.Services
                 : DateTime.UtcNow;
 
             // Kiểm tra trùng lịch
-            var isDoubleBooked = await _context.Appointments
+            var isDoubleBooked = await _unitOfWork.Appointments
                 .AnyAsync(a => a.DoctorId == dto.DoctorId 
                             && a.Status != "cancelled"
                             && a.AppointmentDate >= appointmentDate.AddMinutes(-30) 
@@ -84,14 +80,17 @@ namespace MyPetClinic.Infrastructure.Services
                 throw new InvalidOperationException("Bác sĩ đã có lịch hẹn trong khoảng thời gian này.");
             }
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            await _unitOfWork.BeginTransactionAsync();
             try
             {
                 // 1. Kiểm tra sđt đã tồn tại chưa
-                var customer = await _context.Users.FirstOrDefaultAsync(u => u.Phone == dto.CustomerPhone && u.IsActive == true);
+                var customers = await _unitOfWork.Users.FindAsync(u => u.Phone == dto.CustomerPhone && u.IsActive == true);
+                var customer = customers.FirstOrDefault();
+
                 if (customer == null)
                 {
-                    var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name.ToLower() == "customer");
+                    var roles = await _unitOfWork.Roles.FindAsync(r => r.Name.ToLower() == "customer");
+                    var role = roles.FirstOrDefault();
                     customer = new User
                     {
                         Id = Guid.NewGuid(),
@@ -102,8 +101,8 @@ namespace MyPetClinic.Infrastructure.Services
                         CreatedAt = DateTime.UtcNow,
                         IsActive = true
                     };
-                    _context.Users.Add(customer);
-                    await _context.SaveChangesAsync();
+                    await _unitOfWork.Users.AddAsync(customer);
+                    await _unitOfWork.SaveChangesAsync();
                 }
 
                 // 2. Tạo Pet mới
@@ -115,8 +114,8 @@ namespace MyPetClinic.Infrastructure.Services
                     Weight = (decimal?)dto.PetWeight,
                     CreatedAt = DateTime.UtcNow
                 };
-                _context.Pets.Add(pet);
-                await _context.SaveChangesAsync();
+                await _unitOfWork.Pets.AddAsync(pet);
+                await _unitOfWork.SaveChangesAsync();
 
                 // 3. Tạo Lịch hẹn
                 var appointment = new Appointment
@@ -139,34 +138,35 @@ namespace MyPetClinic.Infrastructure.Services
                     appointment.Status = "pending"; 
                 }
 
-                _context.Appointments.Add(appointment);
-                await _context.SaveChangesAsync();
+                await _unitOfWork.Appointments.AddAsync(appointment);
+                await _unitOfWork.SaveChangesAsync();
 
-                await transaction.CommitAsync();
+                await _unitOfWork.CommitTransactionAsync();
                 return appointment.Id;
             }
             catch
             {
-                await transaction.RollbackAsync();
+                await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
         }
 
         public async Task<System.Collections.Generic.IEnumerable<CalendarEventDto>> GetCalendarEventsAsync(DateTime start, DateTime end, Guid? doctorId)
         {
-            var query = _context.Appointments
-                .Include(a => a.Pet)
-                .Include(a => a.Customer)
-                .Include(a => a.Doctor)
-                .Include(a => a.Service)
-                .Where(a => a.AppointmentDate >= start && a.AppointmentDate <= end);
-
+            System.Linq.Expressions.Expression<Func<Appointment, bool>> predicate;
             if (doctorId.HasValue)
             {
-                query = query.Where(a => a.DoctorId == doctorId.Value);
+                predicate = a => a.AppointmentDate >= start && a.AppointmentDate <= end && a.DoctorId == doctorId.Value;
+            }
+            else
+            {
+                predicate = a => a.AppointmentDate >= start && a.AppointmentDate <= end;
             }
 
-            var appointments = await query.ToListAsync();
+            var appointments = await _unitOfWork.Appointments.FindWithIncludesAsync(
+                predicate,
+                a => a.Pet!, a => a.Customer!, a => a.Doctor!, a => a.Service!
+            );
 
             var events = new System.Collections.Generic.List<CalendarEventDto>();
             foreach (var a in appointments)
@@ -220,7 +220,8 @@ namespace MyPetClinic.Infrastructure.Services
 
         public async Task<bool> UpdateAppointmentStatusAsync(long id, string status)
         {
-            var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == id);
+            var appointments = await _unitOfWork.Appointments.FindAsync(a => a.Id == id);
+            var appointment = appointments.FirstOrDefault();
             if (appointment == null) return false;
 
             // Kiểm tra tính hợp lệ của việc chuyển đổi trạng thái (State Machine)
@@ -243,15 +244,15 @@ namespace MyPetClinic.Infrastructure.Services
             if (newStatus == "waiting" && appointment.QueueNumber == 0)
             {
                 var today = DateTime.UtcNow.Date;
-                var lastQueue = await _context.Appointments
-                    .Where(x => x.AppointmentDate.Date == today && x.QueueNumber > 0)
-                    .MaxAsync(x => (int?)x.QueueNumber) ?? 0;
+                var todayAppointments = await _unitOfWork.Appointments.FindAsync(x => x.AppointmentDate.Date == today && x.QueueNumber > 0);
+                var lastQueue = todayAppointments.Any() ? todayAppointments.Max(x => (int?)x.QueueNumber) ?? 0 : 0;
                 
                 appointment.QueueNumber = lastQueue + 1;
                 appointment.CheckInTime = DateTime.UtcNow;
             }
 
-            await _context.SaveChangesAsync();
+            _unitOfWork.Appointments.Update(appointment);
+            await _unitOfWork.SaveChangesAsync();
             return true;
         }
 
@@ -263,11 +264,12 @@ namespace MyPetClinic.Infrastructure.Services
                 throw new InvalidOperationException("Không thể dời lịch về quá khứ.");
             }
 
-            var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == id);
+            var appointments = await _unitOfWork.Appointments.FindAsync(a => a.Id == id);
+            var appointment = appointments.FirstOrDefault();
             if (appointment == null) return false;
 
             // Kiểm tra double booking
-            var isDoubleBooked = await _context.Appointments
+            var isDoubleBooked = await _unitOfWork.Appointments
                 .AnyAsync(a => a.DoctorId == appointment.DoctorId 
                             && a.Id != id // Không tính chính nó
                             && a.Status != "cancelled"
@@ -280,8 +282,105 @@ namespace MyPetClinic.Infrastructure.Services
             }
 
             appointment.AppointmentDate = newDate;
-            await _context.SaveChangesAsync();
+            _unitOfWork.Appointments.Update(appointment);
+            await _unitOfWork.SaveChangesAsync();
             return true;
+        }
+        public async Task<IEnumerable<ServiceDto>> GetServicesAsync()
+        {
+            var services = await _unitOfWork.Services.GetAllAsync();
+            return services
+                .OrderBy(s => s.Name)
+                .Select(s => new ServiceDto
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    Price = s.Price
+                });
+        }
+
+        public async Task<AppointmentStatsDto> GetAppointmentStatsAsync()
+        {
+            var today = DateTime.UtcNow.Date;
+            var todayAppointmentsList = await _unitOfWork.Appointments.FindAsync(a => a.AppointmentDate.Date == today);
+            var todayAppointments = todayAppointmentsList.ToList();
+
+            return new AppointmentStatsDto
+            {
+                Total = todayAppointments.Count,
+                Pending = todayAppointments.Count(a => a.Status == "pending"),
+                Confirmed = todayAppointments.Count(a => a.Status == "confirmed"),
+                Waiting = todayAppointments.Count(a => a.Status == "waiting"),
+                InProgress = todayAppointments.Count(a => a.Status == "in_progress"),
+                Completed = todayAppointments.Count(a => a.Status == "completed" || a.Status == "ready_to_pay"),
+                Cancelled = todayAppointments.Count(a => a.Status == "cancelled")
+            };
+        }
+
+        public async Task<IEnumerable<AppointmentDetailDto>> GetPendingAppointmentsAsync()
+        {
+            var pendingAppointmentsList = await _unitOfWork.Appointments.FindWithIncludesAsync(
+                a => a.Status == "pending",
+                a => a.Pet!, a => a.Customer!, a => a.Doctor!, a => a.Service!);
+                
+            var pendingAppointments = pendingAppointmentsList.OrderBy(a => a.AppointmentDate).ToList();
+
+            return pendingAppointments.Select(a => new AppointmentDetailDto
+            {
+                Id = a.Id,
+                PetId = a.PetId,
+                PetName = a.Pet?.Name,
+                Species = a.Pet?.Species,
+                Breed = a.Pet?.Breed,
+                Weight = a.Pet?.Weight,
+                IsAggressive = a.Pet?.IsAggressive ?? false,
+                CustomerId = a.CustomerId,
+                CustomerName = a.Customer?.FullName,
+                CustomerPhone = a.Customer?.Phone,
+                ServiceId = a.ServiceId,
+                ServiceName = a.Service?.Name,
+                ServicePrice = a.Service?.Price,
+                DoctorId = a.DoctorId,
+                DoctorName = a.Doctor?.FullName,
+                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss") + "Z",
+                Symptom = a.Symptom,
+                Note = a.Note,
+                QrToken = a.QrToken
+            });
+        }
+
+        public async Task<AppointmentDetailDto?> GetAppointmentDetailAsync(long id)
+        {
+            var appt = await _unitOfWork.Appointments.GetFirstOrDefaultWithIncludesAsync(
+                a => a.Id == id,
+                a => a.Pet!, a => a.Customer!, a => a.Doctor!, a => a.Service!);
+                
+            if (appt == null) return null;
+            
+            return new AppointmentDetailDto
+            {
+                Id = appt.Id,
+                PetId = appt.PetId,
+                PetName = appt.Pet?.Name,
+                Species = appt.Pet?.Species,
+                Breed = appt.Pet?.Breed,
+                Weight = appt.Pet?.Weight,
+                IsAggressive = appt.Pet?.IsAggressive ?? false,
+                CustomerId = appt.CustomerId,
+                CustomerName = appt.Customer?.FullName,
+                CustomerPhone = appt.Customer?.Phone,
+                ServiceId = appt.ServiceId,
+                ServiceName = appt.Service?.Name,
+                ServicePrice = appt.Service?.Price,
+                DoctorId = appt.DoctorId,
+                DoctorName = appt.Doctor?.FullName,
+                AppointmentDate = appt.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss") + "Z",
+                Symptom = appt.Symptom,
+                Note = appt.Note,
+                Status = appt.Status,
+                QrToken = appt.QrToken
+            };
         }
     }
 }
+

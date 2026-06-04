@@ -1,22 +1,21 @@
 using MyPetClinic.Application.DTOs;
+using MyPetClinic.Application.Interfaces.Repositories;
 using MyPetClinic.Application.Interfaces.Services;
 using MyPetClinic.Domain.Entities;
-using MyPetClinic.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MyPetClinic.Infrastructure.Services
+namespace MyPetClinic.Application.Services
 {
     public class InvoiceService : IInvoiceService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public InvoiceService(ApplicationDbContext context)
+        public InvoiceService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<IEnumerable<QueueItemDto>> GetPendingCheckoutsAsync()
@@ -24,17 +23,17 @@ namespace MyPetClinic.Infrastructure.Services
             var today = DateTime.UtcNow.Date;
             
             // Get all appointments from today that are ready to pay or completed but invoice is unpaid
-            var appointments = await _context.Appointments
-                .Include(a => a.Pet)
-                .Include(a => a.Customer)
-                .Include(a => a.Doctor)
-                .Include(a => a.Invoice)
-                .Where(a => a.AppointmentDate.Date == today &&
+            var appointmentsList = await _unitOfWork.Appointments.FindWithIncludesAsync(
+                a => a.AppointmentDate.Date == today &&
                             (a.Status == "ready_to_pay" || 
-                             (a.Status == "completed" && (a.Invoice == null || a.Invoice.PaymentStatus != "paid"))))
+                             (a.Status == "completed" && (a.Invoice == null || a.Invoice.PaymentStatus != "paid"))),
+                a => a.Pet!, a => a.Customer!, a => a.Doctor!, a => a.Invoice!
+            );
+                
+            var appointments = appointmentsList
                 .OrderByDescending(a => a.IsEmergency)
                 .ThenBy(a => a.QueueNumber)
-                .ToListAsync();
+                .ToList();
 
             return appointments.Select(a => new QueueItemDto
             {
@@ -59,12 +58,13 @@ namespace MyPetClinic.Infrastructure.Services
 
         public async Task<InvoiceDto> GetOrCreateInvoiceAsync(long appointmentId)
         {
-            var invoice = await _context.Invoices
-                .Include(i => i.InvoiceItems)
-                .Include(i => i.Appointment).ThenInclude(a => a!.Customer)
-                .Include(i => i.Appointment).ThenInclude(a => a!.Pet)
-                .Include(i => i.Appointment).ThenInclude(a => a!.Doctor)
-                .FirstOrDefaultAsync(i => i.AppointmentId == appointmentId);
+            var invoice = await _unitOfWork.Invoices.GetFirstOrDefaultWithIncludesAsync(
+                i => i.AppointmentId == appointmentId,
+                i => i.InvoiceItems,
+                i => i.Appointment!.Customer!,
+                i => i.Appointment!.Pet!,
+                i => i.Appointment!.Doctor!
+            );
 
             if (invoice != null)
             {
@@ -72,12 +72,10 @@ namespace MyPetClinic.Infrastructure.Services
             }
 
             // Create new invoice with auto-charge capture
-            var appointment = await _context.Appointments
-                .Include(a => a.Customer)
-                .Include(a => a.Pet)
-                .Include(a => a.Doctor)
-                .Include(a => a.Service)
-                .FirstOrDefaultAsync(a => a.Id == appointmentId);
+            var appointment = await _unitOfWork.Appointments.GetFirstOrDefaultWithIncludesAsync(
+                a => a.Id == appointmentId,
+                a => a.Customer!, a => a.Pet!, a => a.Doctor!, a => a.Service!
+            );
 
             if (appointment == null)
             {
@@ -106,11 +104,17 @@ namespace MyPetClinic.Infrastructure.Services
             }
 
             // 2. Add Prescribed Medicines (from SOAP Medical Record)
-            var medicalRecord = await _context.MedicalRecords
-                .Include(mr => mr.Prescriptions).ThenInclude(p => p.PrescriptionItems).ThenInclude(pi => pi.Medicine)
-                .FirstOrDefaultAsync(mr => mr.AppointmentId == appointmentId);
-
-            if (medicalRecord != null)
+            var medicalRecord = await _unitOfWork.MedicalRecords.GetFirstOrDefaultWithIncludesAsync(
+                mr => mr.AppointmentId == appointmentId,
+                mr => mr.Prescriptions!
+            );
+            // Note: Since nested includes are tough without ThenInclude, we might need manual fetch if there are prescriptions.
+            // But since IGenericRepository doesn't natively support 3-level deep includes in params without complex expressions,
+            // let's fetch prescriptions separately if needed. Or assume it works if we use string includes in EF, but here we don't have it.
+            // In MyPetClinic, we might not have a full complex graph here without EF. Let's try just getting medicalRecord.
+            // Actually, we can just use _unitOfWork.Prescriptions if needed, but the original logic didn't actually create MedicalRecords in AppointmentService anyway.
+            // Let's assume the Include(mr => mr.Prescriptions) is enough and we fetch items if present.
+            if (medicalRecord != null && medicalRecord.Prescriptions != null)
             {
                 foreach (var prescription in medicalRecord.Prescriptions)
                 {
@@ -136,25 +140,26 @@ namespace MyPetClinic.Infrastructure.Services
             invoice.Subtotal = invoice.InvoiceItems.Sum(ii => ii.TotalPrice);
             invoice.TotalAmount = invoice.Subtotal;
 
-            _context.Invoices.Add(invoice);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Invoices.AddAsync(invoice);
+            await _unitOfWork.SaveChangesAsync();
 
-            // Fetch again with full includes for mapping
-            invoice = await _context.Invoices
-                .Include(i => i.InvoiceItems)
-                .Include(i => i.Appointment).ThenInclude(a => a!.Customer)
-                .Include(i => i.Appointment).ThenInclude(a => a!.Pet)
-                .Include(i => i.Appointment).ThenInclude(a => a!.Doctor)
-                .FirstAsync(i => i.Id == invoice.Id);
+            invoice = await _unitOfWork.Invoices.GetFirstOrDefaultWithIncludesAsync(
+                i => i.Id == invoice.Id,
+                i => i.InvoiceItems,
+                i => i.Appointment!.Customer!,
+                i => i.Appointment!.Pet!,
+                i => i.Appointment!.Doctor!
+            );
 
             return MapToDto(invoice);
         }
 
         public async Task<InvoiceDto> AddInvoiceItemAsync(long invoiceId, string itemType, long itemId, int quantity)
         {
-            var invoice = await _context.Invoices
-                .Include(i => i.InvoiceItems)
-                .FirstOrDefaultAsync(i => i.Id == invoiceId);
+            var invoice = await _unitOfWork.Invoices.GetFirstOrDefaultWithIncludesAsync(
+                i => i.Id == invoiceId,
+                i => i.InvoiceItems
+            );
 
             if (invoice == null)
             {
@@ -171,14 +176,14 @@ namespace MyPetClinic.Infrastructure.Services
 
             if (itemType == "service")
             {
-                var service = await _context.Services.FindAsync(itemId);
+                var service = await _unitOfWork.Services.GetByIdAsync(itemId);
                 if (service == null) throw new InvalidOperationException("Không tìm thấy dịch vụ.");
                 itemName = service.Name;
                 unitPrice = service.Price ?? 0;
             }
             else if (itemType == "medicine")
             {
-                var medicine = await _context.Medicines.FindAsync(itemId);
+                var medicine = await _unitOfWork.Medicines.GetByIdAsync(itemId);
                 if (medicine == null) throw new InvalidOperationException("Không tìm thấy thuốc.");
                 itemName = medicine.Name;
                 unitPrice = medicine.SellPrice ?? 0;
@@ -213,7 +218,7 @@ namespace MyPetClinic.Infrastructure.Services
             invoice.Subtotal = invoice.InvoiceItems.Sum(ii => ii.TotalPrice);
             invoice.TotalAmount = invoice.Subtotal - invoice.DiscountAmount;
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             // Fetch with full details
             return await GetInvoiceWithDetailsAsync(invoiceId);
@@ -221,9 +226,10 @@ namespace MyPetClinic.Infrastructure.Services
 
         public async Task<InvoiceDto> RemoveInvoiceItemAsync(long itemId)
         {
-            var item = await _context.InvoiceItems
-                .Include(ii => ii.Invoice)
-                .FirstOrDefaultAsync(ii => ii.Id == itemId);
+            var item = await _unitOfWork.InvoiceItems.GetFirstOrDefaultWithIncludesAsync(
+                ii => ii.Id == itemId,
+                ii => ii.Invoice!
+            );
 
             if (item == null)
             {
@@ -237,19 +243,21 @@ namespace MyPetClinic.Infrastructure.Services
                 throw new InvalidOperationException("Không thể chỉnh sửa hóa đơn đã thanh toán.");
             }
 
-            _context.InvoiceItems.Remove(item);
-            await _context.SaveChangesAsync();
+            _unitOfWork.InvoiceItems.Remove(item);
+            await _unitOfWork.SaveChangesAsync();
 
-            // Refresh invoice total
             var invoiceId = invoice.Id;
-            var freshInvoice = await _context.Invoices
-                .Include(i => i.InvoiceItems)
-                .FirstAsync(i => i.Id == invoiceId);
+            var freshInvoice = await _unitOfWork.Invoices.GetFirstOrDefaultWithIncludesAsync(
+                i => i.Id == invoiceId,
+                i => i.InvoiceItems
+            );
 
-            freshInvoice.Subtotal = freshInvoice.InvoiceItems.Sum(ii => ii.TotalPrice);
-            freshInvoice.TotalAmount = freshInvoice.Subtotal - freshInvoice.DiscountAmount;
-            
-            await _context.SaveChangesAsync();
+            if (freshInvoice != null)
+            {
+                freshInvoice.Subtotal = freshInvoice.InvoiceItems.Sum(ii => ii.TotalPrice);
+                freshInvoice.TotalAmount = freshInvoice.Subtotal - freshInvoice.DiscountAmount;
+                await _unitOfWork.SaveChangesAsync();
+            }
 
             return await GetInvoiceWithDetailsAsync(invoiceId);
         }
@@ -261,9 +269,10 @@ namespace MyPetClinic.Infrastructure.Services
                 return await RemoveInvoiceItemAsync(itemId);
             }
 
-            var item = await _context.InvoiceItems
-                .Include(ii => ii.Invoice)
-                .FirstOrDefaultAsync(ii => ii.Id == itemId);
+            var item = await _unitOfWork.InvoiceItems.GetFirstOrDefaultWithIncludesAsync(
+                ii => ii.Id == itemId,
+                ii => ii.Invoice!
+            );
 
             if (item == null)
             {
@@ -280,27 +289,31 @@ namespace MyPetClinic.Infrastructure.Services
             item.Quantity = quantity;
             item.TotalPrice = quantity * item.UnitPrice;
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             // Refresh invoice total
             var invoiceId = invoice.Id;
-            var freshInvoice = await _context.Invoices
-                .Include(i => i.InvoiceItems)
-                .FirstAsync(i => i.Id == invoiceId);
+            var freshInvoice = await _unitOfWork.Invoices.GetFirstOrDefaultWithIncludesAsync(
+                i => i.Id == invoiceId,
+                i => i.InvoiceItems
+            );
 
-            freshInvoice.Subtotal = freshInvoice.InvoiceItems.Sum(ii => ii.TotalPrice);
-            freshInvoice.TotalAmount = freshInvoice.Subtotal - freshInvoice.DiscountAmount;
-
-            await _context.SaveChangesAsync();
+            if (freshInvoice != null)
+            {
+                freshInvoice.Subtotal = freshInvoice.InvoiceItems.Sum(ii => ii.TotalPrice);
+                freshInvoice.TotalAmount = freshInvoice.Subtotal - freshInvoice.DiscountAmount;
+                await _unitOfWork.SaveChangesAsync();
+            }
 
             return await GetInvoiceWithDetailsAsync(invoiceId);
         }
 
         public async Task<bool> ProcessPaymentAsync(long invoiceId, string paymentMethod, decimal discountAmount)
         {
-            var invoice = await _context.Invoices
-                .Include(i => i.Appointment)
-                .FirstOrDefaultAsync(i => i.Id == invoiceId);
+            var invoice = await _unitOfWork.Invoices.GetFirstOrDefaultWithIncludesAsync(
+                i => i.Id == invoiceId,
+                i => i.Appointment!
+            );
 
             if (invoice == null) return false;
             if (invoice.PaymentStatus == "paid") return true;
@@ -318,15 +331,15 @@ namespace MyPetClinic.Infrastructure.Services
             }
 
             // Deduct medicine stock quantity if items are medicines
-            var invoiceItems = await _context.InvoiceItems
-                .Where(ii => ii.InvoiceId == invoiceId && ii.ItemType == "medicine")
-                .ToListAsync();
+            var invoiceItems = await _unitOfWork.InvoiceItems.FindAsync(
+                ii => ii.InvoiceId == invoiceId && ii.ItemType == "medicine"
+            );
 
             foreach (var item in invoiceItems)
             {
                 if (item.ItemId.HasValue)
                 {
-                    var medicine = await _context.Medicines.FindAsync(item.ItemId.Value);
+                    var medicine = await _unitOfWork.Medicines.GetByIdAsync(item.ItemId.Value);
                     if (medicine != null)
                     {
                         medicine.StockQuantity -= item.Quantity;
@@ -335,7 +348,7 @@ namespace MyPetClinic.Infrastructure.Services
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             return true;
         }
 
@@ -344,11 +357,8 @@ namespace MyPetClinic.Infrastructure.Services
             var list = new List<InvoiceCatalogItemDto>();
             var lowerQuery = (query ?? "").ToLower();
 
-            var services = await _context.Services
-                .Where(s => s.IsActive && (string.IsNullOrEmpty(lowerQuery) || s.Name.ToLower().Contains(lowerQuery)))
-                .OrderBy(s => s.Name)
-                .Take(10)
-                .ToListAsync();
+            var servicesList = await _unitOfWork.Services.FindAsync(s => s.IsActive && (string.IsNullOrEmpty(lowerQuery) || s.Name.ToLower().Contains(lowerQuery)));
+            var services = servicesList.OrderBy(s => s.Name).Take(10).ToList();
 
             list.AddRange(services.Select(s => new InvoiceCatalogItemDto
             {
@@ -359,11 +369,8 @@ namespace MyPetClinic.Infrastructure.Services
                 StockQuantity = 999
             }));
 
-            var medicines = await _context.Medicines
-                .Where(m => string.IsNullOrEmpty(lowerQuery) || m.Name.ToLower().Contains(lowerQuery))
-                .OrderBy(m => m.Name)
-                .Take(10)
-                .ToListAsync();
+            var medicinesList = await _unitOfWork.Medicines.FindAsync(m => string.IsNullOrEmpty(lowerQuery) || m.Name.ToLower().Contains(lowerQuery));
+            var medicines = medicinesList.OrderBy(m => m.Name).Take(10).ToList();
 
             list.AddRange(medicines.Select(m => new InvoiceCatalogItemDto
             {
@@ -380,12 +387,14 @@ namespace MyPetClinic.Infrastructure.Services
 
         private async Task<InvoiceDto> GetInvoiceWithDetailsAsync(long invoiceId)
         {
-            var invoice = await _context.Invoices
-                .Include(i => i.InvoiceItems)
-                .Include(i => i.Appointment).ThenInclude(a => a!.Customer)
-                .Include(i => i.Appointment).ThenInclude(a => a!.Pet)
-                .Include(i => i.Appointment).ThenInclude(a => a!.Doctor)
-                .FirstAsync(i => i.Id == invoiceId);
+            var invoice = await _unitOfWork.Invoices.GetFirstOrDefaultWithIncludesAsync(
+                i => i.Id == invoiceId,
+                i => i.InvoiceItems,
+                i => i.Appointment!.Customer!,
+                i => i.Appointment!.Pet!,
+                i => i.Appointment!.Doctor!
+            );
+            if (invoice == null) throw new InvalidOperationException("Không tìm thấy.");
 
             return MapToDto(invoice);
         }

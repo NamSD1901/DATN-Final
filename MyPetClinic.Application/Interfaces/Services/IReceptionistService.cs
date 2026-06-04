@@ -23,5 +23,11 @@ namespace MyPetClinic.Application.Interfaces.Services
 
         // Ghép nối ca cấp cứu ẩn danh với khách hàng thật
         Task<bool> UpdateEmergencyCustomerAsync(long appointmentId, System.Guid customerId, long petId);
+
+        // Lấy danh sách bác sĩ đang hoạt động
+        Task<List<DoctorDto>> GetActiveDoctorsAsync();
+
+        // Tìm kiếm khách hàng theo số điện thoại (trả về cả pets)
+        Task<CustomerWithPetsDto?> GetCustomerWithPetsByPhoneAsync(string phone);
     }
 }

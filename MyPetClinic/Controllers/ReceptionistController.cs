@@ -14,20 +14,17 @@ namespace MyPetClinic.Controllers
     [Authorize(Roles = "Receptionist,Admin")]
     public class ReceptionistController : Controller
     {
-        private readonly ApplicationDbContext _context;
         private readonly ICustomerService _customerService;
         private readonly IPetRepository _petRepository;
         private readonly IAppointmentService _appointmentService;
         private readonly IReceptionistService _receptionistService;
 
         public ReceptionistController(
-            ApplicationDbContext context, 
             ICustomerService customerService, 
             IPetRepository petRepository, 
             IAppointmentService appointmentService,
             IReceptionistService receptionistService)
         {
-            _context = context;
             _customerService = customerService;
             _petRepository = petRepository;
             _appointmentService = appointmentService;
@@ -67,15 +64,9 @@ namespace MyPetClinic.Controllers
             ViewBag.Customer = customer;
             ViewBag.Pets = pets;
 
-            var doctors = await _context.Users
-                .Include(u => u.Role)
-                .Where(u => u.Role != null && u.Role.Name == "Doctor" && u.IsActive == true && u.DeletedAt == null)
-                .ToListAsync();
+            var doctors = await _receptionistService.GetActiveDoctorsAsync();
                 
-            var services = await _context.Services
-                .Include(s => s.Category)
-                .OrderBy(s => s.Category != null ? s.Category.Name : "")
-                .ToListAsync();
+            var services = await _appointmentService.GetServicesAsync();
 
             ViewBag.Doctors = doctors;
             ViewBag.Services = services;
@@ -146,7 +137,7 @@ namespace MyPetClinic.Controllers
         [HttpGet]
         public async Task<IActionResult> AddPet(Guid customerId)
         {
-            var customer = await _context.Users.FindAsync(customerId);
+            var customer = await _customerService.GetCustomerDetailAsync(customerId);
             if (customer == null) return NotFound();
             ViewBag.Customer = customer;
             return View();
@@ -156,7 +147,7 @@ namespace MyPetClinic.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddPet(Pet model, Guid customerId)
         {
-            var customer = await _context.Users.FindAsync(customerId);
+            var customer = await _customerService.GetCustomerDetailAsync(customerId);
             if (customer == null) return NotFound();
 
             var newPet = new Pet
@@ -175,8 +166,8 @@ namespace MyPetClinic.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.Pets.Add(newPet);
-            await _context.SaveChangesAsync();
+            await _petRepository.CreatePetAsync(newPet);
+            await _petRepository.SaveChangesAsync();
 
             TempData["Success"] = $"Đã thêm thú cưng '{newPet.Name}' thành công!";
             return RedirectToAction("CustomerDetail", new { id = customerId });
@@ -188,7 +179,7 @@ namespace MyPetClinic.Controllers
         [HttpGet]
         public async Task<IActionResult> EditPet(long id)
         {
-            var pet = await _context.Pets.Include(p => p.Owner).FirstOrDefaultAsync(p => p.Id == id);
+            var pet = await _petRepository.GetPetByIdAsync(id);
             if (pet == null) return NotFound();
             return View(pet);
         }
@@ -197,7 +188,7 @@ namespace MyPetClinic.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditPet(Pet model)
         {
-            var pet = await _context.Pets.FindAsync(model.Id);
+            var pet = await _petRepository.GetPetByIdAsync(model.Id);
             if (pet == null) return NotFound();
 
             pet.Name = model.Name?.Trim();
@@ -211,7 +202,8 @@ namespace MyPetClinic.Controllers
             pet.Sterilized = model.Sterilized;
             pet.MicrochipCode = model.MicrochipCode?.Trim();
 
-            await _context.SaveChangesAsync();
+            await _petRepository.UpdatePetAsync(pet);
+            await _petRepository.SaveChangesAsync();
 
             TempData["Success"] = $"Đã cập nhật thông tin thú cưng '{pet.Name}' thành công!";
             return RedirectToAction("CustomerDetail", new { id = pet.OwnerId });
@@ -226,27 +218,19 @@ namespace MyPetClinic.Controllers
             if (string.IsNullOrWhiteSpace(phone))
                 return Json(new { found = false });
 
-            var user = await _context.Users
-                .Include(u => u.Role)
-                .Where(u => u.Phone == phone.Trim() && u.IsActive == true)
-                .FirstOrDefaultAsync();
+            var customerWithPets = await _receptionistService.GetCustomerWithPetsByPhoneAsync(phone);
 
-            if (user == null)
+            if (customerWithPets == null)
                 return Json(new { found = false });
-
-            var pets = await _context.Pets
-                .Where(p => p.OwnerId == user.Id)
-                .Select(p => new { p.Id, p.Name, p.Species, p.Breed, p.Weight })
-                .ToListAsync();
 
             return Json(new
             {
                 found = true,
-                customerId = user.Id,
-                fullName = user.FullName,
-                phone = user.Phone,
-                email = user.Email,
-                pets
+                customerId = customerWithPets.CustomerId,
+                fullName = customerWithPets.FullName,
+                phone = customerWithPets.Phone,
+                email = customerWithPets.Email,
+                pets = customerWithPets.Pets.Select(p => new { p.Id, p.Name, p.Species, p.Breed, p.Weight })
             });
         }
         // ==========================================
@@ -316,12 +300,8 @@ namespace MyPetClinic.Controllers
         [HttpGet]
         public async Task<IActionResult> GetDoctors()
         {
-            var doctors = await _context.Users
-                .Include(u => u.Role)
-                .Where(u => u.IsActive == true && u.Role != null && u.Role.Name == "Doctor")
-                .Select(u => new { u.Id, u.FullName })
-                .ToListAsync();
-            return Json(doctors);
+            var doctors = await _receptionistService.GetActiveDoctorsAsync();
+            return Json(doctors.Select(d => new { Id = d.Id, FullName = d.FullName }));
         }
 
         [HttpGet]
@@ -329,20 +309,14 @@ namespace MyPetClinic.Controllers
         {
             if (string.IsNullOrWhiteSpace(phone)) return Json(new { success = false });
 
-            var customer = await _context.Users
-                .FirstOrDefaultAsync(u => u.Phone == phone && u.IsActive == true);
+            var customerWithPets = await _receptionistService.GetCustomerWithPetsByPhoneAsync(phone);
             
-            if (customer == null) return Json(new { success = false });
-
-            var pets = await _context.Pets
-                .Where(p => p.OwnerId == customer.Id && !p.IsDeceased)
-                .Select(p => new { p.Id, p.Name, p.Species })
-                .ToListAsync();
+            if (customerWithPets == null) return Json(new { success = false });
 
             return Json(new { 
                 success = true, 
-                customer = new { customer.Id, customer.FullName },
-                pets = pets
+                customer = new { Id = customerWithPets.CustomerId, FullName = customerWithPets.FullName },
+                pets = customerWithPets.Pets.Select(p => new { p.Id, p.Name, p.Species })
             });
         }
 
