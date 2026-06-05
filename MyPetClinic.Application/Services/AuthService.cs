@@ -209,11 +209,11 @@ namespace MyPetClinic.Application.Services
         <div style='text-align: center; margin-bottom: 20px;'>
             <h2 style='color: #2c3e50; margin: 0; font-size: 28px;'>MyPet<span style='color: #f1c40f;'>Clinic</span></h2>
         </div>
-        <h3 style='color: #2c3e50; font-size: 18px;'>Xin chào {{fullName}},</h3>
-        <p style='color: #555; line-height: 1.6; font-size: 15px;'>{{messageBody}}</p>
+        <h3 style='color: #2c3e50; font-size: 18px;'>Xin chào {fullName},</h3>
+        <p style='color: #555; line-height: 1.6; font-size: 15px;'>{messageBody}</p>
         <div style='text-align: center; margin: 30px 0;'>
             <div style='display: inline-block; padding: 15px 40px; background-color: #fef9e7; border: 2px dashed #f1c40f; border-radius: 8px; font-size: 32px; font-weight: bold; color: #d4ac0d; letter-spacing: 8px;'>
-                {{otp}}
+                {otp}
             </div>
         </div>
         <p style='color: #555; line-height: 1.6; font-size: 15px;'>Mã OTP này sẽ hết hạn trong vòng <strong>5 phút</strong>. Vui lòng không chia sẻ mã này với bất kỳ ai để đảm bảo an toàn.</p>
