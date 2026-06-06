@@ -286,21 +286,10 @@
                                 <option value="" disabled selected>-- Chọn dịch vụ --</option>
                                 @if (ViewBag.Services != null)
                                 {
-                                    var currentCategory = "";
-                                    foreach (var s in (IEnumerable<MyPetClinic.Domain.Entities.Service>)ViewBag.Services)
+                                    foreach (var s in (IEnumerable<MyPetClinic.Application.DTOs.ServiceDto>)ViewBag.Services)
                                     {
-                                        if (s.Category?.Name != currentCategory)
-                                        {
-                                            if (!string.IsNullOrEmpty(currentCategory))
-                                            {
-                                                @Html.Raw("</optgroup>")
-                                            }
-                                            currentCategory = s.Category?.Name ?? "Khác";
-                                            @Html.Raw($"<optgroup label=\"{currentCategory}\">")
-                                        }
                                         <option value="@s.Id">@s.Name</option>
                                     }
-                                    @Html.Raw("</optgroup>")
                                 }
                             </select>
                         </div>
@@ -311,7 +300,7 @@
                                 <option value="" disabled selected>-- Chọn bác sĩ --</option>
                                 @if (ViewBag.Doctors != null)
                                 {
-                                    foreach (var d in (IEnumerable<MyPetClinic.Domain.Entities.User>)ViewBag.Doctors)
+                                    foreach (var d in (IEnumerable<MyPetClinic.Application.DTOs.DoctorDto>)ViewBag.Doctors)
                                     {
                                         <option value="@d.Id">@d.FullName</option>
                                     }
