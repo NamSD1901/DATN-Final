@@ -24,5 +24,10 @@ namespace MyPetClinic.Application.DTOs
         public string? Note { get; set; }
         public string? Status { get; set; }
         public string? QrToken { get; set; }
+        
+        // Invoice Info
+        public long? InvoiceId { get; set; }
+        public string? InvoiceStatus { get; set; }
+        public decimal? InvoiceTotalAmount { get; set; }
     }
 }

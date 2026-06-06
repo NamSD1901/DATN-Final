@@ -16,5 +16,7 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<AppointmentStatsDto> GetAppointmentStatsAsync();
         Task<IEnumerable<AppointmentDetailDto>> GetPendingAppointmentsAsync();
         Task<AppointmentDetailDto?> GetAppointmentDetailAsync(long id);
+        Task<IEnumerable<AppointmentDetailDto>> GetCustomerAppointmentsAsync(Guid customerId);
+        Task<IEnumerable<AppointmentDetailDto>> GetPetAppointmentsAsync(long petId);
     }
 }

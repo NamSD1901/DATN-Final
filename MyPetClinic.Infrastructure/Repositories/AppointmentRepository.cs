@@ -40,6 +40,7 @@ namespace MyPetClinic.Infrastructure.Repositories
                 .Include(a => a.Pet)
                 .Include(a => a.Doctor)
                 .Include(a => a.Service)
+                .Include(a => a.Invoice)
                 .Where(a => a.CustomerId == customerId)
                 .OrderByDescending(a => a.CreatedAt)
                 .ToListAsync();

@@ -19,6 +19,8 @@ namespace MyPetClinic.Domain.Entities
         public string? MicrochipCode { get; set; }
         public string? AllergyNote { get; set; }
         public string? Avatar { get; set; }
+        public string? ChronicDisease { get; set; }
+        public string? CurrentDiet { get; set; }
         public bool IsDeceased { get; set; } = false;
         public bool IsAggressive { get; set; } = false;
         public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;

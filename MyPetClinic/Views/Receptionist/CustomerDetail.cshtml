@@ -1,68 +1,82 @@
+@model MyPetClinic.Web.Models.CustomerProfileViewModel
 @{
     ViewData["Title"] = "Hồ sơ Khách hàng";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
-    var customer = ViewBag.Customer as MyPetClinic.Domain.Entities.User;
-    var pets = ViewBag.Pets as IEnumerable<MyPetClinic.Domain.Entities.Pet>;
+    var customer = Model.Customer;
+    var pets = Model.Pets;
+    var appointments = Model.Appointments;
 }
 
 <style>
-    .profile-header-card {
-        background: linear-gradient(135deg, #fdfaf0, #fff);
-        border: 1px solid #f1c40f44;
-        border-radius: 18px;
+    /* Card Styles */
+    .profile-card {
+        background: #fff;
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
     }
+    .profile-header-bg {
+        background: linear-gradient(135deg, #fdfaf0 0%, #fff 100%);
+        border-bottom: 1px solid #f1c40f33;
+        padding: 2rem;
+        border-radius: 16px 16px 0 0;
+    }
+    
+    /* Avatars */
     .avatar-big {
-        width: 80px; height: 80px;
+        width: 90px; height: 90px;
         border-radius: 50%;
         background: linear-gradient(135deg, #f1c40f, #f39c12);
-        color: white; font-weight: 700; font-size: 2rem;
+        color: white; font-weight: 700; font-size: 2.5rem;
         display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 4px 12px rgba(241,196,15,0.4);
+        box-shadow: 0 4px 15px rgba(241,196,15,0.4);
     }
-    .info-label { font-size: 0.78rem; text-transform: uppercase; color: #aaa; font-weight: 600; }
     
+    /* Typography & Badges */
+    .info-label { font-size: 0.75rem; text-transform: uppercase; color: #888; font-weight: 700; letter-spacing: 0.5px; }
+    .badge-gold { background: #fdf3d8; color: #b7900d; border: 1px solid #f1c40f; }
+    
+    /* Pet Cards */
     .pet-card {
-        border: 2px solid #f0f0f0;
+        border: 2px solid #f5f5f5;
         border-radius: 14px;
         transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
     }
-    .pet-card:hover { border-color: #f1c40f; box-shadow: 0 4px 16px rgba(241,196,15,0.2); }
-    .pet-icon { font-size: 2.5rem; }
-    .species-badge { font-size: 0.75rem; background: #f8f4e3; color: #b7900d; border-radius: 8px; padding: 2px 10px; }
-
-    .btn-gold { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; font-weight: 600; border: none; border-radius: 10px; }
-    .btn-gold:hover { filter: brightness(1.08); color: #fff; }
-    .btn-huge-action { 
-        background: linear-gradient(135deg, #e74c3c, #c0392b); 
-        color: white; 
-        font-weight: 700; 
-        font-size: 1.1rem;
-        padding: 12px 24px;
-        border-radius: 50px;
-        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
-        transition: transform 0.2s, box-shadow 0.2s;
+    .pet-card:hover { border-color: #f1c40f; box-shadow: 0 6px 20px rgba(241,196,15,0.15); transform: translateY(-3px); }
+    .pet-card.deceased { filter: grayscale(100%); opacity: 0.8; }
+    .pet-icon { font-size: 2.8rem; line-height: 1; }
+    
+    .pet-tag { font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+    .tag-danger { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+    .tag-success { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; }
+    .tag-warning { background: #fef3c7; color: #d97706; border: 1px solid #fcd34d; }
+    .tag-dark { background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; }
+    
+    /* Buttons */
+    .btn-gold { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; font-weight: 600; border: none; }
+    .btn-gold:hover { filter: brightness(1.08); color: #fff; box-shadow: 0 4px 12px rgba(241,196,15,0.3); }
+    .btn-quick-action { width: 100%; text-align: left; padding: 12px 20px; font-weight: 600; border-radius: 10px; margin-bottom: 10px; transition: all 0.2s; }
+    
+    /* Timeline */
+    .timeline { position: relative; padding-left: 30px; border-left: 2px solid #f0f0f0; margin-top: 1rem; }
+    .timeline-item { position: relative; margin-bottom: 1.5rem; }
+    .timeline-icon { 
+        position: absolute; left: -41px; top: 0; width: 20px; height: 20px; 
+        border-radius: 50%; background: #fff; border: 2px solid #f39c12; 
     }
-    .btn-huge-action:hover {
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
-    }
-
-    /* Tabs Customization */
-    .nav-tabs-custom { border-bottom: 2px solid #f0f0f0; }
-    .nav-tabs-custom .nav-link { color: #888; font-weight: 600; border: none; padding: 12px 20px; position: relative; }
-    .nav-tabs-custom .nav-link.active { color: #f39c12; background: transparent; }
-    .nav-tabs-custom .nav-link.active::after {
-        content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px;
-        background: #f39c12; border-radius: 3px 3px 0 0;
-    }
+    .timeline-date { font-size: 0.85rem; color: #888; font-weight: 600; margin-bottom: 4px; }
+    .timeline-content { background: #fcfcfc; padding: 15px; border-radius: 12px; border: 1px solid #f0f0f0; }
+    .timeline-content:hover { border-color: #f1c40f55; background: #fff; }
 </style>
 
 <!-- Breadcrumb -->
 <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a asp-action="Customers" class="text-warning text-decoration-none">Khách hàng</a></li>
-        <li class="breadcrumb-item active">@customer?.FullName</li>
+        <li class="breadcrumb-item active">@customer.FullName</li>
     </ol>
 </nav>
 
@@ -74,98 +88,64 @@
     </div>
 }
 
-<!-- Profile Header -->
-<div class="card profile-header-card mb-4 p-4">
-    <div class="d-flex align-items-start gap-4 flex-wrap">
-        <div class="avatar-big">@(customer?.FullName?.Substring(0,1).ToUpper() ?? "?")</div>
-        <div class="flex-grow-1">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-                <div>
-                    <h3 class="fw-bold mb-1">@customer?.FullName</h3>
-                    <div class="d-flex gap-3 flex-wrap mt-2">
-                        @if (!string.IsNullOrEmpty(customer?.Phone))
-                        {
-                            <span class="text-muted"><i class="bi bi-phone-fill text-warning me-1"></i>@customer.Phone</span>
-                        }
-                        @if (!string.IsNullOrEmpty(customer?.Email))
-                        {
-                            <span class="text-muted"><i class="bi bi-envelope-fill text-warning me-1"></i>@customer.Email</span>
-                        }
-                        @if (!string.IsNullOrEmpty(customer?.Address))
-                        {
-                            <span class="text-muted"><i class="bi bi-geo-alt-fill text-warning me-1"></i>@customer.Address</span>
-                        }
+<div class="row">
+    <!-- TRÁI: THÔNG TIN & THÚ CƯNG -->
+    <div class="col-lg-8">
+        <!-- Profile Header -->
+        <div class="profile-card">
+            <div class="profile-header-bg d-flex align-items-center gap-4 flex-wrap">
+                <div class="avatar-big">@(customer.FullName?.Substring(0,1).ToUpper() ?? "?")</div>
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-3 mb-1">
+                        <h3 class="fw-bold mb-0">@customer.FullName</h3>
+                        <span class="badge badge-gold rounded-pill px-3 py-1"><i class="bi bi-star-fill me-1"></i> VIP MEMBER</span>
+                    </div>
+                    <div class="d-flex gap-4 mt-2 flex-wrap">
+                        @if (!string.IsNullOrEmpty(customer.Phone)) { <span class="text-secondary"><i class="bi bi-telephone-fill text-warning me-1"></i>@customer.Phone</span> }
+                        @if (!string.IsNullOrEmpty(customer.Email)) { <span class="text-secondary"><i class="bi bi-envelope-fill text-warning me-1"></i>@customer.Email</span> }
                     </div>
                 </div>
-                <div class="d-flex gap-3 align-items-center">
-                    <a asp-action="Customers" class="btn btn-outline-secondary rounded-pill px-4">
-                        <i class="bi bi-arrow-left me-1"></i>Quay lại
+                <div>
+                    <a asp-action="EditCustomer" asp-route-id="@customer.Id" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="bi bi-pencil-square me-1"></i> Sửa
                     </a>
-                    <button type="button" class="btn btn-huge-action" data-bs-toggle="modal" data-bs-target="#appointmentModal">
-                        <i class="bi bi-journal-medical me-2"></i>Tiếp nhận khám ngay
-                    </button>
                 </div>
             </div>
-            <div class="row mt-4 g-3 bg-white p-3 rounded-3 shadow-sm border">
-                <div class="col-md-3">
-                    <div class="info-label">Giới tính</div>
-                    <div class="fw-semibold">@(customer?.Gender == 1 ? "Nam" : customer?.Gender == 0 ? "Nữ" : "—")</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="info-label">Ngày sinh</div>
-                    <div class="fw-semibold">@(customer?.DateOfBirth?.ToString("dd/MM/yyyy") ?? "—")</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="info-label">Tham gia</div>
-                    <div class="fw-semibold">@(customer?.CreatedAt.HasValue == true ? customer.CreatedAt.Value.ToLocalTime().ToString("dd/MM/yyyy") : "—")</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="info-label">Số thú cưng</div>
-                    <div class="fw-semibold"><strong class="text-warning fs-5">@(pets?.Count() ?? 0)</strong> bé</div>
+            <div class="p-4 bg-white" style="border-radius: 0 0 16px 16px;">
+                <div class="row text-center g-3">
+                    <div class="col-4 border-end">
+                        <div class="info-label">Ngày tham gia</div>
+                        <div class="fw-bold fs-5">@(customer.CreatedAt.HasValue ? customer.CreatedAt.Value.ToLocalTime().ToString("MMM yyyy") : "—")</div>
+                    </div>
+                    <div class="col-4 border-end">
+                        <div class="info-label">Bác sĩ thường khám</div>
+                        <div class="fw-bold fs-5 text-truncate">
+                            @{
+                                var preferredDoc = appointments.GroupBy(a => a.DoctorName)
+                                                               .OrderByDescending(g => g.Count())
+                                                               .FirstOrDefault()?.Key;
+                                @(preferredDoc ?? "Chưa có")
+                            }
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="info-label">Tổng thú cưng</div>
+                        <div class="fw-bold fs-5">@pets.Count() bé</div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Tabs -->
-<ul class="nav nav-tabs nav-tabs-custom mb-4" id="profileTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="pets-tab" data-bs-toggle="tab" data-bs-target="#pets" type="button" role="tab">
-            <i class="bi bi-heart-pulse-fill me-2"></i>Danh sách Thú Cưng
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
-            <i class="bi bi-clock-history me-2"></i>Lịch sử Khám bệnh
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
-            <i class="bi bi-person-lines-fill me-2"></i>Thông tin Mở rộng
-        </button>
-    </li>
-</ul>
-
-<div class="tab-content" id="profileTabsContent">
-    
-    <!-- TAB 1: THÚ CƯNG -->
-    <div class="tab-pane fade show active" id="pets" role="tabpanel">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0">Thú cưng của @customer?.FullName</h5>
-            <a asp-action="AddPet" asp-route-customerId="@customer?.Id" class="btn btn-gold px-3 rounded-pill">
-                <i class="bi bi-plus-lg me-1"></i>Thêm bé mới
-            </a>
+        <!-- Thú cưng (Pet Family) -->
+        <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+            <h5 class="fw-bold mb-0">Gia đình Thú cưng (@pets.Count())</h5>
         </div>
-
-        @if (pets == null || !pets.Any())
+        
+        @if (!pets.Any())
         {
-            <div class="text-center py-5 text-muted border rounded-3" style="background:#fafafa;">
-                <i class="bi bi-emoji-frown display-4 d-block mb-3 opacity-25"></i>
-                <p class="mb-3">Khách hàng này chưa có thú cưng nào trong hệ thống.</p>
-                <a asp-action="AddPet" asp-route-customerId="@customer?.Id" class="btn btn-gold px-4 rounded-pill">
-                    <i class="bi bi-plus-circle-fill me-2"></i>Thêm Thú Cưng Đầu Tiên
-                </a>
+            <div class="profile-card p-5 text-center text-muted">
+                <i class="bi bi-emoji-frown display-4 opacity-25 mb-3 d-block"></i>
+                <p>Khách hàng chưa có thú cưng nào.</p>
             </div>
         }
         else
@@ -173,58 +153,26 @@
             <div class="row g-3">
                 @foreach (var pet in pets)
                 {
-                    string speciesIcon = pet.Species?.ToLower() switch {
-                        "chó" or "dog" => "🐕",
-                        "mèo" or "cat" => "🐈",
-                        "thỏ" or "rabbit" => "🐇",
-                        "hamster" => "🐹",
-                        _ => "🐾"
-                    };
-
-                    <div class="col-md-6 col-lg-4">
-                        <div class="card pet-card p-3 h-100">
-                            <div class="d-flex align-items-start gap-3">
+                    string speciesIcon = pet.Species?.ToLower() switch { "chó" or "dog" => "🐕", "mèo" or "cat" => "🐈", "thỏ" or "rabbit" => "🐇", "hamster" => "🐹", _ => "🐾" };
+                    bool isDeceased = pet.IsDeceased;
+                    
+                    <div class="col-md-6">
+                        <div class="profile-card p-3 h-100 pet-card @(isDeceased ? "deceased" : "")" style="margin-bottom:0; cursor: pointer;" onclick="window.location.href='/Receptionist/PetDetail/@pet.Id'">
+                            @if(isDeceased) { <div style="position:absolute; top:10px; right:-30px; background:#444; color:white; font-size:0.7rem; font-weight:bold; padding:2px 30px; transform:rotate(45deg);">ĐÃ MẤT</div> }
+                            
+                            <div class="d-flex gap-3">
                                 <div class="pet-icon">@speciesIcon</div>
                                 <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <h5 class="fw-bold mb-1 text-dark">@pet.Name</h5>
-                                            <span class="species-badge">@pet.Species @(string.IsNullOrEmpty(pet.Breed) ? "" : $"• {pet.Breed}")</span>
-                                        </div>
-                                        <a asp-action="EditPet" asp-route-id="@pet.Id"
-                                           class="btn btn-sm btn-outline-warning rounded-circle" title="Chỉnh sửa">
-                                            <i class="bi bi-pencil-fill"></i>
-                                        </a>
+                                    <div class="d-flex justify-content-between">
+                                        <h5 class="fw-bold mb-0">@pet.Name</h5>
+                                        <a asp-action="EditPet" asp-route-id="@pet.Id" class="text-secondary"><i class="bi bi-three-dots"></i></a>
                                     </div>
-                                    <hr class="my-2" style="border-color:#f1c40f22;">
-                                    <div class="row g-2 mt-1" style="font-size:0.85rem; color:#666;">
-                                        <div class="col-6">
-                                            <span><i class="bi bi-gender-ambiguous text-warning me-1"></i>
-                                                @(pet.Gender == 1 ? "Đực" : pet.Gender == 0 ? "Cái" : "Chưa rõ")
-                                            </span>
-                                        </div>
-                                        <div class="col-6">
-                                            <span><i class="bi bi-calendar3 text-warning me-1"></i>
-                                                @(pet.BirthDate?.ToString("MM/yyyy") ?? "—")
-                                            </span>
-                                        </div>
-                                        <div class="col-6">
-                                            <span><i class="bi bi-clipboard2-pulse text-warning me-1"></i>
-                                                @(pet.Weight.HasValue ? $"{pet.Weight} kg" : "—")
-                                            </span>
-                                        </div>
-                                        <div class="col-6">
-                                            @if (pet.Sterilized == true)
-                                            {
-                                                <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Triệt sản</span>
-                                            }
-                                        </div>
-                                        @if (!string.IsNullOrEmpty(pet.AllergyNote))
-                                        {
-                                            <div class="col-12 mt-2 p-2 bg-danger bg-opacity-10 rounded text-danger fw-semibold">
-                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Dị ứng: @pet.AllergyNote
-                                            </div>
-                                        }
+                                    <div class="text-muted small mb-2">@pet.Breed • @(pet.Gender == 1 ? "Đực" : pet.Gender == 0 ? "Cái" : "—")</div>
+                                    
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        @if(pet.Weight.HasValue) { <span class="pet-tag tag-dark"><i class="bi bi-speedometer2"></i> @pet.Weight kg</span> }
+                                        @if(pet.Sterilized == true) { <span class="pet-tag tag-success"><i class="bi bi-scissors"></i> Triệt sản</span> }
+                                        @if(pet.IsAggressive) { <span class="pet-tag tag-danger"><i class="bi bi-exclamation-triangle-fill"></i> Hung dữ</span> }
                                     </div>
                                 </div>
                             </div>
@@ -233,22 +181,103 @@
                 }
             </div>
         }
-    </div>
 
-    <!-- TAB 2: LỊCH SỬ KHÁM -->
-    <div class="tab-pane fade" id="history" role="tabpanel">
-        <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
-            <i class="bi bi-journal-x text-muted display-4 opacity-50 mb-3"></i>
-            <h5 class="text-muted">Chưa có lịch sử khám bệnh.</h5>
-            <p class="text-muted small">Thông tin lịch sử khám bệnh, điều trị, tiêm phòng sẽ hiển thị tại đây.</p>
+        <!-- Timeline Lịch sử -->
+        <h5 class="fw-bold mb-3 mt-5">Lịch sử Khám bệnh & Tương tác</h5>
+        <div class="profile-card p-4">
+            @if(!appointments.Any())
+            {
+                <p class="text-muted text-center py-3">Chưa có lịch sử giao dịch nào.</p>
+            }
+            else
+            {
+                <div class="timeline">
+                    @foreach(var appt in appointments)
+                    {
+                        var statusColor = appt.Status == "completed" || appt.Status == "ready_to_pay" ? "success" : 
+                                          appt.Status == "cancelled" ? "danger" : "warning";
+                                          
+                        <div class="timeline-item">
+                            <div class="timeline-icon bg-@statusColor border-white"></div>
+                            <div class="timeline-date">@DateTime.Parse(appt.AppointmentDate).ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="fw-bold mb-1">@appt.ServiceName - <span class="text-warning">@appt.PetName</span></h6>
+                                        <div class="small text-muted mb-2"><i class="bi bi-person-badge"></i> Bs. @appt.DoctorName</div>
+                                        <p class="small mb-0"><strong>Triệu chứng:</strong> @appt.Symptom</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-@statusColor bg-opacity-10 text-@statusColor mb-2">@appt.Status.ToUpper()</span><br/>
+                                        @if(appt.InvoiceTotalAmount > 0)
+                                        {
+                                            <span class="fw-bold">@string.Format("{0:N0}đ", appt.InvoiceTotalAmount)</span>
+                                            @if(appt.InvoiceStatus == "unpaid") { <span class="badge bg-danger ms-1">NỢ</span> }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
         </div>
     </div>
 
-    <!-- TAB 3: THÔNG TIN MỞ RỘNG -->
-    <div class="tab-pane fade" id="info" role="tabpanel">
-        <div class="card border-0 shadow-sm rounded-4 p-4">
-            <h5 class="fw-bold mb-4">Thông tin bổ sung</h5>
-            <p class="text-muted">Chưa có ghi chú đặc biệt nào cho khách hàng này.</p>
+    <!-- PHẢI: ACTIONS & INSIGHTS -->
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        <div class="profile-card p-4">
+            <h6 class="fw-bold mb-3">Thao tác nhanh</h6>
+            <button class="btn btn-gold btn-quick-action text-white" data-bs-toggle="modal" data-bs-target="#appointmentModal">
+                <i class="bi bi-calendar-plus-fill me-2"></i> Đặt Lịch Hẹn Mới
+            </button>
+            <a asp-action="AddPet" asp-route-customerId="@customer.Id" class="btn btn-outline-secondary btn-quick-action">
+                <i class="bi bi-plus-circle-fill text-secondary me-2"></i> Thêm Thú Cưng
+            </a>
+            <button class="btn btn-outline-secondary btn-quick-action">
+                <i class="bi bi-receipt me-2 text-secondary"></i> Tạo Hóa Đơn Lẻ
+            </button>
+        </div>
+
+        <!-- Relationship Insights -->
+        <div class="profile-card p-4">
+            <h6 class="fw-bold mb-3">Thông tin Tín nhiệm</h6>
+            
+            @if(Model.UnpaidBalance > 0)
+            {
+                <div class="alert alert-danger p-3 rounded-3 mb-4 d-flex align-items-center gap-3">
+                    <i class="bi bi-exclamation-triangle-fill fs-3"></i>
+                    <div>
+                        <div class="fw-bold">Nợ chưa thanh toán</div>
+                        <div class="fs-5 fw-bolder">@string.Format("{0:N0} ₫", Model.UnpaidBalance)</div>
+                    </div>
+                </div>
+            }
+
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="bg-light p-2 rounded-circle text-primary"><i class="bi bi-cash-coin fs-5"></i></div>
+                <div>
+                    <div class="info-label">Tổng Chi Tiêu</div>
+                    <div class="fw-bold text-dark fs-6">@string.Format("{0:N0} ₫", Model.TotalSpent)</div>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="bg-light p-2 rounded-circle text-success"><i class="bi bi-check2-circle fs-5"></i></div>
+                <div>
+                    <div class="info-label">Tổng Ca Khám Thành Công</div>
+                    <div class="fw-bold text-dark fs-6">@Model.TotalVisits ca</div>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-light p-2 rounded-circle text-danger"><i class="bi bi-x-circle fs-5"></i></div>
+                <div>
+                    <div class="info-label">Tỉ lệ Bùng lịch / Hủy ngang</div>
+                    <div class="fw-bold text-danger fs-6">@Model.NoShowCount lần</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -258,24 +287,21 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content" style="border-radius: 20px; border: none;">
             <div class="modal-header" style="background: linear-gradient(135deg, #fdfaf0, #fff); border-bottom: 2px solid #f1c40f44; border-radius: 20px 20px 0 0;">
-                <h5 class="modal-title fw-bold text-dark" id="appointmentModalLabel"><i class="bi bi-journal-medical text-warning me-2"></i>Tiếp nhận Khám bệnh</h5>
+                <h5 class="modal-title fw-bold text-dark" id="appointmentModalLabel"><i class="bi bi-journal-medical text-warning me-2"></i>Đặt Lịch Hẹn Mới</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
                 <form id="appointmentForm">
-                    <input type="hidden" id="customerId" name="CustomerId" value="@customer?.Id" />
+                    <input type="hidden" id="customerId" name="CustomerId" value="@customer.Id" />
                     
                     <div class="row g-4">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Chọn Thú cưng <span class="text-danger">*</span></label>
                             <select class="form-select form-select-lg" id="petId" name="PetId" required style="border-radius: 12px; border-color: #f1c40f88;">
                                 <option value="" disabled selected>-- Chọn bé cần khám --</option>
-                                @if (pets != null)
+                                @foreach (var p in pets)
                                 {
-                                    foreach (var p in pets)
-                                    {
-                                        <option value="@p.Id">@p.Name (@p.Species)</option>
-                                    }
+                                    <option value="@p.Id">@p.Name (@p.Species)</option>
                                 }
                             </select>
                         </div>
@@ -284,12 +310,9 @@
                             <label class="form-label fw-bold">Dịch vụ <span class="text-danger">*</span></label>
                             <select class="form-select form-select-lg" id="serviceId" name="ServiceId" required style="border-radius: 12px; border-color: #f1c40f88;">
                                 <option value="" disabled selected>-- Chọn dịch vụ --</option>
-                                @if (ViewBag.Services != null)
+                                @foreach (var s in Model.Services)
                                 {
-                                    foreach (var s in (IEnumerable<MyPetClinic.Application.DTOs.ServiceDto>)ViewBag.Services)
-                                    {
-                                        <option value="@s.Id">@s.Name</option>
-                                    }
+                                    <option value="@s.Id">@s.Name</option>
                                 }
                             </select>
                         </div>
@@ -298,12 +321,9 @@
                             <label class="form-label fw-bold">Bác sĩ phụ trách <span class="text-danger">*</span></label>
                             <select class="form-select" id="doctorId" name="DoctorId" required style="border-radius: 12px;">
                                 <option value="" disabled selected>-- Chọn bác sĩ --</option>
-                                @if (ViewBag.Doctors != null)
+                                @foreach (var d in Model.ActiveDoctors)
                                 {
-                                    foreach (var d in (IEnumerable<MyPetClinic.Application.DTOs.DoctorDto>)ViewBag.Doctors)
-                                    {
-                                        <option value="@d.Id">@d.FullName</option>
-                                    }
+                                    <option value="@d.Id">@d.FullName</option>
                                 }
                             </select>
                         </div>
@@ -375,18 +395,9 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    // Tắt modal, chuyển tab Lịch sử khám
                     var modal = bootstrap.Modal.getInstance(document.getElementById('appointmentModal'));
                     modal.hide();
-                    
-                    form.reset();
-                    
-                    // Chuyển tab sang Lịch sử
-                    var historyTab = new bootstrap.Tab(document.getElementById('history-tab'));
-                    historyTab.show();
-                    
-                    // Tạm thời show alert, sau này có thể load lại data lịch sử qua AJAX
-                    alert(result.message);
+                    window.location.reload(); // Reload trang để cập nhật lịch sử
                 } else {
                     errorDiv.innerHTML = result.message;
                     errorDiv.classList.remove('d-none');

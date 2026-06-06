@@ -381,6 +381,75 @@ namespace MyPetClinic.Application.Services
                 QrToken = appt.QrToken
             };
         }
+        public async Task<IEnumerable<AppointmentDetailDto>> GetCustomerAppointmentsAsync(Guid customerId)
+        {
+            var appts = await _unitOfWork.Appointments.FindWithIncludesAsync(
+                a => a.CustomerId == customerId,
+                a => a.Pet!, a => a.Customer!, a => a.Doctor!, a => a.Service!, a => a.Invoice!
+            );
+            
+            return appts.OrderByDescending(a => a.AppointmentDate).Select(a => new AppointmentDetailDto
+            {
+                Id = a.Id,
+                PetId = a.PetId,
+                PetName = a.Pet?.Name,
+                Species = a.Pet?.Species,
+                Breed = a.Pet?.Breed,
+                Weight = a.Pet?.Weight,
+                IsAggressive = a.Pet?.IsAggressive ?? false,
+                CustomerId = a.CustomerId,
+                CustomerName = a.Customer?.FullName,
+                CustomerPhone = a.Customer?.Phone,
+                ServiceId = a.ServiceId,
+                ServiceName = a.Service?.Name,
+                ServicePrice = a.Service?.Price,
+                DoctorId = a.DoctorId,
+                DoctorName = a.Doctor?.FullName,
+                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss") + "Z",
+                Symptom = a.Symptom,
+                Note = a.Note,
+                Status = a.Status,
+                QrToken = a.QrToken,
+                InvoiceId = a.Invoice?.Id,
+                InvoiceStatus = a.Invoice?.PaymentStatus,
+                InvoiceTotalAmount = a.Invoice?.TotalAmount
+            });
+        }
+
+        public async Task<IEnumerable<AppointmentDetailDto>> GetPetAppointmentsAsync(long petId)
+        {
+            var appts = await _unitOfWork.Appointments.FindWithIncludesAsync(
+                a => a.PetId == petId,
+                a => a.Pet!, a => a.Customer!, a => a.Doctor!, a => a.Service!, a => a.Invoice!
+            );
+            
+            return appts.OrderByDescending(a => a.AppointmentDate).Select(a => new AppointmentDetailDto
+            {
+                Id = a.Id,
+                PetId = a.PetId,
+                PetName = a.Pet?.Name,
+                Species = a.Pet?.Species,
+                Breed = a.Pet?.Breed,
+                Weight = a.Pet?.Weight,
+                IsAggressive = a.Pet?.IsAggressive ?? false,
+                CustomerId = a.CustomerId,
+                CustomerName = a.Customer?.FullName,
+                CustomerPhone = a.Customer?.Phone,
+                ServiceId = a.ServiceId,
+                ServiceName = a.Service?.Name,
+                ServicePrice = a.Service?.Price,
+                DoctorId = a.DoctorId,
+                DoctorName = a.Doctor?.FullName,
+                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss") + "Z",
+                Symptom = a.Symptom,
+                Note = a.Note,
+                Status = a.Status,
+                QrToken = a.QrToken,
+                InvoiceId = a.Invoice?.Id,
+                InvoiceStatus = a.Invoice?.PaymentStatus,
+                InvoiceTotalAmount = a.Invoice?.TotalAmount
+            });
+        }
     }
 }
 

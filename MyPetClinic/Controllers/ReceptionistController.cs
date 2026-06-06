@@ -60,18 +60,44 @@ namespace MyPetClinic.Controllers
             if (customer == null) return NotFound();
 
             var pets = await _customerService.GetPetsByCustomerAsync(id);
-
-            ViewBag.Customer = customer;
-            ViewBag.Pets = pets;
-
             var doctors = await _receptionistService.GetActiveDoctorsAsync();
-                
             var services = await _appointmentService.GetServicesAsync();
+            var appointments = await _appointmentService.GetCustomerAppointmentsAsync(id);
 
-            ViewBag.Doctors = doctors;
-            ViewBag.Services = services;
-            
-            return View();
+            var viewModel = new MyPetClinic.Web.Models.CustomerProfileViewModel
+            {
+                Customer = customer,
+                Pets = pets,
+                ActiveDoctors = doctors,
+                Services = services,
+                Appointments = appointments,
+                TotalVisits = appointments.Count(a => a.Status == "completed" || a.Status == "ready_to_pay"),
+                TotalSpent = appointments.Where(a => a.InvoiceStatus == "paid").Sum(a => a.InvoiceTotalAmount ?? 0),
+                NoShowCount = appointments.Count(a => a.Status == "cancelled"),
+                UnpaidBalance = appointments.Where(a => a.InvoiceStatus == "unpaid").Sum(a => a.InvoiceTotalAmount ?? 0)
+            };
+
+            return View(viewModel);
+        }
+
+        // ==========================================
+        // 2b. CHI TIẾT THÚ CƯNG
+        // ==========================================
+        public async Task<IActionResult> PetDetail(long id)
+        {
+            var pet = await _petRepository.GetPetByIdAsync(id);
+            if (pet == null) return NotFound();
+
+            var appointments = await _appointmentService.GetPetAppointmentsAsync(id);
+
+            var viewModel = new MyPetClinic.Web.Models.PetProfileViewModel
+            {
+                Pet = pet,
+                Customer = pet.Owner!,
+                Appointments = appointments
+            };
+
+            return View(viewModel);
         }
 
         // ==========================================
