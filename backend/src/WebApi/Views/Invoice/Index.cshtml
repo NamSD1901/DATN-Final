@@ -1,0 +1,707 @@
+@{
+    ViewData["Title"] = "Quản lý Thanh toán & Thu ngân";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<!-- Google Fonts & Site Icons -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<style>
+    /* Global Typography Reset */
+    body, .container-fluid, .card, .table, .modal-content, #printReceiptArea {
+        font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif !important;
+    }
+
+    /* Checkout queue card styling */
+    .checkout-queue-card {
+        transition: all 0.2s ease-in-out;
+        border: 1px solid #e2e8f0;
+        cursor: pointer;
+    }
+    .checkout-queue-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px -4px rgba(0,0,0,0.06);
+        border-color: var(--bs-primary);
+    }
+    .checkout-queue-card.active {
+        background-color: rgba(13, 110, 253, 0.04) !important;
+        border-color: var(--bs-primary) !important;
+        border-left: 5px solid var(--bs-primary) !important;
+    }
+
+    /* Modern select and inputs */
+    .form-control, .form-select, .input-group-text {
+        border-radius: 10px !important;
+        border: 1px solid #e2e8f0;
+        font-size: 0.9rem;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+    }
+
+    /* Payment Method Cards */
+    .payment-method-card {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .payment-method-card:hover {
+        border-color: #cbd5e1;
+        background-color: #f8fafc;
+    }
+    .payment-method-card.active {
+        border-color: var(--bs-primary) !important;
+        background-color: rgba(13, 110, 253, 0.03);
+    }
+
+    /* Catalog Search Autocomplete dropdown */
+    #catalogResults {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        max-height: 250px;
+        overflow-y: auto;
+    }
+    .catalog-item-row {
+        cursor: pointer;
+        padding: 8px 12px;
+        transition: background-color 0.15s ease;
+    }
+    .catalog-item-row:hover {
+        background-color: #f1f5f9;
+    }
+
+    /* K80 Print Styling */
+    #printReceiptArea {
+        display: none;
+    }
+
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        #printReceiptArea, #printReceiptArea * {
+            visibility: visible;
+        }
+        #printReceiptArea {
+            display: block !important;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 80mm;
+            padding: 2mm;
+            color: #000000;
+            background: #ffffff;
+        }
+        @@page {
+            size: 80mm auto;
+            margin: 0;
+        }
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h3 class="fw-bold text-primary mb-0"><i class="bi bi-cash-coin me-2"></i> Thu Ngân & Thanh Toán</h3>
+            <p class="text-muted mb-0">Quản lý hóa đơn dịch vụ, cấp đơn thuốc và in hóa đơn tại quầy</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <button class="btn btn-outline-secondary rounded-pill px-4" onclick="loadPendingCheckouts()">
+                <i class="bi bi-arrow-clockwise me-1"></i> Làm mới hàng chờ
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Column: Checkout Queue -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-3">
+                    <h5 class="fw-bold mb-3 text-dark px-1"><i class="bi bi-hourglass-split text-warning me-2"></i>Chờ Thanh Toán</h5>
+                    <div id="checkoutQueueList" style="max-height: 600px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <!-- Queue items render here -->
+                        <div class="text-center text-muted py-5">
+                            <div class="spinner-border spinner-border-sm text-primary mb-2"></div>
+                            <div>Đang tải hàng chờ...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Invoice Details & Action Panel -->
+        <div class="col-md-8 col-lg-9" id="invoiceDetailsContainer">
+            <!-- Empty state when no patient selected -->
+            <div class="card border-0 shadow-sm rounded-4 h-100 text-center py-5">
+                <div class="card-body py-5 d-flex flex-column align-items-center justify-content-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center mb-4 shadow-sm" style="width: 100px; height: 100px;">
+                        <i class="bi bi-credit-card-2-front fs-1 text-primary"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-2">Chưa chọn ca thanh toán</h4>
+                    <p class="text-muted text-wrap mb-0" style="max-width: 400px;">Vui lòng chọn một ca khám từ hàng đợi bên trái để nạp thông tin bệnh án và lập hóa đơn thanh toán.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- K80 Print Receipt Layout (Hidden by default) -->
+<div id="printReceiptArea">
+    <div style="text-align: center; margin-bottom: 4mm;">
+        <h4 style="margin: 0; font-weight: 800; font-size: 1.1rem; text-transform: uppercase;">MYPET CLINIC</h4>
+        <p style="margin: 1mm 0 0; font-size: 0.75rem;">Đ/C: 123 Đường Thú Y, Hà Nội<br>SĐT: 090 123 4567</p>
+        <h5 style="margin: 3mm 0 0; font-weight: 800; font-size: 0.95rem; border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 1.5mm 0; text-transform: uppercase;">Hóa Đơn Thanh Toán</h5>
+    </div>
+
+    <div style="font-size: 0.75rem; margin-bottom: 3mm; line-height: 1.4;">
+        <div style="display: flex; justify-content: space-between;">
+            <span>HĐ số: <strong id="printInvoiceNo">--</strong></span>
+            <span id="printDate">--</span>
+        </div>
+        <div>Khách hàng: <strong id="printCustomerName">--</strong></div>
+        <div>SĐT: <span id="printCustomerPhone">--</span></div>
+        <div>Thú cưng: <strong id="printPetName">--</strong> (<span id="printPetSpecies">--</span>)</div>
+        <div>Bác sĩ: <span id="printDoctorName">--</span></div>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-bottom: 4mm;">
+        <thead>
+            <tr style="border-bottom: 1px dashed #000; font-weight: 800;">
+                <th style="text-align: left; padding: 1mm 0;">Tên</th>
+                <th style="text-align: center; padding: 1mm 0; width: 10mm;">SL</th>
+                <th style="text-align: right; padding: 1mm 0; width: 20mm;">Đơn giá</th>
+                <th style="text-align: right; padding: 1mm 0; width: 22mm;">T.Tiền</th>
+            </tr>
+        </thead>
+        <tbody id="printInvoiceItems">
+            <!-- Printed items render here -->
+        </tbody>
+    </table>
+
+    <div style="font-size: 0.75rem; border-top: 1px dashed #000; padding-top: 2mm; line-height: 1.5;">
+        <div style="display: flex; justify-content: space-between;">
+            <span>Tạm tính:</span>
+            <span id="printSubtotal">0đ</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <span>Giảm giá:</span>
+            <span id="printDiscount">0đ</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 0.85rem; border-top: 1px solid #000; padding-top: 1mm; margin-top: 1mm;">
+            <span>TỔNG CỘNG:</span>
+            <span id="printTotal">0đ</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-top: 1mm;">
+            <span>Hình thức:</span>
+            <span id="printMethod">Tiền mặt</span>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 6mm; font-size: 0.7rem; border-top: 1px dashed #000; padding-top: 3mm;">
+        <p style="margin: 0; font-style: italic;">Cảm ơn Quý khách & bé yêu!<br>Hẹn gặp lại!</p>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        var currentInvoice = null;
+        var selectedMethod = "cash";
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPendingCheckouts();
+        });
+
+        // Fetch Checkout Queue
+        function loadPendingCheckouts() {
+            $.get('/Invoice/GetPendingCheckouts', function(queue) {
+                var container = $('#checkoutQueueList');
+                container.empty();
+
+                if (queue.length === 0) {
+                    container.html(`
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-check-circle fs-2 text-success d-block mb-2"></i>
+                            <div class="small fw-bold">Hàng chờ trống!</div>
+                            <div class="small opacity-75">Không có ca chờ thanh toán.</div>
+                        </div>
+                    `);
+                    return;
+                }
+
+                queue.forEach(function(item) {
+                    var animalEmoji = "🐾";
+                    var speciesLower = (item.species || "").toLowerCase();
+                    if (speciesLower.includes("chó") || speciesLower.includes("dog")) animalEmoji = "🐶";
+                    else if (speciesLower.includes("mèo") || speciesLower.includes("cat")) animalEmoji = "🐱";
+
+                    var statusBadge = `<span class="badge bg-warning text-dark rounded-pill" style="font-size:0.7rem;">Chờ thanh toán</span>`;
+                    if (item.status === "completed") {
+                        statusBadge = `<span class="badge bg-success rounded-pill text-white" style="font-size:0.7rem;">Chờ in lại HĐ</span>`;
+                    }
+
+                    var emergencyBadge = item.isEmergency 
+                        ? `<span class="badge bg-danger ms-1 text-white" style="font-size:0.6rem;"><i class="bi bi-exclamation-triangle-fill"></i> CẤP CỨU</span>` : '';
+
+                    var cardClass = (currentInvoice && currentInvoice.appointmentId === item.appointmentId) ? "active" : "";
+
+                    var itemHtml = `
+                        <div class="card checkout-queue-card shadow-sm p-3 rounded-3 border-0 bg-white ${cardClass}" 
+                             data-id="${item.appointmentId}" onclick="selectCheckout(${item.appointmentId})">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="fw-bold mb-0 text-dark">${animalEmoji} ${item.petName || 'Không tên'} ${emergencyBadge}</h6>
+                                <span class="badge bg-light text-secondary border rounded-pill">#${item.queueNumber}</span>
+                            </div>
+                            <div class="text-muted small mb-2"><i class="bi bi-person-circle text-primary me-1"></i>${item.customerName || 'Vãng lai'}</div>
+                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                ${statusBadge}
+                                <span class="small fw-bold text-muted">Bs. ${item.doctorName ? item.doctorName.split(' ').pop() : 'Chưa xếp'}</span>
+                            </div>
+                        </div>
+                    `;
+                    container.append(itemHtml);
+                });
+            });
+        }
+
+        // Select checkout patient
+        function selectCheckout(appointmentId) {
+            $('.checkout-queue-card').removeClass('active');
+            $(`.checkout-queue-card[data-id="${appointmentId}"]`).addClass('active');
+
+            $('#invoiceDetailsContainer').html(`
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary mb-2"></div>
+                    <div>Đang tạo hóa đơn ca khám...</div>
+                </div>
+            `);
+
+            $.get('/Invoice/GetDetail', { appointmentId: appointmentId }, function(invoice) {
+                currentInvoice = invoice;
+                renderInvoice(invoice);
+            }).fail(function(xhr) {
+                var msg = xhr.responseJSON ? xhr.responseJSON.message : "Không thể tạo hóa đơn";
+                Swal.fire("Lỗi", msg, "error");
+            });
+        }
+
+        // Render Invoice details
+        function renderInvoice(invoice) {
+            var itemsHtml = '';
+            invoice.items.forEach(function(item, idx) {
+                var typeBadge = item.itemType === 'service' 
+                    ? '<span class="badge bg-primary bg-opacity-10 text-primary px-2">Dịch vụ</span>' 
+                    : '<span class="badge bg-success bg-opacity-10 text-success px-2">Thuốc</span>';
+
+                itemsHtml += `
+                    <tr>
+                        <td class="text-center fw-bold text-secondary" style="font-size:0.85rem;">${idx + 1}</td>
+                        <td>
+                            <div class="fw-bold text-dark" style="font-size:0.9rem;">${item.itemName}</div>
+                            <div class="small">${typeBadge}</div>
+                        </td>
+                        <td style="width: 130px;">
+                            <div class="input-group input-group-sm">
+                                <button class="btn btn-outline-secondary px-2" type="button" onclick="changeQty(${item.id}, ${item.quantity - 1})">-</button>
+                                <input type="number" class="form-control text-center fw-bold" value="${item.quantity}" 
+                                       style="width: 50px;" onchange="changeQty(${item.id}, this.value)">
+                                <button class="btn btn-outline-secondary px-2" type="button" onclick="changeQty(${item.id}, ${item.quantity + 1})">+</button>
+                            </div>
+                        </td>
+                        <td class="text-end fw-bold text-slate" style="font-size:0.9rem;">${item.unitPrice.toLocaleString('vi-VN')}đ</td>
+                        <td class="text-end fw-bold text-dark" style="font-size:0.9rem;">${item.totalPrice.toLocaleString('vi-VN')}đ</td>
+                        <td class="text-center">
+                            <button class="btn btn-link text-danger p-0 fs-5" onclick="removeItem(${item.id})">
+                                <i class="bi bi-trash3-fill"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (invoice.items.length === 0) {
+                itemsHtml = `<tr><td colspan="6" class="text-center text-muted py-4">Hóa đơn chưa có dòng chi phí nào. Hãy tìm thêm sản phẩm ở ô phía trên!</td></tr>`;
+            }
+
+            var html = `
+                <div class="row g-4">
+                    <!-- Left column: Itemized list -->
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm rounded-4 mb-4">
+                            <div class="card-body p-4">
+                                <!-- Patient Info Header -->
+                                <div class="p-3 bg-light rounded-4 border mb-4">
+                                    <div class="row align-items-center">
+                                        <div class="col-sm-7 mb-2 mb-sm-0">
+                                            <small class="text-muted text-uppercase fw-bold text-xs">Thú cưng & Khách hàng</small>
+                                            <h5 class="fw-bold text-primary mb-1">🐾 ${invoice.petName} (${invoice.petSpecies || 'Khác'})</h5>
+                                            <div class="text-dark small"><i class="bi bi-person me-1"></i> Chủ nuôi: <strong>${invoice.customerName}</strong> - ${invoice.customerPhone}</div>
+                                        </div>
+                                        <div class="col-sm-5 text-sm-end border-start border-slate-200 ps-sm-4">
+                                            <small class="text-muted text-uppercase fw-bold text-xs">Bác sĩ phụ trách</small>
+                                            <div class="fw-bold text-slate"><i class="bi bi-heart-pulse me-1 text-danger"></i>${invoice.doctorName || 'Chưa xếp'}</div>
+                                            <small class="text-muted"><i class="bi bi-calendar-event me-1"></i>${new Date(invoice.createdAt).toLocaleDateString('vi-VN')}</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Add Item Quick Search -->
+                                <div class="position-relative mb-4">
+                                    <label class="form-label fw-bold text-secondary mb-1">Gõ để thêm nhanh Sản phẩm / Dịch vụ</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                                        <input type="text" id="catalogSearch" class="form-control border-start-0" placeholder="Gõ tên thuốc, dịch vụ khám, dầu tắm, thức ăn..." autocomplete="off">
+                                    </div>
+                                    <div id="catalogResults" class="d-none"></div>
+                                </div>
+
+                                <!-- Table of Items -->
+                                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-list-check me-1 text-primary"></i>Danh sách Chi tiết Chi phí</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead class="table-light text-secondary small">
+                                            <tr>
+                                                <th class="text-center" style="width: 50px;">STT</th>
+                                                <th>Mặt hàng</th>
+                                                <th>Số lượng</th>
+                                                <th class="text-end">Đơn giá</th>
+                                                <th class="text-end">Thành tiền</th>
+                                                <th class="text-center" style="width: 50px;">Xóa</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${itemsHtml}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right column: Cost summaries & payment -->
+                    <div class="col-lg-4">
+                        <!-- Summary Card -->
+                        <div class="card border-0 shadow-sm rounded-4 mb-4" style="background-color:#ffffff;">
+                            <div class="card-body p-4">
+                                <h5 class="fw-bold text-dark mb-4 border-bottom pb-2"><i class="bi bi-wallet2 text-primary me-2"></i>Tính Tiền Hóa Đơn</h5>
+                                
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Tổng tạm tính:</span>
+                                    <span class="fw-bold text-dark">${invoice.subtotal.toLocaleString('vi-VN')}đ</span>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1.5 align-items-center">
+                                        <span class="text-muted">Giảm giá (VND):</span>
+                                        <input type="number" id="discountInput" class="form-control form-control-sm text-end fw-bold text-danger border-danger border-opacity-25" 
+                                               style="width: 140px;" value="${invoice.discountAmount}" onchange="recalculateTotal()">
+                                    </div>
+                                </div>
+                                
+                                <hr class="my-3">
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <span class="fw-bold text-dark fs-5">TỔNG CẦN THU:</span>
+                                    <span class="fw-extrabold text-primary fs-3" id="finalTotalSpan">${(invoice.subtotal - invoice.discountAmount).toLocaleString('vi-VN')}đ</span>
+                                </div>
+
+                                <!-- Payment Method Selector -->
+                                <h6 class="fw-bold text-dark mb-2.5">Chọn Hình thức Thanh toán</h6>
+                                <div class="row g-2 mb-4">
+                                    <div class="col-4">
+                                        <div class="payment-method-card active p-2.5 text-center" id="method-cash" onclick="setPaymentMethod('cash')">
+                                            <i class="bi bi-cash-stack fs-4 text-success d-block mb-1"></i>
+                                            <span class="small fw-bold">Tiền mặt</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="payment-method-card p-2.5 text-center" id="method-qr" onclick="setPaymentMethod('qr')">
+                                            <i class="bi bi-qr-code-scan fs-4 text-primary d-block mb-1"></i>
+                                            <span class="small fw-bold">VietQR</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="payment-method-card p-2.5 text-center" id="method-pos" onclick="setPaymentMethod('pos')">
+                                            <i class="bi bi-credit-card fs-4 text-info d-block mb-1"></i>
+                                            <span class="small fw-bold">POS Thẻ</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dynamic payment method container -->
+                                <div class="p-3 bg-light rounded-4 border mb-4 text-center" id="paymentContentContainer">
+                                    <!-- Dynamic elements render here -->
+                                </div>
+
+                                <!-- Action button -->
+                                <button class="btn btn-primary btn-lg w-100 rounded-pill shadow fw-bold py-2.5" onclick="processPayment()">
+                                    <i class="bi bi-printer-fill me-2"></i> Thanh Toán & In Hóa Đơn
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#invoiceDetailsContainer').html(html);
+
+            // Bind autocomplete quick search
+            $('#catalogSearch').on('input', function() {
+                var query = $(this).val().trim();
+                if (query.length < 2) {
+                    $('#catalogResults').addClass('d-none').empty();
+                    return;
+                }
+
+                $.get('/Invoice/GetCatalog', { query: query }, function(res) {
+                    var dropdown = $('#catalogResults');
+                    dropdown.empty();
+
+                    if (res.length === 0) {
+                        dropdown.append(`<div class="p-3 text-center text-muted small">Không tìm thấy sản phẩm/dịch vụ nào</div>`);
+                    } else {
+                        res.forEach(item => {
+                            var icon = item.type === 'service' ? '🩺' : '💊';
+                            var unitText = item.unit ? ` / ${item.unit}` : '';
+                            var stockText = item.type === 'medicine' ? `<span class="badge bg-secondary text-white float-end">Kho: ${item.stockQuantity}</span>` : '';
+                            
+                            dropdown.append(`
+                                <div class="catalog-item-row border-bottom" onclick="addCatalogItem('${item.type}', ${item.id})">
+                                    <span class="fs-5 me-2">${icon}</span>
+                                    <span class="fw-bold text-dark text-xs">${item.name}</span>
+                                    <span class="text-slate-500 float-end fw-bold text-primary small ms-2">${item.price.toLocaleString('vi-VN')}đ${unitText}</span>
+                                    ${stockText}
+                                </div>
+                            `);
+                        });
+                    }
+                    dropdown.removeClass('d-none');
+                });
+            });
+
+            // Close autocomplete when clicked outside
+            $(document).click(function(e) {
+                if (!$(e.target).closest('.position-relative').length) {
+                    $('#catalogResults').addClass('d-none');
+                }
+            });
+
+            // Trigger payment content render
+            setPaymentMethod(selectedMethod);
+        }
+
+        // Quick add catalog item to invoice
+        function addCatalogItem(type, itemId) {
+            $('#catalogResults').addClass('d-none');
+            $('#catalogSearch').val('');
+
+            $.post('/Invoice/AddItem', {
+                invoiceId: currentInvoice.id,
+                itemType: type,
+                itemId: itemId,
+                quantity: 1
+            }, function(res) {
+                if (res.success) {
+                    currentInvoice = res.invoice;
+                    renderInvoice(res.invoice);
+                } else {
+                    Swal.fire("Lỗi", res.message, "error");
+                }
+            });
+        }
+
+        // Change quantity
+        function changeQty(itemId, newQty) {
+            $.post('/Invoice/UpdateQty', { itemId: itemId, quantity: newQty }, function(res) {
+                if (res.success) {
+                    currentInvoice = res.invoice;
+                    renderInvoice(res.invoice);
+                } else {
+                    Swal.fire("Lỗi", res.message, "error");
+                }
+            });
+        }
+
+        // Remove item
+        function removeItem(itemId) {
+            $.post('/Invoice/RemoveItem', { itemId: itemId }, function(res) {
+                if (res.success) {
+                    currentInvoice = res.invoice;
+                    renderInvoice(res.invoice);
+                } else {
+                    Swal.fire("Lỗi", res.message, "error");
+                }
+            });
+        }
+
+        // Recalculate totals on discount edit
+        function recalculateTotal() {
+            var disc = parseFloat($('#discountInput').val()) || 0;
+            if (disc < 0) disc = 0;
+            if (disc > currentInvoice.subtotal) disc = currentInvoice.subtotal;
+            $('#discountInput').val(disc);
+
+            var total = currentInvoice.subtotal - disc;
+            $('#finalTotalSpan').text(total.toLocaleString('vi-VN') + 'đ');
+            
+            // Re-render payment method helper with new totals
+            setPaymentMethod(selectedMethod);
+        }
+
+        // Set active payment method
+        function setPaymentMethod(method) {
+            selectedMethod = method;
+            $('.payment-method-card').removeClass('active');
+            $(`#method-${method}`).addClass('active');
+
+            var container = $('#paymentContentContainer');
+            container.empty();
+
+            var disc = parseFloat($('#discountInput').val()) || 0;
+            var finalTotal = currentInvoice.subtotal - disc;
+
+            if (method === 'cash') {
+                container.html(`
+                    <div class="text-start">
+                        <label class="form-label small fw-bold text-success mb-1">Số Tiền Khách Đưa (VND)</label>
+                        <input type="number" id="cashReceived" class="form-control form-control-lg fw-bold text-success text-center mb-2" 
+                               value="${finalTotal}" oninput="calcCashChange(this.value, ${finalTotal})">
+                        <div class="d-flex justify-content-between p-2.5 bg-success bg-opacity-10 text-success rounded-3 mt-2 fw-bold">
+                            <span>Tiền thừa trả khách:</span>
+                            <span id="cashChangeSpan">0đ</span>
+                        </div>
+                    </div>
+                `);
+            } else if (method === 'qr') {
+                // Generate Dynamic VietQR Code
+                // Using open VietQR public APIs
+                var bankId = "VCB"; // Vietcombank
+                var accountNo = "990123456789"; // Sample clinic account
+                var accountName = "MYPET CLINIC";
+                var addInfo = encodeURIComponent("THANH TOAN HD " + currentInvoice.id);
+                var qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${finalTotal}&addInfo=${addInfo}&accountName=${encodeURIComponent(accountName)}`;
+                
+                container.html(`
+                    <div>
+                        <p class="text-muted small mb-2">Quét mã QR bằng App Ngân hàng để thanh toán nhanh:</p>
+                        <img src="${qrUrl}" class="img-fluid border rounded-3 p-2 bg-white shadow-sm" style="max-height: 180px; width: auto;" alt="VietQR Code">
+                        <div class="mt-2 text-primary small fw-bold"><i class="bi bi-bank me-1"></i>VCB - 990123456789</div>
+                    </div>
+                `);
+            } else if (method === 'pos') {
+                container.html(`
+                    <div class="py-3">
+                        <div class="spinner-grow text-info mb-2" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
+                        <p class="mb-0 text-slate small fw-bold">Đang kết nối cổng POS ngân hàng...</p>
+                        <small class="text-muted">Vui lòng chạm, chèn hoặc quẹt thẻ trên thiết bị.</small>
+                    </div>
+                `);
+            }
+        }
+
+        // Cash Change calculator
+        function calcCashChange(receivedVal, total) {
+            var received = parseFloat(receivedVal) || 0;
+            var change = received - total;
+            if (change < 0) change = 0;
+            $('#cashChangeSpan').text(change.toLocaleString('vi-VN') + 'đ');
+        }
+
+        // Final Invoice checkout execution
+        function processPayment() {
+            var disc = parseFloat($('#discountInput').val()) || 0;
+            var finalTotal = currentInvoice.subtotal - disc;
+
+            if (selectedMethod === 'cash') {
+                var received = parseFloat($('#cashReceived').val()) || 0;
+                if (received < finalTotal) {
+                    Swal.fire("Cảnh báo", "Số tiền khách đưa chưa đủ!", "warning");
+                    return;
+                }
+            }
+
+            Swal.fire({
+                title: 'Xác nhận thanh toán?',
+                text: `Khách hàng sẽ thanh toán tổng số tiền ${finalTotal.toLocaleString('vi-VN')}đ.`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Đồng ý',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('/Invoice/ProcessPayment', {
+                        invoiceId: currentInvoice.id,
+                        paymentMethod: selectedMethod,
+                        discountAmount: disc
+                    }, function(res) {
+                        if (res.success) {
+                            // Populate receipt print values
+                            $('#printInvoiceNo').text(currentInvoice.id);
+                            $('#printDate').text(new Date().toLocaleString('vi-VN'));
+                            $('#printCustomerName').text(currentInvoice.customerName);
+                            $('#printCustomerPhone').text(currentInvoice.customerPhone);
+                            $('#printPetName').text(currentInvoice.petName);
+                            $('#printPetSpecies').text(currentInvoice.petSpecies || 'Khác');
+                            $('#printDoctorName').text(currentInvoice.doctorName || 'Chưa phân công');
+
+                            var printBody = $('#printInvoiceItems');
+                            printBody.empty();
+
+                            currentInvoice.items.forEach(function(item) {
+                                printBody.append(`
+                                    <tr style="border-bottom: 1px dotted #e2e8f0;">
+                                        <td style="padding: 1.5mm 0;">${item.itemName}</td>
+                                        <td style="text-align: center; padding: 1.5mm 0;">${item.quantity}</td>
+                                        <td style="text-align: right; padding: 1.5mm 0;">${item.unitPrice.toLocaleString('vi-VN')}đ</td>
+                                        <td style="text-align: right; padding: 1.5mm 0;">${item.totalPrice.toLocaleString('vi-VN')}đ</td>
+                                    </tr>
+                                `);
+                            });
+
+                            $('#printSubtotal').text(currentInvoice.subtotal.toLocaleString('vi-VN') + 'đ');
+                            $('#printDiscount').text(disc.toLocaleString('vi-VN') + 'đ');
+                            $('#printTotal').text(finalTotal.toLocaleString('vi-VN') + 'đ');
+
+                            var methodText = 'Tiền mặt';
+                            if (selectedMethod === 'qr') methodText = 'Chuyển khoản VietQR';
+                            else if (selectedMethod === 'pos') methodText = 'Thẻ ngân hàng (POS)';
+                            $('#printMethod').text(methodText);
+
+                            // Trigger Browser Print Dialog
+                            window.print();
+
+                            // Reload layout and queues
+                            currentInvoice = null;
+                            $('#invoiceDetailsContainer').html(`
+                                <div class="card border-0 shadow-sm rounded-4 h-100 text-center py-5">
+                                    <div class="card-body py-5 d-flex flex-column align-items-center justify-content-center">
+                                        <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center mb-4 shadow-sm" style="width: 100px; height: 100px;">
+                                            <i class="bi bi-check2-circle fs-1 text-success"></i>
+                                        </div>
+                                        <h4 class="fw-bold text-dark mb-2">Thanh toán hoàn tất!</h4>
+                                        <p class="text-muted text-wrap mb-0" style="max-width: 400px;">Hóa đơn đã được lập và ghi nhận hoàn thành. Hãy chọn ca khám tiếp theo để tiếp tục.</p>
+                                    </div>
+                                </div>
+                            `);
+                            loadPendingCheckouts();
+                            Swal.fire("Thành công!", "Đã xác nhận thanh toán & In hóa đơn!", "success");
+                        } else {
+                            Swal.fire("Lỗi", res.message || "Giao dịch thất bại", "error");
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

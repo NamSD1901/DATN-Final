@@ -1,0 +1,112 @@
+@model MyPetClinic.Domain.Entities.Pet
+@{
+    ViewData["Title"] = "Sửa Thông Tin Thú Cưng";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .form-card { border: none; border-radius: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+    .section-header { font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: #f39c12; letter-spacing: 0.05em; border-bottom: 2px solid #fef9e7; padding-bottom: 8px; margin-bottom: 16px; }
+    .form-label { font-size: 0.88rem; font-weight: 600; color: #444; }
+    .btn-gold { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; font-weight: 600; border: none; border-radius: 10px; }
+    .btn-gold:hover { filter: brightness(1.08); color: #fff; }
+    .form-control:focus, .form-select:focus { border-color: #f1c40f; box-shadow: 0 0 0 3px rgba(241,196,15,0.15); }
+</style>
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Customers" class="text-warning text-decoration-none">Khách hàng</a></li>
+        <li class="breadcrumb-item"><a asp-action="CustomerDetail" asp-route-id="@Model.OwnerId" class="text-warning text-decoration-none">@Model.Owner?.FullName</a></li>
+        <li class="breadcrumb-item active">Sửa: @Model.Name</li>
+    </ol>
+</nav>
+
+<h4 class="fw-bold mb-4"><i class="bi bi-pencil-square text-warning me-2"></i>Cập Nhật Thú Cưng: <span class="text-warning">@Model.Name</span></h4>
+
+<div class="card form-card p-4">
+    <form asp-action="EditPet" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" value="@Model.Id">
+        <input type="hidden" name="OwnerId" value="@Model.OwnerId">
+
+        <div class="section-header"><i class="bi bi-info-circle me-2"></i>Thông Tin Cơ Bản</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label class="form-label">Tên thú cưng <span class="text-danger">*</span></label>
+                <input type="text" name="Name" class="form-control" value="@Model.Name" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Giống / Breed</label>
+                <input type="text" name="Breed" class="form-control" value="@Model.Breed">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Loài</label>
+                <input type="text" name="Species" class="form-control" value="@Model.Species">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Màu lông</label>
+                <input type="text" name="Color" class="form-control" value="@Model.Color">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Giới tính</label>
+                <select name="Gender" class="form-select">
+                    <option value="">— Chọn —</option>
+                    @{
+                        var genderOptions = new[] {
+                            new { Value = "1", Text = "Đực" },
+                            new { Value = "0", Text = "Cái" }
+                        };
+                    }
+                    @foreach (var opt in genderOptions)
+                    {
+                        if (Model.Gender.ToString() == opt.Value)
+                        {
+                            <option value="@opt.Value" selected>@opt.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@opt.Value">@opt.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Ngày sinh</label>
+                <input type="date" name="BirthDate" class="form-control" value="@Model.BirthDate?.ToString("yyyy-MM-dd")">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Cân nặng (kg)</label>
+                <input type="number" name="Weight" class="form-control" step="0.01" min="0" max="999.99" value="@Model.Weight" placeholder="VD: 3.5">
+            </div>
+        </div>
+
+        <div class="section-header"><i class="bi bi-clipboard2-pulse me-2"></i>Thông Tin Y Tế</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label class="form-label">Mã Microchip</label>
+                <input type="text" name="MicrochipCode" class="form-control" value="@Model.MicrochipCode">
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+                <div class="form-check form-switch ms-2">
+                    <input class="form-check-input" type="checkbox" name="Sterilized" value="true" id="sterilizedCheck"
+                           @(Model.Sterilized == true ? "checked" : "")>
+                    <label class="form-check-label fw-semibold" for="sterilizedCheck">Đã triệt sản</label>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">Ghi chú dị ứng</label>
+                <textarea name="AllergyNote" class="form-control" rows="2">@Model.AllergyNote</textarea>
+            </div>
+        </div>
+
+        <div class="d-flex gap-3">
+            <button type="submit" class="btn btn-gold px-5 py-2">
+                <i class="bi bi-check-circle-fill me-2"></i>Lưu Thay Đổi
+            </button>
+            <a asp-action="CustomerDetail" asp-route-id="@Model.OwnerId" class="btn btn-outline-secondary px-4 py-2">
+                <i class="bi bi-x-circle me-2"></i>Hủy
+            </a>
+        </div>
+    </form>
+</div>

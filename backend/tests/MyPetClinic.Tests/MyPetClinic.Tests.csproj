@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -21,9 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MyPetClinic.Application\MyPetClinic.Application.csproj" />
-    <ProjectReference Include="..\MyPetClinic.Infrastructure\MyPetClinic.Infrastructure.csproj" />
-    <ProjectReference Include="..\MyPetClinic.Domain\MyPetClinic.Domain.csproj" />
+    <ProjectReference Include="..\..\src\MyPetClinic.Application\MyPetClinic.Application.csproj" />
+    <ProjectReference Include="..\..\src\MyPetClinic.Infrastructure\MyPetClinic.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\MyPetClinic.Domain\MyPetClinic.Domain.csproj" />
   </ItemGroup>
 
 </Project>

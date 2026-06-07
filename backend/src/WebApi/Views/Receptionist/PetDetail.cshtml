@@ -1,0 +1,312 @@
+@model MyPetClinic.Web.Models.PetProfileViewModel
+@{
+    ViewData["Title"] = "Hồ sơ Thú cưng";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    var pet = Model.Pet;
+    var customer = Model.Customer;
+    var appointments = Model.Appointments;
+}
+
+<style>
+    /* Card Styles */
+    .profile-card {
+        background: #fff;
+        border: 1px solid #eef0f2;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        margin-bottom: 1.5rem;
+    }
+    .profile-header {
+        padding: 2rem;
+        border-radius: 12px;
+    }
+    
+    /* Avatars */
+    .pet-avatar-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+    .avatar-big {
+        width: 100px; height: 100px;
+        border-radius: 50%;
+        background: #fdfaf0;
+        border: 2px solid #eef0f2;
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden;
+        font-size: 3rem;
+    }
+    .avatar-big img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .gender-badge {
+        position: absolute;
+        bottom: 5px;
+        right: 0;
+        width: 28px;
+        height: 28px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border: 1px solid #eee;
+        font-size: 0.85rem;
+    }
+    .gender-badge.male { color: #3b82f6; }
+    .gender-badge.female { color: #ec4899; }
+    
+    /* Typography & Badges */
+    .vip-tag { 
+        background: #fdf3d8; color: #b7900d; border-radius: 6px; 
+        padding: 4px 10px; font-size: 0.75rem; font-weight: 700; 
+        display: inline-block;
+    }
+    .health-tag { 
+        font-size: 0.8rem; padding: 5px 12px; border-radius: 6px; font-weight: 600; 
+        display: inline-flex; align-items: center; gap: 5px;
+    }
+    .tag-blue { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+    .tag-red { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    
+    /* Buttons */
+    .btn-outline-custom {
+        border: 1px solid #e5e7eb;
+        background: white;
+        color: #4b5563;
+        font-weight: 600;
+        border-radius: 8px;
+    }
+    .btn-outline-custom:hover { background: #f9fafb; color: #111827; }
+    
+    /* Tabs */
+    .nav-pills-custom { border-bottom: 1px solid #e5e7eb; padding-bottom: 0; gap: 10px; }
+    .nav-pills-custom .nav-link { 
+        color: #6b7280; font-weight: 600; border-radius: 0; padding: 12px 16px; 
+        border-bottom: 2px solid transparent; background: transparent;
+    }
+    .nav-pills-custom .nav-link.active { 
+        color: #3b82f6; border-bottom: 2px solid #3b82f6; background: transparent;
+    }
+    
+    /* Timeline */
+    .clinical-timeline { position: relative; padding-left: 20px; border-left: 2px solid #e5e7eb; margin-top: 1rem; margin-left: 10px; }
+    .clinical-item { position: relative; margin-bottom: 2rem; }
+    .clinical-dot { 
+        position: absolute; left: -26px; top: 0; width: 10px; height: 10px; 
+        border-radius: 50%; background: #94a3b8; border: 2px solid white; 
+        box-sizing: content-box;
+    }
+    .clinical-item:first-child .clinical-dot { background: #0f766e; } /* highlight newest */
+    
+    .clinical-date { font-size: 0.85rem; color: #6b7280; font-weight: 500; margin-bottom: 8px; }
+    .clinical-card { 
+        background: #f8fafc; padding: 16px; border-radius: 8px; 
+        border: 1px solid #e2e8f0; 
+    }
+    
+    /* Sidebar Summary */
+    .summary-section { margin-bottom: 1.5rem; }
+    .summary-title { font-size: 0.75rem; text-transform: uppercase; color: #6b7280; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .summary-box { background: #f8fafc; padding: 12px; border-radius: 8px; font-size: 0.9rem; color: #334155; }
+    .summary-box-danger { background: #fef2f2; color: #991b1b; padding: 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 500; }
+</style>
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Customers" class="text-warning text-decoration-none">Khách hàng</a></li>
+        <li class="breadcrumb-item"><a asp-action="CustomerDetail" asp-route-id="@customer.Id" class="text-warning text-decoration-none">@customer.FullName</a></li>
+        <li class="breadcrumb-item active">@pet.Name</li>
+    </ol>
+</nav>
+
+<!-- HEADER -->
+<div class="profile-card profile-header">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div class="d-flex gap-4 align-items-center">
+            <div class="pet-avatar-wrapper">
+                <div class="avatar-big">
+                    @{ string icon = pet.Species?.ToLower() switch { "chó" or "dog" => "🐕", "mèo" or "cat" => "🐈", "thỏ" or "rabbit" => "🐇", "hamster" => "🐹", _ => "🐾" }; }
+                    @if (!string.IsNullOrEmpty(pet.Avatar)) { <img src="@pet.Avatar" alt="@pet.Name" /> } else { @icon }
+                </div>
+                <div class="gender-badge @(pet.Gender == 1 ? "male" : "female")">
+                    @if(pet.Gender == 1) { <i class="bi bi-gender-male"></i> } else if (pet.Gender == 0) { <i class="bi bi-gender-female"></i> } else { <i class="bi bi-gender-ambiguous text-secondary"></i> }
+                </div>
+            </div>
+            
+            <div>
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <h2 class="fw-bold mb-0 text-dark">@pet.Name</h2>
+                    <span class="vip-tag">KHÁCH HÀNG VIP</span>
+                </div>
+                
+                <div class="text-muted mb-3" style="font-size: 0.95rem;">
+                    @pet.Breed <span class="mx-1">•</span> 
+                    @(pet.BirthDate.HasValue ? $"{Math.Round((DateTime.UtcNow - pet.BirthDate.Value).TotalDays / 365, 1)} yrs" : "—") <span class="mx-1">•</span> 
+                    @(pet.Weight.HasValue ? $"{pet.Weight} kg" : "—")
+                </div>
+                
+                <div class="d-flex flex-wrap gap-2">
+                    @if(pet.Sterilized == true) { <span class="health-tag tag-blue"><i class="bi bi-scissors"></i> Đã triệt sản</span> }
+                    @if(!string.IsNullOrEmpty(pet.AllergyNote)) { <span class="health-tag tag-red"><i class="bi bi-exclamation-triangle-fill"></i> Dị ứng @pet.AllergyNote</span> }
+                    @if(pet.IsAggressive) { <span class="health-tag tag-red"><i class="bi bi-shield-exclamation"></i> Hung dữ</span> }
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex gap-2 mt-2 mt-md-0">
+            <a asp-action="EditPet" asp-route-id="@pet.Id" class="btn btn-outline-custom">
+                <i class="bi bi-pencil-square me-1"></i> Sửa thông tin
+            </a>
+            <button class="btn btn-outline-custom">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Xuất file
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- CỘT TRÁI: TAB & LỊCH SỬ KHÁM -->
+    <div class="col-lg-8">
+        <div class="profile-card p-4">
+            <ul class="nav nav-pills nav-pills-custom mb-4" id="petTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#clinical" type="button" role="tab">
+                        <i class="bi bi-clock-history me-1"></i> Lịch sử khám
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#labs" type="button" role="tab">
+                        <i class="bi bi-file-medical me-1"></i> Kết quả xét nghiệm
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#imaging" type="button" role="tab">
+                        <i class="bi bi-images me-1"></i> Chẩn đoán hình ảnh
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="petTabsContent">
+                <!-- TAB LỊCH SỬ LÂM SÀNG -->
+                <div class="tab-pane fade show active" id="clinical" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold mb-0">Lịch sử lâm sàng</h5>
+                        <button class="btn btn-sm btn-link text-decoration-none text-muted"><i class="bi bi-filter"></i> Lọc</button>
+                    </div>
+
+                    @if (!appointments.Any())
+                    {
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-journal-x display-4 opacity-25 mb-3 d-block"></i>
+                            <p>Chưa có lịch sử khám bệnh nào cho bé thú cưng này.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="clinical-timeline">
+                            @foreach(var appt in appointments)
+                            {
+                                <div class="clinical-item">
+                                    <div class="clinical-dot"></div>
+                                    <div class="clinical-date">
+                                        @DateTime.Parse(appt.AppointmentDate).ToLocalTime().ToString("MMM dd, yyyy") <span class="mx-1">•</span> Bs. @appt.DoctorName
+                                    </div>
+                                    <div class="clinical-card">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="fw-bold mb-0 text-dark">@appt.ServiceName</h6>
+                                            <span class="badge bg-light text-secondary border">
+                                                @(appt.Status == "completed" || appt.Status == "ready_to_pay" ? "Đã khám" : appt.Status == "cancelled" ? "Đã hủy" : "Chờ khám")
+                                            </span>
+                                        </div>
+                                        <p class="text-muted small mb-3">
+                                            <strong>Triệu chứng / Chẩn đoán:</strong> @appt.Symptom <br/>
+                                            @if(!string.IsNullOrEmpty(appt.Note)) { <span><strong>Ghi chú:</strong> @appt.Note</span> }
+                                        </p>
+                                        <div class="d-flex gap-3">
+                                            <a href="#" class="text-decoration-none small fw-semibold text-primary"><i class="bi bi-file-earmark-text"></i> Xem ghi chú</a>
+                                            @if(appt.InvoiceId.HasValue)
+                                            {
+                                                <a href="#" class="text-decoration-none small fw-semibold text-primary"><i class="bi bi-receipt"></i> Hóa đơn</a>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        
+                        @if(appointments.Count() > 5)
+                        {
+                            <button class="btn btn-outline-custom w-100 mt-3">Tải thêm lịch sử</button>
+                        }
+                    }
+                </div>
+                
+                <!-- TAB KHÁC -->
+                <div class="tab-pane fade text-center py-5 text-muted" id="labs" role="tabpanel">Chưa có kết quả xét nghiệm.</div>
+                <div class="tab-pane fade text-center py-5 text-muted" id="imaging" role="tabpanel">Chưa có chẩn đoán hình ảnh.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CỘT PHẢI: TÓM TẮT & HÌNH ẢNH -->
+    <div class="col-lg-4">
+        <!-- Tóm tắt sức khỏe -->
+        <div class="profile-card p-4">
+            <h5 class="fw-bold mb-4 d-flex align-items-center gap-2"><i class="bi bi-clipboard2-pulse text-warning"></i> Tóm tắt sức khỏe</h5>
+            
+            <div class="summary-section">
+                <div class="summary-title">Bệnh mãn tính</div>
+                <div class="summary-box">
+                    @(string.IsNullOrEmpty(pet.ChronicDisease) ? "Chưa ghi nhận bệnh mãn tính." : pet.ChronicDisease)
+                </div>
+            </div>
+            
+            <div class="summary-section">
+                <div class="summary-title">Dị ứng & Nhạy cảm</div>
+                @if(string.IsNullOrEmpty(pet.AllergyNote))
+                {
+                    <div class="summary-box">Không có dị ứng.</div>
+                }
+                else
+                {
+                    <div class="summary-box-danger">@pet.AllergyNote</div>
+                }
+            </div>
+            
+            <div class="summary-section">
+                <div class="summary-title">Chế độ ăn hiện tại</div>
+                <div class="summary-box d-flex justify-content-between align-items-center">
+                    <span>@(string.IsNullOrEmpty(pet.CurrentDiet) ? "Chưa có thông tin." : pet.CurrentDiet)</span>
+                    <a asp-action="EditPet" asp-route-id="@pet.Id" class="text-secondary"><i class="bi bi-pencil-fill" style="font-size:0.85rem;"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hình ảnh gần đây -->
+        <div class="profile-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0 d-flex align-items-center gap-2"><i class="bi bi-image text-success"></i> Hình ảnh gần đây</h5>
+                <a href="#" class="text-decoration-none small">Xem tất cả</a>
+            </div>
+            
+            <div class="row g-2">
+                <div class="col-6">
+                    <div style="height: 120px; background: #1e293b; border-radius: 8px; position: relative; overflow: hidden; display:flex; align-items:flex-end; padding:10px;">
+                        <span class="text-white fw-bold" style="font-size: 0.75rem; z-index: 2;">Xét nghiệm máu<br/>Oct 12, 2023</span>
+                        <div style="position: absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);"></div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div style="height: 120px; background: #f1f5f9; border-radius: 8px; border: 1px dashed #cbd5e1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#64748b; cursor:pointer;">
+                        <i class="bi bi-upload fs-4 mb-1"></i>
+                        <span style="font-size: 0.75rem;">Tải lên mới</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

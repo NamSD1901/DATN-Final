@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MyPetClinic.Application.Services;
 using Moq;
 using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Repositories;
@@ -14,7 +15,7 @@ namespace MyPetClinic.Tests
     public class AppointmentServiceTests : IDisposable
     {
         private readonly ApplicationDbContext _context;
-        private readonly Mock<IAppointmentRepository> _mockRepo;
+        private readonly Mock<IGenericRepository<Appointment>> _mockRepo;
         private readonly AppointmentService _service;
 
         public AppointmentServiceTests()
@@ -24,9 +25,12 @@ namespace MyPetClinic.Tests
                 .Options;
 
             _context = new ApplicationDbContext(options);
-            _mockRepo = new Mock<IAppointmentRepository>();
+            _mockRepo = new Mock<IGenericRepository<Appointment>>();
 
-            _service = new AppointmentService(_mockRepo.Object, _context);
+            var mockUnitOfWork = new Mock<IUnitOfWork>();
+            mockUnitOfWork.Setup(u => u.Appointments).Returns(_mockRepo.Object);
+
+            _service = new AppointmentService(mockUnitOfWork.Object);
         }
 
         [Fact]
