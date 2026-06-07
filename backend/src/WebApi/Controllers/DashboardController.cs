@@ -5,9 +5,12 @@ using System.Security.Claims;
 namespace MyPetClinic.Controllers
 {
     [Authorize]
-    public class DashboardController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class DashboardController : ControllerBase
     {
-        public IActionResult Index()
+        [HttpGet]
+        public IActionResult GetDashboardInfo()
         {
             // Lấy User ID và thông tin từ Claim
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -15,23 +18,13 @@ namespace MyPetClinic.Controllers
             var email = User.FindFirstValue(ClaimTypes.Email);
             var role = User.FindFirstValue(ClaimTypes.Role)?.ToLower();
 
-            ViewBag.UserId = userId;
-            ViewBag.UserName = userName;
-            ViewBag.Email = email;
-
-            // Phân luồng View dựa vào Role
-            switch (role)
+            return Ok(new
             {
-                case "admin":
-                    return View("AdminDashboard");
-                case "doctor":
-                    return View("DoctorDashboard");
-                case "receptionist":
-                    return View("ReceptionistDashboard");
-                case "customer":
-                default:
-                    return View("CustomerDashboard");
-            }
+                UserId = userId,
+                UserName = userName,
+                Email = email,
+                Role = role
+            });
         }
     }
 }

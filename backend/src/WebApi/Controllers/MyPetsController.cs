@@ -9,7 +9,9 @@ using MyPetClinic.Application.Interfaces.Services;
 namespace MyPetClinic.Controllers
 {
     [Authorize(Roles = "customer")]
-    public class MyPetsController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class MyPetsController : ControllerBase
     {
         private readonly IPetService _petService;
 
@@ -28,114 +30,68 @@ namespace MyPetClinic.Controllers
             throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng.");
         }
 
-        public async Task<IActionResult> Index()
+        [HttpGet]
+        public async Task<IActionResult> GetMyPets()
         {
             try
             {
                 var userId = GetCurrentUserId();
                 var pets = await _petService.GetMyPetsAsync(userId);
-                return View(pets);
+                return Ok(pets);
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = ex.Message;
-                return RedirectToAction("Index", "Dashboard");
+                return BadRequest(new { message = ex.Message });
             }
         }
 
-        [HttpGet]
-        public IActionResult Create()
-        {
-            return View(new CreatePetDto());
-        }
-
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreatePetDto dto)
+        public async Task<IActionResult> CreatePet([FromBody] CreatePetDto dto)
         {
             if (!ModelState.IsValid)
             {
-                return View(dto);
+                return BadRequest(ModelState);
             }
 
             try
             {
                 var userId = GetCurrentUserId();
                 await _petService.AddPetAsync(dto, userId);
-                TempData["SuccessMessage"] = "Thêm thú cưng thành công!";
-                return RedirectToAction(nameof(Index));
+                return Ok(new { success = true, message = "Thêm thú cưng thành công!" });
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Lỗi khi thêm thú cưng: " + ex.Message;
-                return View(dto);
+                return BadRequest(new { success = false, message = "Lỗi khi thêm thú cưng: " + ex.Message });
             }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Edit(long id)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var pet = await _petService.GetPetByIdAsync(id, userId);
-                
-                if (pet == null)
-                {
-                    TempData["ErrorMessage"] = "Không tìm thấy thú cưng.";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                var updateDto = new UpdatePetDto
-                {
-                    Id = pet.Id,
-                    Name = pet.Name,
-                    Species = pet.Species,
-                    Breed = pet.Breed,
-                    Gender = pet.Gender,
-                    BirthDate = pet.BirthDate,
-                    Weight = pet.Weight,
-                    Color = pet.Color,
-                    BloodType = pet.BloodType,
-                    Sterilized = pet.Sterilized ?? false,
-                    MicrochipCode = pet.MicrochipCode,
-                    AllergyNote = pet.AllergyNote
-                };
-
-                return View(updateDto);
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = ex.Message;
-                return RedirectToAction(nameof(Index));
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(UpdatePetDto dto)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdatePet(long id, [FromBody] UpdatePetDto dto)
         {
             if (!ModelState.IsValid)
             {
-                return View(dto);
+                return BadRequest(ModelState);
+            }
+
+            if (id != dto.Id)
+            {
+                return BadRequest(new { success = false, message = "ID thú cưng không hợp lệ." });
             }
 
             try
             {
                 var userId = GetCurrentUserId();
                 await _petService.UpdatePetAsync(dto, userId);
-                TempData["SuccessMessage"] = "Cập nhật thông tin thú cưng thành công!";
-                return RedirectToAction(nameof(Index));
+                return Ok(new { success = true, message = "Cập nhật thông tin thú cưng thành công!" });
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Lỗi khi cập nhật thú cưng: " + ex.Message;
-                return View(dto);
+                return BadRequest(new { success = false, message = "Lỗi khi cập nhật thú cưng: " + ex.Message });
             }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Details(long id)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetPetDetails(long id)
         {
             try
             {
@@ -143,54 +99,28 @@ namespace MyPetClinic.Controllers
                 var pet = await _petService.GetPetByIdAsync(id, userId);
                 if (pet == null)
                 {
-                    TempData["ErrorMessage"] = "Không tìm thấy thú cưng.";
-                    return RedirectToAction(nameof(Index));
+                    return NotFound(new { message = "Không tìm thấy thú cưng." });
                 }
-                return View(pet);
+                return Ok(pet);
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = ex.Message;
-                return RedirectToAction(nameof(Index));
+                return BadRequest(new { message = ex.Message });
             }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Delete(long id)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var pet = await _petService.GetPetByIdAsync(id, userId);
-                if (pet == null)
-                {
-                    TempData["ErrorMessage"] = "Không tìm thấy thú cưng.";
-                    return RedirectToAction(nameof(Index));
-                }
-                return View(pet);
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = ex.Message;
-                return RedirectToAction(nameof(Index));
-            }
-        }
-
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(long id)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePet(long id)
         {
             try
             {
                 var userId = GetCurrentUserId();
                 await _petService.DeletePetAsync(id, userId);
-                TempData["SuccessMessage"] = "Đã xóa thú cưng thành công.";
-                return RedirectToAction(nameof(Index));
+                return Ok(new { success = true, message = "Đã xóa thú cưng thành công." });
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Lỗi khi xóa thú cưng: " + ex.Message;
-                return RedirectToAction(nameof(Index));
+                return BadRequest(new { success = false, message = "Lỗi khi xóa thú cưng: " + ex.Message });
             }
         }
     }

@@ -6,7 +6,9 @@ using System.Security.Claims;
 namespace MyPetClinic.Controllers
 {
     [Authorize(Roles = "Doctor,Admin")]
-    public class DoctorController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class DoctorController : ControllerBase
     {
         private readonly IReceptionistService _receptionistService;
 
@@ -15,32 +17,32 @@ namespace MyPetClinic.Controllers
             _receptionistService = receptionistService;
         }
 
-        [HttpGet]
+        [HttpGet("queue")]
         public async Task<IActionResult> GetMyQueue()
         {
             var queue = await _receptionistService.GetTodayQueueAsync();
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
-            if (string.IsNullOrEmpty(userIdStr)) return Json(new List<object>());
+            if (string.IsNullOrEmpty(userIdStr)) return Ok(new List<object>());
 
             var myQueue = queue.Where(q => q.DoctorId.ToString().Equals(userIdStr, StringComparison.OrdinalIgnoreCase)).ToList();
-            return Json(myQueue);
+            return Ok(myQueue);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> StartTreatment(long appointmentId)
+        [HttpPost("start-treatment")]
+        public async Task<IActionResult> StartTreatment([FromBody] long appointmentId)
         {
             // Tương đương với việc kéo thẻ sang cột "Đang khám"
             var success = await _receptionistService.UpdateQueueStatusAsync(appointmentId, "in_progress");
-            return Json(new { success });
+            return Ok(new { success });
         }
 
-        [HttpPost]
-        public async Task<IActionResult> FinishTreatment(long appointmentId)
+        [HttpPost("finish-treatment")]
+        public async Task<IActionResult> FinishTreatment([FromBody] long appointmentId)
         {
             // Tương đương với việc kéo thẻ sang cột "Chờ thanh toán"
             var success = await _receptionistService.UpdateQueueStatusAsync(appointmentId, "ready_to_pay");
-            return Json(new { success });
+            return Ok(new { success });
         }
     }
 }

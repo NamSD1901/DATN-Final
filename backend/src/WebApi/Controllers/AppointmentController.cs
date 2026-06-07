@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 namespace MyPetClinic.Controllers
 {
     [Authorize(Roles = "Receptionist,Admin")]
-    public class AppointmentController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AppointmentController : ControllerBase
     {
         private readonly IAppointmentService _appointmentService;
 
@@ -18,34 +20,28 @@ namespace MyPetClinic.Controllers
             _appointmentService = appointmentService;
         }
 
-        public IActionResult Index()
+        [HttpGet("events")]
+        public async Task<IActionResult> GetEvents([FromQuery] DateTime start, [FromQuery] DateTime end, [FromQuery] Guid? doctorId)
         {
-            return View();
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetEvents(DateTime start, DateTime end, Guid? doctorId)
-        {
-            // FullCalendar passes ISO strings for start and end
             var events = await _appointmentService.GetCalendarEventsAsync(start, end, doctorId);
-            return Json(events);
+            return Ok(events);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> UpdateStatus(long id, string status)
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(long id, [FromBody] UpdateStatusRequest req)
         {
-            var success = await _appointmentService.UpdateAppointmentStatusAsync(id, status);
-            return Json(new { success });
+            var success = await _appointmentService.UpdateAppointmentStatusAsync(id, req.Status);
+            return Ok(new { success });
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Reschedule(long id, DateTime newStart)
+        [HttpPut("{id}/reschedule")]
+        public async Task<IActionResult> Reschedule(long id, [FromBody] RescheduleRequest req)
         {
-            var success = await _appointmentService.RescheduleAppointmentAsync(id, newStart);
-            return Json(new { success });
+            var success = await _appointmentService.RescheduleAppointmentAsync(id, req.NewStart);
+            return Ok(new { success });
         }
 
-        [HttpPost]
+        [HttpPost("with-new-customer")]
         public async Task<IActionResult> CreateWithNewCustomer([FromBody] MyPetClinic.Application.DTOs.AppointmentWithNewCustomerDto dto)
         {
             try
@@ -57,43 +53,43 @@ namespace MyPetClinic.Controllers
                 }
 
                 var appointmentId = await _appointmentService.CreateAppointmentWithNewCustomerAsync(dto, createdBy);
-                return Json(new { success = true, id = appointmentId });
+                return Ok(new { success = true, id = appointmentId });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return BadRequest(new { success = false, message = ex.Message });
             }
         }
 
-        [HttpGet]
+        [HttpGet("services")]
         public async Task<IActionResult> GetServices()
         {
             var services = await _appointmentService.GetServicesAsync();
-            return Json(services);
+            return Ok(services);
         }
 
-        [HttpGet]
+        [HttpGet("stats")]
         public async Task<IActionResult> GetAppointmentStats()
         {
             var stats = await _appointmentService.GetAppointmentStatsAsync();
-            return Json(stats);
+            return Ok(stats);
         }
 
-        [HttpGet]
+        [HttpGet("pending")]
         public async Task<IActionResult> GetPendingAppointments()
         {
             var pendingAppointments = await _appointmentService.GetPendingAppointmentsAsync();
-            return Json(pendingAppointments);
+            return Ok(pendingAppointments);
         }
 
-        [HttpGet]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetDetail(long id)
         {
             var appt = await _appointmentService.GetAppointmentDetailAsync(id);
                 
             if (appt == null) return NotFound();
             
-            return Json(appt);
+            return Ok(appt);
         }
 
         [HttpPost]
@@ -103,23 +99,33 @@ namespace MyPetClinic.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    return Json(new { success = false, message = "Vui lòng nhập đủ thông tin bắt buộc." });
+                    return BadRequest(ModelState);
                 }
 
                 var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-                var createdBy = userIdClaim != null ? Guid.Parse(userIdClaim.Value) : Guid.Empty;
+                var createdBy = userIdClaim != null ? Guid.TryParse(userIdClaim.Value, out var uid) ? uid : Guid.Empty : Guid.Empty;
 
                 var appointmentId = await _appointmentService.CreateAppointmentAsync(dto, createdBy);
 
                 // Nếu Lễ tân tạo thì mặc định là confirmed
                 await _appointmentService.UpdateAppointmentStatusAsync(appointmentId, "confirmed");
 
-                return Json(new { success = true, message = "Đã tạo lịch hẹn thành công!", id = appointmentId });
+                return Ok(new { success = true, message = "Đã tạo lịch hẹn thành công!", id = appointmentId });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Đã xảy ra lỗi: " + ex.Message });
+                return BadRequest(new { success = false, message = "Đã xảy ra lỗi: " + ex.Message });
             }
         }
+    }
+
+    public class UpdateStatusRequest
+    {
+        public string Status { get; set; }
+    }
+
+    public class RescheduleRequest
+    {
+        public DateTime NewStart { get; set; }
     }
 }

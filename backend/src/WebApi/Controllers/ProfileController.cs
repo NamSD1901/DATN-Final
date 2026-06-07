@@ -7,7 +7,9 @@ using System.Security.Claims;
 namespace MyPetClinic.Controllers
 {
     [Authorize]
-    public class ProfileController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ProfileController : ControllerBase
     {
         private readonly IUserService _userService;
         private readonly IWebHostEnvironment _webHostEnvironment;
@@ -18,150 +20,108 @@ namespace MyPetClinic.Controllers
             _webHostEnvironment = webHostEnvironment;
         }
 
+        private Guid GetUserId()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (Guid.TryParse(userIdStr, out Guid userId)) return userId;
+            throw new UnauthorizedAccessException("User ID not found in token/cookie.");
+        }
+
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> GetProfile()
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userIdStr, out Guid userId))
+            try
             {
-                return RedirectToAction("Login", "Account");
-            }
-
-            var profile = await _userService.GetUserProfileAsync(userId);
-            if (profile == null)
-            {
-                return NotFound();
-            }
-
-            ViewBag.Profile = profile;
-            return View(new UpdateProfileDto
-            {
-                FullName = profile.FullName,
-                Phone = profile.Phone,
-                Address = profile.Address,
-                Gender = profile.Gender,
-                DateOfBirth = profile.DateOfBirth
-            });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateProfile(UpdateProfileDto model)
-        {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userIdStr, out Guid userId))
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            if (!ModelState.IsValid)
-            {
+                var userId = GetUserId();
                 var profile = await _userService.GetUserProfileAsync(userId);
-                ViewBag.Profile = profile;
-                return View("Index", model);
+                if (profile == null) return NotFound(new { message = "Không tìm thấy hồ sơ." });
+                return Ok(profile);
             }
-
-            bool success = await _userService.UpdateUserProfileAsync(userId, model);
-            if (success)
+            catch (Exception ex)
             {
-                TempData["SuccessMessage"] = "Cập nhật thông tin cá nhân thành công!";
+                return Unauthorized(new { message = ex.Message });
             }
-            else
-            {
-                TempData["ErrorMessage"] = "Có lỗi xảy ra khi cập nhật thông tin.";
-            }
-
-            return RedirectToAction("Index");
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangePassword(ChangePasswordDto model)
+        [HttpPut]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto model)
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userIdStr, out Guid userId))
-            {
-                return RedirectToAction("Login", "Account");
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            if (!ModelState.IsValid)
+            try
             {
-                TempData["ErrorMessage"] = "Thông tin không hợp lệ. Vui lòng kiểm tra lại mật khẩu (tối thiểu 8 ký tự và phải khớp nhau).";
-                return RedirectToAction("Index", new { tab = "password" });
+                var userId = GetUserId();
+                bool success = await _userService.UpdateUserProfileAsync(userId, model);
+                if (success) return Ok(new { success = true, message = "Cập nhật thông tin cá nhân thành công!" });
+                return BadRequest(new { success = false, message = "Có lỗi xảy ra khi cập nhật thông tin." });
             }
-
-            bool success = await _userService.ChangePasswordAsync(userId, model);
-            if (success)
+            catch (Exception ex)
             {
-                TempData["SuccessMessage"] = "Đổi mật khẩu thành công!";
+                return Unauthorized(new { message = ex.Message });
             }
-            else
-            {
-                TempData["ErrorMessage"] = "Mật khẩu hiện tại không chính xác hoặc có lỗi xảy ra.";
-            }
-
-            return RedirectToAction("Index", new { tab = "password" });
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPut("password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            try
+            {
+                var userId = GetUserId();
+                bool success = await _userService.ChangePasswordAsync(userId, model);
+                if (success) return Ok(new { success = true, message = "Đổi mật khẩu thành công!" });
+                return BadRequest(new { success = false, message = "Mật khẩu hiện tại không chính xác hoặc có lỗi xảy ra." });
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("avatar")]
         public async Task<IActionResult> UpdateAvatar(IFormFile avatarFile)
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(userIdStr, out Guid userId))
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
             if (avatarFile == null || avatarFile.Length == 0)
-            {
-                TempData["ErrorMessage"] = "Vui lòng chọn một file ảnh hợp lệ.";
-                return RedirectToAction("Index");
-            }
+                return BadRequest(new { message = "Vui lòng chọn một file ảnh hợp lệ." });
 
             // Check file extension
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
             var extension = Path.GetExtension(avatarFile.FileName).ToLowerInvariant();
             if (!allowedExtensions.Contains(extension))
-            {
-                TempData["ErrorMessage"] = "Chỉ chấp nhận các file ảnh định dạng: .jpg, .jpeg, .png, .gif";
-                return RedirectToAction("Index");
-            }
+                return BadRequest(new { message = "Chỉ chấp nhận các file ảnh định dạng: .jpg, .jpeg, .png, .gif" });
 
             // Limit file size to 2MB
             if (avatarFile.Length > 2 * 1024 * 1024)
-            {
-                TempData["ErrorMessage"] = "Kích thước ảnh không được vượt quá 2MB.";
-                return RedirectToAction("Index");
-            }
+                return BadRequest(new { message = "Kích thước ảnh không được vượt quá 2MB." });
 
-            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "avatars");
-            if (!Directory.Exists(uploadsFolder))
+            try
             {
-                Directory.CreateDirectory(uploadsFolder);
+                var userId = GetUserId();
+                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "avatars");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                string uniqueFileName = $"{Guid.NewGuid()}_{avatarFile.FileName}";
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await avatarFile.CopyToAsync(fileStream);
+                }
+
+                string avatarUrl = $"/uploads/avatars/{uniqueFileName}";
+                
+                bool success = await _userService.UpdateAvatarAsync(userId, avatarUrl);
+                if (success) return Ok(new { success = true, avatarUrl, message = "Cập nhật ảnh đại diện thành công!" });
+                return BadRequest(new { success = false, message = "Có lỗi xảy ra khi lưu ảnh đại diện." });
             }
-
-            string uniqueFileName = $"{Guid.NewGuid()}_{avatarFile.FileName}";
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            catch (Exception ex)
             {
-                await avatarFile.CopyToAsync(fileStream);
+                return Unauthorized(new { message = ex.Message });
             }
-
-            string avatarUrl = $"/uploads/avatars/{uniqueFileName}";
-            
-            bool success = await _userService.UpdateAvatarAsync(userId, avatarUrl);
-            if (success)
-            {
-                TempData["SuccessMessage"] = "Cập nhật ảnh đại diện thành công!";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Có lỗi xảy ra khi lưu ảnh đại diện.";
-            }
-
-            return RedirectToAction("Index");
         }
     }
 }
