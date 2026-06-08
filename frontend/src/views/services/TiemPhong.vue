@@ -1,383 +1,353 @@
 <template>
-  <div class="service-detail-wrapper">
-    <!-- Background elements -->
-    <div class="bg-glow bg-glow-1"></div>
-    <div class="bg-glow bg-glow-2"></div>
+  <div class="page-wrapper">
+    <Header @open-booking="showBookingModal = true" />
 
-    <div class="service-detail-container">
-      <!-- Back button -->
-      <div class="action-bar">
-        <router-link to="/" class="btn-back">
-          <ArrowLeft class="icon-btn" />
-          <span>Quay lại Trang chủ</span>
-        </router-link>
-      </div>
-
-      <!-- Header Section -->
-      <div class="service-header">
-        <div class="icon-wrapper">
-          <ShieldCheck class="service-icon" />
-        </div>
-        <span class="service-tag">Dịch vụ phòng ngừa</span>
-        <h1>Tiêm Phòng & Vaccine</h1>
-        <p class="service-subtitle">
-          Chủ động phòng ngừa các dịch bệnh nguy hiểm có tỷ lệ tử vong cao ở chó mèo bằng các loại vaccine nhập khẩu chính hãng, có tem nhãn kiểm định rõ ràng.
+    <!-- Hero Section -->
+    <section class="py-5 bg-gold-gradient position-relative text-center hero-section">
+      <div class="hero-shape-1"></div>
+      <div class="container py-4">
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3 shadow-sm text-uppercase">
+          <ShieldCheck class="icon-shield" /> Y Học Dự Phòng
+        </span>
+        <h1 class="display-4 fw-bold mb-3 gradient-text-gold">TIÊM PHÒNG BỆNH ĐỊNH KỲ</h1>
+        <p class="fs-5 text-muted max-w-2xl mx-auto">
+          Cách đơn giản, hiệu quả và kinh tế nhất để bảo vệ thú cưng khỏi các căn bệnh truyền nhiễm nguy hiểm gây tử vong cao.
         </p>
       </div>
+    </section>
 
-      <!-- Feature Grid -->
-      <div class="feature-grid">
-        <div class="feature-card">
-          <ShieldAlert class="feat-icon" />
-          <h3>Vaccine Nhập Khẩu Chính Hãng</h3>
-          <p>Sử dụng các loại vaccine chất lượng cao từ các tập đoàn dược thú y hàng đầu thế giới (Zoetis - Mỹ, Boehringer Ingelheim - Đức, Virbac - Pháp).</p>
+    <!-- Services Body -->
+    <section class="py-5 bg-white content-section">
+      <div class="container">
+        <!-- Importance Section -->
+        <div class="importance-row mb-5">
+          <div class="importance-content">
+            <h3 class="fw-bold mb-3">Tại sao cần tiêm vaccine đúng lịch?</h3>
+            <p class="text-muted mb-4">
+              Vaccine huấn luyện hệ miễn dịch của thú cưng nhận biết và tiêu diệt nhanh chóng virus, vi khuẩn gây hại khi chúng xâm nhập. Bỏ lỡ lịch tiêm phòng hoặc tiêm không đủ liều có thể khiến bé cưng mất đi lớp bảo vệ trước các dịch bệnh chết người như Parvo, Care ở chó hay giảm bạch cầu ở mèo.
+            </p>
+            <div class="benefit-check-item">
+              <div class="benefit-check-icon">
+                <Check class="check-icon" />
+              </div>
+              <div>
+                <h6 class="fw-bold mb-1">Bảo vệ cá thể thú cưng</h6>
+                <p class="small text-muted mb-0">Ngăn ngừa các bệnh lý nguy hại đến tính mạng.</p>
+              </div>
+            </div>
+            <div class="benefit-check-item">
+              <div class="benefit-check-icon">
+                <Check class="check-icon" />
+              </div>
+              <div>
+                <h6 class="fw-bold mb-1">Tránh lây sang người</h6>
+                <p class="small text-muted mb-0">Các bệnh nguy hiểm như dại hay xoắn khuẩn Leptospira có thể lây sang người nuôi.</p>
+              </div>
+            </div>
+          </div>
+          <div class="importance-visual">
+            <img src="https://images.unsplash.com/photo-1576201836106-db1758fd1c97?q=80&w=600&auto=format&fit=crop" class="img-fluid rounded-4 shadow-lg" alt="Thú y tiêm phòng cho thú cưng" />
+          </div>
         </div>
 
-        <div class="feature-card">
-          <Stethoscope class="feat-icon" />
-          <h3>Khám Sức Khỏe Trước Tiêm</h3>
-          <p>100% thú cưng được kiểm tra nhiệt độ, nghe tim phổi và đánh giá thể trạng hoàn toàn miễn phí trước khi tiêm để đảm bảo an toàn tuyệt đối.</p>
+        <!-- Vaccination Schedule Tables -->
+        <h3 class="fw-bold text-center mb-5 section-title-center">Lịch Tiêm Vaccine Tham Khảo</h3>
+        <div class="schedules-grid mb-5">
+          <!-- Dog Schedule -->
+          <div class="schedule-card-wrapper">
+            <div class="card border-0 glass-card p-4 h-100">
+              <h4 class="fw-bold text-warning mb-3 text-center d-flex align-items-center justify-content-center gap-2">
+                <PawPrint class="schedule-title-icon" /> Lịch Tiêm Cho Chó
+              </h4>
+              <div class="table-container">
+                <table class="table-premium">
+                  <thead>
+                    <tr>
+                      <th>Độ tuổi</th>
+                      <th>Mũi tiêm</th>
+                      <th>Phòng bệnh</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="fw-semibold text-dark">6 - 8 tuần tuổi</td>
+                      <td>Mũi 1 (5-in-1 hoặc 7-in-1)</td>
+                      <td>Care, Parvo, Viêm gan, Ho cũi chó...</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-dark">10 - 12 tuần tuổi</td>
+                      <td>Mũi 2 (7-in-1)</td>
+                      <td>Nhắc lại và bổ sung xoắn khuẩn Leptospira.</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-dark">14 - 16 tuần tuổi</td>
+                      <td>Mũi 3 (7-in-1) + Tiêm Dại</td>
+                      <td>Mũi nhắc lại cuối cùng của năm đầu + phòng bệnh Dại.</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-dark">Hàng năm</td>
+                      <td>Nhắc lại 1 mũi 7-in-1 + Dại</td>
+                      <td>Duy trì kháng thể bảo vệ suốt đời.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cat Schedule -->
+          <div class="schedule-card-wrapper">
+            <div class="card border-0 glass-card p-4 h-100">
+              <h4 class="fw-bold text-warning mb-3 text-center d-flex align-items-center justify-content-center gap-2">
+                <Cat class="schedule-title-icon" /> Lịch Tiêm Cho Mèo
+              </h4>
+              <div class="table-container">
+                <table class="table-premium">
+                  <thead>
+                    <tr>
+                      <th>Độ tuổi</th>
+                      <th>Mũi tiêm</th>
+                      <th>Phòng bệnh</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="fw-semibold text-dark">8 - 10 tuần tuổi</td>
+                      <td>Mũi 1 (4-in-1)</td>
+                      <td>Giảm bạch cầu, Viêm mũi - khí quản, Calicivirus...</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-dark">12 - 14 tuần tuổi</td>
+                      <td>Mũi 2 (4-in-1)</td>
+                      <td>Nhắc lại tạo kháng thể chủ động.</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-dark">16 - 18 tuần tuổi</td>
+                      <td>Mũi 3 (4-in-1) + Tiêm Dại</td>
+                      <td>Nhắc lại lần 3 bảo đảm an toàn + phòng bệnh Dại.</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-semibold text-dark">Hàng năm</td>
+                      <td>Nhắc lại 1 mũi 4-in-1 + Dại</td>
+                      <td>Duy trì miễn dịch chống lại virus giảm bạch cầu nguy hiểm.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="feature-card">
-          <Calendar class="feat-icon" />
-          <h3>Nhắc Lịch Tự Động</h3>
-          <p>Hệ thống tự động lưu trữ thông tin tiêm phòng và gửi tin nhắn SMS / Zalo nhắc lịch tiêm nhắc lại cho bạn khi đến hạn.</p>
+        <!-- Warning & Care Alert Box -->
+        <div class="alert-box-warning p-4">
+          <h5 class="fw-bold text-warning mb-3 d-flex align-items-center gap-2">
+            <AlertTriangle class="alert-icon-title" /> Lưu Ý Quan Trọng Cho Chủ Nuôi
+          </h5>
+          <div class="alert-grid small text-muted">
+            <div class="alert-col">
+              <h6 class="fw-bold text-dark mb-1">Trước khi tiêm:</h6>
+              <ul class="ps-3 mb-0">
+                <li>Thú cưng phải hoàn toàn khỏe mạnh, không bị sốt, bỏ ăn hay tiêu chảy.</li>
+                <li>Nên tẩy giun trước khi tiêm vaccine khoảng 1 tuần để vaccine đạt hiệu quả cao nhất.</li>
+              </ul>
+            </div>
+            <div class="alert-col">
+              <h6 class="fw-bold text-dark mb-1">Sau khi tiêm:</h6>
+              <ul class="ps-3 mb-0">
+                <li>Kiêng tắm cho thú cưng ít nhất 7 ngày sau tiêm để tránh sốc nhiệt hoặc nhiễm trùng.</li>
+                <li>Theo dõi các biểu hiện sốc phản vệ (sưng mặt, nôn mửa liên tục) để đưa ngay đến bệnh viện xử lý kịp thời.</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
+    </section>
 
-      <!-- Price Table Section -->
-      <div class="price-section">
-        <h2>Bảng Giá Các Loại Vaccine Phổ Biến</h2>
-        <p class="price-desc">Giá đã bao gồm chi phí khám sức khỏe ban đầu và sổ theo dõi tiêm phòng định kỳ.</p>
-        
-        <div class="table-container">
-          <table class="price-table">
-            <thead>
-              <tr>
-                <th>Loại Vaccine</th>
-                <th>Đối Tượng</th>
-                <th>Phòng Bệnh</th>
-                <th>Đơn Giá</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Vaccine phòng dại (Rabisin)</td>
-                <td>Chó & Mèo từ 3 tháng</td>
-                <td>Bệnh dại nguy hiểm lây sang người</td>
-                <td>120.000đ</td>
-              </tr>
-              <tr>
-                <td>Vaccine 4 bệnh cho mèo (Purevax)</td>
-                <td>Mèo từ 8 tuần tuổi</td>
-                <td>Giảm bạch cầu, Viêm mũi, Calicivirus, Chlamydia</td>
-                <td>350.000đ</td>
-              </tr>
-              <tr>
-                <td>Vaccine 5 bệnh cho chó (Vanguard)</td>
-                <td>Chó từ 6 tuần tuổi</td>
-                <td>Care, Parvo, Viêm gan, Ho cũi chó, Cúm</td>
-                <td>200.000đ</td>
-              </tr>
-              <tr>
-                <td>Vaccine 7 bệnh cho chó (Vanguard Plus)</td>
-                <td>Chó từ 6 tuần tuổi</td>
-                <td>5 bệnh trên + 2 chủng Leptospira (bệnh xoắn khuẩn)</td>
-                <td>250.000đ</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <Footer />
 
-      <!-- Call To Action -->
-      <div class="cta-card">
-        <h3>Đã đến lịch tiêm phòng định kỳ của pet cưng của bạn?</h3>
-        <p>Đăng ký tiêm phòng ngay hôm nay để bảo vệ thú cưng khỏi các ổ dịch nguy hiểm.</p>
-        <router-link to="/contact" class="btn-cta">Đặt lịch tiêm phòng</router-link>
-      </div>
-
-    </div>
+    <BookingModal 
+      :show="showBookingModal" 
+      @close="showBookingModal = false" 
+      @success="handleBookingSuccess" 
+      @error="handleBookingError" 
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ArrowLeft, ShieldCheck, ShieldAlert, Stethoscope, Calendar } from '@lucide/vue';
+import { ref } from 'vue';
+import Header from '../../components/layout/Header.vue';
+import Footer from '../../components/layout/Footer.vue';
+import BookingModal from '../../components/shared/BookingModal.vue';
+import { ShieldCheck, Check, PawPrint, Cat, AlertTriangle } from '@lucide/vue';
+
+const showBookingModal = ref(false);
+
+const handleBookingSuccess = (msg: string) => {
+  alert(msg);
+};
+
+const handleBookingError = (msg: string) => {
+  alert(msg);
+};
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-
-.service-detail-wrapper {
-  position: relative;
-  min-height: 100vh;
-  background: radial-gradient(circle at top right, #1e293b, #0f172a, #0b0f19);
-  font-family: 'Outfit', sans-serif;
-  color: #f8fafc;
-  overflow: hidden;
-  padding: 2.5rem 1.5rem;
+.page-wrapper {
+  background-color: var(--bg-light);
+  color: var(--text-dark);
 }
 
-.bg-glow {
+.hero-section {
+  padding: 5rem 0;
+  overflow: hidden;
+}
+
+.icon-shield {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.hero-shape-1 {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.12;
-  z-index: 0;
+  top: -20%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(254, 243, 199, 0.7) 0%, rgba(254, 243, 199, 0) 70%);
+  z-index: 1;
   pointer-events: none;
 }
 
-.bg-glow-1 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, #f59e0b, transparent);
-  top: -100px;
-  right: -100px;
-}
-
-.bg-glow-2 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, #0d9488, transparent);
-  bottom: -50px;
-  left: -50px;
-}
-
-.service-detail-container {
-  position: relative;
-  z-index: 1;
-  max-width: 950px;
-  margin: 0 auto;
-}
-
-.action-bar {
-  margin-bottom: 2.5rem;
-}
-
-.btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.6rem 1.2rem;
-  border-radius: 10px;
-  color: #cbd5e1;
-  font-weight: 500;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.3s;
-}
-
-.btn-back:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  transform: translateX(-4px);
-}
-
-.icon-btn {
-  width: 18px;
-  height: 18px;
-}
-
-.service-header {
-  text-align: center;
-  margin-bottom: 4rem;
-}
-
-.icon-wrapper {
-  width: 70px;
-  height: 70px;
-  border-radius: 20px;
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0 auto 1.5rem auto;
-  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.2);
-}
-
-.service-icon {
-  width: 32px;
-  height: 32px;
-}
-
-.service-tag {
-  color: #f59e0b;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  background: rgba(245, 158, 11, 0.1);
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  margin-bottom: 1rem;
-  display: inline-block;
-}
-
-h1 {
-  font-size: 2.8rem;
+.section-title-center {
+  font-size: 2rem;
   font-weight: 800;
-  letter-spacing: -1px;
-  margin-bottom: 1.2rem;
-  background: linear-gradient(135deg, #f59e0b, #0d9488);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  margin-bottom: 2rem;
+  text-align: center;
 }
 
-.service-subtitle {
-  color: #94a3b8;
-  font-size: 1.05rem;
-  line-height: 1.7;
-  max-width: 750px;
-  margin: 0 auto;
-}
-
-/* Feature grid layout */
-.feature-grid {
+/* Importance section row */
+.importance-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.8rem;
-  margin-bottom: 4.5rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
 }
 
-@media (max-width: 768px) {
-  .feature-grid {
+@media (max-width: 991px) {
+  .importance-row {
     grid-template-columns: 1fr;
   }
 }
 
-.feature-card {
-  background: rgba(30, 41, 59, 0.45);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
-  padding: 2.2rem 1.8rem;
-  text-align: center;
-  transition: all 0.3s;
+.benefit-check-item {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  margin-bottom: 1rem;
 }
 
-.feature-card:hover {
-  transform: translateY(-5px);
-  border-color: rgba(245, 158, 11, 0.25);
+.benefit-check-icon {
+  background: var(--primary-cream);
+  color: var(--primary-dark);
+  padding: 0.4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.feat-icon {
-  width: 32px;
-  height: 32px;
-  color: #f59e0b;
-  margin-bottom: 1.2rem;
+.check-icon {
+  width: 16px;
+  height: 16px;
 }
 
-.feature-card h3 {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.8rem;
+.importance-visual img {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
-.feature-card p {
-  font-size: 0.9rem;
-  color: #94a3b8;
-  line-height: 1.6;
+/* Schedules layouts */
+.schedules-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
 }
 
-/* Price Section styling */
-.price-section {
-  margin-bottom: 4.5rem;
+@media (max-width: 991px) {
+  .schedules-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.price-section h2 {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 0.4rem;
-}
-
-.price-desc {
-  font-size: 0.9rem;
-  color: #64748b;
-  margin-bottom: 2rem;
+.schedule-title-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--primary-gold);
 }
 
 .table-container {
   overflow-x: auto;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  margin-top: 1rem;
 }
 
-.price-table {
+.table-premium {
   width: 100%;
   border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.table-premium th, .table-premium td {
+  padding: 0.8rem 1rem;
   text-align: left;
-  background: rgba(30, 41, 59, 0.25);
-  font-size: 0.95rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.price-table th, .price-table td {
-  padding: 1.2rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.price-table th {
-  background: rgba(15, 23, 42, 0.6);
-  color: #cbd5e1;
-  font-weight: 600;
-}
-
-.price-table td {
-  color: #94a3b8;
-}
-
-.price-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.price-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* CTA Card */
-.cta-card {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(20, 184, 166, 0.15) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  border-radius: 24px;
-  padding: 3rem 2rem;
-  text-align: center;
-  margin-bottom: 4rem;
-  backdrop-filter: blur(20px);
-}
-
-.cta-card h3 {
-  font-size: 1.5rem;
-  color: white;
-  margin-bottom: 0.8rem;
+.table-premium th {
+  background-color: var(--primary-cream);
+  color: var(--primary-dark);
   font-weight: 700;
 }
 
-.cta-card p {
-  color: #cbd5e1;
-  font-size: 0.95rem;
-  margin-bottom: 1.8rem;
+.table-premium td {
+  color: var(--text-muted);
 }
 
-.btn-cta {
-  display: inline-block;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: white;
-  border: none;
-  padding: 0.85rem 2.2rem;
-  border-radius: 12px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.3s;
-  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+.table-premium tbody tr:hover {
+  background-color: rgba(254, 243, 199, 0.2);
 }
 
-.btn-cta:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+/* Warning alert box */
+.alert-box-warning {
+  border-radius: var(--radius-lg);
+  background-color: rgba(245, 158, 11, 0.08);
+  border: 1px solid var(--primary-gold);
+}
+
+.alert-icon-title {
+  width: 20px;
+  height: 20px;
+}
+
+.alert-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .alert-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.alert-col ul {
+  line-height: 1.6;
 }
 </style>

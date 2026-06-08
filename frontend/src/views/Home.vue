@@ -8,349 +8,165 @@
       </div>
     </TransitionGroup>
 
-    <!-- Sticky Header -->
-    <header class="header" :class="{ 'scrolled': isScrolled }">
-      <div class="nav-container">
-        <div class="logo" @click="scrollToSection('hero')">
-          <PawPrint class="logo-icon" />
-          <span class="logo-text">MyPetClinic</span>
-        </div>
+    <!-- Shared Header Layout -->
+    <Header @open-booking="showBookingModal = true" />
 
-        <button class="menu-toggle" @click="isMobileMenuOpen = !isMobileMenuOpen">
-          <Menu v-if="!isMobileMenuOpen" class="menu-icon" />
-          <X v-else class="menu-icon" />
-        </button>
-
-        <nav class="nav-menu" :class="{ 'mobile-open': isMobileMenuOpen }">
-          <a href="#hero" @click.prevent="scrollToSection('hero')" class="nav-link" :class="{ active: activeSection === 'hero' }">Trang chủ</a>
-          <a href="#services" @click.prevent="scrollToSection('services')" class="nav-link" :class="{ active: activeSection === 'services' }">Dịch vụ</a>
-          <router-link to="/team" class="nav-link">Đội ngũ</router-link>
-          <router-link to="/news" class="nav-link">Tin tức</router-link>
-          <router-link to="/contact" class="nav-link">Liên hệ</router-link>
-
-          <div class="auth-buttons">
-            <template v-if="isLoggedIn">
-              <router-link to="/dashboard" class="btn-dashboard">Dashboard</router-link>
-              <button @click="handleLogout" class="btn-logout-header">Đăng xuất</button>
-            </template>
-            <template v-else>
-              <router-link to="/login" class="btn-login-nav">Đăng Nhập</router-link>
-              <router-link to="/register" class="btn-register-nav">Đăng Ký</router-link>
-            </template>
+    <!-- Hero Section with Floating Shapes -->
+    <section class="hero-section bg-gold-gradient position-relative" id="hero">
+      <div class="hero-shape-1"></div>
+      <div class="hero-shape-2"></div>
+      <div class="container">
+        <div class="hero-row">
+          <div class="hero-content-left reveal-left active">
+            <span class="hero-tag animate-pulse">
+              <Heart class="icon-heart-fill" /> Bệnh Viện Thú Y Uy Tín Hàng Đầu
+            </span>
+            <h1 class="hero-title gradient-text-gold">
+              CHĂM SÓC THÚ CƯNG<br />NHƯ BẠN THÂN
+            </h1>
+            <p class="hero-desc">
+              Tại <strong>MyPetClinic</strong>, chúng tôi hiểu rằng thú cưng là thành viên vô giá trong gia đình bạn. Với đội ngũ bác sĩ thú y giàu y đức, tay nghề cao cùng trang thiết bị hiện đại chuẩn quốc tế, chúng tôi cam kết mang lại dịch vụ chăm sóc sức khỏe tốt nhất.
+            </p>
+            <div class="hero-actions">
+              <button class="btn-premium btn-lg shadow" @click="handleBookingBtnClick">
+                <CalendarDays class="btn-icon-left" /> Đặt Lịch Ngay
+              </button>
+              <a href="#services" class="btn-premium-outline btn-lg" @click.prevent="scrollToSection('services')">
+                Tìm Hiểu Dịch Vụ <ArrowDown class="btn-icon-right animate-bounce-y" />
+              </a>
+            </div>
           </div>
-        </nav>
-      </div>
-    </header>
-
-    <!-- Hero Section -->
-    <section id="hero" class="hero-section">
-      <div class="hero-glow bg-glow-1"></div>
-      <div class="hero-glow bg-glow-2"></div>
-      
-      <div class="hero-container-grid">
-        <div class="hero-content-left">
-          <span class="hero-tagline">Chất lượng - Tận tâm - Uy tín</span>
-          <h1 class="hero-title">Chăm Sóc Thú Cưng <br/><span class="gradient-text">Bằng Cả Trái Tim</span></h1>
-          <p class="hero-desc">Chúng tôi mang lại giải pháp y tế toàn diện và các dịch vụ spa làm đẹp tốt nhất cho pet cưng của bạn.</p>
           
-          <div class="hero-actions">
-            <button @click="scrollToSection('contact')" class="btn-hero-primary">Đặt Lịch Hẹn Ngay</button>
-            <button @click="scrollToSection('services')" class="btn-hero-secondary">Tìm Hiểu Dịch Vụ</button>
-          </div>
-
-          <!-- Stats counters inside left content -->
-          <div class="stats-container">
-            <div class="stat-card">
-              <h3 class="stat-number">5,000+</h3>
-              <p class="stat-label">Thú cưng được khám</p>
-            </div>
-            <div class="stat-card">
-              <h3 class="stat-number">15+</h3>
-              <p class="stat-label">Bác sĩ chuyên khoa</p>
-            </div>
-            <div class="stat-card">
-              <h3 class="stat-number">10+</h3>
-              <p class="stat-label">Năm hoạt động</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="hero-visual-right">
-          <div class="image-frame-container">
-            <img src="/hero_veterinarian.png" alt="Bác sĩ thú y MyPetClinic" class="hero-image" />
-            <div class="floating-badge badge-top">
-              <span class="badge-dot animate-pulse"></span>
-              <span class="badge-text">Bác sĩ trực: 24/7</span>
-            </div>
-            <div class="floating-badge badge-bottom">
-              <span class="badge-star">★</span>
-              <span class="badge-text">5.0 Uy Tín Hàng Đầu</span>
+          <div class="hero-visual-right reveal-right active">
+            <div class="position-relative d-inline-block">
+              <div class="chat-bubble-floating animate-bounce">
+                <HeartHandshake class="chat-bubble-icon" />
+              </div>
+              <img src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?q=80&w=600&auto=format&fit=crop" class="hero-image" alt="Pet Clinic Welcome" />
+              <div class="badge-hours-floating">
+                <h6><Clock class="badge-icon" /> Giờ Hành Chính</h6>
+                <p>Đội ngũ bác sĩ luôn sẵn sàng phục vụ bé cưng trong khung giờ làm việc.</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-
-    <!-- Services Section -->
-    <section id="services" class="services-section">
-      <div class="section-header">
-        <span class="section-tag">Dịch Vụ Nổi Bật</span>
-        <h2 class="section-title">Chăm Sóc Pet Chuyên Nghiệp</h2>
-        <p class="section-desc">Chúng tôi cung cấp các gói dịch vụ chất lượng cao giúp giữ cho thú cưng luôn khỏe mạnh và sạch đẹp.</p>
-      </div>
-
-      <div class="services-grid">
-        <div 
-          v-for="service in services" 
-          :key="service.id" 
-          class="service-card"
-          @click="openServiceModal(service)"
-        >
-          <div class="service-icon-wrapper" :style="{ background: service.color }">
-            <component :is="service.icon" class="service-icon" />
+    <!-- About Section -->
+    <section class="py-5 bg-white border-bottom" id="intro">
+      <div class="container my-4">
+        <div class="about-row">
+          <div class="about-visual reveal-left active">
+            <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=600&auto=format&fit=crop" class="about-image" alt="Veterinarian Examining Dog" />
           </div>
-          <h3 class="service-title">{{ service.name }}</h3>
-          <p class="service-excerpt">{{ service.excerpt }}</p>
-          <span class="btn-read-more">Chi tiết <ChevronRight class="icon-right" /></span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Why Us Section -->
-    <section class="why-us-section">
-      <div class="why-us-grid">
-        <div class="why-us-info">
-          <span class="section-tag">Tại sao chọn chúng tôi?</span>
-          <h2 class="section-title">Nơi Gửi Gắm Niềm Tin Của Mọi Chủ Nuôi</h2>
-          <p class="section-desc">Với trang thiết bị y tế hiện đại đạt chuẩn quốc tế cùng quy trình chăm sóc khép kín, MyPetClinic tự hào là lựa chọn hàng đầu cho thú cưng của bạn.</p>
-          
-          <div class="benefit-list">
-            <div class="benefit-item">
-              <CheckCircle class="benefit-icon" />
-              <div>
-                <h4>Bác sĩ thú y giàu kinh nghiệm</h4>
-                <p>Đội ngũ chuyên gia chẩn đoán và điều trị tận tâm, tận lực vì sức khỏe của pet.</p>
+          <div class="about-content reveal-right active">
+            <span class="section-tag-gold">Về Chúng Tôi</span>
+            <h2 class="section-title">Nơi Gửi Gắm Niềm Tin Của Hàng Triệu Chủ Nuôi</h2>
+            <p class="section-desc">
+              Thành lập từ khát khao nâng cao chất lượng phúc lợi cho động vật tại Việt Nam, <strong>MyPetClinic</strong> đã không ngừng đổi mới và nâng cao năng lực y tế. Chúng tôi tin rằng mỗi thú cưng xứng đáng nhận được dịch vụ chăm sóc y tế chuyên nghiệp, nhân văn nhất.
+            </p>
+            <div class="benefits-grid">
+              <div class="benefit-item">
+                <div class="benefit-icon-wrapper">
+                  <Award class="benefit-icon" />
+                </div>
+                <div>
+                  <h6>Bác sĩ chuyên khoa</h6>
+                  <p>Hơn 15 năm kinh nghiệm thực chiến y khoa.</p>
+                </div>
               </div>
-            </div>
-            <div class="benefit-item">
-              <CheckCircle class="benefit-icon" />
-              <div>
-                <h4>Trang thiết bị hiện đại</h4>
-                <p>Máy siêu âm, chụp X-quang và phòng phẫu thuật vô trùng tiên tiến nhất.</p>
+              <div class="benefit-item">
+                <div class="benefit-icon-wrapper">
+                  <HeartPulse class="benefit-icon" />
+                </div>
+                <div>
+                  <h6>Thiết bị hiện đại</h6>
+                  <p>Hệ thống chẩn đoán hình ảnh cao cấp nhập khẩu.</p>
+                </div>
               </div>
-            </div>
-            <div class="benefit-item">
-              <CheckCircle class="benefit-icon" />
-              <div>
-                <h4>Hỗ trợ cấp cứu 24/7</h4>
-                <p>Luôn sẵn sàng tiếp nhận trường hợp khẩn cấp bất cứ thời điểm nào trong ngày.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="why-us-visual">
-          <div class="visual-card">
-            <div class="visual-glow"></div>
-            <div class="visual-content">
-              <HeartHandshake class="visual-icon" />
-              <h3>Bảo vệ Pet Cưng</h3>
-              <p>Cam kết mang đến dịch vụ hoàn hảo và an toàn tuyệt đối cho người bạn 4 chân của bạn.</p>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Doctors Section -->
-    <section id="doctors" class="doctors-section">
-      <div class="section-header">
-        <span class="section-tag">Đội Ngũ Chuyên Gia</span>
-        <h2 class="section-title">Các Bác Sĩ Tiêu Biểu</h2>
-        <p class="section-desc">Gặp gỡ những bác sĩ chuyên khoa xuất sắc luôn hết mình vì thú cưng.</p>
-      </div>
+    <!-- Core Services Section -->
+    <section class="py-5" id="services">
+      <div class="container my-4 text-center">
+        <span class="section-tag-gold">Dịch Vụ Của Chúng Tôi</span>
+        <h2 class="section-title text-center">Giải Pháp Chăm Sóc Toàn Diện Cho Thú Cưng</h2>
+        <p class="section-subtitle max-w-2xl mx-auto">
+          Chúng tôi cung cấp đầy đủ các danh mục dịch vụ từ y tế dự phòng, xét nghiệm chẩn đoán nâng cao cho đến các liệu trình phẫu thuật chuyên sâu và làm đẹp thẩm mỹ.
+        </p>
 
-      <div class="doctors-grid">
-        <div v-for="doctor in doctors" :key="doctor.id" class="doctor-card">
-          <div class="doctor-avatar-wrapper">
-            <img :src="doctor.avatar" :alt="doctor.name" class="doctor-avatar" />
-            <div class="doctor-overlay">
-              <span class="doctor-exp">{{ doctor.exp }} năm kinh nghiệm</span>
+        <div class="services-grid">
+          <!-- Service Cards loop -->
+          <div v-for="service in services" :key="service.id" class="service-card glass-card">
+            <div class="service-icon-wrapper" :style="{ color: service.color, backgroundColor: service.bgColor }">
+              <component :is="service.icon" class="service-card-icon" />
             </div>
-          </div>
-          <h3 class="doctor-name">{{ doctor.name }}</h3>
-          <span class="doctor-role">{{ doctor.specialty }}</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- News & Articles Section -->
-    <section id="news" class="news-section">
-      <div class="section-header">
-        <span class="section-tag">Góc Chia Sẻ</span>
-        <h2 class="section-title">Tin Tức & Kinh Nghiệm Nuôi Pet</h2>
-        <p class="section-desc">Cập nhật cẩm nang hữu ích để chăm sóc thú cưng của bạn luôn khỏe mạnh.</p>
-      </div>
-
-      <div class="news-grid">
-        <div v-for="article in articles" :key="article.id" class="news-card">
-          <div class="news-img-wrapper">
-            <img :src="article.image" :alt="article.title" class="news-img" />
-            <span class="news-tag">{{ article.tag }}</span>
-          </div>
-          <div class="news-info">
-            <span class="news-date">{{ article.date }}</span>
-            <h3 class="news-title" @click="openArticleModal(article)">{{ article.title }}</h3>
-            <p class="news-excerpt">{{ article.excerpt }}</p>
-            <button @click="openArticleModal(article)" class="btn-news-more">Đọc tiếp <ChevronRight class="icon-right" /></button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Contact & Booking Section -->
-    <section id="contact" class="contact-section">
-      <div class="contact-grid">
-        <!-- Contact details -->
-        <div class="contact-info">
-          <span class="section-tag">Liên Hệ Thảo Luận</span>
-          <h2 class="section-title">Kết Nối Với Chúng Tôi</h2>
-          <p class="section-desc">Bạn có câu hỏi hoặc cần tư vấn nhanh? Đừng ngần ngại liên hệ qua các kênh thông tin chính thức hoặc quét mã Zalo để nhận tư vấn trực tiếp từ bác sĩ trực ca.</p>
-          
-          <div class="contact-details">
-            <div class="detail-item">
-              <MapPin class="detail-icon" />
-              <div>
-                <h5>Địa chỉ phòng khám</h5>
-                <p>123 Đường Nguyễn Văn Linh, Quận Hải Châu, TP. Đà Nẵng</p>
-              </div>
-            </div>
-            
-            <div class="detail-item">
-              <Phone class="detail-icon" />
-              <div>
-                <h5>Điện thoại khẩn cấp</h5>
-                <p>0905 090 629 (Hotline 24/7)</p>
-              </div>
-            </div>
-
-            <div class="detail-item">
-              <Mail class="detail-icon" />
-              <div>
-                <h5>Email liên hệ</h5>
-                <p>support@mypetclinic.com</p>
-              </div>
-            </div>
-          </div>
-
-          <button @click="isZaloModalOpen = true" class="btn-zalo">
-            <MessageSquare class="btn-icon" />
-            <span>Tư vấn qua Zalo Bác Sĩ</span>
-          </button>
-        </div>
-
-        <!-- Booking Form -->
-        <div class="booking-card">
-          <h3>Đặt Lịch Hẹn Khám Nhanh</h3>
-          <p>Điền thông tin đặt lịch để được ưu tiên sắp xếp không phải chờ đợi.</p>
-          
-          <form @submit.prevent="handleQuickBooking" class="booking-form">
-            <div class="input-group">
-              <label for="b-name">Họ tên của bạn</label>
-              <input id="b-name" type="text" v-model="bookingForm.name" required placeholder="Nguyễn Văn A" class="form-input" />
-            </div>
-
-            <div class="input-group">
-              <label for="b-phone">Số điện thoại liên lạc</label>
-              <input id="b-phone" type="tel" v-model="bookingForm.phone" required placeholder="0912345678" class="form-input" />
-            </div>
-
-            <div class="form-row">
-              <div class="input-group">
-                <label for="b-service">Chọn dịch vụ</label>
-                <select id="b-service" v-model="bookingForm.service" class="form-select">
-                  <option v-for="srv in services" :key="srv.id" :value="srv.name">{{ srv.name }}</option>
-                </select>
-              </div>
-
-              <div class="input-group">
-                <label for="b-date">Ngày đặt lịch</label>
-                <input id="b-date" type="date" v-model="bookingForm.date" required class="form-input" />
-              </div>
-            </div>
-
-            <button type="submit" :disabled="bookingLoading" class="btn-submit-booking">
-              <span v-if="!bookingLoading">Xác Nhận Đặt Lịch</span>
-              <div class="spinner" v-else></div>
+            <h5 class="service-card-title">{{ service.name }}</h5>
+            <p class="service-card-desc">{{ service.excerpt }}</p>
+            <button class="btn-read-more" @click="goToServiceDetailPage(service.name)">
+              Xem Chi Tiết <ChevronRight class="icon-right" />
             </button>
-          </form>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="footer-container">
-        <div class="footer-brand">
-          <div class="logo">
-            <PawPrint class="logo-icon" />
-            <span class="logo-text">MyPetClinic</span>
+    <!-- Useful Knowledge & Blog Section -->
+    <section class="py-5 bg-white border-top border-bottom" id="news">
+      <div class="container my-4">
+        <div class="text-center mb-5">
+          <span class="section-tag-gold">Góc Chia Sẻ</span>
+          <h2 class="section-title text-center">Cẩm Nang Sức Khỏe & Tin Tức Thú Cưng</h2>
+          <p class="section-subtitle max-w-2xl mx-auto">
+            Cập nhật những thông tin quan trọng, kiến thức chăm sóc khoa học từ đội ngũ bác sĩ y khoa MyPetClinic.
+          </p>
+        </div>
+
+        <div class="articles-grid">
+          <!-- Article Item -->
+          <div v-for="article in articles" :key="article.id" class="article-card glass-card">
+            <div class="article-img-wrapper">
+              <img :src="article.image" class="article-img" :alt="article.title" />
+              <span class="article-badge-tag">{{ article.tag }}</span>
+            </div>
+            <div class="article-body">
+              <div class="article-meta">
+                <span><Clock class="meta-icon" /> {{ article.date }}</span>
+                <span>•</span>
+                <span><User class="meta-icon" /> Bác sĩ MyPetClinic</span>
+              </div>
+              <h5 class="article-title" @click="openArticleModal(article)">
+                {{ article.title }}
+              </h5>
+              <div class="article-tags">
+                <span v-for="t in article.tags" :key="t" class="tag-badge"><Tag class="tag-badge-icon" />{{ t }}</span>
+              </div>
+              <p class="article-desc">{{ article.excerpt }}</p>
+              <button class="btn-news-more" @click="openArticleModal(article)">
+                Đọc thêm <ArrowRight class="icon-right" />
+              </button>
+            </div>
           </div>
-          <p class="footer-desc">Hệ thống phòng khám thú y cao cấp cung cấp dịch vụ chăm sóc sức khỏe toàn diện tốt nhất cho vật nuôi.</p>
-        </div>
-
-        <div class="footer-links">
-          <h4>Về chúng tôi</h4>
-          <a href="#" @click.prevent="scrollToSection('hero')">Trang chủ</a>
-          <router-link to="/history">Lịch sử phòng khám</router-link>
-          <a href="#" @click.prevent="scrollToSection('services')">Dịch vụ</a>
-          <router-link to="/team">Đội ngũ bác sĩ</router-link>
-        </div>
-
-        <div class="footer-contact">
-          <h4>Giờ làm việc</h4>
-          <p>Thứ 2 - Chủ nhật: 08:00 - 21:00</p>
-          <p>Nhận cấp cứu khẩn cấp 24/7</p>
-          <p class="hotline-p">Hotline: 0905 090 629</p>
         </div>
       </div>
-      <div class="footer-bottom">
-        <p>&copy; 2026 MyPetClinic. Bảo lưu mọi quyền.</p>
-      </div>
-    </footer>
+    </section>
 
-    <!-- Service Detail Modal -->
-    <div v-if="activeServiceModal" class="modal-overlay" @click.self="activeServiceModal = null">
-      <div class="modal-card">
-        <button class="modal-close" @click="activeServiceModal = null"><X /></button>
-        <div class="modal-header-icon" :style="{ background: activeServiceModal.color }">
-          <component :is="activeServiceModal.icon" class="modal-icon" />
-        </div>
-        <h3 class="modal-title">{{ activeServiceModal.name }}</h3>
-        <p class="modal-detail-desc">{{ activeServiceModal.detailDesc }}</p>
-        
-        <div class="modal-highlights">
-          <h4>Ưu điểm nổi bật:</h4>
-          <ul>
-            <li v-for="(hl, idx) in activeServiceModal.highlights" :key="idx">
-              <CheckCircle2 class="hl-icon" />
-              <span>{{ hl }}</span>
-            </li>
-          </ul>
-        </div>
 
-        <div class="modal-price">
-          <span>Chi phí ước lượng:</span>
-          <span class="price-val">{{ activeServiceModal.price }}</span>
-        </div>
+    <!-- Shared Footer Layout -->
+    <Footer />
 
-        <div class="modal-actions-row">
-          <button @click="selectServiceForBooking(activeServiceModal.name)" class="btn-modal-action">Đặt lịch dịch vụ này</button>
-          <button @click="goToServiceDetailPage(activeServiceModal.name)" class="btn-modal-secondary">Xem chi tiết & Bảng giá</button>
-        </div>
-      </div>
-    </div>
+    <!-- Shared Booking Modal -->
+    <BookingModal 
+      :show="showBookingModal" 
+      @close="showBookingModal = false" 
+      @success="handleBookingSuccess" 
+      @error="handleBookingError" 
+    />
 
     <!-- Article Detail Modal -->
     <div v-if="activeArticleModal" class="modal-overlay" @click.self="activeArticleModal = null">
@@ -360,10 +176,12 @@
           <img :src="activeArticleModal.image" alt="Article image" class="article-modal-img" />
           <span class="article-modal-tag">{{ activeArticleModal.tag }}</span>
         </div>
-        <span class="article-modal-date">{{ activeArticleModal.date }}</span>
-        <h3 class="modal-title">{{ activeArticleModal.title }}</h3>
-        <div class="article-modal-body">
-          <p v-for="(pText, idx) in activeArticleModal.paragraphs" :key="idx">{{ pText }}</p>
+        <div class="article-modal-content">
+          <span class="article-modal-date"><Clock class="meta-icon" /> {{ activeArticleModal.date }}</span>
+          <h3 class="modal-title">{{ activeArticleModal.title }}</h3>
+          <div class="article-modal-body">
+            <p v-for="(pText, idx) in activeArticleModal.paragraphs" :key="idx">{{ pText }}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -371,59 +189,45 @@
     <!-- Zalo QR Code Modal -->
     <div v-if="isZaloModalOpen" class="modal-overlay" @click.self="isZaloModalOpen = false">
       <div class="modal-card qr-modal-card">
-        <button class="modal-close" @click="isZaloModalOpen = false"><X /></button>
-        <h3 class="modal-title text-center">Kết Nối Zalo Bác Sĩ</h3>
-        <p class="text-center subtitle-qr">Quét mã QR bên dưới để bắt đầu chat tư vấn trực tiếp với bác sĩ trực ca của phòng khám.</p>
-        <div class="qr-wrapper">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://zalo.me/0905090629" alt="Zalo QR Code" class="qr-img" />
+        <div class="qr-modal-header">
+          <h3 class="modal-title text-center">Kết Nối Zalo Bác Sĩ</h3>
+          <button class="modal-close" @click="isZaloModalOpen = false"><X /></button>
         </div>
-        <p class="phone-qr text-center">Số điện thoại: <strong>0905.090.629</strong></p>
+        <div class="qr-modal-body text-center">
+          <p class="subtitle-qr">Quét mã QR bên dưới để bắt đầu chat tư vấn trực tiếp với bác sĩ trực ca của phòng khám.</p>
+          <div class="qr-wrapper">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://zalo.me/0905090629" alt="Zalo QR Code" class="qr-img" />
+          </div>
+          <p class="phone-qr">Số điện thoại: <strong>0905.090.629</strong></p>
+        </div>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../services/api';
-
-const router = useRouter();
+import Header from '../components/layout/Header.vue';
+import Footer from '../components/layout/Footer.vue';
+import BookingModal from '../components/shared/BookingModal.vue';
 import { 
-  PawPrint, 
-  Menu, 
-  X, 
-  HeartHandshake, 
-  CheckCircle, 
-  CheckCircle2, 
-  ChevronRight,
-  Activity, 
-  Sparkles,
-  ShieldCheck,
-  Phone,
-  Mail,
-  MapPin,
-  MessageSquare,
-  Info,
-  AlertCircle
+  Heart, HeartPulse, HeartHandshake, ArrowDown, Clock, 
+  Award, Stethoscope, Scissors, ShieldCheck, Tag, Info, 
+  CheckCircle2, AlertCircle, ChevronRight, ArrowRight, X,
+  CalendarDays, User
 } from '@lucide/vue';
 
+const router = useRouter();
+
 const isLoggedIn = ref(false);
-const isScrolled = ref(false);
-const isMobileMenuOpen = ref(false);
-const activeSection = ref('hero');
+const showBookingModal = ref(false);
+const activeArticleModal = ref<any | null>(null);
+const isZaloModalOpen = ref(false);
+const todayDate = ref('');
 
-// Booking Form & Loading State
-const bookingLoading = ref(false);
-const bookingForm = reactive({
-  name: '',
-  phone: '',
-  service: 'Khám & Điều Trị',
-  date: ''
-});
-
-// Toast notification handling
+// Toasts notifications
 interface Toast {
   id: number;
   message: string;
@@ -445,134 +249,26 @@ const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info')
   }, 4000);
 };
 
-const showSuccessToast = (msg: string) => showToast(msg, 'success');
-const showErrorToast = (msg: string) => showToast(msg, 'error');
+const handleBookingSuccess = (msg: string) => {
+  showToast(msg, 'success');
+};
 
-// Modals state
-const activeServiceModal = ref<any | null>(null);
-const activeArticleModal = ref<any | null>(null);
-const isZaloModalOpen = ref(false);
+const handleBookingError = (msg: string) => {
+  showToast(msg, 'error');
+};
 
-// Services list data
-const services = ref([
-  {
-    id: 1,
-    name: 'Khám & Điều Trị',
-    icon: Activity,
-    color: '#0d9488',
-    excerpt: 'Khám lâm sàng, chẩn đoán bằng hình ảnh siêu âm, xét nghiệm máu và lên phác đồ điều trị chuyên sâu.',
-    detailDesc: 'Dịch vụ chẩn đoán y khoa cốt lõi của chúng tôi. Thú cưng sẽ được kiểm tra toàn diện, thực hiện các xét nghiệm sinh hóa nếu cần thiết để phát hiện sớm các bệnh lý về gan, thận, tim mạch hoặc truyền nhiễm.',
-    highlights: ['Bác sĩ thú y túc trực chẩn đoán', 'Hệ thống xét nghiệm máu hiện đại có kết quả sau 15 phút', 'Phác đồ điều trị an toàn, cập nhật liên tục'],
-    price: 'Từ 100.000 VNĐ'
-  },
-  {
-    id: 2,
-    name: 'Spa & Grooming',
-    icon: Sparkles,
-    color: '#6366f1',
-    excerpt: 'Tắm spa dưỡng lông, cắt tỉa lông tạo kiểu chuyên nghiệp, vệ sinh tai và cắt móng an toàn.',
-    detailDesc: 'Giúp thú cưng của bạn sở hữu diện mạo xinh xắn và sạch sẽ nhất. Quy trình spa bao gồm việc vắt tuyến hôi, tắm sấy 5 bước bằng sữa tắm dưỡng lông chuyên dụng, cắt dũa móng và tạo kiểu nghệ thuật theo yêu cầu.',
-    highlights: ['Nhân viên spa chuyên nghiệp, khéo léo', 'Sử dụng sữa tắm thảo dược an toàn cho da nhạy cảm', 'Tạo kiểu thời trang, hợp xu hướng'],
-    price: 'Từ 150.000 VNĐ'
-  },
-  {
-    id: 3,
-    name: 'Tiêm Phòng & Vaccine',
-    icon: ShieldCheck,
-    color: '#f59e0b',
-    excerpt: 'Cung cấp đầy đủ các loại vaccine phòng bệnh dại, 5 bệnh, 7 bệnh phổ biến cho chó mèo.',
-    detailDesc: 'Bảo vệ thú cưng khỏi các căn bệnh nguy hiểm gây tử vong cao như Parvo, Care ở chó hay Giảm bạch cầu ở mèo. Quy trình tiêm chủng an toàn kèm sổ khám theo dõi định kỳ tiện lợi.',
-    highlights: ['Vaccine nhập khẩu chính hãng có tem kiểm định', 'Khám sức khỏe miễn phí trước khi tiêm', 'Nhắc lịch tiêm chủng tự động qua tin nhắn'],
-    price: 'Từ 120.000 VNĐ'
-  },
-  {
-    id: 4,
-    name: 'Tư Vấn Sức Khỏe',
-    icon: HeartHandshake,
-    color: '#ec4899',
-    excerpt: 'Tư vấn dinh dưỡng, chế độ ăn uống, tập luyện và tiêm chủng định kỳ chuẩn khoa học.',
-    detailDesc: 'Dịch vụ tư vấn chuyên sâu giúp bạn xây dựng chế độ dinh dưỡng cá nhân hóa cho thú cưng theo độ tuổi, cân nặng và thể trạng đặc biệt (như mang thai, béo phì, dưỡng bệnh).',
-    highlights: ['Thiết lập thực đơn dinh dưỡng chuẩn khoa học', 'Lời khuyên từ chuyên gia dinh dưỡng thú y hàng đầu', 'Tặng kèm cẩm nang chăm sóc độc quyền'],
-    price: 'Miễn phí khi khám tại Clinic'
-  }
-]);
+// Quick Booking
+// (Removed unused quick booking handlers to avoid TS6133 compiler warnings)
 
-// Doctors Team list
-const doctors = ref([
-  {
-    id: 1,
-    name: 'Bác sĩ Nguyễn Văn Minh',
-    specialty: 'Giám đốc chuyên môn - Ngoại khoa',
-    avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=300&h=300',
-    exp: 12
-  },
-  {
-    id: 2,
-    name: 'Bác sĩ Trần Thị Hồng',
-    specialty: 'Chuyên khoa Nội - Da liễu Thú y',
-    avatar: 'https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&w=300&h=300',
-    exp: 8
-  },
-  {
-    id: 3,
-    name: 'Bác sĩ Lê Hoàng Nam',
-    specialty: 'Chuyên gia siêu âm & chẩn đoán hình ảnh',
-    avatar: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=300&h=300',
-    exp: 6
-  }
-]);
-
-// Articles News list
-const articles = ref([
-  {
-    id: 1,
-    title: 'Lịch tiêm phòng dại định kỳ cho chó mèo bạn cần biết',
-    tag: 'Sức khỏe',
-    date: '05 Tháng 6, 2026',
-    image: 'https://images.unsplash.com/photo-1581888227599-779811939961?auto=format&fit=crop&w=400&h=250',
-    excerpt: 'Bệnh dại là căn bệnh vô cùng nguy hiểm và có khả năng lây sang người. Tìm hiểu lịch tiêm phòng chuẩn xác nhất...',
-    paragraphs: [
-      'Bệnh dại (Rabies) là bệnh truyền nhiễm virus cấp tính của hệ thần kinh trung ương, lây từ động vật sang người thông qua vết cắn, vết cào. Đây là căn bệnh cực kỳ nguy hiểm, một khi đã lên cơn dại thì tỷ lệ tử vong là 100%.',
-      'Để bảo vệ thú cưng cũng như bản thân và gia đình, chủ nuôi bắt buộc phải cho chó mèo đi tiêm vaccine phòng dại định kỳ. Mũi tiêm đầu tiên nên thực hiện khi thú cưng đạt 3 tháng tuổi. Sau đó, cần tiêm nhắc lại đều đặn mỗi năm một lần.',
-      'Lưu ý: Chỉ thực hiện tiêm vaccine khi thú cưng hoàn toàn khỏe mạnh, không bị sốt hay đang điều trị bệnh lý nào khác. Sau khi tiêm nên theo dõi tại phòng khám khoảng 15-30 phút để đề phòng sốc phản vệ.'
-    ]
-  },
-  {
-    id: 2,
-    title: 'Cách chăm sóc thú cưng vào mùa hè nắng nóng tránh sốc nhiệt',
-    tag: 'Cẩm nang',
-    date: '28 Tháng 5, 2026',
-    image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&h=250',
-    excerpt: 'Thời tiết nắng nóng của mùa hè rất dễ khiến chó mèo bị mất nước và sốc nhiệt dẫn đến đột quỵ. Hãy áp dụng ngay...',
-    paragraphs: [
-      'Sốc nhiệt là tình trạng khẩn cấp xảy ra khi nhiệt độ cơ thể thú cưng tăng cao vượt ngưỡng an toàn (thường trên 40 độ C), khiến cơ thể không kịp tản nhiệt. Điều này rất dễ xảy ra trong những ngày hè oi bức tại Việt Nam.',
-      'Các dấu hiệu sốc nhiệt dễ nhận biết bao gồm: thở gấp gáp, chảy nhiều nước dãi, nướu đỏ sẫm hoặc xanh tím, đi đứng lảo đảo và lờ đờ. Nếu không sơ cứu kịp thời có thể dẫn đến suy đa tạng và tử vong.',
-      'Biện pháp phòng ngừa hiệu quả: Luôn cung cấp đủ nước sạch mát, giữ pet trong không gian thoáng gió hoặc phòng điều hòa vào khung giờ nắng nóng cao điểm. Tuyệt đối không để thú cưng một mình trong xe ô tô đóng kín cửa.'
-    ]
-  }
-]);
-
-// Scroll handling and active navigation highlight
-const handleScroll = () => {
-  isScrolled.value = window.scrollY > 50;
-
-  const sections = ['hero', 'services', 'doctors', 'news', 'contact'];
-  const scrollPosition = window.scrollY + 120;
-
-  for (const section of sections) {
-    const el = document.getElementById(section);
-    if (el) {
-      const top = el.offsetTop;
-      const height = el.offsetHeight;
-      if (scrollPosition >= top && scrollPosition < top + height) {
-        activeSection.value = section;
-      }
-    }
+const handleBookingBtnClick = () => {
+  if (isLoggedIn.value) {
+    showBookingModal.value = true;
+  } else {
+    router.push('/login');
   }
 };
 
 const scrollToSection = (id: string) => {
-  isMobileMenuOpen.value = false;
   const el = document.getElementById(id);
   if (el) {
     window.scrollTo({
@@ -582,7 +278,18 @@ const scrollToSection = (id: string) => {
   }
 };
 
-// Check if user is logged in (via backend call to profile or token cookie verification)
+const goToServiceDetailPage = (serviceName: string) => {
+  if (serviceName === 'Khám & Điều Trị') {
+    router.push('/services/kham-dieu-tri');
+  } else if (serviceName === 'Spa & Làm Đẹp') {
+    router.push('/services/spa-grooming');
+  } else if (serviceName === 'Tiêm Phòng Bệnh') {
+    router.push('/services/tiem-phong');
+  } else if (serviceName === 'Phẫu Thuật Ngoại') {
+    router.push('/services/kham-dieu-tri#phau-thuat');
+  }
+};
+
 const checkLoginState = async () => {
   try {
     await api.get('/profile');
@@ -592,1465 +299,906 @@ const checkLoginState = async () => {
   }
 };
 
-const handleLogout = async () => {
-  try {
-    await api.post('/account/logout');
-    isLoggedIn.value = false;
-    showSuccessToast('Đã đăng xuất tài khoản.');
-  } catch (err) {
-    showErrorToast('Lỗi khi đăng xuất.');
+// Core service list
+const services = ref([
+  {
+    id: 1,
+    name: 'Tiêm Phòng Bệnh',
+    icon: ShieldCheck,
+    color: '#0ea5e9',
+    bgColor: 'rgba(14, 165, 233, 0.1)',
+    excerpt: 'Tiêm phòng vaccine và phòng chống ký sinh trùng định kỳ theo phác đồ khoa học giúp phòng ngừa tối đa bệnh tật.'
+  },
+  {
+    id: 2,
+    name: 'Khám & Điều Trị',
+    icon: Stethoscope,
+    color: '#f59e0b',
+    bgColor: 'rgba(245, 158, 11, 0.15)',
+    excerpt: 'Thăm khám tổng quát, tư vấn chế độ dinh dưỡng, chẩn đoán lâm sàng chuẩn xác các bệnh nội khoa phức tạp.'
+  },
+  {
+    id: 3,
+    name: 'Phẫu Thuật Ngoại',
+    icon: HeartPulse,
+    color: '#10b981',
+    bgColor: 'rgba(16, 185, 129, 0.1)',
+    excerpt: 'Phòng mổ vô trùng áp lực dương tuyệt đối. Thực hiện các ca phẫu thuật triệt sản, mổ đẻ hay nối xương phức tạp.'
+  },
+  {
+    id: 4,
+    name: 'Spa & Làm Đẹp',
+    icon: Scissors,
+    color: '#6366f1',
+    bgColor: 'rgba(99, 102, 241, 0.1)',
+    excerpt: 'Cắt tỉa lông tạo kiểu nghệ thuật, tắm sấy khử mùi, vắt tuyến hôi và vệ sinh tai móng chuyên nghiệp từ các chuyên gia Grooming.'
   }
-};
+]);
 
-const goToServiceDetailPage = (serviceName: string) => {
-  activeServiceModal.value = null;
-  if (serviceName === 'Khám & Điều Trị') {
-    router.push('/services/kham-dieu-tri');
-  } else if (serviceName === 'Spa & Grooming') {
-    router.push('/services/spa-grooming');
-  } else if (serviceName === 'Tiêm Phòng & Vaccine') {
-    router.push('/services/tiem-phong');
-  } else if (serviceName === 'Tư Vấn Sức Khỏe') {
-    router.push('/services/suc-khoe');
+// Cẩm nang & blog
+const articles = ref([
+  {
+    id: 1,
+    title: 'Nấm da ở chó mèo có lây sang người không?',
+    tag: 'Sức khỏe',
+    date: '25/05/2026',
+    image: 'https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?q=80&w=400&auto=format&fit=crop',
+    tags: ['Nấm da', 'Lây nhiễm', 'Bệnh da liễu'],
+    excerpt: 'Bạn thấy thú cưng rụng lông từng mảng tròn, ngứa liên tục... vài ngày sau chính bạn cũng xuất hiện vết đỏ. Tìm hiểu nguyên nhân và phác đồ điều trị dứt điểm...',
+    paragraphs: [
+      'Bệnh nấm da (Microsporum canis) là căn bệnh da liễu phổ biến nhất ở chó mèo, đặc biệt phát triển mạnh trong điều kiện thời tiết nóng ẩm tại Việt Nam.',
+      'Bệnh này HOÀN TOÀN CÓ THỂ lây trực tiếp từ chó mèo sang người thông qua ôm ấp, tiếp xúc da thịt hoặc qua môi trường sống trung gian như nệm, lược chải lông. Ở người, nấm da tạo thành các vệt tròn đỏ hình đồng xu gây ngứa ngáy dữ dội (hắc lào).',
+      'Phác đồ điều trị dứt điểm bao gồm: cạo lông quanh vùng tổn thương của thú cưng, tắm bằng dầu tắm sát khuẩn chuyên dụng kháng nấm, và bôi thuốc mỡ. Đồng thời, vệ sinh khử trùng toàn bộ nhà cửa, xịt cồn y tế lên nệm nằm để diệt sạch bào tử nấm.'
+    ]
+  },
+  {
+    id: 2,
+    title: 'Tại sao chó bị rụng lông và cách điều trị hiệu quả',
+    tag: 'Kinh nghiệm',
+    date: '24/05/2026',
+    image: 'https://images.unsplash.com/photo-1581888227599-779811939961?q=80&w=400&auto=format&fit=crop',
+    tags: ['Rụng lông', 'Kinh nghiệm', 'Chăm sóc chó'],
+    excerpt: 'Chó rụng lông là hiện tượng sinh lý bình thường nhưng rụng quá nhiều kèm theo ngứa, lở loét có thể là biểu hiện của viêm da, ghẻ Demodex hoặc dị ứng...',
+    paragraphs: [
+      'Hiện tượng rụng lông ở chó có hai loại chính: rụng lông sinh lý (thay lông định kỳ) và rụng lông bệnh lý. Rụng lông sinh lý thường đều khắp cơ thể và da chó vẫn hồng hào, mịn màng.',
+      'Nếu chó rụng lông từng mảng, lộ da đỏ ửng, ngứa gãi liên tục, có vảy gàu hoặc mủ thì đây chắc chắn là rụng lông bệnh lý. Nguyên nhân có thể do ký sinh trùng (ve, rận, ghẻ Sarcoptes/Demodex), nấm da hoặc dị ứng thức ăn/sữa tắm.',
+      'Cách khắc phục hiệu quả: Đưa bé đi cạo da làm xét nghiệm kính hiển vi để tìm đúng nguyên nhân. Sử dụng các thuốc nhỏ gáy hoặc uống diệt ngoại ký sinh trùng thế hệ mới, tắm bằng xà phòng y tế hỗ trợ và cải thiện khẩu phần ăn giàu Omega-3, Omega-6 giúp lông khỏe mượt.'
+    ]
+  },
+  {
+    id: 3,
+    title: 'Chó bị táo bón: Biểu hiện và cách điều trị tại nhà',
+    tag: 'Dinh dưỡng',
+    date: '20/05/2026',
+    image: 'https://images.unsplash.com/photo-1544568100-847a948585b9?q=80&w=400&auto=format&fit=crop',
+    tags: ['Táo bón', 'Tiêu hóa', 'Dinh dưỡng'],
+    excerpt: 'Táo bón lâu ngày có thể gây ra phình đại tràng, nhiễm độc ngược dòng rất nguy hiểm cho bé. Tìm hiểu ngay biểu hiện và mẹo xử lý tại nhà...',
+    paragraphs: [
+      'Chó bị táo bón là tình trạng phân khô cứng, chó đi rặn khó khăn, kêu rên khi rặn hoặc không thể đi tiêu trong vòng 2-3 ngày liên tiếp.',
+      'Nguyên nhân phổ biến nhất là do khẩu phần ăn thiếu chất xơ, chó uống ít nước, nuốt phải dị vật như đất đá, xương gà, hoặc lười vận động dẫn đến nhu động ruột kém.',
+      'Cách điều trị tại nhà: Bổ sung ngay chất xơ từ bí đỏ hấp chín, khoai lang xay nhuyễn vào bữa ăn. Khuyến khích chó uống nhiều nước, cho đi bộ vận động nhiều hơn. Trong trường hợp nặng, không được tự ý bơm thuốc thụt đại tràng mà cần đưa đến bác sĩ thú y để thụt rửa an toàn tránh vỡ ruột.'
+    ]
   }
-};
-
-const selectServiceForBooking = (serviceName: string) => {
-  bookingForm.service = serviceName;
-  activeServiceModal.value = null;
-  scrollToSection('contact');
-};
-
-const openServiceModal = (service: any) => {
-  activeServiceModal.value = service;
-};
+]);
 
 const openArticleModal = (article: any) => {
   activeArticleModal.value = article;
 };
 
-// Handle booking submission
-const handleQuickBooking = async () => {
-  bookingLoading.value = true;
-  try {
-    // Gọi API lưu đặt lịch nếu có backend API hỗ trợ đặt lịch nhanh, 
-    // hoặc giả lập thông báo thành công cho Khách hàng trải nghiệm mượt mà.
-    // Vì đây là trang đặt lịch nhanh cho người dùng vãng lai, ta gửi thông tin và thông báo.
-    await new Promise(resolve => setTimeout(resolve, 1200)); // Hiệu ứng mượt mà
-    showSuccessToast(`Đăng ký đặt lịch khám thành công cho ngày ${bookingForm.date}! Chúng tôi sẽ liên hệ sớm nhất để xác nhận.`);
-    bookingForm.name = '';
-    bookingForm.phone = '';
-    bookingForm.date = '';
-  } catch (error) {
-    showErrorToast('Đặt lịch thất bại. Vui lòng liên hệ hotline.');
-  } finally {
-    bookingLoading.value = false;
-  }
-};
-
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll);
   checkLoginState();
-  // Thiết lập ngày mặc định cho form là ngày mai
+  
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  bookingForm.date = tomorrow.toISOString().split('T')[0];
-});
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  todayDate.value = tomorrowStr;
 });
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-
 .home-wrapper {
-  background-color: #080c14;
-  color: #f8fafc;
-  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg-light);
+  color: var(--text-dark);
   min-height: 100vh;
-  position: relative;
-  overflow: hidden;
 }
 
-/* Global Glow Backgrounds */
-.bg-glow-1 {
-  width: 700px;
-  height: 700px;
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.15) 0%, transparent 70%);
-  position: absolute;
-  top: -200px;
-  right: -100px;
-  pointer-events: none;
-  animation: pulse-glow 8s ease-in-out infinite alternate;
-}
-
-.bg-glow-2 {
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
-  position: absolute;
-  top: 35%;
-  left: -200px;
-  pointer-events: none;
-  animation: pulse-glow 10s ease-in-out infinite alternate-reverse;
-}
-
-/* Floating Glassmorphic Header Capsule */
-.header {
-  position: fixed;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 40px);
+.container {
   max-width: 1200px;
-  z-index: 1000;
-  padding: 1rem 2.5rem;
-  background: rgba(9, 13, 22, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 24px;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.header.scrolled {
-  top: 12px;
-  padding: 0.8rem 2.5rem;
-  background: rgba(9, 13, 22, 0.85);
-  border-color: rgba(20, 184, 166, 0.25);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-.nav-container {
-  width: 100%;
   margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 0 1.5rem;
 }
 
-.logo {
+/* Toast Notifications styling */
+.toast-container {
+  position: fixed;
+  top: 90px;
+  right: 20px;
+  z-index: 1200;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
-  cursor: pointer;
 }
 
-.logo-icon {
-  width: 32px;
-  height: 32px;
-  color: #14b8a6;
-  filter: drop-shadow(0 0 8px rgba(20, 184, 166, 0.3));
-}
-
-.logo-text {
-  font-size: 1.6rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  color: #ffffff;
-  background: linear-gradient(135deg, #ffffff, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.menu-toggle {
-  display: none;
-  background: none;
-  border: none;
-  color: #ffffff;
-  cursor: pointer;
-}
-
-.menu-icon {
-  width: 26px;
-  height: 26px;
-}
-
-.nav-menu {
-  display: flex;
-  align-items: center;
-  gap: 2.2rem;
-}
-
-.nav-link {
-  color: #94a3b8;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.95rem;
-  transition: all 0.3s;
-  position: relative;
-  padding: 0.25rem 0;
-}
-
-.nav-link::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--primary, #14b8a6);
-  transition: width 0.3s ease;
-}
-
-.nav-link:hover::after, .nav-link.active::after {
-  width: 100%;
-}
-
-.nav-link:hover, .nav-link.active {
-  color: #ffffff;
-}
-
-.auth-buttons {
+.toast {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 1rem 1.5rem;
+  box-shadow: var(--shadow-lg);
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-left: 1rem;
+  border-left: 5px solid #cbd5e1;
+  min-width: 300px;
 }
 
-.btn-login-nav {
-  color: #cbd5e1;
-  text-decoration: none;
+.toast-success { border-left-color: #10b981; }
+.toast-error { border-left-color: #ef4444; }
+.toast-info { border-left-color: #f59e0b; }
+
+.toast-icon {
+  width: 20px;
+  height: 20px;
+}
+.toast-success .toast-icon { color: #10b981; }
+.toast-error .toast-icon { color: #ef4444; }
+.toast-info .toast-icon { color: #f59e0b; }
+
+.toast-message {
+  font-size: 0.9rem;
   font-weight: 600;
-  padding: 0.6rem 1.2rem;
-  transition: color 0.3s;
+  color: var(--text-dark);
 }
 
-.btn-login-nav:hover {
-  color: #ffffff;
+.toast-fade-enter-active, .toast-fade-leave-active {
+  transition: all 0.3s ease;
 }
-
-.btn-register-nav, .btn-dashboard {
-  background: linear-gradient(135deg, #14b8a6, #0d9488);
-  color: white;
-  border: none;
-  text-decoration: none;
-  padding: 0.6rem 1.4rem;
-  border-radius: 12px;
-  font-weight: 600;
-  transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.25);
+.toast-fade-enter-from {
+  opacity: 0;
+  transform: translateX(50px);
 }
-
-.btn-register-nav:hover, .btn-dashboard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(20, 184, 166, 0.45);
-}
-
-.btn-logout-header {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  padding: 0.6rem 1.2rem;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-logout-header:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: white;
-}
-
-/* Mobile responsive menu */
-@media (max-width: 868px) {
-  .menu-toggle {
-    display: block;
-  }
-
-  .nav-menu {
-    position: fixed;
-    top: 90px;
-    right: -100%;
-    width: 280px;
-    height: auto;
-    max-height: 80vh;
-    background: rgba(9, 13, 22, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 20px;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 2.5rem 2rem;
-    gap: 1.8rem;
-    transition: right 0.4s ease;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .nav-menu.mobile-open {
-    right: 20px;
-  }
-
-  .auth-buttons {
-    flex-direction: column;
-    width: 100%;
-    margin-left: 0;
-    margin-top: 1rem;
-    gap: 1rem;
-  }
-
-  .auth-buttons > * {
-    width: 100%;
-    text-align: center;
-  }
+.toast-fade-leave-to {
+  opacity: 0;
+  transform: translateX(50px);
 }
 
 /* Hero Section */
 .hero-section {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  padding-top: 140px;
-  padding-bottom: 5rem;
+  padding: 5rem 0;
+  overflow: hidden;
 }
 
-.hero-container-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
+.hero-row {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 4rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
   align-items: center;
-  width: 100%;
 }
 
-@media (max-width: 992px) {
-  .hero-container-grid {
+@media (max-width: 991px) {
+  .hero-row {
     grid-template-columns: 1fr;
     text-align: center;
-    gap: 3.5rem;
   }
   .hero-actions {
     justify-content: center;
   }
-  .stats-container {
-    margin: 0 auto !important;
-  }
+}
+
+.hero-shape-1 {
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(254, 243, 199, 0.7) 0%, rgba(254, 243, 199, 0) 70%);
+  z-index: 1;
+  animation: floatShape1 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.hero-shape-2 {
+  position: absolute;
+  bottom: -10%;
+  left: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(254, 243, 199, 0.5) 0%, rgba(254, 243, 199, 0) 70%);
+  z-index: 1;
+  animation: floatShape2 16s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes floatShape1 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, 40px) scale(1.1); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes floatShape2 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -30px) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
 }
 
 .hero-content-left {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  position: relative;
+  z-index: 2;
 }
 
-@media (max-width: 992px) {
-  .hero-content-left {
-    align-items: center;
-  }
-}
-
-.hero-tagline {
-  font-size: 0.9rem;
-  font-weight: 600;
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary-gold);
+  color: var(--text-dark);
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
   text-transform: uppercase;
-  color: #14b8a6;
-  letter-spacing: 2px;
-  background: rgba(20, 184, 166, 0.08);
-  padding: 0.5rem 1.2rem;
-  border-radius: 20px;
-  margin-bottom: 2rem;
-  display: inline-block;
-  border: 1px solid rgba(20, 184, 166, 0.15);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+}
+
+.icon-heart-fill {
+  width: 14px;
+  height: 14px;
+  fill: #ef4444;
+  color: #ef4444;
 }
 
 .hero-title {
-  font-size: 3.8rem;
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -1.5px;
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1.2;
   margin-bottom: 1.5rem;
-  color: #ffffff;
-  text-align: left;
-}
-
-@media (max-width: 992px) {
-  .hero-title {
-    text-align: center;
-  }
-}
-
-@media (max-width: 600px) {
-  .hero-title {
-    font-size: 2.8rem;
-  }
-}
-
-.gradient-text {
-  background: linear-gradient(135deg, #14b8a6, #6366f1);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 .hero-desc {
-  font-size: 1.2rem;
-  color: #94a3b8;
-  max-width: 600px;
-  margin-bottom: 2.5rem;
+  font-size: 1.05rem;
+  color: var(--text-muted);
   line-height: 1.7;
-  text-align: left;
-}
-
-@media (max-width: 992px) {
-  .hero-desc {
-    text-align: center;
-    margin: 0 auto 2.5rem auto;
-  }
+  margin-bottom: 2.5rem;
 }
 
 .hero-actions {
   display: flex;
-  gap: 15px;
-  margin-bottom: 4.5rem;
-  width: 100%;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-@media (max-width: 480px) {
-  .hero-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-  .hero-actions button {
-    width: 100%;
-    max-width: 280px;
-  }
+.btn-icon-left {
+  width: 18px;
+  height: 18px;
 }
 
-.btn-hero-primary {
-  background: linear-gradient(135deg, #14b8a6, #0d9488);
-  color: white;
-  border: none;
-  padding: 1rem 2.2rem;
-  border-radius: 14px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 4px 20px rgba(20, 184, 166, 0.4);
+.btn-icon-right {
+  width: 16px;
+  height: 16px;
 }
 
-.btn-hero-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(20, 184, 166, 0.55);
+.animate-bounce-y {
+  animation: bounceY 1.5s infinite;
 }
 
-.btn-hero-secondary {
-  background: rgba(255, 255, 255, 0.03);
-  color: #cbd5e1;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 1rem 2.2rem;
-  border-radius: 14px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
+@keyframes bounceY {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
 }
 
-.btn-hero-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.stats-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  max-width: 600px;
-  width: 100%;
-}
-
-.stat-card {
-  background: rgba(17, 24, 39, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 1.5rem 1rem;
-  border-radius: 20px;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s;
-  text-align: center;
-}
-
-.stat-card:hover {
-  border-color: rgba(20, 184, 166, 0.2);
-  transform: translateY(-4px);
-}
-
-.stat-number {
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: #14b8a6;
-  margin-bottom: 0.2rem;
-  filter: drop-shadow(0 0 10px rgba(20, 184, 166, 0.2));
-}
-
-.stat-label {
-  font-size: 0.85rem;
-  color: #94a3b8;
-  font-weight: 500;
-}
-
-/* Right side image styling */
 .hero-visual-right {
   display: flex;
   justify-content: center;
-  align-items: center;
   position: relative;
-}
-
-.image-frame-container {
-  position: relative;
-  width: 100%;
-  max-width: 440px;
-  border-radius: 30px;
-  padding: 8px;
-  background: linear-gradient(135deg, rgba(20, 184, 166, 0.3), rgba(99, 102, 241, 0.3));
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  animation: float 6s ease-in-out infinite;
+  z-index: 2;
 }
 
 .hero-image {
-  width: 100%;
-  height: 480px;
+  width: 420px;
+  height: 420px;
   object-fit: cover;
-  border-radius: 24px;
-  display: block;
+  border-radius: 50%;
+  border: 6px solid white;
+  box-shadow: var(--shadow-lg);
+  transition: transform 0.5s ease;
 }
 
-.floating-badge {
+.hero-image:hover {
+  transform: scale(1.02);
+}
+
+.chat-bubble-floating {
   position: absolute;
+  left: 0;
+  top: 10%;
+  width: 80px;
+  height: 80px;
+  background: white;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0.8rem 1.2rem;
-  background: rgba(9, 13, 22, 0.75);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  z-index: 5;
 }
 
-.badge-top {
-  top: 30px;
-  left: -30px;
-  border-color: rgba(20, 184, 166, 0.3);
+.chat-bubble-icon {
+  width: 40px;
+  height: 40px;
+  color: var(--primary-gold);
 }
 
-.badge-bottom {
-  bottom: 40px;
+.animate-bounce {
+  animation: bounce 3s infinite ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.badge-hours-floating {
+  position: absolute;
   right: -20px;
-  border-color: rgba(99, 102, 241, 0.3);
+  bottom: 10px;
+  width: 220px;
+  background: var(--primary-gold);
+  color: var(--text-dark);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  border-left: 5px solid var(--primary-dark);
+  text-align: left;
 }
 
-.badge-dot {
-  width: 8px;
-  height: 8px;
-  background-color: #10b981;
-  border-radius: 50%;
-  box-shadow: 0 0 10px #10b981;
-}
-
-.badge-star {
-  color: #fbbf24;
-  font-weight: bold;
-}
-
-.badge-text {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #ffffff;
-}
-
-@media (max-width: 992px) {
-  .image-frame-container {
-    max-width: 380px;
-  }
-  .hero-image {
-    height: 380px;
-  }
-  .badge-top {
-    left: -10px;
-  }
-  .badge-bottom {
-    right: -10px;
-  }
-}
-
-/* Section generic headers */
-.section-header {
-  text-align: center;
-  max-width: 700px;
-  margin: 0 auto 4rem auto;
-  padding: 0 1.5rem;
-}
-
-.section-tag {
-  color: #14b8a6;
-  font-size: 0.85rem;
+.badge-hours-floating h6 {
   font-weight: 700;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+.badge-hours-floating p {
+  font-size: 0.75rem;
+  color: rgba(41, 37, 36, 0.8) !important;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.badge-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* About Section */
+.about-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3.5rem;
+  align-items: center;
+}
+
+@media (max-width: 991px) {
+  .about-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.about-image {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.section-tag-gold {
+  color: var(--primary-dark);
+  font-weight: 700;
+  font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 2px;
   display: block;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.5rem;
 }
 
 .section-title {
-  font-size: 2.6rem;
+  font-size: 2rem;
   font-weight: 800;
-  color: #ffffff;
-  margin-bottom: 1.2rem;
-  letter-spacing: -0.5px;
+  margin-bottom: 1.5rem;
+  color: var(--text-dark);
+  text-align: left;
 }
 
 .section-desc {
-  color: #94a3b8;
-  font-size: 1.05rem;
+  font-size: 1rem;
+  color: var(--text-muted);
   line-height: 1.7;
+  margin-bottom: 2rem;
 }
 
-/* Services section */
-.services-section {
-  padding: 7rem 1.5rem;
-  background: rgba(9, 13, 22, 0.4);
-  position: relative;
-}
-
-.services-grid {
-  max-width: 1200px;
-  margin: 0 auto;
+.benefits-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2.5rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
 }
 
-.service-card {
-  background: rgba(17, 24, 39, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 24px;
-  padding: 2.5rem 2rem;
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+@media (max-width: 576px) {
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.benefit-item {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: start;
+  gap: 12px;
 }
 
-.service-card:hover {
-  transform: translateY(-10px);
-  border-color: rgba(20, 184, 166, 0.3);
-  background: rgba(31, 41, 55, 0.7);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(20, 184, 166, 0.05);
-}
-
-.service-icon-wrapper {
-  padding: 14px;
-  border-radius: 16px;
+.benefit-icon-wrapper {
+  background: var(--primary-cream);
+  color: var(--primary-dark);
+  padding: 0.6rem;
+  border-radius: 12px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  margin-bottom: 1.8rem;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  justify-content: center;
 }
 
-.service-icon {
-  color: white;
+.benefit-icon {
   width: 24px;
   height: 24px;
 }
 
-.service-title {
-  color: white;
-  font-size: 1.35rem;
+.benefit-item h6 {
+  font-size: 0.95rem;
   font-weight: 700;
-  margin-bottom: 0.8rem;
+  margin-bottom: 4px;
 }
 
-.service-excerpt {
-  color: #94a3b8;
-  font-size: 0.95rem;
-  line-height: 1.7;
-  margin-bottom: 1.8rem;
+.benefit-item p {
+  font-size: 0.8rem;
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* Services section */
+.section-subtitle {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-bottom: 3rem;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+  text-align: left;
+}
+
+.service-card {
+  padding: 2.5rem 2rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
+
+.service-icon-wrapper {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.service-card-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.service-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.service-card-desc {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
   flex-grow: 1;
 }
 
 .btn-read-more {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: #14b8a6;
-  font-size: 0.95rem;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--primary-dark);
   font-weight: 700;
-}
-
-
-.icon-right {
-  width: 16px;
-  height: 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
   transition: transform 0.2s;
 }
 
-.service-card:hover .icon-right {
+.btn-read-more:hover {
   transform: translateX(4px);
 }
 
-/* Why us section */
-.why-us-section {
-  padding: 6rem 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
+.icon-right {
+  width: 14px;
+  height: 14px;
 }
 
-.why-us-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 4rem;
-  align-items: center;
-}
-
-@media (max-width: 868px) {
-  .why-us-grid {
-    grid-template-columns: 1fr;
-    gap: 3rem;
-  }
-}
-
-.benefit-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  margin-top: 2rem;
-}
-
-.benefit-item {
-  display: flex;
-  gap: 15px;
-}
-
-.benefit-icon {
-  width: 24px;
-  height: 24px;
-  color: #14b8a6;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.benefit-item h4 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.3rem;
-}
-
-.benefit-item p {
-  font-size: 0.9rem;
-  color: #94a3b8;
-  line-height: 1.5;
-}
-
-.why-us-visual {
-  display: flex;
-  justify-content: center;
-}
-
-.visual-card {
-  position: relative;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-  padding: 3rem 2.5rem;
-  text-align: center;
-  max-width: 320px;
-  overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-}
-
-.visual-glow {
-  position: absolute;
-  top: -50px;
-  left: -50px;
-  width: 150px;
-  height: 150px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.15), transparent 70%);
-  filter: blur(20px);
-}
-
-.visual-icon {
-  width: 48px;
-  height: 48px;
-  color: #6366f1;
-  margin-bottom: 1.5rem;
-}
-
-.visual-card h3 {
-  font-size: 1.3rem;
-  color: white;
-  margin-bottom: 0.8rem;
-}
-
-.visual-card p {
-  font-size: 0.9rem;
-  color: #94a3b8;
-  line-height: 1.6;
-}
-
-/* Doctors Section */
-.doctors-section {
-  padding: 6rem 1.5rem;
-  background: rgba(15, 23, 42, 0.4);
-}
-
-.doctors-grid {
-  max-width: 1000px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 2.5rem;
-}
-
-.doctor-card {
-  background: rgba(30, 41, 59, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
-  padding: 1.8rem;
-  text-align: center;
-  transition: all 0.3s;
-}
-
-.doctor-card:hover {
-  transform: translateY(-5px);
-  border-color: rgba(20, 184, 166, 0.25);
-  background: rgba(30, 41, 59, 0.5);
-}
-
-.doctor-avatar-wrapper {
-  position: relative;
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  margin: 0 auto 1.5rem auto;
-  overflow: hidden;
-  border: 3px solid rgba(20, 184, 166, 0.2);
-}
-
-.doctor-avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.doctor-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(15, 23, 42, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.doctor-avatar-wrapper:hover .doctor-overlay {
-  opacity: 1;
-}
-
-.doctor-exp {
-  color: white;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.doctor-name {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.3rem;
-}
-
-.doctor-role {
-  font-size: 0.85rem;
-  color: #14b8a6;
-  font-weight: 500;
-}
-
-/* News Section */
-.news-section {
-  padding: 6rem 1.5rem;
-}
-
-.news-grid {
-  max-width: 1100px;
-  margin: 0 auto;
+/* Articles Section */
+.articles-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 2.5rem;
 }
 
-.news-card {
-  background: rgba(30, 41, 59, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
+.article-card {
+  border-radius: var(--radius-md);
   overflow: hidden;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.news-img-wrapper {
+.article-img-wrapper {
   position: relative;
-  height: 200px;
+  height: 220px;
   overflow: hidden;
 }
 
-.news-img {
+.article-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s;
+  transition: transform 0.5s ease;
 }
 
-.news-card:hover .news-img {
+.article-card:hover .article-img {
   transform: scale(1.05);
 }
 
-.news-tag {
+.article-badge-tag {
   position: absolute;
   top: 15px;
   left: 15px;
-  background: #14b8a6;
+  background: #ef4444;
   color: white;
+  font-weight: 700;
   font-size: 0.75rem;
-  font-weight: 600;
   padding: 0.3rem 0.8rem;
-  border-radius: 20px;
+  border-radius: 5px;
+  text-transform: uppercase;
 }
 
-.news-info {
-  padding: 1.5rem;
+.article-card:nth-child(2) .article-badge-tag {
+  background: var(--primary-gold);
+  color: var(--text-dark);
+}
+
+.article-card:nth-child(3) .article-badge-tag {
+  background: #0ea5e9;
+}
+
+.article-body {
+  padding: 2rem 1.5rem;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
 }
 
-.news-date {
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.8rem;
-  color: #64748b;
-  margin-bottom: 0.6rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
 }
 
-.news-title {
+.meta-icon {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+}
+
+.article-title {
   font-size: 1.15rem;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.8rem;
+  font-weight: 750;
   line-height: 1.4;
+  margin-bottom: 0.75rem;
   cursor: pointer;
   transition: color 0.2s;
 }
 
-.news-title:hover {
-  color: #14b8a6;
+.article-title:hover {
+  color: var(--primary-gold);
 }
 
-.news-excerpt {
-  color: #94a3b8;
+.article-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+
+.tag-badge {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--bg-light);
+  border: 1px solid var(--border-color);
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tag-badge-icon {
+  width: 10px;
+  height: 10px;
+}
+
+.article-desc {
   font-size: 0.85rem;
   line-height: 1.6;
-  margin-bottom: 1.2rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
   flex-grow: 1;
 }
 
 .btn-news-more {
   background: none;
   border: none;
-  color: #14b8a6;
+  color: var(--primary-dark);
+  font-weight: 700;
   font-size: 0.85rem;
-  font-weight: 600;
   cursor: pointer;
-  display: flex;
+  padding: 0;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-  align-self: flex-start;
-  padding: 0;
+  transition: transform 0.2s;
 }
 
 .btn-news-more:hover {
-  color: #2dd4bf;
+  transform: translateX(4px);
 }
 
-/* Contact and booking section */
-.contact-section {
-  padding: 6rem 1.5rem;
-  background: rgba(15, 23, 42, 0.4);
-}
-
-.contact-grid {
-  max-width: 1100px;
-  margin: 0 auto;
+/* Contact and Quick Booking */
+.contact-section-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4rem;
+  gap: 3.5rem;
   align-items: center;
 }
 
-@media (max-width: 868px) {
-  .contact-grid {
+@media (max-width: 991px) {
+  .contact-section-grid {
     grid-template-columns: 1fr;
-    gap: 3rem;
   }
 }
 
-.contact-details {
+.contact-info-left h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.contact-desc {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+
+.contact-details-list {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  margin: 2.2rem 0;
+  margin-bottom: 2.5rem;
 }
 
-.detail-item {
+.contact-detail-item {
   display: flex;
-  gap: 15px;
+  gap: 12px;
+  align-items: start;
 }
 
-.detail-icon {
-  width: 22px;
-  height: 22px;
-  color: #14b8a6;
-  flex-shrink: 0;
+.contact-detail-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--primary-dark);
   margin-top: 2px;
 }
 
-.detail-item h5 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.2rem;
+.contact-detail-item h5 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 2px;
 }
 
-.detail-item p {
-  font-size: 0.9rem;
-  color: #94a3b8;
+.contact-detail-item p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
 }
 
 .btn-zalo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #0068ff; /* Zalo Blue */
+  background: #0068ff;
   color: white;
   border: none;
-  padding: 0.8rem 1.8rem;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  border-radius: var(--radius-md);
+  padding: 0.8rem 2rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 4px 15px rgba(0, 104, 255, 0.25);
+  box-shadow: 0 4px 14px rgba(0, 104, 255, 0.35);
+  transition: var(--transition-smooth);
 }
 
 .btn-zalo:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 104, 255, 0.35);
   background: #0056d6;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 104, 255, 0.45);
 }
 
-.btn-icon {
-  width: 18px;
-  height: 18px;
+.btn-zalo-icon {
+  width: 20px;
+  height: 20px;
 }
 
-/* Booking card form */
 .booking-card {
-  background: rgba(30, 41, 59, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 2.5rem;
-  border-radius: 24px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  background: white !important;
 }
 
 .booking-card h3 {
   font-size: 1.4rem;
-  color: white;
-  margin-bottom: 0.4rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
 }
 
 .booking-card p {
   font-size: 0.85rem;
-  color: #94a3b8;
-  margin-bottom: 1.8rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
 }
 
-.booking-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.2rem;
-}
-
-@media (max-width: 450px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.input-group label {
-  color: #cbd5e1;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.form-input, .form-select {
-  width: 100%;
-  padding: 0.8rem 1rem;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  color: white;
-  font-family: inherit;
-  font-size: 0.9rem;
-  transition: all 0.3s;
-}
-
-.form-input:focus, .form-select:focus {
-  outline: none;
-  border-color: #14b8a6;
-  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
-}
-
-.form-select option {
-  background: #1e293b;
-  color: white;
-}
-
-.btn-submit-booking {
-  background: linear-gradient(135deg, #14b8a6, #0d9488);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 0.85rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 0.5rem;
-}
-
-.btn-submit-booking:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(20, 184, 166, 0.3);
-}
-
-.btn-submit-booking:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Footer Section */
-.footer {
-  background: #0b0f19;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 4.5rem 2rem 2rem 2rem;
-}
-
-.footer-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr;
-  gap: 4rem;
-  margin-bottom: 3.5rem;
-}
-
-@media (max-width: 768px) {
-  .footer-container {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
-  }
-}
-
-.footer-brand {
+.quick-booking-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.footer-desc {
-  color: #64748b;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  max-width: 320px;
-}
-
-.footer-links, .footer-contact {
+.form-group-booking {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 4px;
 }
 
-.footer-links h4, .footer-contact h4 {
-  color: white;
-  font-size: 1.05rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.footer-links a {
-  color: #94a3b8;
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.3s;
-}
-
-.footer-links a:hover {
-  color: #14b8a6;
-}
-
-.footer-contact p {
-  color: #94a3b8;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.hotline-p {
-  color: #14b8a6 !important;
-  font-weight: 600;
-  font-size: 1rem !important;
-}
-
-.footer-bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-  padding-top: 2rem;
-  text-align: center;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.footer-bottom p {
-  color: #475569;
+.form-group-booking label {
   font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
-/* Modals layout */
+.form-row-booking {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 576px) {
+  .form-row-booking {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-input, .form-select {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s infinite linear;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Modals global layouts */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(8px);
-  z-index: 10000;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
+  z-index: 1100;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 1rem;
 }
 
 .modal-card {
-  background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
+  background: white;
   width: 100%;
-  max-width: 520px;
-  padding: 2.5rem;
-  position: relative;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   animation: modal-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes modal-enter {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
 .modal-close {
-  position: absolute;
-  top: 20px;
-  right: 20px;
   background: none;
   border: none;
-  color: #64748b;
   cursor: pointer;
-  padding: 5px;
-  border-radius: 50%;
+  color: var(--text-dark);
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
 }
 
-.modal-close:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-}
-
-.modal-header-icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 16px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-}
-
-.modal-icon {
-  color: white;
-  width: 26px;
-  height: 26px;
+.modal-close svg {
+  width: 20px;
+  height: 20px;
 }
 
 .modal-title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 1rem;
-}
-
-.modal-detail-desc {
-  color: #cbd5e1;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  margin-bottom: 1.8rem;
-}
-
-.modal-highlights h4 {
-  font-size: 1rem;
-  color: white;
-  font-weight: 600;
-  margin-bottom: 0.8rem;
-}
-
-.modal-highlights ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  margin-bottom: 1.8rem;
-}
-
-.modal-highlights li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.9rem;
-  color: #94a3b8;
-}
-
-.hl-icon {
-  width: 18px;
-  height: 18px;
-  color: #14b8a6;
-  flex-shrink: 0;
-}
-
-.modal-price {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 1.2rem;
-  margin-bottom: 1.8rem;
-}
-
-.modal-price span:first-child {
-  color: #64748b;
-  font-size: 0.9rem;
-}
-
-.price-val {
-  color: #14b8a6;
-  font-weight: 700;
   font-size: 1.2rem;
+  font-weight: 800;
+  margin: 0;
 }
 
-.btn-modal-action {
-  width: 100%;
-  background: linear-gradient(135deg, #14b8a6, #0d9488);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 0.9rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-modal-action:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(20, 184, 166, 0.3);
-}
-
-.modal-actions-row {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.btn-modal-secondary {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  color: #cbd5e1;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 0.9rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-modal-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-/* Article modal specifics */
+/* Article Modal specifically */
 .article-modal-card {
-  max-width: 680px;
-  padding: 0;
-  overflow: hidden;
+  max-width: 700px;
   max-height: 90vh;
-  display: flex;
-  flex-direction: column;
+  position: relative;
 }
 
 .article-modal-card .modal-close {
-  background: rgba(15, 23, 42, 0.6);
-  color: white;
-  z-index: 1;
-}
-
-.article-modal-card .modal-close:hover {
-  background: rgba(15, 23, 42, 0.9);
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  padding: 0.4rem;
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
 }
 
 .article-modal-img-wrapper {
-  position: relative;
   height: 280px;
-  flex-shrink: 0;
+  position: relative;
 }
 
 .article-modal-img {
@@ -2061,149 +1209,79 @@ onUnmounted(() => {
 
 .article-modal-tag {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
-  background: #14b8a6;
-  color: white;
-  font-weight: 600;
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
+  bottom: 15px;
+  left: 15px;
+  background: var(--primary-gold);
+  color: var(--text-dark);
+  font-weight: 700;
   font-size: 0.8rem;
+  padding: 0.4rem 1rem;
+  border-radius: 5px;
+  text-transform: uppercase;
+}
+
+.article-modal-content {
+  padding: 2rem;
+  overflow-y: auto;
 }
 
 .article-modal-date {
-  color: #64748b;
-  font-size: 0.85rem;
-  margin: 1.5rem 2rem 0.5rem 2rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
   display: block;
-}
-
-.article-modal-card .modal-title {
-  margin: 0 2rem 1.2rem 2rem;
-  line-height: 1.3;
+  margin-bottom: 0.5rem;
 }
 
 .article-modal-body {
-  padding: 0 2rem 2.5rem 2rem;
-  overflow-y: auto;
-  color: #cbd5e1;
-  font-size: 0.95rem;
-  line-height: 1.7;
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-muted);
 }
 
-.article-modal-body p {
-  margin-bottom: 1rem;
-}
-
-/* Zalo QR Modal specifics */
+/* QR Code Modal specifically */
 .qr-modal-card {
-  max-width: 400px;
-  text-align: center;
+  max-width: 420px;
+}
+
+.qr-modal-header {
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qr-modal-body {
+  padding: 2rem 1.5rem;
 }
 
 .subtitle-qr {
-  color: #94a3b8;
   font-size: 0.85rem;
-  line-height: 1.5;
+  color: var(--text-muted);
   margin-bottom: 1.5rem;
 }
 
 .qr-wrapper {
   background: white;
-  padding: 1.2rem;
-  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
   display: inline-block;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-sm);
   margin-bottom: 1.5rem;
 }
 
 .qr-img {
   width: 180px;
   height: 180px;
-  display: block;
 }
 
 .phone-qr {
   font-size: 0.95rem;
-  color: #cbd5e1;
-}
-
-.text-center {
-  text-align: center;
-}
-
-/* Spinner */
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Custom Toasts container */
-.toast-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 10001;
-  max-width: 350px;
-}
-
-.toast {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 1rem 1.25rem;
-  border-radius: 12px;
-  color: #ffffff;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
-  font-size: 0.9rem;
-  font-weight: 500;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.toast-success {
-  background: rgba(16, 185, 129, 0.9);
-  border-color: rgba(16, 185, 129, 0.2);
-}
-
-.toast-error {
-  background: rgba(239, 68, 68, 0.9);
-  border-color: rgba(239, 68, 68, 0.2);
-}
-
-.toast-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.toast-message {
-  line-height: 1.4;
-}
-
-/* Toast Transitions */
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.toast-fade-enter-from {
-  opacity: 0;
-  transform: translateY(-20px) scale(0.9);
-}
-
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(20px) scale(0.9);
+  color: var(--text-dark);
 }
 </style>

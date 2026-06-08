@@ -22,25 +22,77 @@ namespace MyPetClinic.Infrastructure.Persistence
             }
             await context.SaveChangesAsync();
 
-            // 2. Seed Default Doctor
+            // 2. Seed Default Users
+            var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "admin");
             var doctorRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "doctor");
-            if (doctorRole != null && !await context.Users.AnyAsync(u => u.RoleId == doctorRole.Id))
+            var receptionistRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "receptionist");
+            var customerRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "customer");
+
+            if (adminRole != null && !await context.Users.AnyAsync(u => u.Email == "admindemo@gmail.com"))
             {
-                var defaultDoctor = new User
+                context.Users.Add(new User
                 {
                     Id = Guid.NewGuid(),
-                    RoleId = doctorRole.Id,
-                    FullName = "BS. Trần Văn A",
-                    Email = "doctor.a@mypetclinic.com",
+                    RoleId = adminRole.Id,
+                    FullName = "Quản trị viên Demo",
+                    Email = "admindemo@gmail.com",
+                    Phone = "0999999999",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    Gender = 1,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            if (receptionistRole != null && !await context.Users.AnyAsync(u => u.Email == "letandemo@gmail.com"))
+            {
+                context.Users.Add(new User
+                {
+                    Id = Guid.NewGuid(),
+                    RoleId = receptionistRole.Id,
+                    FullName = "Lễ tân Demo",
+                    Email = "letandemo@gmail.com",
                     Phone = "0988888888",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
                     Gender = 1,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
-                };
-                context.Users.Add(defaultDoctor);
-                await context.SaveChangesAsync();
+                });
             }
+
+            if (customerRole != null && !await context.Users.AnyAsync(u => u.Email == "khachhangdemo@gmail.com"))
+            {
+                context.Users.Add(new User
+                {
+                    Id = Guid.NewGuid(),
+                    RoleId = customerRole.Id,
+                    FullName = "Khách hàng Demo",
+                    Email = "khachhangdemo@gmail.com",
+                    Phone = "0977777777",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    Gender = 1,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            if (doctorRole != null && !await context.Users.AnyAsync(u => u.Email == "bacsi_test@gmail.com"))
+            {
+                context.Users.Add(new User
+                {
+                    Id = Guid.NewGuid(),
+                    RoleId = doctorRole.Id,
+                    FullName = "BS. Trần Văn A",
+                    Email = "bacsi_test@gmail.com",
+                    Phone = "0966666666",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    Gender = 1,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            await context.SaveChangesAsync();
 
             // 3. Seed Service Categories & Services
             if (!await context.ServiceCategories.AnyAsync())

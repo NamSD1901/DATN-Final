@@ -1,353 +1,378 @@
 <template>
-  <div class="service-detail-wrapper">
-    <!-- Background elements -->
-    <div class="bg-glow bg-glow-1"></div>
-    <div class="bg-glow bg-glow-2"></div>
+  <div class="page-wrapper">
+    <Header @open-booking="showBookingModal = true" />
 
-    <div class="service-detail-container">
-      <!-- Back button -->
-      <div class="action-bar">
-        <router-link to="/" class="btn-back">
-          <ArrowLeft class="icon-btn" />
-          <span>Quay lại Trang chủ</span>
-        </router-link>
-      </div>
-
-      <!-- Header Section -->
-      <div class="service-header">
-        <div class="icon-wrapper">
-          <Heart class="service-icon" />
-        </div>
-        <span class="service-tag">Dịch vụ tư vấn</span>
-        <h1>Tư Vấn Sức Khỏe & Dinh Dưỡng</h1>
-        <p class="service-subtitle">
-          Chăm sóc chủ động bằng cách tối ưu hóa dinh dưỡng và thói quen sinh hoạt khoa học dưới sự hướng dẫn của bác sĩ chuyên khoa dinh dưỡng thú y.
+    <!-- Hero Section -->
+    <section class="py-5 bg-gold-gradient position-relative text-center hero-section">
+      <div class="hero-shape-1"></div>
+      <div class="container py-4">
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3 shadow-sm text-uppercase">
+          <BookOpen class="icon-book" /> Góc Y Khoa & Đời Sống
+        </span>
+        <h1 class="display-4 fw-bold mb-3 gradient-text-gold">SỨC KHỎE THÚ CƯNG</h1>
+        <p class="fs-5 text-muted max-w-2xl mx-auto">
+          Trang bị kiến thức chăm sóc khoa học, nhận biết sớm các triệu chứng bệnh lý thường gặp dưới sự cố vấn chuyên môn từ bác sĩ.
         </p>
       </div>
+    </section>
 
-      <!-- Feature Grid -->
-      <div class="feature-grid">
-        <div class="feature-card">
-          <Apple class="feat-icon" />
-          <h3>Cá Nhân Hóa Thực Đơn</h3>
-          <p>Thiết lập chế độ ăn phù hợp cho từng giai đoạn phát triển, kiểm soát cân nặng béo phì hoặc hỗ trợ điều trị bệnh lý (thận, gan, tiết niệu).</p>
-        </div>
+    <!-- Content Section -->
+    <section class="py-5 bg-white content-section">
+      <div class="container">
+        <div class="grid-layout">
+          <!-- Sidebar widgets -->
+          <aside class="sidebar-wrapper">
+            <!-- Search box widget -->
+            <div class="card border-0 glass-card p-3 mb-4 widget-card">
+              <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <Search class="widget-icon" /> Tìm kiếm bài viết
+              </h6>
+              <div class="search-box">
+                <input 
+                  type="text" 
+                  v-model="searchQuery" 
+                  class="form-control input-premium search-input" 
+                  placeholder="Nhập từ khóa..." 
+                />
+              </div>
+            </div>
 
-        <div class="feature-card">
-          <Activity class="feat-icon" />
-          <h3>Kiểm Tra Thể Trạng Định Kỳ</h3>
-          <p>Đánh giá chỉ số cơ thể BCS, kiểm tra chất lượng cơ bắp, độ ẩm của da và tư vấn bài tập thể lực nâng cao đề kháng.</p>
-        </div>
+            <!-- Categories Widget -->
+            <div class="card border-0 glass-card p-3 mb-4 widget-card">
+              <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <Tag class="widget-icon" /> Chuyên Mục
+              </h6>
+              <div class="nav flex-column gap-1">
+                <a class="sidebar-link active" href="#" @click.prevent="selectedCategory = 'All'">
+                  <ChevronRight class="chevron" /> Tất cả bài viết
+                </a>
+                <a class="sidebar-link" href="#" @click.prevent="selectedCategory = 'Dinh Dưỡng'">
+                  <ChevronRight class="chevron" /> Dinh Dưỡng Thú Cưng
+                </a>
+                <a class="sidebar-link" href="#" @click.prevent="selectedCategory = 'Bệnh Học'">
+                  <ChevronRight class="chevron" /> Bệnh Học Chó Mèo
+                </a>
+                <a class="sidebar-link" href="#" @click.prevent="selectedCategory = 'Kinh Nghiệm'">
+                  <ChevronRight class="chevron" /> Kinh Nghiệm Nuôi Dạy
+                </a>
+                <a class="sidebar-link" href="#" @click.prevent="selectedCategory = 'Y Học Dự Phòng'">
+                  <ChevronRight class="chevron" /> Y Học Dự Phòng
+                </a>
+              </div>
+            </div>
 
-        <div class="feature-card">
-          <ShieldAlert class="feat-icon" />
-          <h3>Tư Vấn Phòng Ngừa Bệnh</h3>
-          <p>Giải đáp thắc mắc về phòng chống ký sinh trùng (ve, rận, giun tim), chăm sóc răng miệng định kỳ và huấn luyện hành vi cơ bản.</p>
+            <!-- Popular Articles Widget -->
+            <div class="card border-0 glass-card p-3 widget-card">
+              <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <Star class="widget-icon text-warning" /> Đọc Nhiều Nhất
+              </h6>
+              <div class="popular-list">
+                <a href="#" class="popular-item" @click.prevent>
+                  <span class="popular-date">25/05/2026</span>
+                  <strong>Nấm da ở chó mèo có lây sang người không?</strong>
+                </a>
+                <a href="#" class="popular-item" @click.prevent>
+                  <span class="popular-date">24/05/2026</span>
+                  <strong>Tại sao chó bị rụng lông & điều trị thế nào?</strong>
+                </a>
+                <a href="#" class="popular-item" @click.prevent>
+                  <span class="popular-date">20/05/2026</span>
+                  <strong>Chó bị táo bón: Cách chữa trị tại nhà</strong>
+                </a>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Articles Grid -->
+          <main class="main-content">
+            <div class="articles-grid">
+              <!-- Article Card -->
+              <div v-for="article in filteredArticles" :key="article.id" class="article-card glass-card">
+                <div class="article-img-wrapper">
+                  <img :src="article.image" class="article-img" :alt="article.title" />
+                </div>
+                <div class="article-body">
+                  <span class="badge" :class="article.badgeClass">{{ article.category }}</span>
+                  <h5 class="article-title">{{ article.title }}</h5>
+                  <p class="article-desc">{{ article.excerpt }}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div v-if="filteredArticles.length === 0" class="text-center py-5 no-results">
+              Không tìm thấy bài viết nào phù hợp.
+            </div>
+          </main>
         </div>
       </div>
+    </section>
 
-      <!-- Detail Info Section -->
-      <div class="detail-section">
-        <h2>Tại Sao Cần Tư Vấn Sức Khỏe Cho Pet?</h2>
-        <p class="section-desc">Phòng bệnh luôn tốt hơn chữa bệnh. Hơn 80% bệnh lý thường gặp ở chó mèo (như sỏi thận, rụng lông, viêm da, béo phì) đều bắt nguồn từ thói quen ăn uống và chăm sóc sai cách của chủ nuôi.</p>
+    <Footer />
 
-        <div class="bullets-container">
-          <div class="bullet-item">
-            <CheckCircle2 class="bullet-icon" />
-            <span>Được tham vấn bởi các chuyên gia dinh dưỡng thú y hàng đầu tốt nghiệp các trường Nông Lâm danh tiếng.</span>
-          </div>
-          <div class="bullet-item">
-            <CheckCircle2 class="bullet-icon" />
-            <span>Tặng kèm cẩm nang hướng dẫn tự chuẩn bị thức ăn sạch (Raw Food/Barf) an toàn tại nhà.</span>
-          </div>
-          <div class="bullet-item">
-            <CheckCircle2 class="bullet-icon" />
-            <span>Theo dõi sức khỏe trọn đời thông qua hồ sơ điện tử lưu trữ tại Clinic.</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Call To Action -->
-      <div class="cta-card">
-        <h3>Bạn đang lo lắng về chế độ ăn uống hoặc cân nặng của thú cưng?</h3>
-        <p>Đặt lịch hẹn tư vấn miễn phí ngay hôm nay khi kèm theo gói khám sức khỏe tổng quát.</p>
-        <router-link to="/contact" class="btn-cta">Đăng ký tư vấn ngay</router-link>
-      </div>
-
-    </div>
+    <BookingModal 
+      :show="showBookingModal" 
+      @close="showBookingModal = false" 
+      @success="handleBookingSuccess" 
+      @error="handleBookingError" 
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ArrowLeft, Heart, Apple, Activity, ShieldAlert, CheckCircle2 } from '@lucide/vue';
+import { ref, computed } from 'vue';
+import Header from '../../components/layout/Header.vue';
+import Footer from '../../components/layout/Footer.vue';
+import BookingModal from '../../components/shared/BookingModal.vue';
+import { BookOpen, Search, Tag, Star, ChevronRight } from '@lucide/vue';
+
+const showBookingModal = ref(false);
+const searchQuery = ref('');
+const selectedCategory = ref('All');
+
+const handleBookingSuccess = (msg: string) => {
+  alert(msg);
+};
+
+const handleBookingError = (msg: string) => {
+  alert(msg);
+};
+
+const articles = ref([
+  {
+    id: 1,
+    title: 'Nấm da ở chó mèo có lây sang người không?',
+    category: 'Bệnh Học',
+    badgeClass: 'bg-danger',
+    image: 'https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?q=80&w=400&auto=format&fit=crop',
+    excerpt: 'Tìm hiểu nguyên nhân gây nấm da (Microsporum canis), các triệu chứng điển hình ở người khi bị lây nhiễm (vết đỏ tròn như đồng xu, ngứa ngáy) và biện pháp phòng ngừa triệt để tại nhà...'
+  },
+  {
+    id: 2,
+    title: 'Tại sao chó bị rụng lông và cách điều trị hiệu quả',
+    category: 'Kinh Nghiệm',
+    badgeClass: 'bg-warning text-dark',
+    image: 'https://images.unsplash.com/photo-1581888227599-779811939961?q=80&w=400&auto=format&fit=crop',
+    excerpt: 'Phân biệt rụng lông sinh lý tự nhiên và rụng lông bệnh lý do ký sinh trùng (ghẻ demodex, xà mâu, bọ chét) hoặc dị ứng thức ăn để có hướng can thiệp y khoa kịp thời...'
+  },
+  {
+    id: 3,
+    title: 'Chó bị táo bón: Biểu hiện và cách điều trị tại nhà',
+    category: 'Dinh Dưỡng',
+    badgeClass: 'bg-info',
+    image: 'https://images.unsplash.com/photo-1544568100-847a948585b9?q=80&w=400&auto=format&fit=crop',
+    excerpt: 'Hướng dẫn bổ sung chất xơ hòa tan, men vi sinh đường ruột và thay đổi thói quen cho chó uống nước nhằm điều trị dứt điểm chứng táo bón, khó tiêu ở thú cưng...'
+  },
+  {
+    id: 4,
+    title: 'Chế độ dinh dưỡng khoa học cho mèo dưới 1 năm tuổi',
+    category: 'Dinh Dưỡng',
+    badgeClass: 'bg-info',
+    image: 'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?q=80&w=400&auto=format&fit=crop',
+    excerpt: 'Thời kỳ phát triển vàng quyết định tầm vóc và đề kháng của bé mèo. Những thành phần dinh dưỡng bắt buộc (Taurine, Canxi, Protein dễ tiêu) và các thực phẩm tuyệt đối cấm kỵ...'
+  }
+]);
+
+const filteredArticles = computed(() => {
+  return articles.value.filter(a => {
+    const matchesSearch = a.title.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
+                          a.excerpt.toLowerCase().includes(searchQuery.value.toLowerCase());
+    const matchesCategory = selectedCategory.value === 'All' || a.category === selectedCategory.value;
+    return matchesSearch && matchesCategory;
+  });
+});
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-
-.service-detail-wrapper {
-  position: relative;
-  min-height: 100vh;
-  background: radial-gradient(circle at top right, #1e293b, #0f172a, #0b0f19);
-  font-family: 'Outfit', sans-serif;
-  color: #f8fafc;
-  overflow: hidden;
-  padding: 2.5rem 1.5rem;
+.page-wrapper {
+  background-color: var(--bg-light);
+  color: var(--text-dark);
 }
 
-.bg-glow {
+.hero-section {
+  padding: 5rem 0;
+  overflow: hidden;
+}
+
+.icon-book {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.hero-shape-1 {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.12;
-  z-index: 0;
+  top: -20%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(254, 243, 199, 0.7) 0%, rgba(254, 243, 199, 0) 70%);
+  z-index: 1;
   pointer-events: none;
 }
 
-.bg-glow-1 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, #ec4899, transparent);
-  top: -100px;
-  right: -100px;
+.grid-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 2.5rem;
 }
 
-.bg-glow-2 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, #0d9488, transparent);
-  bottom: -50px;
-  left: -50px;
+@media (max-width: 991px) {
+  .grid-layout {
+    grid-template-columns: 1fr;
+  }
+  .sidebar-wrapper {
+    margin-bottom: 2rem;
+  }
 }
 
-.service-detail-container {
-  position: relative;
-  z-index: 1;
-  max-width: 950px;
-  margin: 0 auto;
+.widget-card {
+  background-color: white !important;
 }
 
-.action-bar {
-  margin-bottom: 2.5rem;
-}
-
-.btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.6rem 1.2rem;
-  border-radius: 10px;
-  color: #cbd5e1;
-  font-weight: 500;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.3s;
-}
-
-.btn-back:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  transform: translateX(-4px);
-}
-
-.icon-btn {
+.widget-icon {
   width: 18px;
   height: 18px;
+  color: var(--primary-gold);
 }
 
-.service-header {
-  text-align: center;
-  margin-bottom: 4rem;
-}
-
-.icon-wrapper {
-  width: 70px;
-  height: 70px;
-  border-radius: 20px;
-  background: rgba(236, 72, 153, 0.15);
-  color: #ec4899;
+.search-box {
   display: flex;
-  justify-content: center;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-link {
+  display: flex;
   align-items: center;
-  margin: 0 auto 1.5rem auto;
-  box-shadow: 0 8px 20px rgba(236, 72, 153, 0.2);
-}
-
-.service-icon {
-  width: 32px;
-  height: 32px;
-}
-
-.service-tag {
-  color: #ec4899;
-  font-size: 0.85rem;
+  gap: 4px;
+  padding: 0.5rem 0.8rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-dark) !important;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  background: rgba(236, 72, 153, 0.1);
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  margin-bottom: 1rem;
-  display: inline-block;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: all var(--transition-speed);
 }
 
-h1 {
-  font-size: 2.8rem;
-  font-weight: 800;
-  letter-spacing: -1px;
-  margin-bottom: 1.2rem;
-  background: linear-gradient(135deg, #ec4899, #0d9488);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.sidebar-link .chevron {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s;
 }
 
-.service-subtitle {
-  color: #94a3b8;
-  font-size: 1.05rem;
-  line-height: 1.7;
-  max-width: 750px;
-  margin: 0 auto;
+.sidebar-link:hover, .sidebar-link.active {
+  background-color: var(--primary-cream);
+  color: var(--primary-dark) !important;
+  transform: translateX(4px);
 }
 
-/* Feature grid layout */
-.feature-grid {
+.popular-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.popular-item {
+  text-decoration: none;
+  color: var(--text-dark);
+  font-size: 0.85rem;
+  display: block;
+}
+
+.popular-item:hover strong {
+  color: var(--primary-gold);
+}
+
+.popular-date {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.popular-item strong {
+  display: block;
+  line-height: 1.4;
+  font-weight: 700;
+  transition: color 0.2s;
+}
+
+/* Articles layout */
+.articles-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.8rem;
-  margin-bottom: 4.5rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
 }
 
-@media (max-width: 768px) {
-  .feature-grid {
+@media (max-width: 576px) {
+  .articles-grid {
     grid-template-columns: 1fr;
   }
 }
 
-.feature-card {
-  background: rgba(30, 41, 59, 0.45);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
-  padding: 2.2rem 1.8rem;
-  text-align: center;
-  transition: all 0.3s;
-}
-
-.feature-card:hover {
-  transform: translateY(-5px);
-  border-color: rgba(236, 72, 153, 0.25);
-}
-
-.feat-icon {
-  width: 32px;
-  height: 32px;
-  color: #ec4899;
-  margin-bottom: 1.2rem;
-}
-
-.feature-card h3 {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.8rem;
-}
-
-.feature-card p {
-  font-size: 0.9rem;
-  color: #94a3b8;
-  line-height: 1.6;
-}
-
-/* Detail section styling */
-.detail-section {
-  background: rgba(30, 41, 59, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
-  padding: 2.5rem;
-  margin-bottom: 4.5rem;
-}
-
-.detail-section h2 {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 0.8rem;
-}
-
-.section-desc {
-  font-size: 0.95rem;
-  color: #94a3b8;
-  line-height: 1.7;
-  margin-bottom: 2rem;
-}
-
-.bullets-container {
+.article-card {
+  overflow: hidden;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  background-color: white !important;
 }
 
-.bullet-item {
+.article-img-wrapper {
+  height: 180px;
+}
+
+.article-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.article-body {
+  padding: 1.5rem;
   display: flex;
-  gap: 12px;
-  align-items: flex-start;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
-.bullet-icon {
-  width: 20px;
-  height: 20px;
-  color: #ec4899;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.bullet-item span {
-  font-size: 0.95rem;
-  color: #cbd5e1;
-  line-height: 1.5;
-}
-
-/* CTA Card */
-.cta-card {
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(20, 184, 166, 0.15) 100%);
-  border: 1px solid rgba(236, 72, 153, 0.2);
-  border-radius: 24px;
-  padding: 3rem 2rem;
-  text-align: center;
-  margin-bottom: 4rem;
-  backdrop-filter: blur(20px);
-}
-
-.cta-card h3 {
-  font-size: 1.5rem;
-  color: white;
-  margin-bottom: 0.8rem;
+.badge {
+  align-self: start;
+  font-size: 0.7rem;
   font-weight: 700;
-}
-
-.cta-card p {
-  color: #cbd5e1;
-  font-size: 0.95rem;
-  margin-bottom: 1.8rem;
-}
-
-.btn-cta {
-  display: inline-block;
-  background: linear-gradient(135deg, #ec4899, #be185d);
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
   color: white;
-  border: none;
-  padding: 0.85rem 2.2rem;
-  border-radius: 12px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.3s;
-  box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
 }
 
-.btn-cta:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
+.bg-danger { background-color: #ef4444; }
+.bg-warning { background-color: var(--primary-gold); }
+.bg-info { background-color: #0ea5e9; }
+
+.article-title {
+  font-size: 1.1rem;
+  font-weight: 750;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  color: var(--text-dark);
+}
+
+.article-desc {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.no-results {
+  font-size: 0.95rem;
+  color: var(--text-muted);
 }
 </style>

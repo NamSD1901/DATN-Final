@@ -1,301 +1,262 @@
 <template>
-  <div class="team-wrapper">
-    <!-- Background elements -->
-    <div class="bg-glow bg-glow-1"></div>
-    <div class="bg-glow bg-glow-2"></div>
+  <div class="page-wrapper">
+    <Header @open-booking="showBookingModal = true" />
 
-    <div class="team-container">
-      <!-- Back button -->
-      <div class="action-bar">
-        <router-link to="/" class="btn-back">
-          <ArrowLeft class="icon-btn" />
-          <span>Quay lại Trang chủ</span>
-        </router-link>
-      </div>
-
-      <!-- Header Section -->
-      <div class="team-header">
-        <span class="section-tag">Đội ngũ chuyên gia</span>
-        <h1 class="gradient-text">Những Người Bảo Vệ Âm Thầm</h1>
-        <p class="team-subtitle">
-          MyPetClinic sở hữu đội ngũ y bác sĩ đầu ngành, tận tâm và giàu kinh nghiệm, luôn ứng dụng các kỹ thuật chẩn đoán và điều trị hiện đại nhất vì sức khỏe của thú cưng.
+    <!-- Hero Section -->
+    <section class="py-5 bg-gold-gradient position-relative text-center hero-section">
+      <div class="hero-shape-1"></div>
+      <div class="container py-4">
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3 shadow-sm text-uppercase">
+          <Users class="icon-users" /> Bác Sĩ & Chuyên Gia
+        </span>
+        <h1 class="display-4 fw-bold mb-3 gradient-text-gold">ĐỘI NGŨ NHÂN VIÊN</h1>
+        <p class="fs-5 text-muted max-w-2xl mx-auto">
+          Gặp gỡ đội ngũ y bác sĩ giàu lòng nhân ái, có trình độ chuyên môn cao và tận tụy hết lòng vì sức khỏe của thú cưng.
         </p>
       </div>
+    </section>
 
-      <!-- Doctors Grid -->
-      <div class="doctors-grid">
-        <div 
-          v-for="doctor in doctors" 
-          :key="doctor.id" 
-          class="doctor-card"
-        >
-          <div class="doctor-avatar-wrapper">
-            <img :src="doctor.avatar" :alt="doctor.name" class="doctor-avatar" />
-            <div class="doctor-experience-tag">
-              {{ doctor.exp }} Năm kinh nghiệm
+    <!-- Team Content -->
+    <section class="py-5 bg-white content-section">
+      <div class="container">
+        <!-- Message of Commitment -->
+        <div class="text-center max-w-2xl mx-auto mb-5 section-commitment">
+          <h3 class="fw-bold mb-3">Cam Kết Y Đức & Trách Nhiệm</h3>
+          <p class="text-muted">
+            Tại MyPetClinic, mỗi bác sĩ và nhân viên không chỉ là người chữa bệnh mà còn là những người bạn đáng tin cậy của thú cưng. Chúng tôi liên tục cập nhật các phác đồ y khoa hiện đại và học hỏi các kỹ thuật điều trị mới nhất trên thế giới.
+          </p>
+        </div>
+
+        <!-- Doctors Grid -->
+        <h4 class="fw-bold mb-4 text-warning border-bottom pb-2 title-category-team">
+          <Award class="icon-category-team" /> Các Bác Sĩ Trụ Cột
+        </h4>
+        
+        <div class="doctors-grid mb-5">
+          <!-- Doctor 1 -->
+          <div class="doctor-card-wrapper text-center">
+            <div class="card border-0 glass-card h-100 p-4 doctor-card">
+              <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=200&auto=format&fit=crop" class="doctor-avatar" alt="Dr. Nguyen Van A" />
+              <h5 class="fw-bold mb-1">ThS. BS. Nguyễn Văn An</h5>
+              <p class="text-warning-highlight small fw-bold mb-2">Giám Đốc Y Khoa</p>
+              <p class="text-muted small mb-0">
+                Hơn 15 năm kinh nghiệm về phẫu thuật ngoại khoa và quản lý y tế thú y. Tốt nghiệp Đại học Thú y Queensland, Úc.
+              </p>
             </div>
           </div>
-          
-          <div class="doctor-info">
-            <h3 class="doctor-name">{{ doctor.name }}</h3>
-            <span class="doctor-role">{{ doctor.role }}</span>
-            <p class="doctor-bio">{{ doctor.bio }}</p>
-            
-            <div class="doctor-degrees">
-              <span v-for="deg in doctor.degrees" :key="deg" class="degree-tag">
-                {{ deg }}
-              </span>
+
+          <!-- Doctor 2 -->
+          <div class="doctor-card-wrapper text-center">
+            <div class="card border-0 glass-card h-100 p-4 doctor-card">
+              <img src="https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&w=300&h=300" class="doctor-avatar" alt="BS. Lê Thị Bình" />
+              <h5 class="fw-bold mb-1">BS. Lê Thị Bình</h5>
+              <p class="text-warning-highlight small fw-bold mb-2">Trưởng Khoa Nội Trực</p>
+              <p class="text-muted small mb-0">
+                Chuyên gia chẩn đoán các bệnh nội khoa truyền nhiễm và dinh dưỡng thú cưng. 10 năm kinh nghiệm lâm sàng thực tế.
+              </p>
+            </div>
+          </div>
+
+          <!-- Doctor 3 -->
+          <div class="doctor-card-wrapper text-center">
+            <div class="card border-0 glass-card h-100 p-4 doctor-card">
+              <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=200&auto=format&fit=crop" class="doctor-avatar" alt="Dr. Tran Hoang C" />
+              <h5 class="fw-bold mb-1">BS. Trần Hoàng Cường</h5>
+              <p class="text-warning-highlight small fw-bold mb-2">Chuyên Gia Chẩn Đoán Hình Ảnh</p>
+              <p class="text-muted small mb-0">
+                Chuyên sâu về siêu âm tim, Doppler mạch máu và đọc phim X-Quang, cắt lớp vi tính. Được đào tạo tại Nhật Bản.
+              </p>
+            </div>
+          </div>
+
+          <!-- Doctor 4 -->
+          <div class="doctor-card-wrapper text-center">
+            <div class="card border-0 glass-card h-100 p-4 doctor-card">
+              <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop" class="doctor-avatar" alt="Dr. Pham Minh D" />
+              <h5 class="fw-bold mb-1">BS. Phạm Minh Duy</h5>
+              <p class="text-warning-highlight small fw-bold mb-2">Chuyên Khoa Da Liễu</p>
+              <p class="text-muted small mb-0">
+                Chuyên trị các bệnh nấm da, ghẻ lở, viêm da dị ứng mãn tính ở chó mèo. Tư vấn chế độ chăm sóc da và lông chuẩn khoa học.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nursing & Care Team -->
+        <h4 class="fw-bold mb-4 text-warning border-bottom pb-2 title-category-team">
+          <HeartPulse class="icon-category-team" /> Đội Ngũ Điều Dưỡng & Chăm Sóc
+        </h4>
+        <p class="text-muted mb-4 section-desc-team">
+          Đóng vai trò quan trọng trong việc hỗ trợ các bác sĩ và chăm sóc trực tiếp cho thú cưng khi điều trị nội trú hay phục hồi chức năng. Họ là những người túc trực ngày đêm để đảm bảo thú cưng của bạn cảm thấy ấm áp và an toàn nhất.
+        </p>
+        
+        <div class="nurses-grid">
+          <!-- Nurse 1 -->
+          <div class="nurse-card-wrapper text-center">
+            <div class="card border-0 glass-card p-4 nurse-card">
+              <h6 class="fw-bold mb-1 text-dark">CN. Nguyễn Thảo Vy</h6>
+              <p class="text-muted small mb-2">Trưởng Bộ Phận Điều Dưỡng</p>
+              <span class="badge-exp">8 năm kinh nghiệm</span>
+            </div>
+          </div>
+          <!-- Nurse 2 -->
+          <div class="nurse-card-wrapper text-center">
+            <div class="card border-0 glass-card p-4 nurse-card">
+              <h6 class="fw-bold mb-1 text-dark">CN. Trần Quốc Bảo</h6>
+              <p class="text-muted small mb-2">Điều Dưỡng Viên Nội Trú</p>
+              <span class="badge-exp">5 năm kinh nghiệm</span>
+            </div>
+          </div>
+          <!-- Nurse 3 -->
+          <div class="nurse-card-wrapper text-center">
+            <div class="card border-0 glass-card p-4 nurse-card">
+              <h6 class="fw-bold mb-1 text-dark">CN. Lê Hoài Nam</h6>
+              <p class="text-muted small mb-2">Kỹ Thuật Viên Phẫu Thuật</p>
+              <span class="badge-exp">6 năm kinh nghiệm</span>
             </div>
           </div>
         </div>
       </div>
+    </section>
 
-    </div>
+    <Footer />
+
+    <BookingModal 
+      :show="showBookingModal" 
+      @close="showBookingModal = false" 
+      @success="handleBookingSuccess" 
+      @error="handleBookingError" 
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { ArrowLeft } from '@lucide/vue';
+import Header from '../components/layout/Header.vue';
+import Footer from '../components/layout/Footer.vue';
+import BookingModal from '../components/shared/BookingModal.vue';
+import { Users, Award, HeartPulse } from '@lucide/vue';
 
-const doctors = ref([
-  {
-    id: 1,
-    name: 'Bác sĩ Nguyễn Văn Minh',
-    role: 'Giám đốc chuyên môn - Ngoại khoa & Chấn thương chỉnh hình',
-    avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=300&h=300',
-    exp: 12,
-    bio: 'Chuyên gia hàng đầu về phẫu thuật ngoại khoa, nội soi khớp và chấn thương chỉnh hình phức tạp cho vật nuôi nhỏ.',
-    degrees: ['Thạc sĩ Thú y', 'Đại học Nông Lâm TPHCM', 'Chứng chỉ ngoại khoa nâng cao tại Thái Lan']
-  },
-  {
-    id: 2,
-    name: 'Bác sĩ Trần Thị Hồng',
-    role: 'Trưởng khoa Nội - Da liễu & Nội tiết Thú y',
-    avatar: 'https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&w=300&h=300',
-    exp: 8,
-    bio: 'Chuyên điều trị các bệnh lý mãn tính, bệnh tự miễn, dị ứng da phức tạp và các hội chứng rối loạn nội tiết ở chó mèo.',
-    degrees: ['Bác sĩ Thú y', 'Đại học Nông Lâm Huế', 'Chứng chỉ Da liễu Thú y Châu Á']
-  },
-  {
-    id: 3,
-    name: 'Bác sĩ Lê Hoàng Nam',
-    role: 'Chuyên gia Siêu âm & Chẩn đoán hình ảnh',
-    avatar: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=300&h=300',
-    exp: 6,
-    bio: 'Đảm nhận công tác siêu âm tim mạch, ổ bụng chuyên sâu và đọc kết quả hình ảnh X-quang kỹ thuật số công nghệ cao.',
-    degrees: ['Bác sĩ Thú y', 'Đại học Tây Nguyên', 'Chứng chỉ Chẩn đoán hình ảnh cao cấp']
-  }
-]);
+const showBookingModal = ref(false);
+
+const handleBookingSuccess = (msg: string) => {
+  alert(msg);
+};
+
+const handleBookingError = (msg: string) => {
+  alert(msg);
+};
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-
-.team-wrapper {
-  position: relative;
-  min-height: 100vh;
-  background: radial-gradient(circle at top right, #1e293b, #0f172a, #0b0f19);
-  font-family: 'Outfit', sans-serif;
-  color: #f8fafc;
-  overflow: hidden;
-  padding: 2.5rem 1.5rem;
+.page-wrapper {
+  background-color: var(--bg-light);
+  color: var(--text-dark);
 }
 
-.bg-glow {
+.hero-section {
+  padding: 5rem 0;
+  overflow: hidden;
+}
+
+.icon-users {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.hero-shape-1 {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.12;
-  z-index: 0;
+  top: -20%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(254, 243, 199, 0.7) 0%, rgba(254, 243, 199, 0) 70%);
+  z-index: 1;
   pointer-events: none;
 }
 
-.bg-glow-1 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, #0d9488, transparent);
-  top: -100px;
-  right: -100px;
+.section-commitment {
+  margin-top: 1rem;
 }
 
-.bg-glow-2 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, #6366f1, transparent);
-  bottom: -50px;
-  left: -50px;
-}
-
-.team-container {
-  position: relative;
-  z-index: 1;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-.action-bar {
-  margin-bottom: 2.5rem;
-}
-
-.btn-back {
-  display: inline-flex;
+.title-category-team {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--primary-gold) !important;
+  display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.6rem 1.2rem;
-  border-radius: 10px;
-  color: #cbd5e1;
-  font-weight: 500;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.3s;
 }
 
-.btn-back:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  transform: translateX(-4px);
+.icon-category-team {
+  width: 22px;
+  height: 22px;
 }
 
-.icon-btn {
-  width: 18px;
-  height: 18px;
-}
-
-.team-header {
-  text-align: center;
-  margin-bottom: 4.5rem;
-}
-
-.section-tag {
-  color: #14b8a6;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  background: rgba(20, 184, 166, 0.1);
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  margin-bottom: 1rem;
-  display: inline-block;
-}
-
-.gradient-text {
-  font-size: 2.8rem;
-  font-weight: 800;
-  letter-spacing: -1px;
-  margin-bottom: 1.2rem;
-  background: linear-gradient(135deg, #14b8a6, #6366f1);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.team-subtitle {
-  color: #94a3b8;
-  font-size: 1.05rem;
-  line-height: 1.7;
-  max-width: 700px;
-  margin: 0 auto;
-}
-
-/* Doctors list grid layout */
+/* Doctors list grid */
 .doctors-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 2.5rem;
-  margin-bottom: 4rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+  margin-top: 1.5rem;
 }
 
 .doctor-card {
-  background: rgba(30, 41, 59, 0.45);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
-  transition: transform 0.3s ease, border-color 0.3s ease;
-}
-
-.doctor-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(20, 184, 166, 0.3);
-}
-
-.doctor-avatar-wrapper {
-  position: relative;
-  height: 320px;
-  overflow: hidden;
+  background-color: white !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .doctor-avatar {
-  width: 100%;
-  height: 100%;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 4px solid var(--primary-gold);
   object-fit: cover;
-  transition: transform 0.5s ease;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+  transition: transform var(--transition-speed);
 }
 
 .doctor-card:hover .doctor-avatar {
-  transform: scale(1.03);
+  transform: scale(1.05);
 }
 
-.doctor-experience-tag {
-  position: absolute;
-  bottom: 15px;
-  right: 15px;
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(8px);
-  color: #14b8a6;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  border: 1px solid rgba(20, 184, 166, 0.3);
-}
-
-.doctor-info {
-  padding: 2rem;
-}
-
-.doctor-name {
-  font-size: 1.4rem;
+.text-warning-highlight {
+  color: var(--primary-dark) !important;
   font-weight: 700;
-  color: white;
-  margin-bottom: 0.4rem;
 }
 
-.doctor-role {
-  display: block;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #14b8a6;
-  margin-bottom: 1rem;
-  line-height: 1.4;
+/* Nurses grid */
+.nurses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
 
-.doctor-bio {
-  font-size: 0.9rem;
-  color: #94a3b8;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
+.nurse-card {
+  background-color: white !important;
+  padding: 1.5rem;
 }
 
-.doctor-degrees {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 1.2rem;
-}
-
-.degree-tag {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #cbd5e1;
+.badge-exp {
   font-size: 0.75rem;
-  font-weight: 500;
-  padding: 0.3rem 0.8rem;
+  color: var(--text-dark);
+  border: 1px solid var(--border-color);
+  padding: 0.3rem 1rem;
   border-radius: 20px;
+  display: inline-block;
+  margin-top: 0.5rem;
+  background-color: var(--bg-light);
+  font-weight: 600;
+}
+
+.section-desc-team {
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 </style>

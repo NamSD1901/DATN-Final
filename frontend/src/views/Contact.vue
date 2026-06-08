@@ -1,596 +1,485 @@
 <template>
-  <div class="contact-wrapper">
-    <!-- Background elements -->
-    <div class="bg-glow bg-glow-1"></div>
-    <div class="bg-glow bg-glow-2"></div>
+  <div class="page-wrapper">
+    <Header @open-booking="showBookingModal = true" />
 
-    <!-- Toast Notifications -->
-    <TransitionGroup name="toast-fade" tag="div" class="toast-container">
-      <div v-for="toast in toasts" :key="toast.id" :class="['toast', `toast-${toast.type}`]">
-        <component :is="toast.icon" class="toast-icon" />
-        <span class="toast-message">{{ toast.message }}</span>
-      </div>
-    </TransitionGroup>
-
-    <div class="contact-container">
-      <!-- Back button -->
-      <div class="action-bar">
-        <router-link to="/" class="btn-back">
-          <ArrowLeft class="icon-btn" />
-          <span>Quay lại Trang chủ</span>
-        </router-link>
-      </div>
-
-      <!-- Header Section -->
-      <div class="contact-header">
-        <span class="section-tag">Liên hệ hỗ trợ</span>
-        <h1 class="gradient-text">Kết Nối Với Chúng Tôi</h1>
-        <p class="contact-subtitle">
-          Ý kiến đóng góp và phản hồi của bạn là động lực to lớn giúp MyPetClinic cải thiện dịch vụ mỗi ngày. Hãy gửi tin nhắn cho chúng tôi hoặc kết nối Zalo để được phản hồi ngay lập tức.
+    <!-- Hero Section -->
+    <section class="py-5 bg-gold-gradient position-relative text-center hero-section">
+      <div class="hero-shape-1"></div>
+      <div class="container py-4">
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3 shadow-sm text-uppercase">
+          <PhoneCall class="icon-phone" /> Kết Nối Với Chúng Tôi
+        </span>
+        <h1 class="display-4 fw-bold mb-3 gradient-text-gold">LIÊN HỆ & ĐẶT LỊCH</h1>
+        <p class="fs-5 text-muted max-w-2xl mx-auto">
+          Cơ sở chính sẵn sàng hỗ trợ thăm khám, tư vấn chăm sóc sức khỏe cho bé cưng mọi lúc bạn cần.
         </p>
       </div>
+    </section>
 
-      <div class="contact-grid">
-        <!-- Contact Information & Zalo QR -->
-        <div class="info-column">
-          <div class="info-card">
-            <h3>Thông Tin Liên Hệ</h3>
+    <!-- Contact Details -->
+    <section class="py-5 bg-white content-section">
+      <div class="container">
+        <div class="contact-grid">
+          <!-- Left Column: Location details and Working Hours -->
+          <div class="contact-left">
+            <h3 class="fw-bold mb-4 block-title">Trụ Sở Chính</h3>
             
-            <div class="details-list">
-              <div class="detail-item">
-                <MapPin class="detail-icon" />
-                <div>
-                  <h4>Địa chỉ phòng khám</h4>
-                  <p>123 Đường Nguyễn Văn Linh, Quận Hải Châu, TP. Đà Nẵng</p>
-                </div>
+            <!-- Branch 1 -->
+            <div class="d-flex align-items-start gap-3 mb-4 branch-item">
+              <div class="icon-box-gold">
+                <MapPin class="branch-icon" />
               </div>
+              <div>
+                <h6 class="fw-bold mb-1 text-dark">MyPetClinic (Trụ sở chính)</h6>
+                <p class="small text-muted mb-1">124A Xuân Thủy, Phường An Khánh, TP. Hồ Chí Minh</p>
+                <p class="small mb-0 text-warning-highlight fw-bold"><Phone class="phone-inline-icon" /> Hotline: 0905 090 629</p>
+              </div>
+            </div>
 
-              <div class="detail-item">
-                <Phone class="detail-icon" />
-                <div>
-                  <h4>Hotline hỗ trợ & Cấp cứu 24/7</h4>
-                  <p class="highlight-text">0905 090 629</p>
-                </div>
-              </div>
+            <hr class="my-4" />
 
-              <div class="detail-item">
-                <Mail class="detail-icon" />
-                <div>
-                  <h4>Email tiếp nhận đóng góp</h4>
-                  <p>support@mypetclinic.com</p>
-                </div>
+            <h4 class="fw-bold mb-3 block-title">Giờ Làm Việc</h4>
+            <div class="card bg-light border-0 p-3 rounded-4 mb-4 hours-card">
+              <div class="hours-row">
+                <span>Thứ 2 - Thứ 7:</span>
+                <strong class="text-dark">Sáng: 08:00 - 12:00 | Chiều: 14:00 - 19:00</strong>
               </div>
+              <div class="hours-row">
+                <span>Chủ nhật & Lễ:</span>
+                <strong class="text-dark">Sáng: 08:00 - 12:00 (Chiều nghỉ)</strong>
+              </div>
+            </div>
+
+            <h4 class="fw-bold mb-3 block-title">Bản Đồ</h4>
+            <div class="rounded-4 overflow-hidden border shadow-sm map-container">
+              <iframe style="border: 0; width: 100%; height: 100%;" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3920.0531119583807!2d106.70744515079734!3d10.73038709231523!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f91a2a96ad1%3A0xc19a98cc93ec317e!2sPetcare+Veterinary+Hospital!5e0!3m2!1sen!2s!4v1465265330727" frameborder="0" allowfullscreen="true"></iframe>
             </div>
           </div>
 
-          <!-- Zalo QR Code card -->
-          <div class="zalo-card">
-            <div class="zalo-icon-box">
-              <MessageSquare class="zalo-icon" />
+          <!-- Right Column: Contact Channels -->
+          <div class="contact-right">
+            <div class="card border-0 glass-card p-4 shadow-md booking-card">
+              <h3 class="fw-bold mb-3 text-dark">Đặt Lịch Ngay</h3>
+              <p class="text-muted small mb-4">
+                Quý khách vui lòng chọn một trong các phương thức liên hệ dưới đây để đặt lịch khám nhanh chóng hoặc nhận tư vấn trực tiếp từ các bác sĩ thú y tại MyPetClinic:
+              </p>
+
+              <div class="action-buttons-grid">
+                <!-- Zalo Option -->
+                <button type="button" @click="isZaloLocalOpen = true" class="btn-channel btn-zalo-outline">
+                  <MessageSquare class="channel-icon" />
+                  <span class="fw-bold">Zalo Tư Vấn (0905 090 629)</span>
+                </button>
+
+                <!-- Messenger Option -->
+                <a href="https://m.me/mypetclinic" target="_blank" class="btn-channel btn-messenger-outline">
+                  <MessageCircle class="channel-icon" />
+                  <span class="fw-bold">Facebook Messenger</span>
+                </a>
+
+                <!-- Hotline Option -->
+                <a href="tel:0905090629" class="btn-channel btn-phone-outline">
+                  <PhoneCall class="channel-icon" />
+                  <span class="fw-bold">Gọi Hotline: 0905 090 629</span>
+                </a>
+              </div>
             </div>
-            <h3>Kênh Tư Vấn Zalo</h3>
-            <p>Quét mã QR dưới đây để chat trực tuyến cùng bác sĩ trực ca của MyPetClinic.</p>
-            <div class="qr-wrapper">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://zalo.me/0905090629" alt="Zalo QR Code" class="qr-img" />
-            </div>
-            <span class="zalo-phone">Zalo Hotline: 0905.090.629</span>
           </div>
         </div>
 
-        <!-- Feedback & Suggestions Form -->
-        <div class="form-column">
-          <div class="form-card">
-            <h3>Gửi Ý Kiến Đóng Góp</h3>
-            <p>Chúng tôi luôn lắng nghe ý kiến phản hồi về chất lượng dịch vụ từ bạn.</p>
-
-            <form @submit.prevent="handleFeedbackSubmit" class="feedback-form">
-              <div class="input-group">
-                <label for="fullName">Họ và Tên</label>
-                <input 
-                  id="fullName" 
-                  type="text" 
-                  v-model="feedbackForm.fullName" 
-                  placeholder="Nguyễn Văn A" 
-                  required 
-                  class="form-input"
-                />
-              </div>
-
-              <div class="input-group">
-                <label for="email">Địa chỉ Email</label>
-                <input 
-                  id="email" 
-                  type="email" 
-                  v-model="feedbackForm.email" 
-                  placeholder="name@example.com" 
-                  required 
-                  class="form-input"
-                />
-              </div>
-
-              <div class="input-group">
-                <label for="subject">Tiêu đề phản hồi</label>
-                <input 
-                  id="subject" 
-                  type="text" 
-                  v-model="feedbackForm.subject" 
-                  placeholder="Góp ý về dịch vụ spa, thái độ phục vụ..." 
-                  required 
-                  class="form-input"
-                />
-              </div>
-
-              <div class="input-group">
-                <label for="message">Nội dung chi tiết</label>
-                <textarea 
-                  id="message" 
-                  v-model="feedbackForm.message" 
-                  rows="5" 
-                  placeholder="Hãy viết ý kiến đóng góp chi tiết của bạn tại đây..." 
-                  required 
-                  class="form-textarea"
-                ></textarea>
-              </div>
-
-              <button type="submit" :disabled="submitting" class="btn-submit">
-                <span v-if="!submitting">Gửi Phản Hồi</span>
-                <div class="spinner" v-else></div>
+        <!-- FAQ Section -->
+        <div class="faq-section mt-5 pt-4">
+          <h3 class="fw-bold text-center mb-5 faq-title-center">Câu Hỏi Thường Gặp (FAQs)</h3>
+          <div class="faq-list">
+            <div v-for="(faq, idx) in faqs" :key="idx" class="faq-item">
+              <button class="faq-question" @click="toggleFaq(idx)">
+                {{ faq.question }}
+                <ChevronDown class="faq-chevron" :class="{ 'rotated': openFaqs.includes(idx) }" />
               </button>
-            </form>
+              <div class="faq-answer" v-show="openFaqs.includes(idx)">
+                <p>{{ faq.answer }}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+    </section>
 
+    <!-- Zalo Local Modal -->
+    <div v-if="isZaloLocalOpen" class="zalo-modal-overlay" @click.self="isZaloLocalOpen = false">
+      <div class="zalo-modal-card">
+        <div class="zalo-modal-header">
+          <h5 class="modal-title"><QrCode class="modal-icon-title" /> Quét QR Zalo MyPetClinic</h5>
+          <button class="modal-close" @click="isZaloLocalOpen = false"><X /></button>
+        </div>
+        <div class="zalo-modal-body">
+          <p class="modal-desc">
+            Quét mã QR dưới đây bằng ứng dụng Zalo để liên hệ và nhận tư vấn nhanh chóng từ MyPetClinic.
+          </p>
+          <div class="qr-wrapper">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://zalo.me/0905090629" alt="Zalo QR Code" />
+          </div>
+          <div class="qr-info-row">Tài khoản Zalo: 0905 090 629</div>
+          <div class="qr-info-sub">Chủ tài khoản: MyPetClinic Support</div>
+          <div class="modal-actions-list">
+            <a href="https://zalo.me/0905090629" target="_blank" class="btn-zalo-action">Mở bằng ứng dụng Zalo</a>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <Footer />
+
+    <BookingModal 
+      :show="showBookingModal" 
+      @close="showBookingModal = false" 
+      @success="handleBookingSuccess" 
+      @error="handleBookingError" 
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref } from 'vue';
+import Header from '../components/layout/Header.vue';
+import Footer from '../components/layout/Footer.vue';
+import BookingModal from '../components/shared/BookingModal.vue';
 import { 
-  ArrowLeft, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  MessageSquare,
-  CheckCircle2,
-  AlertCircle,
-  Info
+  PhoneCall, MapPin, Phone, MessageSquare, 
+  MessageCircle, ChevronDown, QrCode, X 
 } from '@lucide/vue';
 
-const submitting = ref(false);
+const showBookingModal = ref(false);
+const isZaloLocalOpen = ref(false);
+const openFaqs = ref<number[]>([]);
 
-const feedbackForm = reactive({
-  fullName: '',
-  email: '',
-  subject: '',
-  message: ''
-});
-
-// Toast notification State
-interface Toast {
-  id: number;
-  message: string;
-  type: 'success' | 'error' | 'info';
-  icon: any;
-}
-const toasts = ref<Toast[]>([]);
-let toastId = 0;
-
-const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-  const id = toastId++;
-  let icon = Info;
-  if (type === 'success') icon = CheckCircle2;
-  if (type === 'error') icon = AlertCircle;
-
-  toasts.value.push({ id, message, type, icon });
-  setTimeout(() => {
-    toasts.value = toasts.value.filter(t => t.id !== id);
-  }, 4000);
+const handleBookingSuccess = (msg: string) => {
+  alert(msg);
 };
 
-const showSuccessToast = (msg: string) => showToast(msg, 'success');
-const showErrorToast = (msg: string) => showToast(msg, 'error');
+const handleBookingError = (msg: string) => {
+  alert(msg);
+};
 
-const handleFeedbackSubmit = async () => {
-  submitting.value = true;
-  try {
-    // Giả lập gửi feedback đóng góp ý kiến
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    showSuccessToast('Cảm ơn bạn đã đóng góp ý kiến! Ý kiến của bạn đã được gửi tới Ban giám đốc phòng khám.');
-    feedbackForm.fullName = '';
-    feedbackForm.email = '';
-    feedbackForm.subject = '';
-    feedbackForm.message = '';
-  } catch (err) {
-    showErrorToast('Không thể gửi phản hồi lúc này. Vui lòng liên hệ hotline.');
-  } finally {
-    submitting.value = false;
+const faqs = [
+  {
+    question: '1. Tôi có cần đặt lịch khám trước khi đưa thú cưng tới không?',
+    answer: 'MyPetClinic khuyến khích khách hàng đặt lịch khám trực tuyến hoặc gọi hotline trước khi đến để được ưu tiên sắp xếp bác sĩ và hạn chế thời gian chờ đợi. Tuy nhiên, chúng tôi vẫn tiếp nhận các ca khám trực tiếp trong giờ làm việc.'
+  },
+  {
+    question: '2. Chi phí điều trị nội trú tại bệnh viện được tính thế nào?',
+    answer: 'Chi phí chăm sóc nội trú bao gồm phí lưu chuồng theo ngày, tiền thuốc theo phác đồ điều trị, dinh dưỡng đặc thù và công theo dõi sát sao của các điều dưỡng. Bác sĩ sẽ luôn trao đổi chi tiết và đưa ra bảng ước tính chi phí trước khi làm thủ tục nhập viện cho thú cưng.'
+  },
+  {
+    question: '3. Bệnh viện có tiếp nhận cấp cứu ngoài giờ hành chính không?',
+    answer: 'Hiện tại, MyPetClinic hoạt động phục vụ theo khung giờ hành chính cố định được niêm yết (Thứ 2 - Thứ 7: 8h00 - 19h00; Chủ nhật: 8h00 - 12h00). Đối với các sự cố khẩn cấp phát sinh ngoài giờ làm việc trên, quý khách vui lòng liên hệ các trung tâm cấp cứu 24/7 chuyên biệt.'
+  }
+];
+
+const toggleFaq = (idx: number) => {
+  if (openFaqs.value.includes(idx)) {
+    openFaqs.value = openFaqs.value.filter(i => i !== idx);
+  } else {
+    openFaqs.value.push(idx);
   }
 };
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-
-.contact-wrapper {
-  position: relative;
-  min-height: 100vh;
-  background: radial-gradient(circle at top right, #1e293b, #0f172a, #0b0f19);
-  font-family: 'Outfit', sans-serif;
-  color: #f8fafc;
-  overflow: hidden;
-  padding: 2.5rem 1.5rem;
+.page-wrapper {
+  background-color: var(--bg-light);
+  color: var(--text-dark);
 }
 
-.bg-glow {
+.hero-section {
+  padding: 5rem 0;
+  overflow: hidden;
+}
+
+.icon-phone {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.hero-shape-1 {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.12;
-  z-index: 0;
+  top: -20%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(254, 243, 199, 0.7) 0%, rgba(254, 243, 199, 0) 70%);
+  z-index: 1;
   pointer-events: none;
 }
 
-.bg-glow-1 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, #0d9488, transparent);
-  top: -100px;
-  right: -100px;
-}
-
-.bg-glow-2 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, #6366f1, transparent);
-  bottom: -50px;
-  left: -50px;
-}
-
-.contact-container {
-  position: relative;
-  z-index: 1;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-.action-bar {
-  margin-bottom: 2.5rem;
-}
-
-.btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.6rem 1.2rem;
-  border-radius: 10px;
-  color: #cbd5e1;
-  font-weight: 500;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.3s;
-}
-
-.btn-back:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  transform: translateX(-4px);
-}
-
-.icon-btn {
-  width: 18px;
-  height: 18px;
-}
-
-.contact-header {
-  text-align: center;
-  margin-bottom: 4rem;
-}
-
-.section-tag {
-  color: #14b8a6;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  background: rgba(20, 184, 166, 0.1);
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  margin-bottom: 1rem;
-  display: inline-block;
-}
-
-.gradient-text {
-  font-size: 2.8rem;
-  font-weight: 800;
-  letter-spacing: -1px;
-  margin-bottom: 1.2rem;
-  background: linear-gradient(135deg, #14b8a6, #6366f1);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.contact-subtitle {
-  color: #94a3b8;
-  font-size: 1.05rem;
-  line-height: 1.7;
-  max-width: 700px;
-  margin: 0 auto;
-}
-
-/* Grid layout for two columns */
 .contact-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2.5rem;
-  margin-bottom: 4rem;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 3.5rem;
 }
 
-@media (max-width: 868px) {
+@media (max-width: 991px) {
   .contact-grid {
     grid-template-columns: 1fr;
   }
 }
 
-.info-column {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.info-card, .zalo-card, .form-card {
-  background: rgba(30, 41, 59, 0.45);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 24px;
-  padding: 2.5rem;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
-}
-
-.info-card h3, .zalo-card h3, .form-card h3 {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: white;
+.block-title {
+  font-size: 1.4rem;
+  font-weight: 800;
   margin-bottom: 1.5rem;
 }
 
-.details-list {
+.icon-box-gold {
+  background-color: rgba(245, 158, 11, 0.2);
+  color: var(--primary-gold);
+  padding: 0.6rem;
+  border-radius: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 1.8rem;
-}
-
-.detail-item {
-  display: flex;
-  gap: 15px;
-}
-
-.detail-icon {
-  width: 22px;
-  height: 22px;
-  color: #14b8a6;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.detail-item h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.3rem;
-}
-
-.detail-item p {
-  font-size: 0.9rem;
-  color: #94a3b8;
-  line-height: 1.5;
-}
-
-.highlight-text {
-  color: #14b8a6 !important;
-  font-weight: 600;
-  font-size: 1.05rem !important;
-}
-
-/* Zalo QR Code card specs */
-.zalo-card {
-  text-align: center;
-}
-
-.zalo-icon-box {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  background: rgba(0, 104, 255, 0.15);
-  color: #0068ff;
-  display: flex;
-  justify-content: center;
   align-items: center;
-  margin: 0 auto 1.2rem auto;
+  justify-content: center;
 }
 
-.zalo-icon {
+.branch-icon {
   width: 24px;
   height: 24px;
 }
 
-.zalo-card p {
-  font-size: 0.9rem;
-  color: #94a3b8;
-  line-height: 1.5;
+.text-warning-highlight {
+  color: var(--primary-dark) !important;
+  font-weight: 700;
+}
+
+.phone-inline-icon {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+}
+
+.hours-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 1.25rem !important;
+  background-color: #f7f6f2 !important;
+}
+
+.hours-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.map-container {
+  height: 220px;
+  border: 1px solid var(--border-color);
+}
+
+.booking-card {
+  padding: 2.5rem;
+  background-color: white !important;
+}
+
+.action-buttons-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.btn-channel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  text-decoration: none;
+  cursor: pointer;
+  background: transparent;
+  transition: transform var(--transition-speed);
+}
+
+.btn-channel:hover {
+  transform: translateY(-2px);
+}
+
+.btn-zalo-outline {
+  border: 2px solid #0068ff;
+  color: #0068ff;
+}
+
+.btn-messenger-outline {
+  border: 2px solid #0084ff;
+  color: #0084ff;
+}
+
+.btn-phone-outline {
+  border: 2px solid #198754;
+  color: #198754;
+}
+
+.channel-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* FAQ layout */
+.faq-title-center {
+  font-size: 1.8rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.faq-list {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 0;
+}
+
+.faq-question {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  background: none;
+  border: none;
+  padding: 0.75rem 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.faq-chevron {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s;
+}
+
+.faq-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.faq-answer {
+  padding: 0.5rem 0 1rem 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Zalo Modal */
+.zalo-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
+  z-index: 1200;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.zalo-modal-card {
+  background: white;
+  width: 100%;
+  max-width: 420px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.zalo-modal-header {
+  background-color: #0068ff;
+  color: white;
+  padding: 1.2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-icon-title {
+  width: 20px;
+  height: 20px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.modal-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.zalo-modal-body {
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.modal-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
   margin-bottom: 1.5rem;
 }
 
 .qr-wrapper {
-  background: white;
   padding: 1rem;
-  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
   display: inline-block;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  margin-bottom: 1.2rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+  background: white;
 }
 
-.qr-img {
-  width: 150px;
-  height: 150px;
-  display: block;
+.qr-wrapper img {
+  width: 200px;
+  height: 200px;
 }
 
-.zalo-phone {
-  display: block;
+.qr-info-row {
+  font-weight: 700;
   font-size: 0.95rem;
-  font-weight: 600;
-  color: #14b8a6;
+  margin-bottom: 4px;
 }
 
-/* Form layout specs */
-.form-card p {
-  font-size: 0.9rem;
-  color: #94a3b8;
-  margin-bottom: 2rem;
+.qr-info-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
 }
 
-.feedback-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.input-group label {
-  color: #cbd5e1;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.form-input, .form-textarea {
-  width: 100%;
-  padding: 0.85rem 1rem;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+.btn-zalo-action {
+  background-color: #0068ff;
   color: white;
-  font-family: inherit;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-weight: 700;
   font-size: 0.95rem;
-  transition: all 0.3s;
+  display: block;
+  text-decoration: none;
+  transition: background-color 0.2s;
 }
 
-.form-input:focus, .form-textarea:focus {
-  outline: none;
-  border-color: #14b8a6;
-  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
-  background: rgba(15, 23, 42, 0.8);
-}
-
-.form-textarea {
-  resize: vertical;
-}
-
-.btn-submit {
-  background: linear-gradient(135deg, #14b8a6, #0d9488);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 0.9rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 0.5rem;
-}
-
-.btn-submit:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.3);
-}
-
-.btn-submit:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Custom Toasts container */
-.toast-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 10001;
-  max-width: 350px;
-}
-
-.toast {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 1rem 1.25rem;
-  border-radius: 12px;
-  color: #ffffff;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
-  font-size: 0.9rem;
-  font-weight: 500;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.toast-success {
-  background: rgba(16, 185, 129, 0.9);
-  border-color: rgba(16, 185, 129, 0.2);
-}
-
-.toast-error {
-  background: rgba(239, 68, 68, 0.9);
-  border-color: rgba(239, 68, 68, 0.2);
-}
-
-.toast-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.toast-message {
-  line-height: 1.4;
-}
-
-/* Toast Transitions */
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.toast-fade-enter-from {
-  opacity: 0;
-  transform: translateY(-20px) scale(0.9);
-}
-
-.toast-fade-leave-to {
-  opacity: 0;
-  transform: translateY(20px) scale(0.9);
+.btn-zalo-action:hover {
+  background-color: #0056d6;
 }
 </style>

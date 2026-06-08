@@ -51,6 +51,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         };
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
+        options.Cookie.SameSite = SameSiteMode.None;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.HttpOnly = true;
     })
     .AddGoogle(googleOptions =>
     {

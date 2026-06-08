@@ -5,6 +5,7 @@ using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Repositories;
 using MyPetClinic.Domain.Entities;
 using MyPetClinic.Infrastructure.Persistence;
+using MyPetClinic.Infrastructure.Repositories;
 using MyPetClinic.Infrastructure.Services;
 using System;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace MyPetClinic.Tests
     public class AppointmentServiceTests : IDisposable
     {
         private readonly ApplicationDbContext _context;
-        private readonly Mock<IGenericRepository<Appointment>> _mockRepo;
+        private readonly UnitOfWork _unitOfWork;
         private readonly AppointmentService _service;
 
         public AppointmentServiceTests()
@@ -25,12 +26,8 @@ namespace MyPetClinic.Tests
                 .Options;
 
             _context = new ApplicationDbContext(options);
-            _mockRepo = new Mock<IGenericRepository<Appointment>>();
-
-            var mockUnitOfWork = new Mock<IUnitOfWork>();
-            mockUnitOfWork.Setup(u => u.Appointments).Returns(_mockRepo.Object);
-
-            _service = new AppointmentService(mockUnitOfWork.Object);
+            _unitOfWork = new UnitOfWork(_context);
+            _service = new AppointmentService(_unitOfWork);
         }
 
         [Fact]
