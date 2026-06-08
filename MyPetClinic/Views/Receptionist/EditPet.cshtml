@@ -75,9 +75,9 @@
                 <label class="form-label">Ngày sinh</label>
                 <input type="date" name="BirthDate" class="form-control" value="@Model.BirthDate?.ToString("yyyy-MM-dd")">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label">Cân nặng (kg)</label>
-                <input type="number" name="Weight" class="form-control" step="0.1" value="@Model.Weight">
+                <input type="number" name="Weight" class="form-control" step="0.01" min="0" max="999.99" value="@Model.Weight" placeholder="VD: 3.5">
             </div>
         </div>
 
