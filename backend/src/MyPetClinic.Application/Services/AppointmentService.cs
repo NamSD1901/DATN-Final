@@ -23,9 +23,27 @@ namespace MyPetClinic.Application.Services
                 ? DateTime.SpecifyKind(dto.AppointmentDate.Value, DateTimeKind.Utc) 
                 : DateTime.UtcNow;
 
+            var finalDoctorId = dto.DoctorId;
+            if (finalDoctorId == Guid.Empty)
+            {
+                var doctors = await _unitOfWork.Users.FindWithIncludesAsync(
+                    u => u.Role != null && u.Role.Name.ToLower() == "doctor" && u.IsActive == true,
+                    u => u.Role!
+                );
+                var doctor = doctors.FirstOrDefault();
+                if (doctor != null)
+                {
+                    finalDoctorId = doctor.Id;
+                }
+                else
+                {
+                    throw new InvalidOperationException("Hệ thống hiện không có bác sĩ nào đang trực để phân công!");
+                }
+            }
+
             // Chặn đặt lịch nếu Bác sĩ đã có lịch trong khoảng +/- 30 phút
             var isDoubleBooked = await _unitOfWork.Appointments
-                .AnyAsync(a => a.DoctorId == dto.DoctorId 
+                .AnyAsync(a => a.DoctorId == finalDoctorId 
                             && a.Status != "cancelled"
                             && a.AppointmentDate >= appointmentDate.AddMinutes(-30) 
                             && a.AppointmentDate <= appointmentDate.AddMinutes(30));
@@ -40,7 +58,7 @@ namespace MyPetClinic.Application.Services
                 CustomerId = dto.CustomerId,
                 PetId = dto.PetId,
                 ServiceId = dto.ServiceId,
-                DoctorId = dto.DoctorId, // Phải truyền DoctorId do DB bắt buộc
+                DoctorId = finalDoctorId,
                 Symptom = dto.Symptom?.Trim(),
                 Note = dto.Note?.Trim(),
                 Status = "waiting", // Khám ngay / Chờ khám

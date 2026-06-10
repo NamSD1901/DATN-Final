@@ -722,7 +722,15 @@ const formatDateFull = (dateStr: string): string => {
 
 const formatDatetimeLocal = (val: string): string => {
   if (!val) return '—';
-  return new Date(val).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  let date = new Date(val);
+  if (isNaN(date.getTime())) {
+    // Fallback for Safari/WebKit: replace 'T' with ' '
+    date = new Date(val.replace('T', ' '));
+  }
+  if (isNaN(date.getTime())) {
+    return val; // Return raw value if parsing completely fails
+  }
+  return date.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
 const formatCurrency = (amount: number | null | undefined): string => {

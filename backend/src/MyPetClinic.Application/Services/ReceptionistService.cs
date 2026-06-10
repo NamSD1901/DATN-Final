@@ -35,7 +35,7 @@ namespace MyPetClinic.Application.Services
             var matchedOwnerIds = matchedPets.Select(p => p.OwnerId).ToList();
 
             var usersList = await _unitOfWork.Users.FindWithIncludesAsync(
-                u => u.IsActive == true && u.Role != null && u.Role.Name == "Customer" &&
+                u => u.IsActive == true && u.Role != null && u.Role.Name.ToLower() == "customer" &&
                     ((u.FullName != null && u.FullName.ToLower().Contains(lowerQuery)) ||
                      (u.Phone != null && u.Phone.Contains(lowerQuery)) ||
                      (u.Email != null && u.Email.ToLower().Contains(lowerQuery)) ||
@@ -187,7 +187,7 @@ namespace MyPetClinic.Application.Services
                     
                 if (customer == null)
                 {
-                    var roles = await _unitOfWork.Roles.FindAsync(r => r.Name == "Customer");
+                    var roles = await _unitOfWork.Roles.FindAsync(r => r.Name.ToLower() == "customer");
                     var role = roles.FirstOrDefault();
                     customer = new User
                     {
@@ -238,7 +238,7 @@ namespace MyPetClinic.Application.Services
                     if (finalDoctorId == Guid.Empty)
                     {
                         var doctors = await _unitOfWork.Users.FindWithIncludesAsync(
-                            u => u.Role != null && u.Role.Name == "Doctor" && u.IsActive == true,
+                            u => u.Role != null && u.Role.Name.ToLower() == "doctor" && u.IsActive == true,
                             u => u.Role!
                         );
                         var doctor = doctors.FirstOrDefault();
@@ -363,7 +363,7 @@ namespace MyPetClinic.Application.Services
         public async Task<List<DoctorDto>> GetActiveDoctorsAsync()
         {
             var doctors = await _unitOfWork.Users.FindWithIncludesAsync(
-                u => u.IsActive == true && u.Role != null && u.Role.Name == "Doctor" && u.DeletedAt == null,
+                u => u.IsActive == true && u.Role != null && u.Role.Name.ToLower() == "doctor" && u.DeletedAt == null,
                 u => u.Role!
             );
 

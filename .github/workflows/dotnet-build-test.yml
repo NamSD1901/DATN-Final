@@ -1,0 +1,28 @@
+name: .NET Core Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore backend/MyPetClinic.slnx
+
+    - name: Build Solution
+      run: dotnet build backend/MyPetClinic.slnx --no-restore --configuration Release
+
+    - name: Run Tests
+      run: dotnet test backend/MyPetClinic.slnx --no-build --configuration Release --verbosity normal
