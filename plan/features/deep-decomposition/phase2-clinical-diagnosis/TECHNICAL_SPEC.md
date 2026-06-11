@@ -1,52 +1,200 @@
 # 🛠️ Technical Specification - Clinical Diagnosis & Treatment
 
-## 🔗 Skills Liên Quan
-- **BE-F02 (SOLID - SRP):** Tách biệt logic quản lý bệnh án (`MedicalRecordService`) và logic xử lý trừ kho thuốc (`InventoryStockService`).
-- **BE-A02 (Unit of Work / Transaction):** Áp dụng Transaction Scope đảm bảo đơn thuốc và cập nhật kho thuốc là Atomic.
-- **BE-C02 (EF Core):** Sử dụng các truy vấn tải trước (Eager Loading) `.Include()` để tối ưu hóa việc đọc lịch sử bệnh án phức tạp.
+## 1. Luồng xử lý Kỹ thuật (Sequence Diagram)
 
----
-
-## 1. Bản vẽ Thiết kế Database quan hệ (Data Model)
+Quy trình khám bệnh lâm sàng, kê đơn thuốc và tích hợp trừ kho dược thời gian thực diễn ra theo trình tự bảo đảm tính toàn vẹn dữ liệu:
 
 ```mermaid
-erDiagram
-    Appointments ||--|| MedicalRecords : "creates"
-    MedicalRecords ||--|| Prescriptions : "has"
-    Prescriptions ||--o{ PrescriptionItems : "contains"
-    PrescriptionItems ||--|| Medicines : "references"
-    MedicalRecords ||--o{ VaccinationRecords : "records"
-    Pets ||--o{ MedicalRecords : "has history"
+sequenceDiagram
+    autonumber
+    actor Doc as Bác sĩ thú y
+    participant FE as Vue 3 Client
+    participant API as DoctorClinicalController
+    participant Service as MedicalRecordService
+    participant DB as PostgreSQL Database
+    participant Billing as BillingService
+
+    Doc->>FE: Bấm 'Tiếp nhận' ca khám
+    FE->>API: PUT /api/doctor/appointments/{id}/start
+    API->>DB: UPDATE Appointments SET Status = 'in_progress', StartExamTime = NOW()
+    DB-->>FE: Cập nhật UI phòng khám thành công
+
+    Doc->>FE: Mở xem bệnh sử y khoa cũ của thú cưng
+    FE->>API: GET /api/doctor/pets/{petId}/medical-history
+    API->>DB: SELECT * FROM MedicalRecords JOIN Prescriptions WHERE PetId = @PetId
+    DB-->>FE: Hiển thị Timeline bệnh sử y tế chi tiết
+
+    Doc->>FE: Nhập triệu chứng, chẩn đoán, và thêm thuốc kê đơn
+    FE->>API: POST /api/doctor/medical-records (CreateMedicalRecordDto)
+    Note over API: Bắt đầu DbContext Transaction
+    API->>Service: CreateMedicalRecordAsync(dto)
+    
+    Service->>DB: INSERT INTO MedicalRecords (PetId, AppointmentId, Diagnosis, TreatmentPlan)
+    DB-->>Service: medicalRecordId
+    
+    Service->>DB: INSERT INTO Prescriptions (MedicalRecordId, CreatedAt)
+    DB-->>Service: prescriptionId
+    
+    loop Với mỗi Medicine trong PrescriptionItems
+        Service->>DB: SELECT StockQuantity FROM Medicines WHERE Id = @MedicineId FOR UPDATE (Row Lock)
+        DB-->>Service: StockQuantity
+        alt Số lượng tồn kho < Số lượng kê đơn
+            Note over Service: Phát hiện thiếu thuốc thực tế trong kho
+            Service-->>API: Quăng InsufficientStockException(MedicineName)
+            API->>DB: ROLLBACK Transaction
+            API-->>FE: HTTP 400 Bad Request ("Thuốc X không đủ số lượng trong kho")
+        else Hợp lệ
+            Service->>DB: UPDATE Medicines SET StockQuantity = StockQuantity - @Quantity WHERE Id = @MedicineId
+        end
+    end
+    
+    Service->>DB: UPDATE Appointments SET Status = 'completed', EndExamTime = NOW() WHERE Id = @AppointmentId
+    
+    Note over Service: 4. Gọi Billing để sinh hóa đơn nháp
+    Service->>Billing: CreateDraftInvoiceAsync(appointmentId)
+    Billing->>DB: INSERT INTO Invoices (AppointmentId, TotalAmount, Status: 'draft')
+    
+    Service->>DB: COMMIT Transaction
+    DB-->>FE: HTTP 201 Created (medicalRecordId)
+    FE->>Doc: Hiện Toast khám thành công + Mở file in đơn thuốc pdf
 ```
 
 ---
 
-## 2. Sequence Diagram: Kê đơn & Trừ kho thuốc Atomic
+## 2. Đặc tả Mô hình Cơ sở dữ liệu Bệnh án & Đơn thuốc (Database Schemas)
+
+Sơ đồ ERD chi tiết thể hiện quan hệ giữa Lịch hẹn, Bệnh án, Đơn thuốc, Chi tiết đơn thuốc và Dược phẩm:
 
 ```mermaid
-sequenceDiagram
-    actor Doctor as Bác sĩ
-    participant FE as Vue Frontend
-    participant API as Web API Gateway
-    participant DB as PostgreSQL Database
+erDiagram
+    Appointments ||--|| MedicalRecords : "has one"
+    MedicalRecords ||--|| Prescriptions : "has one"
+    Prescriptions ||--o{ PrescriptionItems : "contains"
+    Medicines ||--o{ PrescriptionItems : "prescribed as"
 
-    Doctor->>FE: Nhập triệu chứng, chẩn đoán & thêm thuốc kê đơn
-    FE->>API: POST /api/doctor/medical-records (Data)
-    Note over API: Bắt đầu DbContext Transaction
-    API->>DB: Insert MedicalRecord & Prescription
-    
-    loop Với mỗi Medicine trong PrescriptionItems
-        API->>DB: Select Medicine.StockQuantity (Row Lock)
-        alt StockQuantity < Kê đơn
-            Note over API: Phát hiện thiếu thuốc trong kho
-            API-->>FE: Rollback Transaction & Trả về HTTP 400 (Tên thuốc thiếu)
-        else Hợp lệ
-            API->>DB: Update Medicine.StockQuantity = StockQuantity - Kê đơn
-        end
-    end
+    MedicalRecords {
+        bigint Id PK
+        bigint AppointmentId FK
+        bigint PetId FK
+        varchar Diagnosis
+        varchar TreatmentPlan
+        timestamp CreatedAt
+    }
 
-    API->>DB: Save Changes & Commit Transaction
-    DB-->>API: Giao dịch thành công
-    API-->>FE: HTTP 201 Created
-    FE-->>Doctor: Hiển thị thông báo thành công & In đơn thuốc
+    Prescriptions {
+        bigint Id PK
+        bigint MedicalRecordId FK
+        timestamp CreatedAt
+    }
+
+    PrescriptionItems {
+        bigint Id PK
+        bigint PrescriptionId FK
+        bigint MedicineId FK
+        int Quantity
+        varchar DosageInstructions
+        decimal UnitPrice
+    }
+```
+
+### Script khởi tạo CSDL:
+```sql
+CREATE TABLE "MedicalRecords" (
+    "Id" bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    "AppointmentId" bigint NOT NULL REFERENCES "Appointments"("Id") ON DELETE CASCADE,
+    "PetId" bigint NOT NULL REFERENCES "Pets"("Id") ON DELETE CASCADE,
+    "Diagnosis" text NOT NULL,
+    "TreatmentPlan" text NOT NULL,
+    "CreatedAt" timestamp DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "Prescriptions" (
+    "Id" bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    "MedicalRecordId" bigint NOT NULL REFERENCES "MedicalRecords"("Id") ON DELETE CASCADE,
+    "CreatedAt" timestamp DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "PrescriptionItems" (
+    "Id" bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    "PrescriptionId" bigint NOT NULL REFERENCES "Prescriptions"("Id") ON DELETE CASCADE,
+    "MedicineId" bigint NOT NULL REFERENCES "Medicines"("Id") ON DELETE RESTRICT,
+    "Quantity" int NOT NULL CHECK ("Quantity" > 0),
+    "DosageInstructions" varchar(500) NOT NULL, -- Ví dụ: Uống ngày 2 lần, mỗi lần 1 viên sau ăn
+    "UnitPrice" decimal(18,2) NOT NULL
+);
+```
+
+---
+
+## 3. Đặc tả DTOs & Validation Rules
+
+### A. CreateMedicalRecordDto (Ghi nhận bệnh án từ Bác sĩ)
+```csharp
+using System;
+using System.Collections.Generic;
+
+namespace MyPetClinic.Application.DTOs
+{
+    public class CreateMedicalRecordDto
+    {
+        public long AppointmentId { get; set; }
+        public long PetId { get; set; }
+        public string Diagnosis { get; set; } = string.Empty;
+        public string TreatmentPlan { get; set; } = string.Empty;
+        public List<PrescriptionItemDto> PrescriptionItems { get; set; } = new();
+    }
+
+    public class PrescriptionItemDto
+    {
+        public long MedicineId { get; set; }
+        public int Quantity { get; set; }
+        public string DosageInstructions { get; set; } = string.Empty;
+    }
+}
+```
+
+### B. FluentValidation C# Rules
+```csharp
+using FluentValidation;
+using MyPetClinic.Application.DTOs;
+
+namespace MyPetClinic.Application.Validators
+{
+    public class CreateMedicalRecordDtoValidator : AbstractValidator<CreateMedicalRecordDto>
+    {
+        public CreateMedicalRecordDtoValidator()
+        {
+            RuleFor(x => x.AppointmentId)
+                .NotEmpty().WithMessage("Lịch hẹn chỉ định khám không được để trống.");
+
+            RuleFor(x => x.PetId)
+                .NotEmpty().WithMessage("Vui lòng chọn đúng thú cưng điều trị.");
+
+            RuleFor(x => x.Diagnosis)
+                .NotEmpty().WithMessage("Chẩn đoán lâm sàng của bác sĩ không được để trống.")
+                .MinimumLength(10).WithMessage("Chẩn đoán lâm sàng phải chứa tối thiểu 10 ký tự.");
+
+            RuleFor(x => x.TreatmentPlan)
+                .NotEmpty().WithMessage("Hướng điều trị / Lời khuyên không được để trống.");
+
+            RuleForEach(x => x.PrescriptionItems).SetValidator(new PrescriptionItemDtoValidator());
+        }
+    }
+
+    public class PrescriptionItemDtoValidator : AbstractValidator<PrescriptionItemDto>
+    {
+        public PrescriptionItemDtoValidator()
+        {
+            RuleFor(x => x.MedicineId)
+                .NotEmpty().WithMessage("Vui lòng chọn thuốc kê đơn.");
+
+            RuleFor(x => x.Quantity)
+                .GreaterThan(0).WithMessage("Số lượng thuốc kê đơn phải lớn hơn 0.");
+
+            RuleFor(x => x.DosageInstructions)
+                .NotEmpty().WithMessage("Hướng dẫn sử dụng thuốc không được để trống.")
+                .MaximumLength(300).WithMessage("Hướng dẫn sử dụng không được vượt quá 300 ký tự.");
+        }
+    }
+}
 ```
