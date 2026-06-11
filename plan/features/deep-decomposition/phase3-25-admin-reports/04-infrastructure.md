@@ -1,73 +1,62 @@
-# 🗄️ Infrastructure & Security - Admin Revenue Reports
+# 04. Infrastructure & Security - Admin Revenue Reports
 
-## 🔗 Skills Liên Quan
-- **BE-A03 (Security & Identity):** Thiết lập phân quyền RBAC chặt chẽ (chỉ cho phép Role `Admin` truy cập dữ liệu tài chính nhạy cảm).
-- **BE-C01 (EF Core & SQL Optimization):** Tối ưu hóa hiệu năng truy vấn báo cáo thông qua việc tạo index hợp lý trên bảng Invoices và Appointments để tránh Full Table Scan khi lượng dữ liệu lớn.
+Tài liệu thiết kế hạ tầng, an ninh thông tin, giải pháp bộ đệm (Caching) tối ưu hiệu năng và giới hạn tần suất truy vấn báo cáo.
 
 ---
 
-## 1. Security & Authorization
+## 1. Phân quyền và Bảo mật Dữ liệu tài chính nhạy cảm
 
-Để bảo mật các thông tin tài chính nhạy cảm của phòng khám, API Controller bắt buộc phải áp dụng thuộc tính phân quyền cấp lớp:
+Doanh số kinh doanh, hiệu suất làm việc bác sĩ và thông tin thanh toán chi tiết là các dữ liệu tối mật của phòng khám. Hệ thống bắt buộc phải chặn đứng mọi hành vi xem báo cáo trái phép:
+- **Áp dụng phân quyền Admin tuyệt đối:** Tất cả các endpoint trong `ReportsController` bắt buộc phải áp dụng bộ lọc `[Authorize(Roles = "admin")]`.
+- **Chặn đứng mọi vai trò khác:** Nếu một Bác sĩ (`doctor`) hoặc Lễ tân (`receptionist`) cố gắng gọi các API này bằng cách thay đổi URL, hệ thống Middleware JWT sẽ phát hiện và ngay lập tức chặn lại với mã phản hồi `403 Forbidden` trước khi truy vấn SQL được thực thi.
 
+---
+
+## 2. Giải pháp Bộ đệm Giảm tải Cơ sở dữ liệu (Memory Caching Strategy)
+
+Các truy vấn báo cáo tài chính sử dụng các phép tính tổng hợp (`SUM`, `COUNT`, `AVG`) trên hàng ngàn dòng hóa đơn và chi tiết hóa đơn. Nếu Admin thay đổi bộ lọc liên tục hoặc có nhiều Admin cùng xem Dashboard báo cáo cùng lúc, database sẽ bị quá tải dẫn đến chậm toàn bộ hệ thống khám bệnh.
+
+### Cơ chế Memory Cache (Bộ đệm RAM ngắn hạn):
+Hệ thống sử dụng bộ nhớ đệm `IMemoryCache` của ASP.NET Core để lưu trữ kết quả báo cáo trong vòng **15 phút**. 
+
+- **Khóa Cache (Cache Key Generator):** Khóa được sinh tự động dựa trên khoảng ngày lọc và loại API báo cáo. Ví dụ: `Report_KPIs_20260501_20260531`.
+- **Thời hạn lưu cache (Sliding Expiration):** 15 phút. Nếu trong 15 phút đó có yêu cầu trùng khớp khoảng ngày lọc, API sẽ trả về kết quả ngay lập tức từ RAM mà không cần truy vấn SQL xuống database.
+
+#### Mã nguồn C# Cài đặt Memory Cache tại API Controller:
 ```csharp
+[HttpGet("kpis")]
 [Authorize(Roles = "admin")]
-[ApiController]
-[Route("api/admin/reports")]
-public class AdminReportsController : ControllerBase
+public async Task<IActionResult> GetKpis([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
 {
-    private readonly RevenueReportService _reportService;
+    string cacheKey = $"Report_KPIs_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}";
 
-    public AdminReportsController(RevenueReportService reportService)
+    if (!_memoryCache.TryGetValue(cacheKey, out KpiReportDto? cachedKpis))
     {
-        _reportService = reportService;
-    }
+        // 1. Nếu chưa có cache -> Thực hiện truy vấn DB tính toán
+        cachedKpis = await _reportService.GetKpiReportAsync(startDate, endDate);
 
-    [HttpGet("revenue")]
-    public async Task<IActionResult> GetRevenueReport([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
-    {
-        if (startDate > endDate)
-        {
-            return BadRequest("Ngày bắt đầu không được lớn hơn ngày kết thúc.");
-        }
+        // 2. Thiết lập chính sách lưu cache 15 phút
+        var cacheEntryOptions = new MemoryCacheEntryOptions()
+            .SetAbsoluteExpiration(TimeSpan.FromMinutes(15));
+
+        _memoryCache.Set(cacheKey, cachedKpis, cacheEntryOptions);
         
-        var result = await _reportService.GetDashboardAsync(startDate, endDate);
-        return Ok(result);
+        _logger.LogInformation($"Cache MISSED cho khóa {cacheKey}. Đã truy vấn CSDL.");
     }
+    else
+    {
+        _logger.LogInformation($"Cache HIT cho khóa {cacheKey}. Trả về dữ liệu từ RAM.");
+    }
+
+    return Ok(cachedKpis);
 }
 ```
 
 ---
 
-## 2. Database Optimization
+## 3. Rate Limiting Chính sách Giới hạn Tần suất Yêu cầu
 
-### 2.1. SQL Server Indexes
-Báo cáo doanh thu lọc theo khoảng thời gian và trạng thái hóa đơn (`Status = Paid`). Vì vậy, cần bổ sung Index kết hợp (Composite Index) để tăng tốc độ tìm kiếm:
-
-```sql
--- Index tối ưu hóa cho truy vấn doanh thu hóa đơn theo ngày
-CREATE INDEX IX_Invoices_Status_CreatedAt_Includes
-ON Invoices (Status, CreatedAt)
-INCLUDE (TotalAmount, ServiceAmount, MedicineAmount);
-
--- Index tối ưu hóa cho truy vấn đếm lịch hẹn theo ngày
-CREATE INDEX IX_Appointments_AppointmentDate
-ON Appointments (AppointmentDate);
-```
-
-### 2.2. Entity Framework Migration
-Được khai báo thông qua `DbContext` Fluent API hoặc Migration class:
-
-```csharp
-protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-    modelBuilder.Entity<Invoice>()
-        .HasIndex(i => new { i.Status, i.CreatedAt })
-        .HasDatabaseName("IX_Invoices_Status_CreatedAt")
-        .IncludeProperties(i => new { i.TotalAmount, i.ServiceAmount, i.MedicineAmount });
-
-    modelBuilder.Entity<Appointment>()
-        .HasIndex(a => a.AppointmentDate)
-        .HasDatabaseName("IX_Appointments_AppointmentDate");
-}
-```
+Nhằm ngăn chặn hành vi tấn công từ chối dịch vụ (DDoS) bằng cách liên tục gọi API báo cáo tài chính nặng nề:
+- **API Báo cáo thông thường:** Giới hạn tối đa **15 requests / phút** trên một tài khoản Admin.
+- **API Xuất file Excel/PDF:** Giới hạn tối đa **5 requests / phút** trên một tài khoản Admin để tránh quá tải CPU lúc sinh tệp Excel nhị phân.
+- **Kích thước bộ lọc ngày tối đa:** Hệ thống chặn các yêu cầu lọc ngày có khoảng cách lớn hơn **3 năm** để tránh làm cạn kiệt tài nguyên máy chủ.
