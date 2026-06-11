@@ -1,133 +1,126 @@
 # 🗓️ Lộ Trình Phân Chia Sprint & Sprint Backlog - MyPetClinic
 
-Tài liệu này đặc tả chi tiết **Sprint Backlog** gồm 6 Sprints phát triển và hướng dẫn vận hành cho dự án MyPetClinic.
+Tài liệu này đặc tả chi tiết **Sprint Backlog** gồm 17 Sprints phát triển và hướng dẫn vận hành cho dự án MyPetClinic.
 
 ---
 
 ## 🎯 Quy Ước Chung & Định Nghĩa Hoàn Thành (DoD)
 *   **Độ dài mỗi Sprint:** 2 tuần (10 ngày làm việc thực tế).
-*   **Tổng số Sprint:** 6 Sprint (12 tuần).
-*   **Quy trình quản lý:** Agile / Scrum với Daily Stand-up 15 phút đầu giờ.
+*   **Tổng số Sprint:** 17 Sprints.
 *   **Định nghĩa Hoàn thành (Definition of Done - DoD):**
     *   Code đã được viết Clean Code, review chéo và merge thành công vào nhánh `develop`.
     *   Đã viết và chạy pass Unit Tests cho các API endpoints và dịch vụ nghiệp vụ cốt lõi.
     *   Đã deploy bản dựng lên môi trường Staging/Development cục bộ và kiểm thử liên kết (Integration Test) thành công.
     *   Không còn lỗi nghiêm trọng thuộc nhóm `Critical` hay `High` tồn đọng.
-    *   Acceptance Criteria (AC) của từng User Story được nhóm trưởng/giảng viên nghiệm thu.
 
 ---
 
-## 🎯 Sprint 1: Khởi Tạo Dự Án & Xác Thực Người Dùng
-**Mục tiêu:** Thiết lập nền tảng kỹ thuật, CI/CD, và hoàn thành luồng Đăng ký/Đăng nhập cơ bản.
+## 🎯 Danh Sách Chi Tiết 17 Sprints
 
-| ID | Epic | User Story | Priority | Assigned To | Est. (giờ) | Task Breakdown |
-|:---|:---|:---|:---|:---|:---|:---|
-| **T1** | Technical | Thiết lập cấu trúc Solution Backend (.NET 8 Clean Architecture) | Critical | Nam | 8 | Tạo các project: Domain, Application, Infrastructure, WebApi. Cấu hình EF Core + PostgreSQL. |
-| **T2** | Technical | Thiết lập dự án Frontend (Vue 3 + TypeScript + Tailwind/CSS) | Critical | Phương | 8 | Cài đặt Vite, Vue Router, Pinia, Axios, cấu trúc thư mục chuẩn. |
-| **T3** | Technical | Thiết lập CI/CD Pipeline (GitHub Actions) | High | Lâm | 6 | Tự động build & test khi push lên `main`/`develop`. |
-| **T4** | Authentication | **PB01 - Đăng ký tài khoản (Backend)** | High | Nam | 8 | Tạo Entity User, API Register, mã hóa BCrypt. |
-| **T5** | Authentication | **PB01 - Đăng ký tài khoản (Frontend)** | High | Phương | 6 | Giao diện form đăng ký, validate input, gọi API. |
-| **T6** | Authentication | **PB02 - Đăng nhập hệ thống (Backend)** | High | Nam | 6 | API Login, sinh JWT Token, trả về thông tin user + role. |
-| **T7** | Authentication | **PB02 - Đăng nhập hệ thống (Frontend)** | High | Phương | 6 | Giao diện form đăng nhập, lưu JWT vào LocalStorage, điều hướng sau login. |
-| **T8** | Authentication | **PB03 - Quên mật khẩu (Backend)** | Medium | Hạnh | 8 | API Forgot Password, sinh OTP (6 số), gửi qua Email (SMTP). |
-| **T9** | Authentication | **PB03 - Quên mật khẩu (Frontend)** | Medium | Phương | 4 | Giao diện nhập email -> nhập OTP -> đặt mật khẩu mới. |
+### 🎯 Sprint 1: Khởi Tạo Dự Án & CI/CD
+**Mục tiêu:** Thiết lập nền tảng kỹ thuật và CI/CD.
+*   **T1:** Thiết lập cấu trúc Solution Backend (.NET 8 Clean Architecture) [Nam - 8 giờ]
+*   **T2:** Thiết lập dự án Frontend (Vue 3 + TypeScript + CSS/Tailwind) [Phương - 8 giờ]
+*   **T3:** Thiết lập CI/CD Pipeline (GitHub Actions) [Lâm - 6 giờ]
 
-**Tổng thời gian dự kiến Sprint 1:** ~60 giờ
+### 🎯 Sprint 2: Xác Thực Tài Khoản (Authentication)
+**Mục tiêu:** Hoàn thiện luồng Đăng ký và Đăng nhập JWT.
+*   **T4:** PB01 - Đăng ký tài khoản (Backend API & mã hóa BCrypt) [Nam - 8 giờ]
+*   **T5:** PB01 - Đăng ký tài khoản (Frontend Form UI & Validation) [Phương - 6 giờ]
+*   **T6:** PB02 - Đăng nhập hệ thống (Backend JWT Generator) [Nam - 6 giờ]
+*   **T7:** PB02 - Đăng nhập hệ thống (Frontend store, Token storage & Router guard) [Phương - 6 giờ]
 
----
+### 🎯 Sprint 3: Quên Mật Khẩu & Hồ Sơ Cá Nhân
+**Mục tiêu:** Xử lý xác thực OTP và thông tin tài khoản người dùng.
+*   **T8:** PB03 - Quên mật khẩu (Backend sinh OTP & gửi SMTP Email) [Hạnh - 8 giờ]
+*   **T9:** PB03 - Quên mật khẩu (Frontend wizard nhập OTP & reset password) [Phương - 4 giờ]
+*   **T14:** PB07 - Quản lý thông tin cá nhân (Backend Get/Update Profile) [Nam - 6 giờ]
+*   **T15:** PB07 - Quản lý thông tin cá nhân (Frontend Form Profile) [Lâm - 6 giờ]
 
-## 🎯 Sprint 2: Trang Chủ & Hồ Sơ Người Dùng - Thú Cưng
-**Mục tiêu:** Người dùng có thể xem thông tin phòng khám và quản lý hồ sơ cá nhân, hồ sơ thú cưng.
+### 🎯 Sprint 4: Cổng Dịch Vụ & Bác Sĩ Công Khai
+**Mục tiêu:** Khách vãng lai có thể tra cứu thông tin dịch vụ và bác sĩ tại phòng khám.
+*   **T10:** PB04 - Xem danh sách dịch vụ & bảng giá (Backend API & Seed Data) [Hạnh - 6 giờ]
+*   **T11:** PB04 - Xem danh sách dịch vụ & bảng giá (Frontend Cards view & Filter) [Phương - 8 giờ]
+*   **T12:** PB05 - Xem đội ngũ bác sĩ (Backend API lọc Vet) [Hạnh - 4 giờ]
+*   **T13:** PB05 - Xem đội ngũ bác sĩ (Frontend Doctors Grid view) [Phương - 6 giờ]
 
-| ID | Epic | User Story | Priority | Assigned To | Est. (giờ) | Task Breakdown |
-|:---|:---|:---|:---|:---|:---|:---|
-| **T10** | Homepage | **PB04 - Xem danh sách dịch vụ & bảng giá (Backend)** | High | Hạnh | 6 | API lấy danh sách Service (bao gồm Category). Seed dữ liệu mẫu. |
-| **T11** | Homepage | **PB04 - Xem danh sách dịch vụ & bảng giá (Frontend)** | High | Phương | 8 | Giao diện hiển thị dịch vụ dạng card/table, filter theo danh mục, responsive. |
-| **T12** | Homepage | **PB05 - Xem đội ngũ bác sĩ (Backend)** | Medium | Hạnh | 4 | API lấy danh sách bác sĩ (từ bảng User với role='Vet'), seed dữ liệu mẫu. |
-| **T13** | Homepage | **PB05 - Xem đội ngũ bác sĩ (Frontend)** | Medium | Phương | 6 | Giao diện hiển thị thông tin bác sĩ: ảnh, chuyên môn, kinh nghiệm. |
-| **T14** | Customer Portal | **PB07 - Quản lý thông tin cá nhân (Backend)** | High | Nam | 6 | API Get/Update Profile, upload ảnh đại diện (Cloudinary/Local). |
-| **T15** | Customer Portal | **PB07 - Quản lý thông tin cá nhân (Frontend)** | High | Lâm | 6 | Giao diện trang Profile, form chỉnh sửa thông tin. |
-| **T16** | Customer Portal | **PB08 - Quản lý hồ sơ thú cưng (Backend)** | High | Nam | 10 | CRUD API cho Pet entity (gắn với UserId), validate dữ liệu. |
-| **T17** | Customer Portal | **PB08 - Quản lý hồ sơ thú cưng (Frontend)** | High | Lâm | 10 | Giao diện danh sách thú cưng, form thêm/sửa thú cưng (có upload ảnh). |
+### 🎯 Sprint 5: Hồ Sơ Thú Cưng (IDOR Protected)
+**Mục tiêu:** CRUD quản lý thông tin thú cưng bảo mật.
+*   **T16:** PB08 - Quản lý hồ sơ thú cưng (Backend CRUD & Chống IDOR bằng cách check OwnerId) [Nam - 10 giờ]
+*   **T17:** PB08 - Quản lý hồ sơ thú cưng (Frontend Grid & Modal Form thêm/sửa có ảnh) [Lâm - 10 giờ]
 
-**Tổng thời gian dự kiến Sprint 2:** ~56 giờ
+### 🎯 Sprint 6: Ca Làm Việc & Khung Giờ Bác Sĩ
+**Mục tiêu:** Xây dựng cấu trúc ca trực bác sĩ và tính toán slot trống.
+*   **T18:** Thiết kế logic Slot & Ca làm việc (Backend Helper kiểm tra Slot Availability) [Nam - 12 giờ]
 
----
+### 🎯 Sprint 7: Đặt Lịch Khám & Tiêm Chủng Trực Tuyến
+**Mục tiêu:** Chủ nuôi đặt lịch hẹn trực tuyến ngăn ngừa double-booking.
+*   **T19:** PB09 - Đặt lịch khám bệnh (Backend Validate trùng lịch & Serializable Transaction) [Nam - 12 giờ]
+*   **T20:** PB09 - Đặt lịch khám bệnh (Frontend Wizard Form đặt lịch động) [Phương - 14 giờ]
+*   **T21:** PB10 - Đặt lịch tiêm chủng (Backend gắn Vaccine & kiểm tra kho) [Nam - 8 giờ]
+*   **T22:** PB10 - Đặt lịch tiêm chủng (Frontend tích hợp chọn vaccine) [Phương - 10 giờ]
 
-## 🎯 Sprint 3: Đặt Lịch & Quản Lý Lịch Hẹn (Core Feature)
-**Mục tiêu:** Hoàn thiện luồng đặt lịch khám/tiêm chủng từ phía khách hàng. Đây là tính năng cốt lõi quan trọng nhất của MVP.
+### 🎯 Sprint 8: Theo Dõi Cuộc Hẹn & Lịch Sử
+**Mục tiêu:** Theo dõi và xem lại lịch sử y tế.
+*   **T23:** PB11 - Quản lý lịch hẹn (Backend API lọc trạng thái & phân trang) [Hạnh - 6 giờ]
+*   **T24:** PB11 - Quản lý lịch hẹn (Frontend Timeline view) [Lâm - 8 giờ]
+*   **T44:** PB12 - Xem lịch sử dịch vụ & bệnh án (Frontend Customer view) [Lâm - 8 giờ]
 
-| ID | Epic | User Story | Priority | Assigned To | Est. (giờ) | Task Breakdown |
-|:---|:---|:---|:---|:---|:---|:---|
-| **T18** | Technical | Thiết kế logic Slot & Ca làm việc (Backend) | Critical | Nam | 12 | Tạo entity Schedule, Slot (khung giờ). API cho Admin cấu hình slot (liên quan PB31). Logic kiểm tra slot còn trống. |
-| **T19** | Booking | **PB09 - Đặt lịch khám bệnh (Backend)** | Very High | Nam | 12 | API Create Booking: chọn pet, chọn slot, chọn vet. Validate trùng lịch, quá giới hạn slot. Trạng thái mặc định "Chờ xác nhận". |
-| **T20** | Booking | **PB09 - Đặt lịch khám bệnh (Frontend)** | Very High | Phương | 14 | Giao diện multi-step: Chọn thú cưng -> Chọn dịch vụ -> Chọn ngày -> Chọn giờ -> Chọn bác sĩ -> Xác nhận. |
-| **T21** | Booking | **PB10 - Đặt lịch tiêm chủng (Backend)** | Very High | Nam | 8 | Tương tự T19, nhưng gắn thêm loại vaccine. Kiểm tra phác đồ tiêm. |
-| **T22** | Booking | **PB10 - Đặt lịch tiêm chủng (Frontend)** | Very High | Phương | 10 | Tương tự T20, bổ sung bước chọn vaccine. |
-| **T23** | Customer Portal | **PB11 - Quản lý lịch hẹn (Backend)** | High | Hạnh | 6 | API lấy danh sách Booking của user, filter theo trạng thái, phân trang. |
-| **T24** | Customer Portal | **PB11 - Quản lý lịch hẹn (Frontend)** | High | Lâm | 8 | Giao diện danh sách lịch hẹn dạng timeline/card, hiển thị trạng thái bằng màu sắc. |
+### 🎯 Sprint 9: Tiếp Nhận & Duyệt Lịch Hẹn
+**Mục tiêu:** Cổng lễ tân duyệt lịch hẹn và thực hiện check-in.
+*   **T25:** PB15 - Tiếp nhận khách hàng (Backend Check-in hoặc tạo Walk-in) [Nam - 8 giờ]
+*   **T26:** PB15 - Tiếp nhận khách hàng (Frontend Receptionist dashboard & Search) [Lâm - 10 giờ]
+*   **T27:** PB17 - Xác nhận/Hủy lịch hẹn (Backend Update trạng thái & gửi mail lý do hủy) [Nam - 8 giờ]
+*   **T28:** PB17 - Xác nhận/Hủy lịch hẹn (Frontend Dashboard chờ duyệt & cancel modal) [Lâm - 10 giờ]
 
-**Tổng thời gian dự kiến Sprint 3:** ~70 giờ
+### 🎯 Sprint 10: Điều Phối Hàng Đợi & TV Board
+**Mục tiêu:** Cấp số thứ tự tự động và màn hình sảnh chờ công cộng.
+*   **T29:** PB18 - Quản lý hàng đợi (Backend logic Queue tự động cấp số thứ tự khám) [Hạnh - 10 giờ]
+*   **T30:** PB18 - Quản lý hàng đợi (Frontend TV Board ngoài sảnh & nút lễ tân điều phối) [Lâm - 10 giờ]
 
----
+### 🎯 Sprint 11: Cổng Bác Sĩ & Tiếp Nhận Khám
+**Mục tiêu:** Bác sĩ theo dõi và kích hoạt ca khám bệnh.
+*   **T31:** PB20 - Xem lịch khám của bác sĩ (Backend API gán Queue của bác sĩ) [Nam - 6 giờ]
+*   **T32:** PB20 - Xem lịch khám của bác sĩ (Frontend Doctor Queue dashboard) [Phương - 8 giờ]
+*   **T33:** PB22 - Tiếp nhận ca khám (Backend đổi trạng thái sang In_Progress) [Nam - 4 giờ]
+*   **T34:** PB22 - Tiếp nhận ca khám (Frontend kích hoạt chuyển sang trang khám) [Phương - 6 giờ]
 
-## 🎯 Sprint 4: Nghiệp Vụ Lễ Tân & Bác Sĩ (Phần 1)
-**Mục tiêu:** Hoàn thiện giao diện và nghiệp vụ cho Lễ tân (Check-in, xác nhận lịch) và Bác sĩ (Xem lịch trực, bắt đầu tiếp nhận ca khám).
+### 🎯 Sprint 12: Bệnh Án & Kê Đơn Thuốc (Trừ Kho Tự Động)
+**Mục tiêu:** Khám lâm sàng và kê đơn thuốc trừ kho có giao dịch an toàn.
+*   **T35:** PB21 - Xem hồ sơ & lịch sử thú cưng (Backend API tổng hợp bệnh sử) [Hạnh - 6 giờ]
+*   **T36:** PB21 - Xem hồ sơ & lịch sử thú cưng (Frontend Doctor Timeline view) [Phương - 8 giờ]
+*   **T37:** PB23 - Quản lý bệnh án & Kê đơn (Backend MedicalRecord Transaction & trừ kho rollback) [Nam - 14 giờ]
+*   **T38:** PB23 - Quản lý bệnh án & Kê đơn (Frontend Dynamic prescription form & stock warning) [Phương - 14 giờ]
+*   **T39:** PB25 - Cập nhật trạng thái lịch hẹn (Backend hoàn thành ca khám sang Completed) [Hạnh - 4 giờ]
 
-| ID | Epic | User Story | Priority | Assigned To | Est. (giờ) | Task Breakdown |
-|:---|:---|:---|:---|:---|:---|:---|
-| **T25** | Receptionist | **PB15 - Tiếp nhận khách hàng (Backend)** | High | Nam | 8 | API Check-in: tạo Walk-in Booking hoặc cập nhật trạng thái Booking đã đặt thành "Đã Check-in". |
-| **T26** | Receptionist | **PB15 - Tiếp nhận khách hàng (Frontend)** | High | Lâm | 10 | Giao diện Lễ tân: tìm kiếm khách hàng bằng SĐT, hiển thị lịch hẹn hôm nay, nút Check-in. |
-| **T27** | Receptionist | **PB17 - Xác nhận/Hủy lịch hẹn (Backend)** | Very High | Nam | 8 | API Update Booking Status (Confirmed/Cancelled). Nếu hủy, gửi email thông báo cho khách. |
-| **T28** | Receptionist | **PB17 - Xác nhận/Hủy lịch hẹn (Frontend)** | Very High | Lâm | 10 | Giao diện dashboard lịch hẹn chờ duyệt, nút "Xác nhận"/"Từ chối", modal lý do hủy. |
-| **T29** | Receptionist | **PB18 - Quản lý hàng đợi (Backend)** | High | Hạnh | 10 | Logic Queue tự động: khi Check-in -> cấp số thứ tự, phân bổ vào phòng khám theo vet. |
-| **T30** | Receptionist | **PB18 - Quản lý hàng đợi (Frontend)** | High | Lâm | 10 | Giao diện màn hình lớn hiển thị số thứ tự, phòng khám, trạng thái chờ. Giao diện lễ tân để điều chỉnh thủ công. |
-| **T31** | Clinical | **PB20 - Xem lịch khám của bác sĩ (Backend)** | High | Nam | 6 | API lấy danh sách Booking của vet trong ngày, kèm số thứ tự và trạng thái. |
-| **T32** | Clinical | **PB20 - Xem lịch khám của bác sĩ (Frontend)** | High | Phương | 8 | Giao diện bác sĩ: dashboard danh sách bệnh nhân chờ, đang khám, đã khám. |
-| **T33** | Clinical | **PB22 - Tiếp nhận ca khám (Backend)** | High | Nam | 4 | API Start Examination: chuyển trạng thái Booking thành "Đang khám". |
-| **T34** | Clinical | **PB22 - Tiếp nhận ca khám (Frontend)** | High | Phương | 6 | Nút "Bắt đầu khám", chuyển giao diện sang màn hình khám. |
+### 🎯 Sprint 13: Tiêm Chủng Vaccine & Thanh Toán Hóa Đơn
+**Mục tiêu:** Ghi nhận mũi tiêm và thanh toán xuất hóa đơn tại quầy.
+*   **T40:** PB19 - Thanh toán hóa đơn (Backend tự động kết xuất hóa đơn & phí dịch vụ/thuốc) [Nam - 10 giờ]
+*   **T41:** PB19 - Thanh toán hóa đơn (Frontend In hóa đơn & nút Xác nhận thanh toán) [Lâm - 10 giờ]
+*   **T42:** PB24 - Thực hiện tiêm chủng (Backend cập nhật lịch sử tiêm & tính NextDueDate) [Hạnh - 8 giờ]
+*   **T43:** PB24 - Thực hiện tiêm chủng (Frontend nhập vaccine & số lô) [Phương - 6 giờ]
 
-**Tổng thời gian dự kiến Sprint 4:** ~80 giờ
+### 🎯 Sprint 14: Quản Trị Hệ Thống & Cấu Hình Dịch Vụ
+**Mục tiêu:** Quản lý tài khoản và danh mục dịch vụ dành cho Quản trị viên.
+*   **T45:** PB28 - Quản lý người dùng (Backend & Frontend CRUD user) [Nam & Lâm - 12 giờ]
+*   **T46:** PB26, 27 - Quản lý dịch vụ & danh mục (Backend & Frontend CRUD Services) [Hạnh & Phương - 10 giờ]
+*   **T49:** PB31 - Cấu hình khung giờ đặt lịch (Backend & Frontend slot config) [Hạnh & Phương - 8 giờ]
 
----
+### 🎯 Sprint 15: Quản Trị Kho Thuốc & Ca Trực Bác Sĩ
+**Mục tiêu:** Quản trị dược phẩm và phân ca trực của bác sĩ.
+*   **T47:** PB29 - Quản lý thuốc & Vật tư (Backend & Frontend CRUD thuốc & nhập kho) [Nam & Lâm - 14 giờ]
+*   **T48:** PB30 - Quản lý lịch làm việc bác sĩ (Backend & Frontend CRUD Vet Schedules) [Hạnh & Phương - 12 giờ]
 
-## 🎯 Sprint 5: Nghiệp Vụ Bác Sĩ (Phần 2) & Thanh Toán
-**Mục tiêu:** Hoàn thiện quy trình khám bệnh, kê đơn thuốc, tiêm chủng và thanh toán hóa đơn.
+### 🎯 Sprint 16: Báo Cáo Doanh Thu & Cổng Tin Tức
+**Mục tiêu:** Thống kê biểu đồ tài chính và quản lý blog cẩm nang.
+*   **T50:** PB33 - Báo cáo doanh thu (Backend aggregate SQL & Frontend Chart.js) [Nam & Lâm - 16 giờ]
+*   **T54:** PB06 - Xem bài viết/Blog (Backend & Frontend cẩm nang sức khỏe) [Hạnh & Lâm - 10 giờ]
+*   **T55:** PB32 - Quản lý bài viết & đánh giá (Admin duyệt bài) [Hạnh & Phương - 8 giờ]
+*   **T56:** PB13 - Đánh giá dịch vụ (Khách hàng gửi số sao & nhận xét) [Nam & Lâm - 8 giờ]
 
-| ID | Epic | User Story | Priority | Assigned To | Est. (giờ) | Task Breakdown |
-|:---|:---|:---|:---|:---|:---|:---|
-| **T35** | Clinical | **PB21 - Xem hồ sơ & lịch sử thú cưng (Backend)** | High | Hạnh | 6 | API tổng hợp: thông tin pet, lịch sử bệnh án, mũi tiêm. |
-| **T36** | Clinical | **PB21 - Xem hồ sơ & lịch sử thú cưng (Frontend)** | High | Phương | 8 | Giao diện hiển thị timeline lịch sử bệnh án, thông tin sinh hiệu. |
-| **T37** | Clinical | **PB23 - Quản lý bệnh án & Kê đơn (Backend)** | Very High | Nam | 14 | Tạo MedicalRecord entity. API lưu chẩn đoán, triệu chứng. API kê đơn: chọn thuốc từ kho -> tự động trừ tồn kho. Validate số lượng tồn. |
-| **T38** | Clinical | **PB23 - Quản lý bệnh án & Kê đơn (Frontend)** | Very High | Phương | 14 | Giao diện form khám: nhập triệu chứng/chẩn đoán, autocomplete chọn thuốc, bảng kê đơn, hiển thị tồn kho real-time. |
-| **T39** | Clinical | **PB25 - Cập nhật trạng thái lịch hẹn (Backend)** | Medium | Hạnh | 4 | API hoàn thành ca khám -> chuyển Booking thành "Đã hoàn thành", chuyển sang trạng thái chờ thanh toán. |
-| **T40** | Receptionist | **PB19 - Thanh toán hóa đơn (Backend)** | Very High | Nam | 10 | API tổng hợp hóa đơn: tiền khám + tiền thuốc + dịch vụ phát sinh. API xác nhận thanh toán (tiền mặt/chuyển khoản). |
-| **T41** | Receptionist | **PB19 - Thanh toán hóa đơn (Frontend)** | Very High | Lâm | 10 | Giao diện hóa đơn cho Lễ tân: chi tiết dịch vụ, nút in hóa đơn, xác nhận thanh toán. |
-| **T42** | Clinical | **PB24 - Thực hiện tiêm chủng (Backend)** | High | Hạnh | 8 | API ghi nhận mũi tiêm (vaccine, số lô, ngày tiêm, vet thực hiện). Cập nhật lịch sử tiêm của pet. |
-| **T43** | Clinical | **PB24 - Thực hiện tiêm chủng (Frontend)** | High | Phương | 6 | Giao diện chọn vaccine, nhập số lô, xác nhận đã tiêm. |
-| **T44** | Customer Portal | **PB12 - Xem lịch sử dịch vụ & bệnh án (Frontend)** | Medium | Lâm | 8 | Giao diện khách hàng xem lại toàn bộ lịch sử khám, đơn thuốc cũ (dữ liệu lấy từ T35). |
-
-**Tổng thời gian dự kiến Sprint 5:** ~88 giờ
-
----
-
-## 🎯 Sprint 6: Admin Dashboard, AI & Các Tính Năng Hoàn Thiện
-**Mục tiêu:** Xây dựng trang quản trị, tích hợp AI Chatbot tư vấn, tự động hóa nhắc lịch và tối ưu hóa hệ thống.
-
-| ID | Epic | User Story | Priority | Assigned To | Est. (giờ) | Task Breakdown |
-|:---|:---|:---|:---|:---|:---|:---|
-| **T45** | Admin | **PB28 - Quản lý người dùng (Backend + Frontend)** | High | Nam & Lâm | 12 | Backend: CRUD user, phân quyền, khóa/mở khóa. Frontend: bảng quản lý user. |
-| **T46** | Admin | **PB26, 27 - Quản lý dịch vụ & danh mục (Backend + Frontend)** | High | Hạnh & Phương | 10 | CRUD Service & Category. Giao diện quản lý với form modal. |
-| **T47** | Admin | **PB29 - Quản lý thuốc & Vật tư (Backend + Frontend)** | High | Nam & Lâm | 14 | CRUD thuốc, chức năng nhập kho. Cảnh báo tồn kho thấp & hết hạn. Frontend: bảng quản lý + form nhập kho. |
-| **T48** | Admin | **PB30 - Quản lý lịch làm việc bác sĩ (Backend + Frontend)** | High | Hạnh & Phương | 12 | Backend: CRUD Schedule cho vet. Frontend: giao diện lịch trực tuần/tháng. |
-| **T49** | Admin | **PB31 - Cấu hình khung giờ đặt lịch (Backend + Frontend)** | High | Hạnh & Phương | 8 | API cấu hình Slot (số lượng tối đa/khung giờ). Frontend: form cài đặt. |
-| **T50** | Admin | **PB33 - Báo cáo doanh thu (Backend + Frontend)** | Very High | Nam & Lâm | 16 | Backend: API thống kê doanh thu (theo ngày/tháng/vet/dịch vụ). Frontend: biểu đồ trực quan. |
-| **T51** | AI | **PB14 - Tích hợp Gemini AI Chatbot (Backend)** | Medium | Hạnh | 10 | Cấu hình Gemini API, tạo Chatbot Service, xây dựng prompt tư vấn y tế thú y. |
-| **T52** | AI | **PB14 - Tích hợp Gemini AI Chatbot (Frontend)** | Medium | Phương | 8 | Giao diện Chat Widget (góc phải màn hình), hiển thị hội thoại với AI. |
-| **T53** | Notification | **PB34 - Tự động nhắc lịch tái chủng (Backend)** | Medium | Hạnh | 8 | Background Service (Hangfire/Quartz.NET) quét lịch tiêm, gửi email nhắc 3-5 ngày trước hạn. |
-| **T54** | Homepage | **PB06 - Xem bài viết/Blog (Backend + Frontend)** | Low | Hạnh & Lâm | 10 | CRUD bài viết. Frontend: danh sách & chi tiết bài viết. |
-| **T55** | Admin | **PB32 - Quản lý bài viết & đánh giá (Backend + Frontend)** | Medium | Hạnh & Phương | 8 | Admin duyệt/ẩn bài viết, đánh giá. Frontend: bảng quản lý. |
-| **T56** | Customer | **PB13 - Đánh giá dịch vụ (Backend + Frontend)** | Medium | Nam & Lâm | 8 | API gửi đánh giá sau ca khám. Frontend: form đánh giá số sao + nhận xét. |
-| **T57** | Technical | Kiểm thử tích hợp & Sửa lỗi tổng thể | Critical | Cả nhóm | 16 | Kiểm thử End-to-End toàn bộ hệ thống, vá lỗi bảo mật, tối ưu hóa database trước khi báo cáo. |
-
-**Tổng thời gian dự kiến Sprint 6:** ~122 giờ
+### 🎯 Sprint 17: Trợ Lý Gemini AI, Nhắc Lịch Tự Động & E2E Test
+**Mục tiêu:** Các tính năng nâng cao thông minh và tối ưu hóa trước phát hành.
+*   **T51:** PB14 - Tích hợp Gemini AI Chatbot (Backend System Prompt & SDK) [Hạnh - 10 giờ]
+*   **T52:** PB14 - Tích hợp Gemini AI Chatbot (Frontend Floating Widget Chat UI) [Phương - 8 giờ]
+*   **T53:** PB34 - Tự động nhắc lịch tái chủng (Quartz Background Job) [Hạnh - 8 giờ]
+*   **T57:** Technical - Kiểm thử tích hợp E2E & Sửa lỗi tổng thể [Cả nhóm - 16 giờ]

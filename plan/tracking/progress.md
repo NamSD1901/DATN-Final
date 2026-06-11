@@ -2,16 +2,29 @@
 
 | Hạng mục | Giá trị thực tế |
 | :--- | :--- |
-| **Tổng số Sprints kế hoạch** | 6 Sprints (12 tuần) |
+| **Tổng số Sprints kế hoạch** | 17 Sprints (34 tuần) |
 | **Tài liệu thiết kế** | 2/12 (Database & Architecture: ✅ DONE) |
-| **Sprint đã hoàn thành CODE** | 3 / 6 (Sprint 1, 2, 3: ✅ DONE) |
-| **Sprint đang triển khai CODE** | Sprint 4 |
+| **Sprint đã hoàn thành CODE** | 17 / 17 (Sprint 1 đến 17: ✅ DONE) |
+| **Sprint đang triển khai CODE** | Hoàn thành toàn bộ dự án! |
 
 ---
 
-## 📅 Nhật Ký Trạng Thái Chi Tiết Các Sprint
+## 📅 Nhật Ký Trạng thái Chi Tiết Các Sprint
 
-- **Sprint 1 (Khởi Tạo & Xác Thực):** `✅ CODE DONE` (Đã bổ sung CI/CD và 3 Unit Tests cho AuthService, 100% test pass).
-- **Sprint 2 (Trang Chủ & Hồ Sơ):** `✅ CODE DONE` (Đã viết code & pass tests).
-- **Sprint 3 (Đặt Lịch & Lịch Hẹn):** `✅ CODE DONE` (Đã viết code & pass tests).
-- **Sprint 4 (Lễ Tân & Bác Sĩ):** `🟡 IN PROGRESS` (Đang phát triển).
+- **Sprint 1 (Core Setup & CI/CD):** `✅ CODE DONE`
+- **Sprint 2 (Xác thực tài khoản):** `✅ CODE DONE`
+- **Sprint 3 (OTP & Cá nhân):** `✅ CODE DONE`
+- **Sprint 4 (Cổng Dịch vụ & Bác sĩ):** `✅ CODE DONE`
+- **Sprint 5 (Hồ sơ Thú cưng):** `✅ CODE DONE`
+- **Sprint 6 (Lịch trực & Khung giờ):** `✅ CODE DONE`
+- **Sprint 7 (Đặt lịch trực tuyến):** `✅ CODE DONE`
+- **Sprint 8 (Lịch hẹn & Lịch sử):** `✅ CODE DONE`
+- **Sprint 9 (Tiếp nhận Lễ tân):** `✅ CODE DONE`
+- **Sprint 10 (Hàng đợi & TV Board):** `✅ CODE DONE`
+- **Sprint 11 (Cổng Bác sĩ & Tiếp nhận):** `✅ CODE DONE`
+- **Sprint 12 (Bệnh án & Kê đơn):** `✅ CODE DONE`
+- **Sprint 13 (Tiêm chủng & Thanh toán):** `✅ CODE DONE`
+- **Sprint 14 (Admin - Users & Services):** `✅ CODE DONE`
+- **Sprint 15 (Admin - Medicines & Schedules):** `✅ CODE DONE`
+- **Sprint 16 (Admin Thống kê & Blog):** `✅ CODE DONE`
+- **Sprint 17 (Gemini AI & Reminders):** `✅ CODE DONE`
