@@ -1,27 +1,145 @@
-# 📝 Implementation Plan & Testing Strategy - Admin Staff Management
+# 📅 Implementation Plan & Test Strategy - Admin Staff Management
 
-## 1. Kế hoạch Triển khai (Sprint 6)
-
-| Giai đoạn | Task | Skills áp dụng | Est. |
-|---|---|---|---|
-| 1 | Cấu hình tham số Identity Options trong Program.cs bảo mật | BE-C01 (Config) | 1h |
-| 2 | Code lớp dịch vụ quản lý tài khoản nhân viên `AdminStaffService` | BE-F01, BE-F03 | 2h |
-| 3 | Tạo các API Controller quản trị nhân sự gắn phân quyền RBAC | BE-A03, BE-F03 | 2h |
-| 4 | Xây dựng màn hình danh sách nhân viên kèm các modal tạo mới/sửa đổi | FE-F01, FE-C03 | 4h |
-| 5 | Tích hợp kiểm thử tự động (Unit/Integration Tests) cho logic Lock/Unlock | BE-T01 (Testing) | 2h |
+Tài liệu kế hoạch triển khai chi tiết (Micro-roadmap) và bộ kịch bản kiểm thử (Test Strategy) dành cho phân hệ Quản trị Nhân sự & Phân quyền Admin.
 
 ---
 
-## 2. QA Test Suite (Kiểm thử chức năng & Bảo mật nhân sự)
+## 1. Lộ trình Triển khai Chi tiết (4-Phase Micro-Roadmap)
 
-### Case 1: Thêm mới nhân viên thành công
-- **Các bước:** Đăng nhập tài khoản Admin ➡️ Mở trang nhân sự ➡️ Chọn "Thêm nhân viên" ➡️ Nhập đầy đủ thông tin hợp lệ (chọn Role = `doctor`) ➡️ Nhấn Lưu.
-- **Kết quả mong muốn:** API trả về 200 OK. Kiểm tra trong DB bảng `AspNetUsers` có bản ghi mới, đồng thời bảng liên kết Role gắn chính xác quyền `doctor`.
+### Giai đoạn 1: Thiết kế Database & Domain Entities (Tuần 1)
+- Thiết lập bảng `AuditLogs` trong CSDL PostgreSQL.
+- Mở rộng các trường `Status`, `Role`, `RequirePasswordChange` trong thực thể `User`.
+- Viết migrations và thiết lập database index cho trường `Role` và `Status`.
 
-### Case 2: Chặn tự khóa chính mình
-- **Các bước:** Đăng nhập Admin A ➡️ Click nút "Khóa" chính tài khoản Admin A đang hoạt động.
-- **Kết quả mong muốn:** Hệ thống chặn ngay từ frontend (nút khóa bị ẩn/vô hiệu hóa). Nếu gọi API thủ công bằng công cụ ngoài, API trả về 400 Bad Request kèm thông báo lỗi "Bạn không thể tự khóa tài khoản của chính mình."
+### Giai đoạn 2: Phát triển Backend API & Core Security (Tuần 2)
+- Viết logic sinh mật khẩu ngẫu nhiên an toàn mật mã tại `PasswordGenerator`.
+- Cài đặt lớp `AdminStaffService` quản lý CRUD nhân sự, chặn tự khóa tài khoản Admin.
+- Xây dựng Middleware ghi nhật ký Audit Log bảo mật.
+- Đăng ký chính sách phân quyền vai trò `[Authorize(Roles = "admin")]`.
 
-### Case 3: Chặn tài khoản không có quyền Admin chỉnh sửa nhân viên
-- **Các bước:** Đăng nhập tài khoản Bác sĩ hoặc Lễ tân ➡️ Gửi request POST tới `/api/admin/users/create`.
-- **Kết quả mong muốn:** API từ chối xử lý, trả về HTTP 403 Forbidden.
+### Giai đoạn 3: Phát triển Giao diện Web (Vue 3 Client) (Tuần 3)
+- Viết Pinia Store `useAdminStaffStore.ts` quản lý mảng nhân viên và lọc dữ liệu.
+- Thiết kế giao diện Quản trị nhân viên mờ kính Glassmorphism.
+- Tích hợp popup Thêm nhân viên và Dialog xác nhận khóa tài khoản.
+- Cài đặt Router Guard chặn truy cập trái phép trên Client.
+
+### Giai đoạn 4: Kiểm thử, Audit & Bàn giao (Tuần 4)
+- Viết unit tests kiểm tra logic băm mật khẩu BCrypt và sinh mật khẩu ngẫu nhiên.
+- Thực hiện kiểm thử thâm nhập (Penetration Test) kiểm tra lỗi Privilege Escalation.
+- Tối ưu hóa hiệu năng phản hồi API khi tải danh sách Audit Log.
+
+---
+
+## 2. Kịch bản Kiểm thử QA (QA Test Cases)
+
+| Mã Test Case | Phân loại | Mục tiêu kiểm thử | Các bước thực hiện | Kết quả mong đợi |
+| :--- | :--- | :--- | :--- | :--- |
+| **TC-ADM-01** | Security | Chống leo thang đặc quyền (Privilege Escalation) | Dùng token JWT của vai trò `doctor` để gọi API `PUT /api/admin/staff/{id}/role` đổi quyền thành `admin`. | Backend trả về mã lỗi `403 Forbidden`, giao dịch bị từ chối. |
+| **TC-ADM-02** | Boundary | Chặn Admin tự thay đổi vai trò của chính mình | Admin đăng nhập gọi API đổi quyền của chính ID mình sang `receptionist`. | Hệ thống từ chối đổi quyền, trả về lỗi `400 Bad Request`. |
+| **TC-ADM-03** | Boundary | Chặn Admin tự khóa tài khoản của chính mình | Admin gọi API toggle-status lên ID tài khoản của chính mình. | Hệ thống từ chối khóa, trả về lỗi `400 Bad Request`. |
+| **TC-ADM-04** | Security | Bắt buộc đổi mật khẩu ở lần đăng nhập đầu tiên | Tạo nhân viên mới -> Đăng nhập bằng pass tạm -> Gửi request lấy danh sách thú cưng. | Hệ thống chặn request, trả về mã lỗi yêu cầu đổi mật khẩu. |
+
+---
+
+## 3. Mã nguồn Unit Test C# xUnit mẫu
+
+Dưới đây là mã nguồn unit test sử dụng **xUnit** và **FluentAssertions** kiểm định tính đúng đắn của logic quản trị nhân sự:
+
+```csharp
+using System;
+using System.Threading.Tasks;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using MyPetClinic.Application.Services;
+using MyPetClinic.Domain.Entities;
+using MyPetClinic.Infrastructure.Data;
+using Xunit;
+
+namespace MyPetClinic.Tests
+{
+    public class AdminStaffServiceTests : IDisposable
+    {
+        private readonly AppDbContext _context;
+        private readonly AdminStaffService _adminStaffService;
+
+        public AdminStaffServiceTests()
+        {
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+
+            _context = new AppDbContext(options);
+            // Giả lập EmailService trống
+            var mockEmailService = new MockEmailService();
+            _adminStaffService = new AdminStaffService(_context, NullLogger<AdminStaffService>.Instance, mockEmailService);
+        }
+
+        [Fact]
+        public async Task ChangeStaffRole_ShouldFail_WhenAdminTriesToChangeOwnRole()
+        {
+            // Arrange
+            var adminId = Guid.NewGuid();
+            var adminUser = new User
+            {
+                Id = adminId,
+                FullName = "Admin Root",
+                Email = "admin.root@mypet.vn",
+                Role = "admin",
+                Status = "Active"
+            };
+            _context.Users.Add(adminUser);
+            await _context.SaveChangesAsync();
+
+            var request = new ChangeRoleRequest { NewRole = "doctor" };
+
+            // Act
+            Func<Task> act = async () => await _adminStaffService.ChangeStaffRoleAsync(adminId, request, adminId, "127.0.0.1");
+
+            // Assert
+            await act.Should().ThrowAsync<InvalidOperationException>()
+                .WithMessage("Không thể tự thay đổi vai trò của chính mình.");
+        }
+
+        [Fact]
+        public async Task ToggleStaffStatus_ShouldFail_WhenAdminTriesToSuspendSelf()
+        {
+            // Arrange
+            var adminId = Guid.NewGuid();
+            var adminUser = new User
+            {
+                Id = adminId,
+                FullName = "Admin Root",
+                Email = "admin.root@mypet.vn",
+                Role = "admin",
+                Status = "Active"
+            };
+            _context.Users.Add(adminUser);
+            await _context.SaveChangesAsync();
+
+            // Act
+            Func<Task> act = async () => await _adminStaffService.ToggleStaffStatusAsync(adminId, adminId, "127.0.0.1");
+
+            // Assert
+            await act.Should().ThrowAsync<InvalidOperationException>()
+                .WithMessage("Không thể tự khóa tài khoản của chính mình.");
+        }
+
+        public void Dispose()
+        {
+            _context.Database.EnsureDeleted();
+            _context.Dispose();
+        }
+    }
+
+    // Lớp giả lập Email Service phục vụ Testing
+    public class MockEmailService : IEmailService
+    {
+        public Task SendEmailAsync(string email, string subject, string body)
+        {
+            // Không làm gì, giả lập gửi email thành công
+            return Task.CompletedTask;
+        }
+    }
+}
+```
