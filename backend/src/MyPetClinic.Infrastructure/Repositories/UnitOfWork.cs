@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using MyPetClinic.Application.Interfaces.Repositories;
 using MyPetClinic.Domain.Entities;
@@ -21,7 +22,12 @@ namespace MyPetClinic.Infrastructure.Repositories
         public IGenericRepository<InvoiceItem> InvoiceItems { get; private set; }
         public IGenericRepository<MedicalRecord> MedicalRecords { get; private set; }
         public IGenericRepository<Medicine> Medicines { get; private set; }
-
+        public IGenericRepository<Prescription> Prescriptions { get; private set; }
+        public IGenericRepository<PrescriptionItem> PrescriptionItems { get; private set; }
+        public IGenericRepository<Vaccine> Vaccines { get; private set; }
+        public IGenericRepository<VaccinationRecord> VaccinationRecords { get; private set; }
+        public IGenericRepository<DoctorSchedule> DoctorSchedules { get; private set; }
+ 
         public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
@@ -34,6 +40,11 @@ namespace MyPetClinic.Infrastructure.Repositories
             InvoiceItems = new GenericRepository<InvoiceItem>(_context);
             MedicalRecords = new GenericRepository<MedicalRecord>(_context);
             Medicines = new GenericRepository<Medicine>(_context);
+            Prescriptions = new GenericRepository<Prescription>(_context);
+            PrescriptionItems = new GenericRepository<PrescriptionItem>(_context);
+            Vaccines = new GenericRepository<Vaccine>(_context);
+            VaccinationRecords = new GenericRepository<VaccinationRecord>(_context);
+            DoctorSchedules = new GenericRepository<DoctorSchedule>(_context);
         }
 
         public async Task<int> SaveChangesAsync()
@@ -48,6 +59,15 @@ namespace MyPetClinic.Infrastructure.Repositories
                 return;
             }
             _currentTransaction = await _context.Database.BeginTransactionAsync();
+        }
+
+        public async Task BeginTransactionAsync(System.Data.IsolationLevel isolationLevel)
+        {
+            if (_currentTransaction != null)
+            {
+                return;
+            }
+            _currentTransaction = await _context.Database.BeginTransactionAsync(isolationLevel);
         }
 
         public async Task CommitTransactionAsync()

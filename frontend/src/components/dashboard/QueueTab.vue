@@ -47,6 +47,9 @@
               <button class="btn btn-warning text-dark px-4 py-2 rounded-pill shadow-sm fw-bold" @click="openWalkInModal">
                 <i class="bi bi-person-walking"></i> Khách Vãng Lai
               </button>
+              <router-link to="/tv-board" target="_blank" class="btn btn-outline-dark px-4 py-2 rounded-pill shadow-sm fw-bold" style="background: white; border: 1.5px solid #1e293b;">
+                <i class="bi bi-display-fill text-warning"></i> Mở TV Board 🖥️
+              </router-link>
             </div>
           </div>
         </div>
@@ -105,7 +108,7 @@
                     <i class="bi bi-exclamation-triangle-fill"></i> CẤP CỨU
                   </span>
                 </h6>
-                <span class="badge bg-light text-secondary border rounded-pill">#{{ card.queueNumber }}</span>
+                <span class="badge bg-light text-secondary border rounded-pill">{{ formatQueueNumber(card.queueNumber) }}</span>
               </div>
               <div class="text-muted small mb-2"><i class="bi bi-person-circle text-warning me-1"></i>Chủ nuôi: {{ card.customerName || 'Khách vãng lai' }}</div>
               <div v-if="card.symptom" class="bg-light p-2 rounded text-muted small mb-2">{{ card.symptom }}</div>
@@ -167,7 +170,7 @@
                     <i class="bi bi-exclamation-triangle-fill"></i> CẤP CỨU
                   </span>
                 </h6>
-                <span class="badge bg-light text-secondary border rounded-pill">#{{ card.queueNumber }}</span>
+                <span class="badge bg-light text-secondary border rounded-pill">{{ formatQueueNumber(card.queueNumber) }}</span>
               </div>
               <div class="text-muted small mb-2"><i class="bi bi-person-circle text-warning me-1"></i>Chủ nuôi: {{ card.customerName || 'Khách vãng lai' }}</div>
               <div v-if="card.symptom" class="bg-light p-2 rounded text-muted small mb-2">{{ card.symptom }}</div>
@@ -226,7 +229,7 @@
                     <i class="bi bi-exclamation-triangle-fill"></i> CẤP CỨU
                   </span>
                 </h6>
-                <span class="badge bg-light text-secondary border rounded-pill">#{{ card.queueNumber }}</span>
+                <span class="badge bg-light text-secondary border rounded-pill">{{ formatQueueNumber(card.queueNumber) }}</span>
               </div>
               <div class="text-muted small mb-2"><i class="bi bi-person-circle text-warning me-1"></i>Chủ nuôi: {{ card.customerName || 'Khách vãng lai' }}</div>
               <div v-if="card.symptom" class="bg-light p-2 rounded text-muted small mb-2">{{ card.symptom }}</div>
@@ -613,6 +616,13 @@ const getAnimalEmoji = (species: string) => {
   if (s.includes('chó') || s.includes('dog')) return '🐶';
   if (s.includes('mèo') || s.includes('cat')) return '🐱';
   return '🐾';
+};
+
+const formatQueueNumber = (num: number | string) => {
+  if (!num) return 'Q-000';
+  const n = parseInt(num.toString(), 10);
+  if (isNaN(n)) return num;
+  return `Q-${String(n).padStart(3, '0')}`;
 };
 
 const getLastWord = (name: string) => {

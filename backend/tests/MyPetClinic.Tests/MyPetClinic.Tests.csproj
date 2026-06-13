@@ -24,6 +24,10 @@
     <ProjectReference Include="..\..\src\MyPetClinic.Application\MyPetClinic.Application.csproj" />
     <ProjectReference Include="..\..\src\MyPetClinic.Infrastructure\MyPetClinic.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\MyPetClinic.Domain\MyPetClinic.Domain.csproj" />
+    <ProjectReference Include="..\..\src\WebApi\WebApi.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
   </ItemGroup>
 
 </Project>

@@ -123,5 +123,45 @@ namespace MyPetClinic.Controllers
                 return BadRequest(new { success = false, message = "Lỗi khi xóa thú cưng: " + ex.Message });
             }
         }
+
+        [HttpPost("upload-avatar")]
+        public async Task<IActionResult> UploadPetAvatar(IFormFile avatarFile, [FromServices] Microsoft.AspNetCore.Hosting.IWebHostEnvironment webHostEnvironment)
+        {
+            if (avatarFile == null || avatarFile.Length == 0)
+                return BadRequest(new { message = "Vui lòng chọn một file ảnh hợp lệ." });
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var extension = Path.GetExtension(avatarFile.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+                return BadRequest(new { message = "Chỉ chấp nhận các file ảnh định dạng: .jpg, .jpeg, .png, .gif" });
+
+            if (avatarFile.Length > 2 * 1024 * 1024)
+                return BadRequest(new { message = "Kích thước ảnh không được vượt quá 2MB." });
+
+            try
+            {
+                string webRootPath = webHostEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                string uploadsFolder = Path.Combine(webRootPath, "uploads", "pets");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                string uniqueFileName = $"{Guid.NewGuid()}_{avatarFile.FileName}";
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await avatarFile.CopyToAsync(fileStream);
+                }
+
+                string avatarUrl = $"/uploads/pets/{uniqueFileName}";
+                return Ok(new { success = true, avatarUrl, message = "Tải ảnh lên thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Lỗi tải ảnh lên: " + ex.Message });
+            }
+        }
     }
 }

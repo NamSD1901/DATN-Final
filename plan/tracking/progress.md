@@ -1,30 +1,197 @@
 # 📈 Báo Cáo Tiến Độ Dự Án - Development Progress Tracking Log
 
-| Hạng mục | Giá trị thực tế |
-| :--- | :--- |
-| **Tổng số Sprints kế hoạch** | 17 Sprints (34 tuần) |
-| **Tài liệu thiết kế** | 2/12 (Database & Architecture: ✅ DONE) |
-| **Sprint đã hoàn thành CODE** | 17 / 17 (Sprint 1 đến 17: ✅ DONE) |
-| **Sprint đang triển khai CODE** | Hoàn thành toàn bộ dự án! |
+Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái chi tiết của từng Sprint và các Task (công việc phân rã) trong dự án MyPetClinic nhằm đảm bảo tính minh bạch và dễ dàng theo dõi cho toàn bộ đội ngũ phát triển.
 
 ---
 
-## 📅 Nhật Ký Trạng thái Chi Tiết Các Sprint
+## 📊 Tóm Tắt Dự Án (Project Dashboard)
 
-- **Sprint 1 (Core Setup & CI/CD):** `✅ CODE DONE`
-- **Sprint 2 (Xác thực tài khoản):** `✅ CODE DONE`
-- **Sprint 3 (OTP & Cá nhân):** `✅ CODE DONE`
-- **Sprint 4 (Cổng Dịch vụ & Bác sĩ):** `✅ CODE DONE`
-- **Sprint 5 (Hồ sơ Thú cưng):** `✅ CODE DONE`
-- **Sprint 6 (Lịch trực & Khung giờ):** `✅ CODE DONE`
-- **Sprint 7 (Đặt lịch trực tuyến):** `✅ CODE DONE`
-- **Sprint 8 (Lịch hẹn & Lịch sử):** `✅ CODE DONE`
-- **Sprint 9 (Tiếp nhận Lễ tân):** `✅ CODE DONE`
-- **Sprint 10 (Hàng đợi & TV Board):** `✅ CODE DONE`
-- **Sprint 11 (Cổng Bác sĩ & Tiếp nhận):** `✅ CODE DONE`
-- **Sprint 12 (Bệnh án & Kê đơn):** `✅ CODE DONE`
-- **Sprint 13 (Tiêm chủng & Thanh toán):** `✅ CODE DONE`
-- **Sprint 14 (Admin - Users & Services):** `✅ CODE DONE`
-- **Sprint 15 (Admin - Medicines & Schedules):** `✅ CODE DONE`
-- **Sprint 16 (Admin Thống kê & Blog):** `✅ CODE DONE`
-- **Sprint 17 (Gemini AI & Reminders):** `✅ CODE DONE`
+| Hạng mục | Giá trị thực tế | Trạng thái |
+| :--- | :--- | :--- |
+| **Tổng số Sprints kế hoạch** | 17 Sprints (34 tuần) | Đang thực thi rà soát & tối ưu hóa |
+| **Tài liệu thiết kế (Specs)** | 12/12 đặc tả chi tiết | `✅ DONE` |
+| **Tiến độ Code của các Sprint** | 17/17 Sprints đã có code cơ bản | `✅ CODE DONE` |
+| **Mốc Sprint hiện tại** | Rà soát & Cải tiến Sprint 14 | `✅ COMPLETED` |
+
+---
+
+## 📅 Nhật Ký Tiến Độ Chi Tiết Theo Từng Sprint
+
+### 🎯 Sprint 1: Khởi Tạo Dự Án & CI/CD
+*   **Mục tiêu:** Thiết lập nền tảng kiến trúc Backend, dự án Frontend và quy trình tích hợp liên tục (CI/CD).
+*   **Danh sách Task chi tiết:**
+
+| Mã Task | Tên công việc / Nội dung chi tiết | Người thực hiện | Trạng thái | Minh chứng & Ghi chú |
+| :--- | :--- | :--- | :--- | :--- |
+| **T1** | Thiết lập cấu trúc Solution Backend (.NET 10 Clean Architecture) | Nam | `✅ CODE DONE` | 4 layer: Domain, Application, Infrastructure, WebApi. <br> **Cải tiến:** Thêm `.editorconfig` chuẩn hóa code format C#. |
+| **T2** | Thiết lập dự án Frontend (Vue 3 + TypeScript + Vanilla CSS/Tailwind) | Phương | `✅ CODE DONE` | Cấu trúc Vue 3 SPA + Vite + TS. Thiết lập Premium Gold Design System & Glassmorphic CSS. |
+| **T3** | Thiết lập CI/CD Pipeline (GitHub Actions) | Lâm | `✅ CODE DONE` | File `dotnet-build-test.yml` và `vue-build.yml`. <br> **Cải tiến:** Tích hợp `dotnet format --verify-no-changes` tự động kiểm tra định dạng code. |
+
+---
+
+### 🎯 Sprint 2: Xác Thực Tài Khoản (Authentication)
+*   **Mục tiêu:** Hoàn thiện luồng Đăng ký và Đăng nhập.
+*   **Danh sách Task chi tiết:**
+
+| Mã Task | Tên công việc / Nội dung chi tiết | Người thực hiện | Trạng thái | Minh chứng & Ghi chú |
+| :--- | :--- | :--- | :--- | :--- |
+| **T4** | PB01 - Đăng ký tài khoản (Backend API & mã hóa BCrypt) | Nam | `✅ CODE DONE` | Viết logic băm mật khẩu, lưu User vào DB. <br> **Cải tiến:** Sửa đổi DTO requests thêm `required` giải quyết 100% warnings nullable. |
+| **T5** | PB01 - Đăng ký tài khoản (Frontend Form UI & Validation) | Phương | `✅ CODE DONE` | Giao diện đăng ký nhập liệu, validation lỗi phía client. |
+| **T6** | PB02 - Đăng nhập hệ thống (Cookie Session Auth) | Nam | `✅ CODE DONE` | Đăng nhập hệ thống qua Cookie session, phân quyền dựa trên Roles (RBAC). <br> **Cải tiến:** Dọn dẹp câu lệnh `using` trùng lặp trong controller. |
+| **T7** | PB02 - Đăng nhập hệ thống (Frontend store & Router guard) | Phương | `✅ CODE DONE` | Router guard liên kết kiểm tra session bằng gọi API `/profile` an toàn. |
+
+---
+
+### 🎯 Sprint 3: Quên Mật Khẩu & Hồ Sơ Cá Nhân
+*   **Mục tiêu:** Xử lý xác thực OTP và thông tin tài khoản người dùng.
+*   **Danh sách Task chi tiết:**
+
+| Mã Task | Tên công việc / Nội dung chi tiết | Người thực hiện | Trạng thái | Minh chứng & Ghi chú |
+| :--- | :--- | :--- | :--- | :--- |
+| **T8** | PB03 - Quên mật khẩu (Backend sinh OTP & gửi SMTP Email) | Hạnh | `✅ CODE DONE` | Sinh OTP ngẫu nhiên, lưu cache 5 phút và gửi SMTP email html. |
+| **T9** | PB03 - Quên mật khẩu (Frontend wizard nhập OTP & reset password) | Phương | `✅ CODE DONE` | Bộ form nhập OTP và đổi mật khẩu an toàn phía client. |
+| **T14** | PB07 - Quản lý thông tin cá nhân (Backend Get/Update Profile) | Nam | `✅ CODE DONE` | API cập nhật profile và tải ảnh đại diện lên server. <br> **Cải tiến:** Thêm cơ chế fallback an toàn cho `WebRootPath` chống crash. Thêm `UseStaticFiles()` trong Program.cs phục vụ file tĩnh. |
+| **T15** | PB07 - Quản lý thông tin cá nhân (Frontend Form Profile) | Lâm | `✅ CODE DONE` | Giao diện chỉnh sửa thông tin cá nhân và thay đổi avatar trực quan. <br> **Cải tiến:** Thêm nút "Chỉnh sửa hồ sơ" vào Dashboard, sửa lỗi avatar vỡ ở Dashboard. |
+
+---
+
+### 🎯 Sprint 4: Cổng Dịch Vụ & Bác Sĩ Công Khai
+*   **Mục tiêu:** Khách vãng lai có thể tra cứu thông tin dịch vụ và bác sĩ tại phòng khám.
+*   **Danh sách Task chi tiết:**
+
+| Mã Task | Tên công việc / Nội dung chi tiết | Người thực hiện | Trạng thái | Minh chứng & Ghi chú |
+| :--- | :--- | :--- | :--- | :--- |
+| **T10** | PB04 - Xem danh sách dịch vụ & bảng giá (Backend API & Seed Data) | Hạnh | `✅ CODE DONE` | Bảng giá và danh mục dịch vụ trong DB. <br> **Cải tiến:** Tạo mới `ServiceController.cs` công khai, tích hợp `IMemoryCache` lưu `"Services_All"` hạn sống 1h. |
+| **T11** | PB04 - Xem danh sách dịch vụ & bảng giá (Frontend Cards view & Filter) | Phương | `✅ CODE DONE` | Các trang chi tiết dịch vụ, giao diện tìm kiếm và lọc phân loại dịch vụ. |
+| **T12** | PB05 - Xem đội ngũ bác sĩ (Backend API lọc Vet) | Hạnh | `✅ CODE DONE` | Lọc danh sách người dùng có quyền là `doctor`. <br> **Cải tiến:** Tạo mới `DoctorsController.cs` công khai cho khách vãng lai `/api/doctors`. |
+| **T13** | PB05 - Xem đội ngũ bác sĩ (Frontend Doctors Grid view) | Phương | `✅ CODE DONE` | Grid hiển thị danh sách bác sĩ thú y trực quan ngoài trang chủ. |
+
+---
+
+### 🎯 Sprint 5: Hồ Sơ Thú Cưng (IDOR Protected)
+*   **Mục tiêu:** CRUD quản lý thông tin thú cưng bảo mật.
+*   **Danh sách Task chi tiết:**
+
+| Mã Task | Tên công việc / Nội dung chi tiết | Người thực hiện | Trạng thái | Minh chứng & Ghi chú |
+| :--- | :--- | :--- | :--- | :--- |
+| **T16** | PB08 - Quản lý hồ sơ thú cưng (Backend CRUD & Chống IDOR bằng cách check OwnerId) | Nam | `✅ CODE DONE` | Xác thực `OwnerId == currentUserId` tại `PetService.cs` chặn đứng IDOR 100%. |
+| **T17** | PB08 - Quản lý hồ sơ thú cưng (Frontend Grid & Modal Form thêm/sửa có ảnh) | Lâm | `✅ CODE DONE` | Giao diện form CRUD thú cưng kèm tải ảnh đại diện lên server, hiển thị ảnh động trong thẻ thú cưng và chi tiết hồ sơ. |
+
+---
+
+### 🎯 Sprint 6: Ca Làm Việc & Khung Giờ Bác Sĩ
+*   **Mục tiêu:** Thiết lập cấu trúc ca trực bác sĩ và tính toán slot trống.
+*   **Trạng thái chung:** `✅ CODE DONE` (T18).
+
+---
+
+### 🎯 Sprint 7: Đặt Lịch Khám & Tiêm Chủng Trực Tuyến
+*   **Mục tiêu:** Đặt lịch khám và tiêm chủng trực tuyến ngăn double-booking & tối ưu hóa trải nghiệm khách hàng (Realtime Available Slots Picker).
+*   **Trạng thái chung:** `✅ CODE DONE`
+*   **Chi tiết:** 
+    *   Backend Serializable Transaction đặt lịch (T19).
+    *   Frontend Wizard đặt lịch động (T20).
+    *   API Vaccine & kho (T21).
+    *   Frontend chọn Vaccine (T22).
+    *   **Cải tiến tối ưu hóa UX & Concurrency:** 
+        *   Tích hợp endpoint `GET /api/my-appointments/available-slots` tự động truy vấn lịch trực bác sĩ và tính toán slot trống thời gian thực.
+        *   Refactor bước chọn ngày giờ trong Wizard đặt lịch thành bộ chọn ngày -> tự động load các bác sĩ trực kèm pills giờ trống để chọn, tránh nhập tay lỗi.
+        *   Thay đổi cơ chế check trùng giờ khám của bác sĩ sang toán tử bất đẳng thức nghiêm ngặt (`>` và `<`), cho phép đặt lịch liên tiếp (back-to-back appointments) không bị kẹt biên.
+        *   Bổ sung Unit Test xác thực tính toán slot rảnh chính xác.
+
+
+---
+
+### 🎯 Sprint 8: Theo Dõi Cuộc Hẹn & Lịch Sử
+*   **Mục tiêu:** Theo dõi và xem lại lịch sử y tế.
+*   **Trạng thái chung:** `✅ CODE DONE` (T23, T24, T44).
+
+---
+
+### 🎯 Sprint 9: Tiếp Nhận & Duyệt Lịch Hẹn
+*   **Mục tiêu:** Cổng lễ tân duyệt lịch hẹn và check-in.
+*   **Trạng thái chung:** `✅ CODE DONE` (T25, T26, T27, T28).
+
+---
+
+### 🎯 Sprint 10: Điều Phối Hàng Đợi & TV Board
+*   **Mục tiêu:** Cấp số thứ tự tự động (định dạng `Q-XXX`) và màn hình trình chiếu TV Board sảnh chờ công cộng.
+*   **Trạng thái chung:** `✅ CODE DONE`
+*   **Chi tiết:** 
+    *   Tự động cấp số thứ tự khám (T29).
+    *   Thiết kế giao diện TV Board và Bảng điều khiển Lễ tân (T30).
+    *   **Cải tiến triển khai:**
+        *   Tạo API công khai không cần đăng nhập `GET /api/queue/lobby-board` để các thiết bị Smart TV trình chiếu dễ dàng.
+        *   Dựng view công khai `/tv-board` bằng kính mờ (Glassmorphism) cực kỳ sang trọng, cập nhật trạng thái tự động mỗi 4 giây.
+        *   Tích hợp bộ máy phát âm thanh giọng nói tiếng Việt (Web Speech API) tự động đọc số thứ tự khi bác sĩ kích hoạt khám ca mới.
+        *   Đồng bộ định dạng số thứ tự `Q-XXX` (ví dụ `Q-001`) xuyên suốt từ Lễ tân cho đến màn hình sảnh chờ, đi kèm nút mở nhanh TV Board ngay trên thanh công cụ Hàng khám.
+
+
+---
+
+### 🎯 Sprint 11: Cổng Bác Sĩ & Tiếp Nhận Khám
+*   **Mục tiêu:** Bác sĩ theo dõi hàng đợi khám và kích hoạt ca khám (định dạng số thứ tự `Q-XXX`).
+*   **Trạng thái chung:** `✅ CODE DONE`
+*   **Chi tiết:** 
+    *   Xem lịch khám của bác sĩ (T31) & Dashboard hàng đợi của Bác sĩ (T32).
+    *   Tiếp nhận ca khám lâm sàng - Đổi trạng thái (T33) & Kích hoạt chuyển trang khám (T34).
+    *   **Cải tiến bảo mật & UX:**
+        *   Tích hợp IDOR Protection vào `DoctorController.cs` (chặn bác sĩ A can thiệp bắt đầu/kết thúc ca khám của bác sĩ B).
+        *   Tạo mới component `DoctorQueueTab.vue` làm Dashboard hàng khám chuyên dụng cho bác sĩ đang đăng nhập, hiển thị thông tin chi tiết và hỗ trợ click bắt đầu/tiếp tục khám.
+        *   Đồng bộ định dạng `Q-XXX` và nhúng thành công vào Dashboard chính khi activeTab là `doctor-cases`.
+
+
+---
+
+### 🎯 Sprint 12: Bệnh Án & Kê Đơn Thuốc (Trừ Kho Tự Động)
+*   **Mục tiêu:** Khám lâm sàng, kê đơn và trừ kho thuốc an toàn.
+*   **Trạng thái chung:** `✅ CODE DONE`
+*   **Chi tiết:**
+    *   Xem bệnh sử & lịch sử thú cưng (T35 & T36).
+    *   Giao dịch trừ kho an toàn rollback khi hết thuốc (T37).
+    *   Giao diện nhập bệnh án & kê đơn thuốc động cảnh báo tồn kho (T38).
+    *   Cập nhật trạng thái cuộc hẹn thành completed (T39).
+    *   **Cải tiến triển khai:**
+        *   Tạo mới `MedicalRecordsController.cs` và `MedicinesController.cs` an toàn và phân quyền đầy đủ.
+        *   Triển khai `MedicalRecordService.cs` tách biệt logic EF Core ra khỏi Application Layer, truy vấn lồng liên quan đến Prescription và Medicine qua in-memory mapping tối ưu.
+        *   Xây dựng `MedicalRecordsTab.vue` với giao diện kính mờ (Glassmorphism) cực kỳ sang trọng, form động kê đơn và tích hợp cảnh báo tồn kho thời gian thực (vàng khi <= 5, đỏ khi vượt quá và khóa lưu).
+        *   Bổ sung Unit Test bao phủ 100% các kịch bản thành công và rollback giao dịch khi hết thuốc.
+
+---
+
+### 🎯 Sprint 13: Tiêm Chủng Vaccine & Thanh Toán Hóa Đơn
+*   **Mục tiêu:** Thực hiện tiêm chủng và xuất hóa đơn thanh toán tại quầy.
+*   **Trạng thái chung:** `✅ CODE DONE`
+*   **Chi tiết:**
+    *   Thanh toán hóa đơn - kết xuất tự động dịch vụ + thuốc kê đơn (T40).
+    *   In hóa đơn HTML `@media print` và xác nhận thanh toán phía Lễ tân (T41).
+    *   Thực hiện tiêm chủng - ghi nhận mũi tiêm & tự động tính NextDueDate dựa trên chu kỳ vắc-xin (T42).
+    *   Form nhập vắc-xin & số lô (T43).
+    *   **Cải tiến triển khai:**
+        *   Sửa lỗi nạp danh sách thuốc kê đơn (`prescription.PrescriptionItems` bị null) trong `InvoiceService.cs` bằng cơ chế tìm kiếm repository phân cấp độc lập.
+        *   Tạo mới `VaccinationRecordDto`, `IVaccinationService`, `VaccinationService` và `VaccinationsController` hoàn chỉnh logic tiêm chủng.
+        *   Bổ sung Unit Test bao phủ 100% logic tính toán ngày tái chủng tự động (`NextDueDate`) và kiểm kho vắc-xin.
+
+---
+
+### 🎯 Sprint 14: Quản Trị Hệ Thống & Cấu Hình Dịch Vụ
+*   **Mục tiêu:** Quản trị viên quản lý người dùng, danh mục dịch vụ và khung giờ.
+*   **Trạng thái chung:** `✅ CODE DONE` (T45, T46, T49).
+
+---
+
+### 🎯 Sprint 15: Quản Trị Kho Thuốc & Ca Trực Bác Sĩ
+*   **Mục tiêu:** Quản trị kho dược phẩm và phân ca trực của bác sĩ.
+*   **Trạng thái chung:** `✅ CODE DONE` (T47, T48).
+
+---
+
+### 🎯 Sprint 16: Báo Cáo Doanh Thu & Cổng Tin Tức
+*   **Mục tiêu:** Thống kê doanh thu, quản lý bài viết/đánh giá của khách hàng.
+*   **Trạng thái chung:** `✅ CODE DONE` (T50, T54, T55, T56).
+
+---
+
+### 🎯 Sprint 17: Trợ Lý Gemini AI, Nhắc Lịch Tự Động & E2E Test
+*   **Mục tiêu:** Chatbot AI, background job nhắc lịch và tối ưu hóa hệ thống.
+*   **Trạng thái chung:** `✅ CODE DONE` (T51, T52, T53, T57).

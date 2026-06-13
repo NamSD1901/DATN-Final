@@ -32,6 +32,19 @@ namespace MyPetClinic.Controllers
         [HttpPost("start-treatment")]
         public async Task<IActionResult> StartTreatment([FromBody] long appointmentId)
         {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+
+            var queue = await _receptionistService.GetTodayQueueAsync();
+            var appt = queue.FirstOrDefault(q => q.AppointmentId == appointmentId);
+            if (appt == null) return NotFound(new { message = "Không tìm thấy ca khám." });
+
+            var isAdmin = User.IsInRole("Admin");
+            if (!isAdmin && !appt.DoctorId.ToString().Equals(userIdStr, StringComparison.OrdinalIgnoreCase))
+            {
+                return Forbid();
+            }
+
             // Tương đương với việc kéo thẻ sang cột "Đang khám"
             var success = await _receptionistService.UpdateQueueStatusAsync(appointmentId, "in_progress");
             return Ok(new { success });
@@ -40,6 +53,19 @@ namespace MyPetClinic.Controllers
         [HttpPost("finish-treatment")]
         public async Task<IActionResult> FinishTreatment([FromBody] long appointmentId)
         {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+
+            var queue = await _receptionistService.GetTodayQueueAsync();
+            var appt = queue.FirstOrDefault(q => q.AppointmentId == appointmentId);
+            if (appt == null) return NotFound(new { message = "Không tìm thấy ca khám." });
+
+            var isAdmin = User.IsInRole("Admin");
+            if (!isAdmin && !appt.DoctorId.ToString().Equals(userIdStr, StringComparison.OrdinalIgnoreCase))
+            {
+                return Forbid();
+            }
+
             // Tương đương với việc kéo thẻ sang cột "Chờ thanh toán"
             var success = await _receptionistService.UpdateQueueStatusAsync(appointmentId, "ready_to_pay");
             return Ok(new { success });

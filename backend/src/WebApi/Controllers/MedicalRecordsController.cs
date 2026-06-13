@@ -1,0 +1,68 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MyPetClinic.Application.DTOs;
+using MyPetClinic.Application.Interfaces.Services;
+using System;
+using System.Collections.Generic;
+using System.Security.Claims;
+using System.Threading.Tasks;
+
+namespace MyPetClinic.Controllers
+{
+    [Authorize(Roles = "Doctor,Admin")]
+    [ApiController]
+    [Route("api/medical-records")]
+    public class MedicalRecordsController : ControllerBase
+    {
+        private readonly IMedicalRecordService _medicalRecordService;
+
+        public MedicalRecordsController(IMedicalRecordService medicalRecordService)
+        {
+            _medicalRecordService = medicalRecordService;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateMedicalRecord([FromBody] CreateMedicalRecordDto dto)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+
+            if (!Guid.TryParse(userIdStr, out var doctorId))
+            {
+                return BadRequest(new { message = "DoctorId không hợp lệ." });
+            }
+
+            try
+            {
+                var recordId = await _medicalRecordService.CreateMedicalRecordAsync(dto, doctorId);
+                return Ok(new { success = true, recordId });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", detail = ex.Message });
+            }
+        }
+
+        [HttpGet("pet/{petId}")]
+        public async Task<IActionResult> GetPetMedicalHistory(long petId)
+        {
+            try
+            {
+                var history = await _medicalRecordService.GetPetMedicalHistoryAsync(petId);
+                return Ok(history);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", detail = ex.Message });
+            }
+        }
+    }
+}

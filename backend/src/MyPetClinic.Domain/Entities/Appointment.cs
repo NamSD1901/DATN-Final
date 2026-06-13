@@ -9,6 +9,7 @@ namespace MyPetClinic.Domain.Entities
         public Guid CustomerId { get; set; }
         public Guid DoctorId { get; set; }
         public long ServiceId { get; set; }
+        public long? VaccineId { get; set; }
         public DateTime AppointmentDate { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan? EndTime { get; set; }
@@ -28,6 +29,7 @@ namespace MyPetClinic.Domain.Entities
         public User? Customer { get; set; }
         public User? Doctor { get; set; }
         public Service? Service { get; set; }
+        public Vaccine? Vaccine { get; set; }
         public User? Creator { get; set; }
 
         public MedicalRecord? MedicalRecord { get; set; }

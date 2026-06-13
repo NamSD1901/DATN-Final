@@ -1,6 +1,6 @@
 # 📋 Kế Hoạch Thực Thi Sprint - Sprint Execution Plan
 
-Tài liệu này đặc tả quy trình vận hành, phối hợp nhóm, quản trị rủi ro và các mốc thời gian thực thi 6 Sprints phát triển của dự án **MyPetClinic**.
+Tài liệu này đặc tả quy trình vận hành, phối hợp nhóm, quản trị rủi ro và các mốc thời gian thực thi đầy đủ **17 Sprints** phát triển của dự án **MyPetClinic**.
 
 ---
 
@@ -58,12 +58,23 @@ flowchart TD
 
 | Sprint | Thời gian dự kiến | Mục tiêu bàn giao chính | Môi trường triển khai |
 | :--- | :--- | :--- | :--- |
-| **Sprint 1** | Tuần 1 - Tuần 2 | Bộ khung Clean Architecture, API & UI Đăng ký/Đăng nhập/Quên mật khẩu. | Local Staging (Dockerized PostgreSQL) |
-| **Sprint 2** | Tuần 3 - Tuần 4 | Trang chủ hiển thị dịch vụ & bác sĩ, chức năng CRUD thông tin cá nhân và hồ sơ thú cưng. | Local Staging |
-| **Sprint 3** | Tuần 5 - Tuần 6 | Cấu hình Slot khám, luồng Đặt lịch khám và tiêm chủng trực tuyến hoàn chỉnh. | Staging / Development |
-| **Sprint 4** | Tuần 7 - Tuần 8 | Cổng lễ tân (check-in, quản lý hàng đợi khám), cổng bác sĩ (xem hàng đợi, tiếp nhận ca khám). | Staging / Development |
-| **Sprint 5** | Tuần 9 - Tuần 10 | Bệnh án điện tử, kê đơn trừ kho thuốc tự động, thanh toán hóa đơn tổng hợp tại quầy lễ tân. | Demo Environment |
-| **Sprint 6** | Tuần 11 - Tuần 12 | Dashboard quản trị (Doanh thu, dịch vụ), AI Chatbot tư vấn, Background job gửi email, E2E Testing. | Production Release (UAT) |
+| **Sprint 1** | Tuần 1 - Tuần 2 | Bộ khung Clean Architecture Backend, Vue 3 SPA Frontend và Pipeline CI/CD. | Local Staging (Dockerized PostgreSQL) |
+| **Sprint 2** | Tuần 3 - Tuần 4 | API & UI Đăng ký tài khoản (PB01) và Đăng nhập hệ thống (PB02). | Local Staging |
+| **Sprint 3** | Tuần 5 - Tuần 6 | Quên mật khẩu xác thực OTP (PB03) và Quản lý thông tin cá nhân (PB07). | Local Staging |
+| **Sprint 4** | Tuần 7 - Tuần 8 | Tra cứu danh mục dịch vụ công khai (PB04) và Đội ngũ bác sĩ thú y (PB05). | Local Staging |
+| **Sprint 5** | Tuần 9 - Tuần 10 | CRUD Hồ sơ thú cưng (PB08) tích hợp bảo mật chống tấn công IDOR bằng cách check OwnerId. | Local Staging |
+| **Sprint 6** | Tuần 11 - Tuần 12 | Logic thiết kế ca làm việc & tính toán khung giờ trống khả dụng của Bác sĩ. | Local Staging |
+| **Sprint 7** | Tuần 13 - Tuần 14 | Đặt lịch khám (PB09) & tiêm chủng (PB10) trực tuyến (Serializable Transaction chống trùng lịch, check kho). | Staging / Development |
+| **Sprint 8** | Tuần 15 - Tuần 16 | Timeline theo dõi trạng thái lịch hẹn khách hàng (PB11) và Cổng xem lịch sử y tế (PB12). | Staging / Development |
+| **Sprint 9** | Tuần 17 - Tuần 18 | Cổng Lễ tân tiếp nhận check-in/walk-in (PB15) và Duyệt/Hủy lịch hẹn gửi email tự động (PB17). | Staging / Development |
+| **Sprint 10** | Tuần 19 - Tuần 20 | Logic tự động cấp số thứ tự Queue (PB18) và màn hình TV Queue Board ngoài phòng chờ sảnh chính. | Staging / Development |
+| **Sprint 11** | Tuần 21 - Tuần 22 | Cổng Bác sĩ: Theo dõi hàng đợi khám của riêng mình (PB20) và Kích hoạt ca khám bệnh (PB22). | Staging / Development |
+| **Sprint 12** | Tuần 23 - Tuần 24 | Khám lâm sàng: Xem lịch sử bệnh án (PB21) và Quản lý bệnh án kê đơn (PB23 - Trừ kho thuốc rollback). | Staging / Development |
+| **Sprint 13** | Tuần 25 - Tuần 26 | Ghi nhận thực hiện tiêm chủng (PB24) và Thanh toán & In hóa đơn tổng hợp tại quầy (PB19). | Staging / Development |
+| **Sprint 14** | Tuần 27 - Tuần 28 | Admin: Quản lý danh sách người dùng (PB28), dịch vụ khám (PB26) và danh mục (PB27). | Demo Environment |
+| **Sprint 15** | Tuần 29 - Tuần 30 | Admin: Quản lý kho dược phẩm/vật tư y tế (PB29) và Lịch làm việc phân ca bác sĩ (PB30). | Demo Environment |
+| **Sprint 16** | Tuần 31 - Tuần 32 | Thống kê biểu đồ doanh số/KPIs (PB33), Cổng Blog cẩm nang (PB06, 32) và Khách hàng đánh giá (PB13). | Demo Environment |
+| **Sprint 17** | Tuần 33 - Tuần 34 | Trợ lý Gemini AI Chatbot (PB14), Gửi mail nhắc lịch tự động (PB34) và Chạy bộ test tích hợp E2E. | Production Release (UAT) |
 
 ---
 
@@ -71,7 +82,7 @@ flowchart TD
 
 | Loại rủi ro | Khả năng | Ảnh hưởng | Giải pháp phòng ngừa / Khắc phục |
 | :--- | :--- | :---: | :--- |
-| **Trễ hạn task quan trọng (Đặc biệt là Booking ở Sprint 3)** | Trung bình | Rất cao | Chia nhỏ task, hỗ trợ chéo giữa Nam và Hạnh ở backend. Thiết lập mốc cảnh báo trước 3 ngày khi kết thúc Sprint. |
+| **Trễ hạn task quan trọng (Đặc biệt là Booking ở Sprint 7)** | Trung bình | Rất cao | Chia nhỏ task, hỗ trợ chéo giữa Nam và Hạnh ở backend. Thiết lập mốc cảnh báo trước 3 ngày khi kết thúc Sprint. |
 | **Xung đột API giữa FE và BE** | Cao | Trung bình | Định nghĩa trước tài liệu giao ước API ([api-spec.md](file:///e:/DATN/MyPetClinic/plan/api-spec.md)) trước khi code. Sử dụng công cụ mock API nếu BE chưa hoàn thành kịp. |
 | **Lỗi tồn kho thuốc bất đồng bộ (Race Condition)** | Thấp | Cao | Sử dụng Database Transactions và Lock ở tầng Database khi thực hiện trừ số lượng thuốc tồn kho trong [Medical_records](file:///e:/DATN/MyPetClinic/plan/database.md#L160). |
 | **Quá tải API Gemini AI khi chat** | Trung bình | Trung bình | Triển khai cơ chế lưu cache kết quả trả về cho các câu hỏi phổ biến, giới hạn tần suất yêu cầu (Rate Limiting) trên mỗi tài khoản. |

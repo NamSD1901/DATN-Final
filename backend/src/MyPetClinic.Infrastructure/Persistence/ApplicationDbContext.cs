@@ -137,6 +137,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.CustomerId).HasColumnName("customer_id");
                 entity.Property(e => e.DoctorId).HasColumnName("doctor_id");
                 entity.Property(e => e.ServiceId).HasColumnName("service_id");
+                entity.Property(e => e.VaccineId).HasColumnName("vaccine_id");
                 entity.Property(e => e.AppointmentDate).HasColumnName("appointment_date");
                 entity.Property(e => e.StartTime).HasColumnName("start_time");
                 entity.Property(e => e.EndTime).HasColumnName("end_time");
@@ -150,6 +151,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.HasOne(d => d.Customer).WithMany().HasForeignKey(d => d.CustomerId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Doctor).WithMany().HasForeignKey(d => d.DoctorId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Service).WithMany(p => p.Appointments).HasForeignKey(d => d.ServiceId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(d => d.Vaccine).WithMany().HasForeignKey(d => d.VaccineId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Creator).WithMany().HasForeignKey(d => d.CreatedBy).OnDelete(DeleteBehavior.SetNull);
             });
 
@@ -233,6 +235,10 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.Name).HasColumnName("name").IsRequired().HasMaxLength(255);
                 entity.Property(e => e.Manufacturer).HasColumnName("manufacturer").HasMaxLength(255);
                 entity.Property(e => e.Description).HasColumnName("description");
+                entity.Property(e => e.StockQuantity).HasColumnName("stock_quantity").HasDefaultValue(0);
+                entity.Property(e => e.TargetSpecies).HasColumnName("target_species").HasMaxLength(50);
+                entity.Property(e => e.MinAgeWeeks).HasColumnName("min_age_weeks");
+                entity.Property(e => e.IntervalDays).HasColumnName("interval_days");
             });
 
             // vaccination_records

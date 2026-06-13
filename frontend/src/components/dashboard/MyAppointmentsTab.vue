@@ -24,10 +24,9 @@
         :key="tab.value"
         class="filter-tab-btn"
         :class="{ active: activeFilter === tab.value }"
-        @click="activeFilter = tab.value"
+        @click="changeFilter(tab.value)"
       >
         <i :class="tab.icon" class="me-1"></i> {{ tab.label }}
-        <span v-if="getCountByStatus(tab.value) > 0" class="tab-count">{{ getCountByStatus(tab.value) }}</span>
       </button>
     </div>
 
@@ -135,6 +134,25 @@
           </div>
         </div>
       </TransitionGroup>
+
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="d-flex justify-content-center align-items-center gap-2 mt-4 pb-2">
+        <button 
+          class="btn btn-outline-secondary btn-sm rounded-pill px-3" 
+          :disabled="currentPage === 1" 
+          @click="prevPage"
+        >
+          <i class="bi bi-chevron-left me-1"></i> Trang trước
+        </button>
+        <span class="text-muted small mx-2" style="font-size: 0.8rem; font-weight: 600;">Trang {{ currentPage }} / {{ totalPages }} (Tổng số: {{ totalCount }} lịch hẹn)</span>
+        <button 
+          class="btn btn-outline-secondary btn-sm rounded-pill px-3" 
+          :disabled="currentPage === totalPages" 
+          @click="nextPage"
+        >
+          Trang sau <i class="bi bi-chevron-right ms-1"></i>
+        </button>
+      </div>
     </div>
 
     <!-- ===== BOOKING MODAL ===== -->
@@ -166,10 +184,25 @@
               </div>
 
               <div v-if="bookingSuccess" class="text-center py-4">
-                <div style="font-size: 4rem;">✅</div>
+                <div style="font-size: 4rem;">🎉</div>
                 <h5 class="fw-bold text-success mt-3 mb-2">Đặt lịch thành công!</h5>
                 <p class="text-muted small">Chúng tôi sẽ xác nhận lịch hẹn của bạn sớm nhất có thể.</p>
-                <button class="btn btn-premium-appt mt-3" @click="closeBookModal">
+
+                <!-- QR Code Box -->
+                <div v-if="lastBookedAppt && lastBookedAppt.qrToken" id="booking-success-qr-box" class="qr-token-box my-4 p-3 mx-auto" style="max-width: 250px; background: #fafafa; border: 1.5px dashed #10b981; border-radius: 16px;">
+                  <div class="small fw-bold text-muted mb-2">MÃ CHECK-IN (QR TOKEN)</div>
+                  <div class="qr-placeholder-graphics mb-2" style="font-size: 5rem; line-height: 1; color: #1f2937;">
+                    <i class="bi bi-qr-code"></i>
+                  </div>
+                  <div class="badge bg-dark text-white font-monospace p-2 px-3 fs-6" style="letter-spacing: 1px;">
+                    {{ lastBookedAppt.qrToken }}
+                  </div>
+                  <div class="small text-muted mt-2" style="font-size: 0.75rem;">
+                    Vui lòng xuất trình mã này tại quầy lễ tân để check-in nhanh.
+                  </div>
+                </div>
+
+                <button class="btn btn-premium-appt mt-2" @click="closeBookModal">
                   <i class="bi bi-check2-circle me-2"></i> Hoàn tất
                 </button>
               </div>
@@ -211,16 +244,65 @@
                         </option>
                       </select>
                     </div>
+
                     <div class="col-12">
-                      <label class="form-label-custom">Ngày & Giờ hẹn <span class="text-danger">*</span></label>
+                      <label class="form-label-custom">Chọn Ngày khám <span class="text-danger">*</span></label>
                       <input
-                        v-model="bookForm.appointmentDate"
-                        type="datetime-local"
+                        v-model="selectedBookingDate"
+                        type="date"
                         class="form-control-custom"
-                        :min="minDateStr"
+                        :min="minDateOnlyStr"
+                        @change="onBookingDateChange"
                         required
                       />
                     </div>
+
+                    <!-- Available Slots Picker -->
+                    <div class="col-12" v-if="selectedBookingDate">
+                      <div class="mb-3">
+                        <label class="form-label-custom">Bác sĩ mong muốn (Không bắt buộc)</label>
+                        <select v-model="selectedDoctorFilter" class="form-control-custom">
+                          <option value="auto">✨ Tự động phân công (Phòng khám tự xếp bác sĩ rảnh)</option>
+                          <option v-for="doc in doctorAvailableSlots" :key="doc.doctorId" :value="doc.doctorId">
+                            👨‍⚕️ {{ doc.doctorName }}
+                          </option>
+                        </select>
+                      </div>
+
+                      <label class="form-label-custom">Chọn Giờ khám trống <span class="text-danger">*</span></label>
+                      
+                      <div v-if="fetchingSlots" class="text-center py-3">
+                        <span class="spinner-border spinner-border-sm text-warning me-2"></span>
+                        <span class="text-muted small">Đang kiểm tra lịch làm việc của bác sĩ...</span>
+                      </div>
+
+                      <div v-else-if="slotFetchError" class="alert alert-danger py-2 px-3 small border-0 rounded-3">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ slotFetchError }}
+                      </div>
+
+                      <div v-else-if="doctorAvailableSlots.length === 0" class="alert alert-warning py-2 px-3 small border-0 rounded-3">
+                        <i class="bi bi-info-circle-fill me-2"></i>Không có bác sĩ nào trực hoặc còn lịch trống trong ngày này. Vui lòng chọn ngày khác.
+                      </div>
+
+                      <div v-else>
+                        <div v-if="computedAvailableSlots.length === 0" class="alert alert-warning py-2 px-3 small border-0 rounded-3">
+                          <i class="bi bi-info-circle-fill me-2"></i>Không có giờ khám nào còn trống cho lựa chọn này. Vui lòng chọn ngày khác hoặc đổi bác sĩ.
+                        </div>
+                        <div v-else class="time-slots-grid d-flex flex-wrap gap-2 pt-2">
+                          <button
+                            v-for="slot in computedAvailableSlots"
+                            :key="slot"
+                            type="button"
+                            class="btn-time-pill"
+                            :class="{ active: bookForm.appointmentDate === slot }"
+                            @click="selectTimeSlot(selectedDoctorFilter === 'auto' ? null : selectedDoctorFilter, slot)"
+                          >
+                            {{ formatTimeOnly(slot) }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
                     <div class="col-12">
                       <label class="form-label-custom">Triệu chứng / Lý do khám <span class="text-danger">*</span></label>
                       <textarea
@@ -243,8 +325,74 @@
                   </div>
                 </div>
 
+
+                <!-- Step 2.5: Choose Vaccine -->
+                <div v-else-if="isVaccinationService && currentStep === 2">
+                  <p class="text-muted small mb-3">Vui lòng chọn loại vắc-xin cho bé <strong>{{ getSelectedPetName() }}</strong>:</p>
+                  
+                  <div id="vaccine-select-list-container" class="vaccine-select-list mb-3" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                    <div
+                      v-for="vac in filteredVaccines"
+                      :key="vac.id"
+                      :id="'vaccine-option-card-' + vac.id"
+                      class="vaccine-card-select"
+                      :class="{ selected: bookForm.vaccineId === vac.id }"
+                      @click="selectVaccine(vac.id)"
+                    >
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div>
+                          <strong class="text-dark">{{ vac.name }}</strong>
+                          <div class="text-muted small" style="font-size: 0.78rem;">
+                            Nhà sản xuất: {{ vac.manufacturer || 'Không rõ' }}
+                          </div>
+                          <div class="text-muted small mt-1" style="font-size: 0.75rem;">
+                            {{ vac.description }}
+                          </div>
+                        </div>
+                        <div class="text-end">
+                          <span class="badge" :class="vac.stockQuantity > 2 ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'">
+                            Còn: {{ vac.stockQuantity }} liều
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="vaccine-validation-loading" v-if="checkingValidation" class="text-center py-3">
+                    <span class="spinner-border spinner-border-sm text-warning me-2"></span>
+                    <span class="text-muted small">Đang đối chiếu phác đồ tiêm chủng...</span>
+                  </div>
+
+                  <div v-else-if="vaccineValidation">
+                    <!-- Warning banner if validation fails but allows override -->
+                    <div v-if="!vaccineValidation.isValid" id="vaccine-validation-alert-warning" class="alert rounded-3 p-3" :class="vaccineValidation.requiresDoctorOverride ? 'alert-warning border-warning' : 'alert-danger border-danger'">
+                      <div class="d-flex gap-2">
+                        <i class="bi flex-shrink-0" :class="vaccineValidation.requiresDoctorOverride ? 'bi-exclamation-triangle-fill text-warning' : 'bi-dash-circle-fill text-danger'" style="font-size: 1.25rem;"></i>
+                        <div>
+                          <strong class="d-block mb-1">{{ vaccineValidation.requiresDoctorOverride ? 'Cảnh báo phác đồ y khoa' : 'Không đạt điều kiện tiêm chủng' }}</strong>
+                          <span class="small">{{ vaccineValidation.warningMessage }}</span>
+                          <span v-if="vaccineValidation.requiresDoctorOverride" class="d-block mt-2 small text-muted font-italic">
+                            * Lưu ý: Lịch tiêm của bé sẽ được bác sĩ thú y trực tiếp rà soát và ghi đè chấp thuận tại phòng khám.
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Success banner if valid -->
+                    <div v-else id="vaccine-validation-alert-success" class="alert alert-success border-success rounded-3 p-3">
+                      <div class="d-flex gap-2 align-items-center">
+                        <i class="bi bi-patch-check-fill text-success" style="font-size: 1.25rem;"></i>
+                        <div>
+                          <strong class="d-block">Phác đồ hợp lệ</strong>
+                          <span class="small">Bé đủ điều kiện để thực hiện mũi tiêm này theo đúng lịch sử tiêm chủng.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Step 3: Confirm -->
-                <div v-else-if="currentStep === 2">
+                <div v-else-if="currentStep === (isVaccinationService ? 3 : 2)">
                   <div class="booking-confirm-card">
                     <h6 class="fw-bold mb-3 text-dark">
                       <i class="bi bi-clipboard-check text-warning me-2"></i>Xác nhận thông tin đặt lịch
@@ -256,6 +404,10 @@
                     <div class="confirm-row">
                       <span class="confirm-label">Dịch vụ</span>
                       <span class="confirm-value">{{ getSelectedServiceName() }}</span>
+                    </div>
+                    <div v-if="bookForm.vaccineId" class="confirm-row">
+                      <span class="confirm-label">Loại Vaccine</span>
+                      <span class="confirm-value">{{ getSelectedVaccineName() }}</span>
                     </div>
                     <div class="confirm-row">
                       <span class="confirm-label">Thời gian</span>
@@ -288,7 +440,7 @@
                   </button>
                   <div class="ms-auto d-flex gap-2">
                     <button
-                      v-if="currentStep < 2"
+                      v-if="currentStep < maxSteps"
                       type="button"
                       class="btn btn-premium-appt"
                       @click="nextStep"
@@ -380,6 +532,13 @@
                       <span>{{ getInvoiceStatusLabel(detailAppt.invoiceStatus) }}</span>
                       <strong v-if="detailAppt.invoiceTotalAmount" class="text-dark">{{ formatCurrency(detailAppt.invoiceTotalAmount) }}</strong>
                     </div>
+                  </div>
+                </div>
+                <div v-if="detailAppt.qrToken" class="col-12">
+                  <div id="appointment-detail-qr-box" class="detail-item text-center p-3" style="background: #fafafa; border: 1.5px dashed #10b981; border-radius: 12px;">
+                    <div class="detail-label"><i class="bi bi-qr-code me-1"></i>Mã QR Check-in</div>
+                    <div class="fs-5 fw-bold text-dark font-monospace my-1">{{ detailAppt.qrToken }}</div>
+                    <div class="small text-muted" style="font-size: 0.75rem;">Đưa mã này cho nhân viên lễ tân khi đến phòng khám để check-in nhanh.</div>
                   </div>
                 </div>
               </div>
@@ -485,6 +644,10 @@ const loading = ref(false);
 const errorMsg = ref('');
 
 const activeFilter = ref('all');
+const currentPage = ref(1);
+const pageSize = ref(5);
+const totalCount = ref(0);
+const totalPages = ref(1);
 
 // Detail modal
 const showDetailModal = ref(false);
@@ -508,9 +671,69 @@ const bookForm = ref({
   appointmentDate: '',
   symptom: '',
   note: '',
+  vaccineId: null as number | null,
+  doctorId: null as string | null,
 });
 
-const bookingSteps = ['Chọn thú cưng', 'Dịch vụ & Thời gian', 'Xác nhận'];
+const selectedBookingDate = ref('');
+const selectedDoctorFilter = ref<string>('auto');
+const doctorAvailableSlots = ref<Array<{ doctorId: string; doctorName: string; availableSlots: string[] }>>([]);
+const fetchingSlots = ref(false);
+const slotFetchError = ref('');
+
+const computedAvailableSlots = computed(() => {
+  if (selectedDoctorFilter.value === 'auto') {
+    const allSlots: string[] = [];
+    doctorAvailableSlots.value.forEach(doc => {
+      doc.availableSlots.forEach(slot => {
+        if (!allSlots.includes(slot)) {
+          allSlots.push(slot);
+        }
+      });
+    });
+    return allSlots.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  } else {
+    const doc = doctorAvailableSlots.value.find(d => d.doctorId === selectedDoctorFilter.value);
+    return doc ? doc.availableSlots : [];
+  }
+});
+
+const isVaccinationService = computed(() => {
+  const svc = services.value.find(s => s.id === bookForm.value.serviceId);
+  return svc ? (svc.name.toLowerCase().includes('tiêm') || svc.name.toLowerCase().includes('vaccine') || svc.name.toLowerCase().includes('chích')) : false;
+});
+
+const bookingSteps = computed(() => {
+  return isVaccinationService.value 
+    ? ['Chọn thú cưng', 'Dịch vụ & Thời gian', 'Chọn Vaccine', 'Xác nhận'] 
+    : ['Chọn thú cưng', 'Dịch vụ & Thời gian', 'Xác nhận'];
+});
+
+const maxSteps = computed(() => isVaccinationService.value ? 3 : 2);
+
+const vaccines = ref<Vaccine[]>([]);
+const vaccineValidation = ref<ValidationResult | null>(null);
+const checkingValidation = ref(false);
+const lastBookedAppt = ref<AppointmentDetail | null>(null);
+
+
+interface Vaccine {
+  id: number;
+  name: string;
+  manufacturer: string | null;
+  description: string | null;
+  stockQuantity: number;
+  targetSpecies: string | null;
+  minAgeWeeks: number | null;
+  intervalDays: number | null;
+}
+
+interface ValidationResult {
+  isValid: boolean;
+  warningMessage: string | null;
+  requiresDoctorOverride: boolean;
+  nextAvailableDate: string | null;
+}
 
 // ===== Filter Options =====
 const filterOptions = [
@@ -524,33 +747,67 @@ const filterOptions = [
 
 // ===== Computed =====
 const filteredAppointments = computed(() => {
-  if (activeFilter.value === 'all') return appointments.value;
-  return appointments.value.filter(a => a.status === activeFilter.value);
+  return appointments.value;
 });
 
-const minDateStr = computed(() => {
+const minDateOnlyStr = computed(() => {
   const now = new Date();
-  now.setMinutes(now.getMinutes() + 30); // At least 30 min from now
-  return now.toISOString().slice(0, 16);
+  return now.toISOString().split('T')[0];
 });
+
 
 const canProceed = computed(() => {
   if (currentStep.value === 0) return bookForm.value.petId > 0;
-  if (currentStep.value === 1) return bookForm.value.serviceId > 0 && bookForm.value.appointmentDate !== '' && bookForm.value.symptom.trim() !== '';
+  if (currentStep.value === 1) {
+    return bookForm.value.serviceId > 0 && 
+           bookForm.value.appointmentDate !== '' && 
+           bookForm.value.symptom.trim() !== '' && 
+           (bookForm.value.doctorId !== null || selectedDoctorFilter.value === 'auto');
+  }
+  if (isVaccinationService.value && currentStep.value === 2) return bookForm.value.vaccineId !== null && bookForm.value.vaccineId > 0;
   return true;
 });
+
 
 // ===== API =====
 const fetchAppointments = async () => {
   loading.value = true;
   errorMsg.value = '';
   try {
-    const res = await api.get('/my-appointments');
-    appointments.value = res.data;
+    const res = await api.get('/my-appointments', {
+      params: {
+        page: currentPage.value,
+        pageSize: pageSize.value,
+        status: activeFilter.value === 'all' ? null : activeFilter.value
+      }
+    });
+    appointments.value = res.data.items;
+    totalCount.value = res.data.totalCount;
+    totalPages.value = res.data.totalPages;
   } catch (err: any) {
     errorMsg.value = 'Không thể tải lịch hẹn. Vui lòng thử lại.';
   } finally {
     loading.value = false;
+  }
+};
+
+const changeFilter = (val: string) => {
+  activeFilter.value = val;
+  currentPage.value = 1;
+  fetchAppointments();
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+    fetchAppointments();
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+    fetchAppointments();
   }
 };
 
@@ -572,13 +829,22 @@ const submitBooking = async () => {
   bookingLoading.value = true;
   bookingError.value = '';
   try {
-    await api.post('/my-appointments', {
+    const res = await api.post('/my-appointments', {
       petId: bookForm.value.petId,
       serviceId: bookForm.value.serviceId,
       appointmentDate: bookForm.value.appointmentDate,
       symptom: bookForm.value.symptom,
       note: bookForm.value.note,
+      vaccineId: bookForm.value.vaccineId,
+      doctorId: bookForm.value.doctorId,
     });
+    const appointmentId = res.data.id;
+    try {
+      const detailRes = await api.get(`/my-appointments/${appointmentId}`);
+      lastBookedAppt.value = detailRes.data;
+    } catch {
+      lastBookedAppt.value = null;
+    }
     bookingSuccess.value = true;
     await fetchAppointments();
   } catch (err: any) {
@@ -586,6 +852,40 @@ const submitBooking = async () => {
   } finally {
     bookingLoading.value = false;
   }
+};
+
+const onBookingDateChange = async () => {
+  bookForm.value.appointmentDate = '';
+  bookForm.value.doctorId = null;
+  selectedDoctorFilter.value = 'auto';
+  if (!selectedBookingDate.value) {
+    doctorAvailableSlots.value = [];
+    return;
+  }
+  
+  fetchingSlots.value = true;
+  slotFetchError.value = '';
+  try {
+    const res = await api.get('/my-appointments/available-slots', {
+      params: { date: selectedBookingDate.value }
+    });
+    doctorAvailableSlots.value = res.data;
+  } catch (err: any) {
+    slotFetchError.value = err?.response?.data?.message || 'Không thể tải danh sách khung giờ trống.';
+    doctorAvailableSlots.value = [];
+  } finally {
+    fetchingSlots.value = false;
+  }
+};
+
+const selectTimeSlot = (doctorId: string | null, slotStr: string) => {
+  bookForm.value.appointmentDate = slotStr;
+  bookForm.value.doctorId = selectedDoctorFilter.value === 'auto' ? null : doctorId;
+};
+
+const formatTimeOnly = (dateStr: string): string => {
+  if (!dateStr) return '';
+  return new Date(dateStr).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 };
 
 const cancelAppointment = async () => {
@@ -605,21 +905,27 @@ const cancelAppointment = async () => {
 
 // ===== Modal controls =====
 const openBookModal = async () => {
-  bookForm.value = { petId: 0, serviceId: 0, appointmentDate: '', symptom: '', note: '' };
+  bookForm.value = { petId: 0, serviceId: 0, appointmentDate: '', symptom: '', note: '', vaccineId: null, doctorId: null };
+  selectedBookingDate.value = '';
+  doctorAvailableSlots.value = [];
   currentStep.value = 0;
   bookingError.value = '';
   bookingSuccess.value = false;
+  vaccineValidation.value = null;
+  lastBookedAppt.value = null;
   await fetchPets();
   await fetchServices();
+  await fetchVaccines();
   showBookModal.value = true;
 };
+
 
 const closeBookModal = () => {
   showBookModal.value = false;
 };
 
 const nextStep = () => {
-  if (currentStep.value < 2) currentStep.value++;
+  if (currentStep.value < maxSteps.value) currentStep.value++;
 };
 
 const openDetailModal = (appt: AppointmentDetail) => {
@@ -639,11 +945,6 @@ const confirmCancelFromDetail = (appt: AppointmentDetail) => {
 };
 
 // ===== Helpers =====
-const getCountByStatus = (status: string): number => {
-  if (status === 'all') return 0;
-  return appointments.value.filter(a => a.status === status).length;
-};
-
 const canCancel = (status: string | null): boolean => {
   return status === 'pending' || status === 'confirmed';
 };
@@ -696,6 +997,64 @@ const getSelectedServiceName = (): string => {
   return svc?.name ?? '—';
 };
 
+const getSelectedVaccineName = (): string => {
+  const vac = vaccines.value.find(v => v.id === bookForm.value.vaccineId);
+  return vac ? vac.name : '—';
+};
+
+const fetchVaccines = async () => {
+  try {
+    const res = await api.get('/my-appointments/vaccines');
+    vaccines.value = res.data;
+  } catch { /* silent */ }
+};
+
+const selectedPetSpecies = computed(() => {
+  const pet = myPets.value.find(p => p.id === bookForm.value.petId);
+  return pet?.species || '';
+});
+
+const filteredVaccines = computed(() => {
+  if (!selectedPetSpecies.value) return vaccines.value;
+  const petSpeciesLower = selectedPetSpecies.value.toLowerCase();
+  return vaccines.value.filter(v => {
+    if (!v.targetSpecies || v.targetSpecies.toLowerCase() === 'all') return true;
+    const targetLower = v.targetSpecies.toLowerCase();
+    return petSpeciesLower.includes(targetLower) || targetLower.includes(petSpeciesLower);
+  });
+});
+
+const selectVaccine = async (id: number) => {
+  bookForm.value.vaccineId = id;
+  await validateVaccineChoice();
+};
+
+const validateVaccineChoice = async () => {
+  if (!bookForm.value.petId || !bookForm.value.vaccineId || !bookForm.value.appointmentDate) {
+    vaccineValidation.value = null;
+    return;
+  }
+  checkingValidation.value = true;
+  vaccineValidation.value = null;
+  try {
+    const res = await api.post('/my-appointments/validate-vaccine', {
+      petId: bookForm.value.petId,
+      vaccineId: bookForm.value.vaccineId,
+      targetDate: bookForm.value.appointmentDate,
+    });
+    vaccineValidation.value = res.data;
+  } catch (err: any) {
+    vaccineValidation.value = {
+      isValid: false,
+      warningMessage: err?.response?.data?.message || 'Không thể kiểm tra phác đồ tiêm chủng.',
+      requiresDoctorOverride: false,
+      nextAvailableDate: null
+    };
+  } finally {
+    checkingValidation.value = false;
+  }
+};
+
 const formatDay = (dateStr: string): string => {
   if (!dateStr) return '—';
   return new Date(dateStr).getDate().toString().padStart(2, '0');
@@ -740,6 +1099,10 @@ const formatCurrency = (amount: number | null | undefined): string => {
 
 // ===== Lifecycle =====
 onMounted(fetchAppointments);
+
+defineExpose({
+  openBookModal
+});
 </script>
 
 <style scoped>
@@ -1310,4 +1673,81 @@ textarea.form-control-custom { resize: vertical; min-height: 80px; }
 /* Modal transition */
 .modal-fade-enter-active, .modal-fade-leave-active { transition: all 0.3s ease; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; transform: scale(0.95); }
+
+/* Vaccine Selection Styles */
+.vaccine-card-select {
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+}
+
+.vaccine-card-select:hover {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.vaccine-card-select.selected {
+  border-color: #10b981;
+  background: #f0fdf4;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+/* Time slots selection styles */
+.doctor-slots-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.doctor-slot-group {
+  transition: all 0.25s ease;
+}
+
+.doctor-name-title {
+  font-size: 0.95rem;
+  color: #1e293b;
+}
+
+.avatar-mini-doctor {
+  font-size: 1.25rem;
+}
+
+.time-slots-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn-time-pill {
+  background: white;
+  border: 1.5px solid #cbd5e1;
+  color: #334155;
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-time-pill:hover {
+  border-color: #10b981;
+  color: #059669;
+  background: #f0fdf4;
+  transform: translateY(-1px);
+}
+
+.btn-time-pill.active {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #10b981;
+  color: white;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+  transform: scale(1.03);
+}
 </style>
+

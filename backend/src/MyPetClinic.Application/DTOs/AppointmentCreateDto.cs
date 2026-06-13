@@ -23,5 +23,7 @@ namespace MyPetClinic.Application.DTOs
         public string Symptom { get; set; } = null!;
 
         public string? Note { get; set; }
+
+        public long? VaccineId { get; set; }
     }
 }

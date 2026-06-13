@@ -29,5 +29,8 @@ namespace MyPetClinic.Application.DTOs
         public long? InvoiceId { get; set; }
         public string? InvoiceStatus { get; set; }
         public decimal? InvoiceTotalAmount { get; set; }
+
+        public long? VaccineId { get; set; }
+        public string? VaccineName { get; set; }
     }
 }

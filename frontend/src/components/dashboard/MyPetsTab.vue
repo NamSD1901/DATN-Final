@@ -58,7 +58,10 @@
 
             <!-- Pet Avatar -->
             <div class="pet-avatar-wrapper">
-              <div class="pet-avatar" :style="{ background: getPetAvatarColor(pet.species) }">
+              <div v-if="pet.avatar" class="pet-avatar-img-wrapper">
+                <img :src="getPetAvatarUrl(pet.avatar)" alt="Pet Avatar" class="pet-avatar-img" />
+              </div>
+              <div v-else class="pet-avatar" :style="{ background: getPetAvatarColor(pet.species) }">
                 <span>{{ getSpeciesEmoji(pet.species) }}</span>
               </div>
               <div v-if="pet.sterilized" class="sterilized-badge" title="Đã triệt sản">
@@ -136,6 +139,22 @@
               </div>
 
               <form @submit.prevent="submitForm" class="pet-form">
+                <!-- Pet Avatar Uploader -->
+                <div class="pet-upload-section mb-4 text-center">
+                  <div class="pet-upload-container mx-auto">
+                    <img v-if="form.avatar" :src="getPetAvatarUrl(form.avatar)" alt="Pet Preview" class="pet-upload-preview" />
+                    <div v-else class="pet-upload-placeholder">
+                      <span class="fs-1">🐾</span>
+                    </div>
+                    <label for="pet-avatar-upload" class="pet-upload-label" :class="{ uploading: avatarUploading }">
+                      <span v-if="avatarUploading" class="spinner-border spinner-border-sm text-white" role="status"></span>
+                      <i v-else class="bi bi-camera-fill"></i>
+                      <input type="file" id="pet-avatar-upload" class="d-none" accept="image/*" @change="handlePetAvatarUpload" />
+                    </label>
+                  </div>
+                  <div class="text-muted small mt-2">Chọn ảnh đại diện của bé (Tối đa 2MB)</div>
+                </div>
+
                 <div class="row g-3">
                   <!-- Name -->
                   <div class="col-sm-6">
@@ -241,7 +260,10 @@
           <div class="pet-modal-card detail-modal">
             <div class="pet-modal-header detail-header" :style="{ background: getPetAvatarColor(selectedPet.species) }">
               <div class="text-center w-100">
-                <div class="detail-avatar">{{ getSpeciesEmoji(selectedPet.species) }}</div>
+                <div v-if="selectedPet.avatar" class="detail-avatar-img-wrapper mb-2">
+                  <img :src="getPetAvatarUrl(selectedPet.avatar)" alt="Pet Avatar" class="detail-avatar-img" />
+                </div>
+                <div v-else class="detail-avatar mb-2">{{ getSpeciesEmoji(selectedPet.species) }}</div>
                 <h4 class="fw-bold text-white mt-2 mb-0">{{ selectedPet.name }}</h4>
                 <p class="text-white opacity-75 small mb-0">{{ selectedPet.species }} · {{ selectedPet.breed || 'Chưa xác định' }}</p>
               </div>
@@ -362,6 +384,8 @@
 import { ref, onMounted, computed } from 'vue';
 import api from '../../services/api';
 
+const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5150';
+
 // ===== Types =====
 interface Pet {
   id: number;
@@ -377,6 +401,7 @@ interface Pet {
   sterilized: boolean;
   microchipCode: string | null;
   allergyNote: string | null;
+  avatar: string | null;
   createdAt: string | null;
 }
 
@@ -393,6 +418,7 @@ interface PetForm {
   sterilized: boolean;
   microchipCode: string;
   allergyNote: string;
+  avatar: string | null;
 }
 
 // ===== State =====
@@ -413,6 +439,7 @@ const formLoading = ref(false);
 const deleteLoading = ref(false);
 const formSuccess = ref('');
 const formError = ref('');
+const avatarUploading = ref(false);
 
 const defaultForm = (): PetForm => ({
   name: '',
@@ -426,6 +453,7 @@ const defaultForm = (): PetForm => ({
   sterilized: false,
   microchipCode: '',
   allergyNote: '',
+  avatar: null,
 });
 
 const form = ref<PetForm>(defaultForm());
@@ -433,6 +461,40 @@ const form = ref<PetForm>(defaultForm());
 const todayStr = computed(() => {
   return new Date().toISOString().split('T')[0];
 });
+
+// ===== Helper for Avatar URL =====
+const getPetAvatarUrl = (avatarPath: string | null) => {
+  if (!avatarPath) return '';
+  if (avatarPath.startsWith('http')) return avatarPath;
+  return `${backendUrl}${avatarPath}`;
+};
+
+// ===== Handle Avatar Upload =====
+const handlePetAvatarUpload = async (event: Event) => {
+  const fileInput = event.target as HTMLInputElement;
+  if (!fileInput.files || fileInput.files.length === 0) return;
+
+  const file = fileInput.files[0];
+  const formData = new FormData();
+  formData.append('avatarFile', file);
+
+  avatarUploading.value = true;
+  formError.value = '';
+  try {
+    const response = await api.post('/mypets/upload-avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    if (response.data.success) {
+      form.value.avatar = response.data.avatarUrl;
+    }
+  } catch (error: any) {
+    formError.value = error.response?.data?.message || 'Không thể tải ảnh thú cưng lên.';
+  } finally {
+    avatarUploading.value = false;
+  }
+};
 
 // ===== API calls =====
 const fetchPets = async () => {
@@ -507,6 +569,7 @@ const openEditModal = (pet: Pet) => {
     sterilized: pet.sterilized ?? false,
     microchipCode: pet.microchipCode ?? '',
     allergyNote: pet.allergyNote ?? '',
+    avatar: pet.avatar ?? null,
   };
   formSuccess.value = '';
   formError.value = '';
@@ -731,6 +794,22 @@ onMounted(fetchPets);
   margin-bottom: 0.5rem;
 }
 
+.pet-avatar-img-wrapper {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  border: 4px solid white;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+.pet-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .pet-avatar {
   width: 65px;
   height: 65px;
@@ -757,6 +836,81 @@ onMounted(fetchPets);
   justify-content: center;
   font-size: 0.65rem;
   border: 2px solid white;
+}
+
+/* Pet Upload Section */
+.pet-upload-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pet-upload-container {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.pet-upload-preview {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid white;
+}
+
+.pet-upload-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+.pet-upload-label {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #d97706;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s;
+}
+
+.pet-upload-label:hover {
+  background: #b45309;
+  transform: scale(1.1);
+}
+
+.detail-avatar-img-wrapper {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  margin: 0 auto;
+  background: white;
+}
+
+.detail-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* Card body */

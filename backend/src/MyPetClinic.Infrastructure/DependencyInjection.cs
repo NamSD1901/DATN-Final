@@ -3,7 +3,7 @@ using MyPetClinic.Application.Interfaces.Repositories;
 using MyPetClinic.Application.Interfaces;
 using MyPetClinic.Application.Interfaces.Services;
 using MyPetClinic.Application.Services;
-using MyPetClinic.Application.Services;
+using MyPetClinic.Application.Helpers;
 using MyPetClinic.Infrastructure.Repositories;
 using MyPetClinic.Infrastructure.Services;
 
@@ -28,8 +28,9 @@ namespace MyPetClinic.Infrastructure
             services.AddScoped<IReceptionistService, ReceptionistService>();
             services.AddScoped<IInvoiceService, InvoiceService>();
             
-            services.AddScoped<IPetRepository, PetRepository>();
             services.AddScoped<IPetService, PetService>();
+            services.AddScoped<IMedicalRecordService, MedicalRecordService>();
+            services.AddScoped<IVaccinationService, VaccinationService>();
             
             // Nếu muốn để logic Service ở Application Layer, ta chỉ cần đăng ký tại đây
             // Hoặc có thể tạo AddApplicationServices riêng biệt bên Application, 
@@ -42,6 +43,10 @@ namespace MyPetClinic.Infrastructure
 
             // Đăng ký AI Chatbot Service
             services.AddScoped<IAiChatbotService, AiChatbotService>();
+            services.AddScoped<IVaccinationScheduleChecker, VaccinationScheduleChecker>();
+
+            // Đăng ký Audit Log Service
+            services.AddScoped<IAuditLogService, AuditLogService>();
 
             return services;
         }

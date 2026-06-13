@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Services;
+using MyPetClinic.Application.Interfaces.Repositories;
 using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -18,13 +20,16 @@ namespace MyPetClinic.Controllers
     {
         private readonly IAppointmentService _appointmentService;
         private readonly IPetService _petService;
+        private readonly IUnitOfWork _unitOfWork;
 
         public CustomerAppointmentController(
             IAppointmentService appointmentService,
-            IPetService petService)
+            IPetService petService,
+            IUnitOfWork unitOfWork)
         {
             _appointmentService = appointmentService;
             _petService = petService;
+            _unitOfWork = unitOfWork;
         }
 
         private Guid GetCurrentUserId()
@@ -36,16 +41,33 @@ namespace MyPetClinic.Controllers
         }
 
         /// <summary>
-        /// Lấy tất cả lịch hẹn của khách hàng đang đăng nhập.
+        /// Lấy tất cả lịch hẹn của khách hàng đang đăng nhập (hỗ trợ phân trang và lọc trạng thái).
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetMyAppointments()
+        public async Task<IActionResult> GetMyAppointments([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null)
         {
             try
             {
                 var customerId = GetCurrentUserId();
-                var appointments = await _appointmentService.GetCustomerAppointmentsAsync(customerId);
+                var appointments = await _appointmentService.GetCustomerAppointmentsPaginatedAsync(customerId, status, page, pageSize);
                 return Ok(appointments);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách các slot thời gian rảnh của các bác sĩ trong một ngày cụ thể.
+        /// </summary>
+        [HttpGet("available-slots")]
+        public async Task<IActionResult> GetAvailableSlots([FromQuery] DateTime date)
+        {
+            try
+            {
+                var slots = await _appointmentService.GetAvailableSlotsAsync(date);
+                return Ok(slots);
             }
             catch (Exception ex)
             {
@@ -106,6 +128,7 @@ namespace MyPetClinic.Controllers
                     AppointmentDate = dto.AppointmentDate,
                     Symptom = dto.Symptom ?? string.Empty,
                     Note = dto.Note,
+                    VaccineId = dto.VaccineId
                 };
 
                 var appointmentId = await _appointmentService.CreateAppointmentAsync(createDto, customerId);
@@ -155,6 +178,80 @@ namespace MyPetClinic.Controllers
             var services = await _appointmentService.GetServicesAsync();
             return Ok(services);
         }
+
+        /// <summary>
+        /// Lấy danh sách vắc-xin còn hàng trong kho.
+        /// </summary>
+        [HttpGet("vaccines")]
+        public async Task<IActionResult> GetAvailableVaccines()
+        {
+            try
+            {
+                var vaccines = await _unitOfWork.Vaccines.FindAsync(v => v.StockQuantity > 0);
+                return Ok(vaccines.OrderBy(v => v.Name));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Kiểm tra phác đồ tiêm chủng cho thú cưng trước khi đặt lịch.
+        /// </summary>
+        [HttpPost("validate-vaccine")]
+        public async Task<IActionResult> ValidateVaccine([FromBody] ValidateVaccineDto dto)
+        {
+            try
+            {
+                var customerId = GetCurrentUserId();
+                
+                // Security check: pet must belong to customer
+                var pets = await _unitOfWork.Pets.FindAsync(p => p.Id == dto.PetId && p.OwnerId == customerId);
+                var pet = pets.FirstOrDefault();
+                if (pet == null)
+                    return BadRequest(new { message = "Thú cưng không hợp lệ hoặc không thuộc về bạn." });
+
+                var vaccines = await _unitOfWork.Vaccines.FindAsync(v => v.Id == dto.VaccineId);
+                var vaccine = vaccines.FirstOrDefault();
+                if (vaccine == null)
+                    return NotFound(new { message = "Không tìm thấy vắc-xin." });
+
+                var lastRecords = await _unitOfWork.VaccinationRecords.FindAsync(vr => vr.PetId == dto.PetId && vr.VaccineId == dto.VaccineId);
+                var lastRecord = lastRecords.OrderByDescending(vr => vr.InjectionDate).FirstOrDefault();
+
+                var checker = new MyPetClinic.Application.Helpers.VaccinationScheduleChecker();
+                var validation = checker.ValidateInterval(lastRecord, vaccine, dto.TargetDate, pet);
+                
+                return Ok(validation);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Lấy lịch sử bệnh án khám của thú cưng thuộc sở hữu (chống IDOR).
+        /// </summary>
+        [HttpGet("pets/{petId:long}/medical-history")]
+        public async Task<IActionResult> GetPetMedicalHistory(long petId)
+        {
+            try
+            {
+                var customerId = GetCurrentUserId();
+                var history = await _appointmentService.GetPetMedicalHistoryAsync(petId, customerId);
+                return Ok(history);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 
     /// <summary>
@@ -168,5 +265,16 @@ namespace MyPetClinic.Controllers
         public DateTime? AppointmentDate { get; set; }
         public string? Symptom { get; set; }
         public string? Note { get; set; }
+        public long? VaccineId { get; set; }
+    }
+
+    /// <summary>
+    /// DTO kiểm tra phác đồ vắc-xin.
+    /// </summary>
+    public class ValidateVaccineDto
+    {
+        public long PetId { get; set; }
+        public long VaccineId { get; set; }
+        public DateTime TargetDate { get; set; }
     }
 }

@@ -43,3 +43,12 @@
   1. Đóng gói logic tư vấn AI trong `GeminiChatService` và tích hợp System Prompt nghiêm ngặt (chỉ tư vấn kỹ năng chăm sóc và sơ cứu cơ bản, từ chối kê đơn và chẩn đoán lâm sàng chuyên sâu).
   2. Triển khai công việc định kỳ bằng `.NET BackgroundService` kế thừa `BackgroundService` của framework để thực hiện quét bảng CSDL và gửi email tự động hàng ngày lúc 08:00 sáng.
 - **Hệ quả:** Đảm bảo tính pháp lý và an toàn y tế trong tư vấn AI, đồng thời tự động hóa hoàn toàn quy trình CSKH nhắc lịch tiêm chủng một cách hiệu quả và đáng tin cậy.
+
+## ADR 07: Chuyển đổi luồng đặt lịch sang tự động phân bổ bác sĩ và gộp slot giờ khám chung của phòng khám
+
+- **Bối cảnh:** Việc bắt buộc khách hàng phải chọn đích danh bác sĩ khi đặt lịch online gây bất tiện nếu bác sĩ đó chưa có lịch trực hoặc bị quá tải, trong khi các bác sĩ khác vẫn rảnh.
+- **Quyết định:** 
+  1. Gộp tất cả các slot thời gian trống của tất cả các bác sĩ trực trong ngày thành một danh sách khung giờ chung duy nhất trên Frontend.
+  2. Cho phép khách hàng chọn giờ trực tiếp mà không cần chọn bác sĩ (Tự động phân công).
+  3. Ở Backend, cải tiến logic `CreateAppointmentAsync` để tự động lọc các bác sĩ rảnh vào khung giờ đó và chọn ra bác sĩ có ít ca khám nhất trong ngày (Cân bằng tải).
+- **Hệ quả:** Tối giản hóa quy trình đặt lịch của khách hàng, tối ưu hóa công suất làm việc của đội ngũ bác sĩ thú y, và tránh lỗi trùng lịch/quá tải cục bộ.

@@ -50,6 +50,7 @@ namespace MyPetClinic.Application.Services
                 Sterilized = dto.Sterilized,
                 MicrochipCode = dto.MicrochipCode,
                 AllergyNote = dto.AllergyNote,
+                Avatar = dto.Avatar,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -77,6 +78,7 @@ namespace MyPetClinic.Application.Services
             pet.Sterilized = dto.Sterilized;
             pet.MicrochipCode = dto.MicrochipCode;
             pet.AllergyNote = dto.AllergyNote;
+            pet.Avatar = dto.Avatar;
 
             await _petRepository.UpdatePetAsync(pet);
             await _petRepository.SaveChangesAsync();
@@ -111,6 +113,7 @@ namespace MyPetClinic.Application.Services
                 Sterilized = pet.Sterilized,
                 MicrochipCode = pet.MicrochipCode,
                 AllergyNote = pet.AllergyNote,
+                Avatar = pet.Avatar,
                 CreatedAt = pet.CreatedAt
             };
         }

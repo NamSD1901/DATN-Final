@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using MyPetClinic.Domain.Entities;
 using MyPetClinic.Infrastructure.Persistence;
 using MyPetClinic.Application.Interfaces.Services;
-using MyPetClinic.Application.Interfaces.Services;
 using MyPetClinic.Application.DTOs;
 using System.Security.Claims;
 
@@ -179,26 +178,26 @@ namespace MyPetClinic.Controllers
 
     public class ResendOtpRequest
     {
-        public string Email { get; set; }
-        public string Type { get; set; }
+        public required string Email { get; set; }
+        public required string Type { get; set; }
     }
 
     public class VerifyOtpRequest
     {
-        public string Email { get; set; }
-        public string OtpCode { get; set; }
+        public required string Email { get; set; }
+        public required string OtpCode { get; set; }
     }
 
     public class ForgotPasswordRequest
     {
-        public string Email { get; set; }
+        public required string Email { get; set; }
     }
 
     public class ResetPasswordRequest
     {
-        public string Email { get; set; }
-        public string OtpCode { get; set; }
-        public string NewPassword { get; set; }
-        public string ConfirmPassword { get; set; }
+        public required string Email { get; set; }
+        public required string OtpCode { get; set; }
+        public required string NewPassword { get; set; }
+        public required string ConfirmPassword { get; set; }
     }
 }

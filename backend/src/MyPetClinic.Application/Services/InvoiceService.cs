@@ -105,20 +105,24 @@ namespace MyPetClinic.Application.Services
 
             // 2. Add Prescribed Medicines (from SOAP Medical Record)
             var medicalRecord = await _unitOfWork.MedicalRecords.GetFirstOrDefaultWithIncludesAsync(
-                mr => mr.AppointmentId == appointmentId,
-                mr => mr.Prescriptions!
+                mr => mr.AppointmentId == appointmentId
             );
-            // Note: Since nested includes are tough without ThenInclude, we might need manual fetch if there are prescriptions.
-            // But since IGenericRepository doesn't natively support 3-level deep includes in params without complex expressions,
-            // let's fetch prescriptions separately if needed. Or assume it works if we use string includes in EF, but here we don't have it.
-            // In MyPetClinic, we might not have a full complex graph here without EF. Let's try just getting medicalRecord.
-            // Actually, we can just use _unitOfWork.Prescriptions if needed, but the original logic didn't actually create MedicalRecords in AppointmentService anyway.
-            // Let's assume the Include(mr => mr.Prescriptions) is enough and we fetch items if present.
-            if (medicalRecord != null && medicalRecord.Prescriptions != null)
+
+            if (medicalRecord != null)
             {
-                foreach (var prescription in medicalRecord.Prescriptions)
+                var prescriptions = await _unitOfWork.Prescriptions.FindWithIncludesAsync(
+                    p => p.MedicalRecordId == medicalRecord.Id
+                );
+
+                var prescriptionIds = prescriptions.Select(p => p.Id).ToList();
+                if (prescriptionIds.Any())
                 {
-                    foreach (var pi in prescription.PrescriptionItems)
+                    var prescriptionItems = await _unitOfWork.PrescriptionItems.FindWithIncludesAsync(
+                        pi => prescriptionIds.Contains(pi.PrescriptionId),
+                        pi => pi.Medicine!
+                    );
+
+                    foreach (var pi in prescriptionItems)
                     {
                         if (pi.Medicine != null)
                         {

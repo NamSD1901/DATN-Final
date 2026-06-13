@@ -15,9 +15,15 @@ namespace MyPetClinic.Application.Interfaces.Repositories
         IGenericRepository<InvoiceItem> InvoiceItems { get; }
         IGenericRepository<MedicalRecord> MedicalRecords { get; }
         IGenericRepository<Medicine> Medicines { get; }
+        IGenericRepository<Prescription> Prescriptions { get; }
+        IGenericRepository<PrescriptionItem> PrescriptionItems { get; }
+        IGenericRepository<Vaccine> Vaccines { get; }
+        IGenericRepository<VaccinationRecord> VaccinationRecords { get; }
+        IGenericRepository<DoctorSchedule> DoctorSchedules { get; }
 
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();
+        Task BeginTransactionAsync(System.Data.IsolationLevel isolationLevel);
         Task CommitTransactionAsync();
         Task RollbackTransactionAsync();
     }

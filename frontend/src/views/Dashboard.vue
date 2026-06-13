@@ -53,11 +53,20 @@
 
         <template v-if="role === 'admin'">
           <li class="mt-4 mb-2 px-3 text-muted sidebar-section-title">Quản trị hệ thống</li>
-          <li>
-            <a href="#"><i class="bi bi-person-badge-fill text-warning opacity-75"></i> Nhân sự</a>
+          <li :class="{ 'active': activeTab === 'staff' }">
+            <a href="#" @click.prevent="activeTab = 'staff'"><i class="bi bi-person-badge-fill text-warning opacity-75"></i> Nhân sự</a>
           </li>
-          <li>
-            <a href="#"><i class="bi bi-box-seam-fill text-warning opacity-75"></i> Kho thuốc & Vật tư</a>
+          <li :class="{ 'active': activeTab === 'services-admin' }">
+            <a href="#" @click.prevent="activeTab = 'services-admin'"><i class="bi bi-box-seam-fill text-warning opacity-75"></i> Quản lý Dịch vụ</a>
+          </li>
+          <li :class="{ 'active': activeTab === 'settings-admin' }">
+            <a href="#" @click.prevent="activeTab = 'settings-admin'"><i class="bi bi-clock-fill text-warning opacity-75"></i> Khung giờ làm việc</a>
+          </li>
+          <li :class="{ 'active': activeTab === 'medicines-admin' }">
+            <a href="#" @click.prevent="activeTab = 'medicines-admin'"><i class="bi bi-capsule text-warning opacity-75"></i> Quản lý Kho thuốc</a>
+          </li>
+          <li :class="{ 'active': activeTab === 'schedules-admin' }">
+            <a href="#" @click.prevent="activeTab = 'schedules-admin'"><i class="bi bi-calendar-event-fill text-warning opacity-75"></i> Lịch trực Bác sĩ</a>
           </li>
         </template>
 
@@ -78,7 +87,7 @@
 
       <!-- Sidebar Footer Actions -->
       <div class="sidebar-footer p-3 border-top mt-auto">
-        <button class="btn btn-premium w-100 mb-3 py-2 fw-bold shadow-sm rounded-4" @click="showBookingModal = true">
+        <button class="btn btn-premium w-100 mb-3 py-2 fw-bold shadow-sm rounded-4" @click="handleSidebarBookNew">
           <i class="bi bi-plus-circle-fill me-1"></i> Đặt Lịch Mới
         </button>
         <router-link to="/" class="btn btn-outline-secondary w-100 mb-2 border-0 text-start ps-4 rounded-4 hover-text-warning py-2 fw-bold" style="font-size: 0.95em;">
@@ -172,7 +181,7 @@
                   <h4 class="fw-bold mb-3 position-relative z-index-1">Đặt Lịch Hẹn Mới</h4>
                   <p class="mb-4 position-relative z-index-1 opacity-75">Tiết kiệm thời gian chờ đợi. Đăng ký trước lịch khám, tiêm phòng hoặc spa cho thú cưng của bạn ngay hôm nay.</p>
                   <div class="mt-auto position-relative z-index-1">
-                    <button @click="showBookingModal = true" class="btn btn-light text-warning fw-bold px-4 py-2 rounded-pill shadow-sm">
+                    <button @click="handleSidebarBookNew" class="btn btn-light text-warning fw-bold px-4 py-2 rounded-pill shadow-sm">
                       Đặt Lịch Ngay <i class="bi bi-arrow-right ms-1"></i>
                     </button>
                   </div>
@@ -255,6 +264,11 @@
                   <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold text-uppercase shadow-sm">
                     Tài khoản hoạt động
                   </span>
+                  <div class="mt-3">
+                    <router-link to="/profile" class="btn btn-outline-warning rounded-pill px-4 fw-bold shadow-sm">
+                      <i class="bi bi-pencil-square me-1"></i> Chỉnh sửa hồ sơ
+                    </router-link>
+                  </div>
                 </div>
                 
                 <div class="col-md-8 ps-md-4">
@@ -310,12 +324,47 @@
 
           <!-- tab: My Appointments Tab (Customer) -->
           <div v-else-if="activeTab === 'my-appointments'" class="container-fluid p-0">
-            <MyAppointmentsTab @switch-tab="activeTab = $event" />
+            <MyAppointmentsTab ref="myAppointmentsTabRef" @switch-tab="activeTab = $event" />
           </div>
 
           <!-- tab: My History Tab (Customer) -->
           <div v-else-if="activeTab === 'my-history'" class="container-fluid p-0">
             <MyHistoryTab />
+          </div>
+
+          <!-- tab: Doctor Cases Tab -->
+          <div v-else-if="activeTab === 'doctor-cases'" class="container-fluid p-0">
+            <DoctorQueueTab @switch-tab="activeTab = $event" />
+          </div>
+
+          <!-- tab: Medical Records Tab -->
+          <div v-else-if="activeTab === 'medical-records'" class="container-fluid p-0">
+            <MedicalRecordsTab @switch-tab="activeTab = $event" />
+          </div>
+
+          <!-- tab: Staff Management Tab -->
+          <div v-else-if="activeTab === 'staff'" class="container-fluid p-0">
+            <StaffTab />
+          </div>
+
+          <!-- tab: Services Admin Tab -->
+          <div v-else-if="activeTab === 'services-admin'" class="container-fluid p-0">
+            <ServicesAdminTab />
+          </div>
+
+          <!-- tab: Settings Admin Tab -->
+          <div v-else-if="activeTab === 'settings-admin'" class="container-fluid p-0">
+            <SettingsAdminTab />
+          </div>
+
+          <!-- tab: Medicines Admin Tab -->
+          <div v-else-if="activeTab === 'medicines-admin'" class="container-fluid p-0">
+            <MedicinesAdminTab />
+          </div>
+
+          <!-- tab: Schedules Admin Tab -->
+          <div v-else-if="activeTab === 'schedules-admin'" class="container-fluid p-0">
+            <SchedulesAdminTab />
           </div>
         </Transition>
       </div>
@@ -368,6 +417,13 @@ import InvoicesTab from '../components/dashboard/InvoicesTab.vue';
 import MyPetsTab from '../components/dashboard/MyPetsTab.vue';
 import MyAppointmentsTab from '../components/dashboard/MyAppointmentsTab.vue';
 import MyHistoryTab from '../components/dashboard/MyHistoryTab.vue';
+import DoctorQueueTab from '../components/dashboard/DoctorQueueTab.vue';
+import MedicalRecordsTab from '../components/dashboard/MedicalRecordsTab.vue';
+import StaffTab from '../components/dashboard/StaffTab.vue';
+import ServicesAdminTab from '../components/dashboard/ServicesAdminTab.vue';
+import SettingsAdminTab from '../components/dashboard/SettingsAdminTab.vue';
+import MedicinesAdminTab from '../components/dashboard/MedicinesAdminTab.vue';
+import SchedulesAdminTab from '../components/dashboard/SchedulesAdminTab.vue';
 
 const router = useRouter();
 
@@ -382,6 +438,20 @@ const handleSelectInvoice = (id: number) => {
 const isSidebarActive = ref(false);
 const showBookingModal = ref(false);
 const showQrModal = ref(false);
+const myAppointmentsTabRef = ref<any>(null);
+
+const handleSidebarBookNew = () => {
+  if (role.value.toLowerCase() === 'customer') {
+    activeTab.value = 'my-appointments';
+    setTimeout(() => {
+      if (myAppointmentsTabRef.value && typeof myAppointmentsTabRef.value.openBookModal === 'function') {
+        myAppointmentsTabRef.value.openBookModal();
+      }
+    }, 100);
+  } else {
+    showBookingModal.value = true;
+  }
+};
 
 // User context
 const userId = ref('');
@@ -402,6 +472,13 @@ const getTitle = computed(() => {
   if (activeTab.value === 'my-pets') return 'Thú cưng của tôi';
   if (activeTab.value === 'my-appointments') return 'Lịch hẹn của tôi';
   if (activeTab.value === 'my-history') return 'Lịch sử khám bệnh';
+  if (activeTab.value === 'doctor-cases') return 'Hàng khám của tôi';
+  if (activeTab.value === 'medical-records') return 'Hồ sơ bệnh án & Khám bệnh';
+  if (activeTab.value === 'staff') return 'Quản lý Nhân sự';
+  if (activeTab.value === 'services-admin') return 'Quản lý Dịch vụ & Giá cả';
+  if (activeTab.value === 'settings-admin') return 'Cấu hình Khung giờ làm việc';
+  if (activeTab.value === 'medicines-admin') return 'Quản lý Kho thuốc & Dược phẩm';
+  if (activeTab.value === 'schedules-admin') return 'Quản lý Ca trực Bác sĩ';
   return 'Bảng điều khiển';
 });
 
@@ -425,7 +502,14 @@ const fetchDashboardData = async () => {
     const profileRes = await api.get('/profile');
     phone.value = profileRes.data.phone || '';
     address.value = profileRes.data.address || '';
-    avatarUrl.value = profileRes.data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName.value)}&background=f59e0b&color=fff&rounded=true`;
+    
+    const avatarPath = profileRes.data.avatar;
+    const backendUrl = 'https://localhost:7284';
+    if (avatarPath) {
+      avatarUrl.value = avatarPath.startsWith('http') ? avatarPath : `${backendUrl}${avatarPath}`;
+    } else {
+      avatarUrl.value = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName.value)}&background=f59e0b&color=fff&rounded=true`;
+    }
   } catch (err) {
     console.error('Lỗi khi lấy dữ liệu dashboard:', err);
     router.push('/login');

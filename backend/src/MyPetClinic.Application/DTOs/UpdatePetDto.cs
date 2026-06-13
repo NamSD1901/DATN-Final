@@ -30,5 +30,7 @@ namespace MyPetClinic.Application.DTOs
         public string? MicrochipCode { get; set; }
         
         public string? AllergyNote { get; set; }
+        
+        public string? Avatar { get; set; }
     }
 }

@@ -21,6 +21,9 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore backend/MyPetClinic.slnx
 
+    - name: Check Formatting
+      run: dotnet format backend/MyPetClinic.slnx --verify-no-changes
+
     - name: Build Solution
       run: dotnet build backend/MyPetClinic.slnx --no-restore --configuration Release
 

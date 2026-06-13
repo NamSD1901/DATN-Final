@@ -21,6 +21,15 @@ namespace MyPetClinic.Application.Services
             _unitOfWork = unitOfWork;
         }
 
+        private (DateTime Start, DateTime End) GetVietnamTodayUtcRange()
+        {
+            var vnNow = DateTime.UtcNow.AddHours(7);
+            var vnTodayStartLocal = vnNow.Date;
+            var startUtc = DateTime.SpecifyKind(vnTodayStartLocal.AddHours(-7), DateTimeKind.Utc);
+            var endUtc = DateTime.SpecifyKind(startUtc.AddDays(1), DateTimeKind.Utc);
+            return (startUtc, endUtc);
+        }
+
         public async Task<List<OmniSearchDto>> OmniSearchAsync(string query)
         {
             if (string.IsNullOrWhiteSpace(query))
@@ -104,10 +113,12 @@ namespace MyPetClinic.Application.Services
                 throw new InvalidOperationException("Khách hàng này đã nằm trong hàng đợi rồi.");
 
             // Kiểm tra ngày khám
-            var localNow = DateTime.UtcNow.AddHours(7).Date; // Giả sử múi giờ Việt Nam (UTC+7)
-            var apptDate = appointment.AppointmentDate.AddHours(7).Date;
-            if (apptDate != localNow)
-                throw new InvalidOperationException($"Lịch hẹn này dành cho ngày {apptDate:dd/MM/yyyy}. Không thể Check-in hôm nay.");
+            var (todayStartUtc, todayEndUtc) = GetVietnamTodayUtcRange();
+            if (appointment.AppointmentDate < todayStartUtc || appointment.AppointmentDate >= todayEndUtc)
+            {
+                var localApptDate = appointment.AppointmentDate.AddHours(7).Date;
+                throw new InvalidOperationException($"Lịch hẹn này dành cho ngày {localApptDate:dd/MM/yyyy}. Không thể Check-in hôm nay.");
+            }
 
             // 1. Nếu có cân nặng mới thì cập nhật luôn cho Pet
             if (request.CurrentWeight.HasValue && appointment.Pet != null)
@@ -119,8 +130,8 @@ namespace MyPetClinic.Application.Services
             try
             {
                 // 2. Tự động tính toán Queue Number an toàn bằng Semaphore
-                var today = DateTime.UtcNow.Date;
-                var todayAppointments = await _unitOfWork.Appointments.FindAsync(a => a.AppointmentDate.Date == today && a.QueueNumber > 0);
+                var todayAppointments = await _unitOfWork.Appointments.FindAsync(a => 
+                    a.AppointmentDate >= todayStartUtc && a.AppointmentDate < todayEndUtc && a.QueueNumber > 0);
                 var maxQueueToday = todayAppointments.Any() ? todayAppointments.Max(a => (int?)a.QueueNumber) ?? 0 : 0;
 
                 // 3. Cập nhật các trường Workflow
@@ -142,10 +153,10 @@ namespace MyPetClinic.Application.Services
 
         public async Task<List<QueueItemDto>> GetTodayQueueAsync()
         {
-            var today = DateTime.UtcNow.Date;
+            var (todayStartUtc, todayEndUtc) = GetVietnamTodayUtcRange();
             
             var appointmentsList = await _unitOfWork.Appointments.FindWithIncludesAsync(
-                a => a.AppointmentDate.Date == today && 
+                a => a.AppointmentDate >= todayStartUtc && a.AppointmentDate < todayEndUtc && 
                      (a.Status == "waiting" || a.Status == "in_progress" || a.Status == "ready_to_pay"),
                 a => a.Pet!, a => a.Customer!, a => a.Doctor!
             );
@@ -250,8 +261,9 @@ namespace MyPetClinic.Application.Services
                         }
                     }
 
-                    var today = DateTime.UtcNow.Date;
-                    var todayAppointments = await _unitOfWork.Appointments.FindAsync(a => a.AppointmentDate.Date == today && a.QueueNumber > 0);
+                    var (todayStartUtc, todayEndUtc) = GetVietnamTodayUtcRange();
+                    var todayAppointments = await _unitOfWork.Appointments.FindAsync(a => 
+                        a.AppointmentDate >= todayStartUtc && a.AppointmentDate < todayEndUtc && a.QueueNumber > 0);
                     var maxQueueToday = todayAppointments.Any() ? todayAppointments.Max(a => (int?)a.QueueNumber) ?? 0 : 0;
 
                     // 5. Tạo Appointment với trạng thái Waiting luôn
