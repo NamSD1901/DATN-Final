@@ -158,4 +158,5 @@ Dưới đây là nhật ký ghi nhận các tính năng đã được kiểm th
 ### 1. VaccineReminderWorker
 - **Tệp kiểm thử:** [VaccineReminderWorkerTests.cs](file:///e:/DATN/MyPetClinic/backend/tests/MyPetClinic.Tests/VaccineReminderWorkerTests.cs)
 - **Kịch bản kiểm thử:**
+  - `SendVaccineReminders_ShouldSendEmail_OnlyWhenNextDueDateIsExactlyThreeDaysAhead`: Kiểm thử logic quét và tự động gửi email nhắc lịch tiêm chủng vắc-xin trước đúng 3 ngày, bỏ qua các mũi tiêm chưa đến hạn hoặc đã quá hạn.
 - **Trạng thái:** `✅ PASSED`

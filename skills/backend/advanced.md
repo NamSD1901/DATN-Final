@@ -289,3 +289,93 @@ public IActionResult GetSchedules()
 ```
 
 </details>
+
+---
+
+### BE-A04: Centralized IDOR Prevention using ActionFilters
+
+| Thuộc tính | Chi tiết |
+|:---|:---|
+| **Mức độ** | ⭐⭐⭐⭐ Mastery |
+| **Sprint** | Sprint 5 |
+| **Tại sao cần?** | Chặn đứng 100% các cuộc tấn công IDOR bằng cách kiểm tra quyền sở hữu của user đối với tài nguyên trước khi vào luồng xử lý Service, giữ cho Application Layer sạch sẽ. |
+
+<details>
+<summary><b>📚 ActionFilter Implementation Details (Click để mở rộng)</b></summary>
+
+Để bảo vệ các tài nguyên nhạy cảm như thú cưng, bệnh án hoặc hóa đơn khỏi IDOR, chúng ta tạo một ActionFilter tùy chỉnh:
+
+```csharp
+using System;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using MyPetClinic.Application.Interfaces.Repositories;
+
+namespace MyPetClinic.WebApi.Filters
+{
+    public class AuthorizeOwnerAttribute : TypeFilterAttribute
+    {
+        public AuthorizeOwnerAttribute() : base(typeof(AuthorizeOwnerFilter))
+        {
+        }
+
+        private class AuthorizeOwnerFilter : IAsyncActionFilter
+        {
+            private readonly IPetRepository _petRepository;
+
+            public AuthorizeOwnerFilter(IPetRepository petRepository)
+            {
+                _petRepository = petRepository;
+            }
+
+            public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+            {
+                var userIdStr = context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
+                {
+                    context.Result = new UnauthorizedObjectResult(new { message = "Không xác thực người dùng." });
+                    return;
+                }
+
+                if (context.RouteData.Values.TryGetValue("id", out var idVal) && idVal != null)
+                {
+                    if (long.TryParse(idVal.ToString(), out long petId))
+                    {
+                        var pet = await _petRepository.GetPetByIdAsync(petId);
+                        if (pet == null)
+                        {
+                            context.Result = new NotFoundObjectResult(new { message = "Không tìm thấy thú cưng." });
+                            return;
+                        }
+
+                        if (pet.OwnerId != userId)
+                        {
+                            context.Result = new ObjectResult(new { message = "Bạn không có quyền truy cập thú cưng này." }) { StatusCode = 403 };
+                            return;
+                        }
+                    }
+                }
+
+                await next();
+            }
+        }
+    }
+}
+```
+
+Sử dụng trong Controller:
+```csharp
+[HttpDelete("{id}")]
+[AuthorizeOwner]
+public async Task<IActionResult> DeletePet(long id)
+{
+    // Không cần check IDOR thủ công tại đây nữa! ActionFilter đã xử lý
+    await _petService.DeletePetAsync(id, GetCurrentUserId());
+    return Ok();
+}
+```
+
+</details>
+

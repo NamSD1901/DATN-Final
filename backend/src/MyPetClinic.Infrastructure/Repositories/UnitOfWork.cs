@@ -27,6 +27,8 @@ namespace MyPetClinic.Infrastructure.Repositories
         public IGenericRepository<Vaccine> Vaccines { get; private set; }
         public IGenericRepository<VaccinationRecord> VaccinationRecords { get; private set; }
         public IGenericRepository<DoctorSchedule> DoctorSchedules { get; private set; }
+        public IGenericRepository<Post> Posts { get; private set; }
+        public IGenericRepository<Review> Reviews { get; private set; }
  
         public UnitOfWork(ApplicationDbContext context)
         {
@@ -45,6 +47,8 @@ namespace MyPetClinic.Infrastructure.Repositories
             Vaccines = new GenericRepository<Vaccine>(_context);
             VaccinationRecords = new GenericRepository<VaccinationRecord>(_context);
             DoctorSchedules = new GenericRepository<DoctorSchedule>(_context);
+            Posts = new GenericRepository<Post>(_context);
+            Reviews = new GenericRepository<Review>(_context);
         }
 
         public async Task<int> SaveChangesAsync()

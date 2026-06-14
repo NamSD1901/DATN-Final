@@ -15,7 +15,8 @@ Tài liệu này đặc tả chi tiết **Sprint Backlog** gồm 17 Sprints phá
 
 ---
 
-## 🎯 Danh Sách Chi Tiết 17 Sprints
+## 🎯 Danh Sách Chi Tiết 17 Sprints (Đang thực thi rà soát & Tối ưu hóa chất lượng từ Sprint 5)
+
 
 ### 🎯 Sprint 1: Khởi Tạo Dự Án & CI/CD
 **Mục tiêu:** Thiết lập nền tảng kỹ thuật và CI/CD.
@@ -44,8 +45,8 @@ Tài liệu này đặc tả chi tiết **Sprint Backlog** gồm 17 Sprints phá
 *   **T12:** PB05 - Xem đội ngũ bác sĩ (Backend API lọc Vet) [Hạnh - 4 giờ]
 *   **T13:** PB05 - Xem đội ngũ bác sĩ (Frontend Doctors Grid view) [Phương - 6 giờ]
 
-### 🎯 Sprint 5: Hồ Sơ Thú Cưng (IDOR Protected)
-**Mục tiêu:** CRUD quản lý thông tin thú cưng bảo mật.
+### 🎯 Sprint 5: Hồ Sơ Thú Cưng (Tái Cấu Trúc Chất Lượng Cao & Chống IDOR)
+**Mục tiêu:** Nâng cấp chất lượng code, tối ưu truy vấn, bảo mật IDOR qua ActionFilter và xây dựng giao diện Premium Glassmorphic.
 *   **T16:** PB08 - Quản lý hồ sơ thú cưng (Backend CRUD & Chống IDOR bằng cách check OwnerId) [Nam - 10 giờ]
 *   **T17:** PB08 - Quản lý hồ sơ thú cưng (Frontend Grid & Modal Form thêm/sửa có ảnh) [Lâm - 10 giờ]
 

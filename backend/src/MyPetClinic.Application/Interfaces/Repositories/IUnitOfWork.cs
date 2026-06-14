@@ -20,6 +20,8 @@ namespace MyPetClinic.Application.Interfaces.Repositories
         IGenericRepository<Vaccine> Vaccines { get; }
         IGenericRepository<VaccinationRecord> VaccinationRecords { get; }
         IGenericRepository<DoctorSchedule> DoctorSchedules { get; }
+        IGenericRepository<Post> Posts { get; }
+        IGenericRepository<Review> Reviews { get; }
 
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();

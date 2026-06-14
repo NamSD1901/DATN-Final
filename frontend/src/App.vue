@@ -1,9 +1,10 @@
 <template>
   <router-view />
+  <AiChatbotWidget />
 </template>
 
 <script setup lang="ts">
-// Main App Component
+import AiChatbotWidget from './components/shared/AiChatbotWidget.vue';
 </script>
 
 <style>

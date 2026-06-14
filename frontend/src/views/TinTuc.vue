@@ -42,66 +42,59 @@
 
         <!-- Secondary News Grid -->
         <h4 class="fw-bold mb-4 block-title-news">Bản Tin Gần Đây</h4>
-        <div class="news-cards-grid">
-          <!-- Article 1 -->
-          <div class="news-card-col">
+        
+        <div v-if="loading" class="text-center py-5">
+          <div class="spinner-border text-warning" role="status"></div>
+          <p class="text-muted mt-2 small">Đang tải tin tức...</p>
+        </div>
+
+        <div v-else class="news-cards-grid">
+          <!-- Dynamic Articles -->
+          <div v-for="post in posts" :key="post.id" class="news-card-col" @click="selectPost(post)" style="cursor: pointer;">
             <div class="card border-0 glass-card h-100 overflow-hidden shadow-sm article-card">
               <div class="position-relative img-wrapper">
-                <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=400&auto=format&fit=crop" class="card-img-top article-img" alt="News Image 1" />
-                <span class="position-absolute badge-category bg-warning text-dark text-uppercase">Khuyến Mãi</span>
+                <img :src="post.thumbnail || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=400&auto=format&fit=crop'" class="card-img-top article-img" :alt="post.title" />
+                <span class="position-absolute badge-category bg-warning text-dark text-uppercase">Cẩm Nang</span>
               </div>
               <div class="card-body p-4 article-body">
                 <div class="d-flex align-items-center gap-2 mb-2 text-muted small meta-date">
-                  <CalendarDays class="meta-icon" /> 26/05/2026
+                  <CalendarDays class="meta-icon" /> {{ formatDate(post.createdAt) }}
                 </div>
-                <h5 class="card-title fw-bold mb-2">Chào Hè Rực Rỡ - Ưu Đãi 20% Dịch Vụ Cắt Tỉa Lông</h5>
-                <p class="card-text small text-muted">
-                  Giúp bé cưng giải nhiệt mùa hè với bộ lông gọn gàng mát mẻ. MyPetClinic giảm ngay 20% cho tất cả khách hàng đặt lịch dịch vụ Grooming...
+                <h5 class="card-title fw-bold mb-2 text-dark">{{ post.title }}</h5>
+                <p class="card-text small text-muted line-clamp">
+                  {{ truncateText(post.content || '', 100) }}
                 </p>
               </div>
             </div>
           </div>
 
-          <!-- Article 2 -->
-          <div class="news-card-col">
-            <div class="card border-0 glass-card h-100 overflow-hidden shadow-sm article-card">
-              <div class="position-relative img-wrapper">
-                <img src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=400&auto=format&fit=crop" class="card-img-top article-img" alt="News Image 2" />
-                <span class="position-absolute badge-category bg-info text-white text-uppercase">Nội Bộ</span>
-              </div>
-              <div class="card-body p-4 article-body">
-                <div class="d-flex align-items-center gap-2 mb-2 text-muted small meta-date">
-                  <CalendarDays class="meta-icon" /> 18/05/2026
-                </div>
-                <h5 class="card-title fw-bold mb-2">MyPetClinic Đón Nhận Chứng Chỉ Y Khoa ISO 9001</h5>
-                <p class="card-text small text-muted">
-                  Đánh dấu mốc quan trọng trong việc chuẩn hóa toàn bộ quy trình chăm sóc nội trú, phẫu thuật ngoại khoa và quy trình khử trùng...
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Article 3 -->
-          <div class="news-card-col">
-            <div class="card border-0 glass-card h-100 overflow-hidden shadow-sm article-card">
-              <div class="position-relative img-wrapper">
-                <img src="https://images.unsplash.com/photo-1518717758536-85ae29035b6d?q=80&w=400&auto=format&fit=crop" class="card-img-top article-img" alt="News Image 3" />
-                <span class="position-absolute badge-category bg-success text-white text-uppercase">Cộng Đồng</span>
-              </div>
-              <div class="card-body p-4 article-body">
-                <div class="d-flex align-items-center gap-2 mb-2 text-muted small meta-date">
-                  <CalendarDays class="meta-icon" /> 10/05/2026
-                </div>
-                <h5 class="card-title fw-bold mb-2">Ngày Hội Nhận Nuôi Thú Cưng Mồ Côi - Tìm Mái Ấm Yêu Thương</h5>
-                <p class="card-text small text-muted">
-                  Phối hợp với Trạm Cứu Hộ Động Vật, MyPetClinic hỗ trợ kiểm tra sức khỏe, tiêm phòng dại miễn phí cho các bé cưng được nhận nuôi...
-                </p>
-              </div>
-            </div>
+          <!-- Fallback when no posts -->
+          <div v-if="posts.length === 0" class="col-12 text-center py-5 text-muted">
+            <i class="bi bi-journal-x fs-1 d-block mb-2 text-warning opacity-50"></i>
+            Hiện tại chưa có bài viết mới. Vui lòng quay lại sau!
           </div>
         </div>
       </div>
     </section>
+
+    <!-- Detail Article Modal -->
+    <div v-if="selectedPost" class="zalo-modal-overlay" @click.self="selectedPost = null">
+      <div class="zalo-modal-card" style="max-width: 650px;">
+        <div class="zalo-modal-header bg-warning text-dark">
+          <h5 class="modal-title fw-bold">{{ selectedPost.title }}</h5>
+          <button class="modal-close text-dark border-0 bg-transparent" @click="selectedPost = null"><i class="bi bi-x-lg fs-5"></i></button>
+        </div>
+        <div class="zalo-modal-body text-start" style="max-height: 70vh; overflow-y: auto;">
+          <img :src="selectedPost.thumbnail || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=400&auto=format&fit=crop'" class="img-fluid rounded-4 w-100 mb-4 object-fit-cover" style="max-height: 250px;" />
+          <div class="d-flex align-items-center gap-2 mb-3 text-muted small">
+            <CalendarDays class="meta-icon" /> Đăng ngày: {{ formatDate(selectedPost.createdAt) }} | Tác giả: {{ selectedPost.authorName }}
+          </div>
+          <div class="text-dark" style="white-space: pre-line; line-height: 1.8;">
+            {{ selectedPost.content }}
+          </div>
+        </div>
+      </div>
+    </div>
 
     <Footer />
 
@@ -115,13 +108,46 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import Header from '../components/layout/Header.vue';
 import Footer from '../components/layout/Footer.vue';
 import BookingModal from '../components/shared/BookingModal.vue';
 import { Newspaper, CalendarDays, MapPin } from '@lucide/vue';
+import api from '../services/api';
 
 const showBookingModal = ref(false);
+const posts = ref<any[]>([]);
+const loading = ref(false);
+const selectedPost = ref<any>(null);
+
+const fetchPosts = async () => {
+  loading.value = true;
+  try {
+    const res = await api.get('/posts');
+    posts.value = res.data;
+  } catch (err) {
+    console.error('Không thể tải bài viết:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const formatDate = (dateStr: string) => {
+  return new Date(dateStr).toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+const selectPost = (post: any) => {
+  selectedPost.value = post;
+};
+
+const truncateText = (text: string, length: number) => {
+  if (text.length <= length) return text;
+  return text.substring(0, length) + '...';
+};
 
 const handleBookingSuccess = (msg: string) => {
   alert(msg);
@@ -130,6 +156,10 @@ const handleBookingSuccess = (msg: string) => {
 const handleBookingError = (msg: string) => {
   alert(msg);
 };
+
+onMounted(() => {
+  fetchPosts();
+});
 </script>
 
 <style scoped>

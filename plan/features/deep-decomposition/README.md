@@ -26,7 +26,7 @@ Tài liệu này đóng vai trò hạt nhân điều phối toàn bộ các phâ
 - **[06. Homepage Vets Team](./phase1-06-homepage-doctors)** `✅ CODE DONE` — Xem danh sách bác sĩ thú y, chuyên môn và kinh nghiệm làm việc công khai.
 - **[07. Profile Details](./phase1-07-profile-update)** `✅ CODE DONE` — Khách hàng tự xem và cập nhật thông tin cá nhân (Họ tên, SĐT, Địa chỉ, Ngày sinh).
 - **[08. Profile Avatar Upload](./phase1-08-profile-avatar)** `✅ CODE DONE` — Tải lên tệp ảnh làm đại diện, giới hạn dung lượng < 2MB và định dạng tệp an toàn.
-- **[09. Pet Portfolio Management](./phase1-09-pet-portfolio)** `✅ CODE DONE` — CRUD danh sách thú cưng của khách hàng, kiểm duyệt quyền sở hữu tránh IDOR.
+- **[09. Pet Portfolio Management](./phase1-09-pet-portfolio)** `🟡 IN PROGRESS` — CRUD danh sách thú cưng của khách hàng, kiểm duyệt quyền sở hữu tránh IDOR qua ActionFilter, UI Glassmorphism.
 
 ---
 

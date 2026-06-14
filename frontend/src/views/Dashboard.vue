@@ -68,6 +68,12 @@
           <li :class="{ 'active': activeTab === 'schedules-admin' }">
             <a href="#" @click.prevent="activeTab = 'schedules-admin'"><i class="bi bi-calendar-event-fill text-warning opacity-75"></i> Lịch trực Bác sĩ</a>
           </li>
+          <li :class="{ 'active': activeTab === 'reports-admin' }">
+            <a href="#" @click.prevent="activeTab = 'reports-admin'"><i class="bi bi-graph-up-arrow text-warning opacity-75"></i> Báo cáo doanh thu</a>
+          </li>
+          <li :class="{ 'active': activeTab === 'blog-admin' }">
+            <a href="#" @click.prevent="activeTab = 'blog-admin'"><i class="bi bi-journal-text text-warning opacity-75"></i> Quản lý bài viết</a>
+          </li>
         </template>
 
         <!-- Customer specific routes -->
@@ -366,6 +372,16 @@
           <div v-else-if="activeTab === 'schedules-admin'" class="container-fluid p-0">
             <SchedulesAdminTab />
           </div>
+
+          <!-- tab: Reports Admin Tab -->
+          <div v-else-if="activeTab === 'reports-admin'" class="container-fluid p-0">
+            <ReportsAdminTab />
+          </div>
+
+          <!-- tab: Blog Admin Tab -->
+          <div v-else-if="activeTab === 'blog-admin'" class="container-fluid p-0">
+            <BlogAdminTab />
+          </div>
         </Transition>
       </div>
 
@@ -424,6 +440,8 @@ import ServicesAdminTab from '../components/dashboard/ServicesAdminTab.vue';
 import SettingsAdminTab from '../components/dashboard/SettingsAdminTab.vue';
 import MedicinesAdminTab from '../components/dashboard/MedicinesAdminTab.vue';
 import SchedulesAdminTab from '../components/dashboard/SchedulesAdminTab.vue';
+import ReportsAdminTab from '../components/dashboard/ReportsAdminTab.vue';
+import BlogAdminTab from '../components/dashboard/BlogAdminTab.vue';
 
 const router = useRouter();
 
@@ -479,6 +497,8 @@ const getTitle = computed(() => {
   if (activeTab.value === 'settings-admin') return 'Cấu hình Khung giờ làm việc';
   if (activeTab.value === 'medicines-admin') return 'Quản lý Kho thuốc & Dược phẩm';
   if (activeTab.value === 'schedules-admin') return 'Quản lý Ca trực Bác sĩ';
+  if (activeTab.value === 'reports-admin') return 'Báo cáo Doanh thu & Hiệu suất';
+  if (activeTab.value === 'blog-admin') return 'Quản trị Bài viết & Tin tức';
   return 'Bảng điều khiển';
 });
 

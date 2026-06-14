@@ -48,6 +48,12 @@ namespace MyPetClinic.Infrastructure
             // Đăng ký Audit Log Service
             services.AddScoped<IAuditLogService, AuditLogService>();
 
+            // Đăng ký Report Service
+            services.AddScoped<IReportService, ReportService>();
+
+            // Đăng ký Background Service nhắc lịch tiêm phòng
+            services.AddHostedService<Workers.VaccineReminderWorker>();
+
             return services;
         }
     }

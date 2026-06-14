@@ -89,6 +89,7 @@ Quality Assurance Engineer (MyPetClinic)
 │   ├── QA-08: UI/UX Testing & Responsive Testing (Checklists & Responsive Matrix)
 │   ├── QA-09: Test Data Management (Dữ liệu kiểm thử ảo & Môi trường)
 │   ├── QA-10: Regression Testing Strategy (Kiểm thử hồi quy sau mỗi Sprint)
+│   ├── QA-11-IDOR: API Security Verification for IDOR Prevention
 │   └── QA-11: Cross-browser Testing (Chrome, Safari Mobile, Firefox, Edge)
 │
 ├── 🟠 LEVEL 3: QA ADVANCED (Sprint 4-6)

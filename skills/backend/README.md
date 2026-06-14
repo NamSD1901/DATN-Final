@@ -79,6 +79,7 @@ Backend Developer (MyPetClinic)
 │   │   ├── FluentValidation
 │   │   ├── Global Exception Handling
 │   │   └── ProblemDetails (RFC 7807)
+│   ├── Centralized IDOR Prevention (ActionFilters)
 │   └── Database Advanced
 │       ├── Transactions & Concurrency
 │       ├── Stored Procedures

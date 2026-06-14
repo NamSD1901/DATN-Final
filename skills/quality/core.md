@@ -78,6 +78,25 @@ pm.test("Check data format", () => {
 
 ---
 
+## 🎯 QA-11-IDOR: API Security Verification for IDOR Prevention
+
+### 1. Kịch Bản Kiểm Thử Bảo Mật IDOR (Thú Cưng)
+Kiểm tra xem hệ thống có thực sự ngăn chặn cuộc tấn công IDOR (Insecure Direct Object Reference) hay không:
+* **Mục tiêu:** Đảm bảo Customer B không thể truy cập, sửa đổi hoặc xóa thú cưng của Customer A.
+* **Quy trình kiểm thử:**
+  1. Đăng nhập bằng tài khoản Customer A, gọi API `GET /api/mypets` để lấy `petId` của Customer A (ví dụ: `15`).
+  2. Đăng nhập bằng tài khoản Customer B, lưu trữ JWT cookie của Customer B.
+  3. Gửi request bằng token của Customer B đến các endpoint:
+     - `GET /api/mypets/15` (Xem chi tiết Pet của A)
+     - `PUT /api/mypets/15` (Cập nhật thông tin Pet của A)
+     - `DELETE /api/mypets/15` (Xóa Pet của A)
+* **Kết quả mong đợi:** 
+  - Hệ thống phải trả về mã HTTP `403 Forbidden` hoặc `404 Not Found` kèm thông báo lỗi rõ ràng.
+  - Tuyệt đối không cho phép xem hoặc ghi đè dữ liệu.
+
+
+---
+
 ## 🎯 QA-07: Database Testing with SQL
 
 Để đảm bảo dữ liệu lưu trữ chính xác trong PostgreSQL DB, QA cần thực hiện các truy vấn xác minh.

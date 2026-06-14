@@ -94,6 +94,29 @@ namespace MyPetClinic.Tests
             );
         }
 
+        [Fact]
+        public async Task AddPet_ShouldCreateSuccessfully_WithValidData()
+        {
+            // Arrange
+            var ownerId = Guid.NewGuid();
+            var dto = new CreatePetDto
+            {
+                Name = "Milo",
+                Species = "Mèo",
+                Breed = "Ba Tư",
+                Gender = 2,
+                Weight = 4.2m
+            };
+
+            // Act
+            var result = await _service.AddPetAsync(dto, ownerId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("Milo", result.Name);
+            Assert.Equal(ownerId, result.OwnerId);
+        }
+
         public void Dispose()
         {
             _context.Database.EnsureDeleted();

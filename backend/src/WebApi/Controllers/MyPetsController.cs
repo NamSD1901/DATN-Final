@@ -66,6 +66,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPut("{id}")]
+        [MyPetClinic.WebApi.Filters.AuthorizeOwner]
         public async Task<IActionResult> UpdatePet(long id, [FromBody] UpdatePetDto dto)
         {
             if (!ModelState.IsValid)
@@ -91,6 +92,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpGet("{id}")]
+        [MyPetClinic.WebApi.Filters.AuthorizeOwner]
         public async Task<IActionResult> GetPetDetails(long id)
         {
             try
@@ -110,6 +112,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpDelete("{id}")]
+        [MyPetClinic.WebApi.Filters.AuthorizeOwner]
         public async Task<IActionResult> DeletePet(long id)
         {
             try

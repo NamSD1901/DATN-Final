@@ -10,8 +10,8 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 | :--- | :--- | :--- |
 | **Tổng số Sprints kế hoạch** | 17 Sprints (34 tuần) | Đang thực thi rà soát & tối ưu hóa |
 | **Tài liệu thiết kế (Specs)** | 12/12 đặc tả chi tiết | `✅ DONE` |
-| **Tiến độ Code của các Sprint** | 17/17 Sprints đã có code cơ bản | `✅ CODE DONE` |
-| **Mốc Sprint hiện tại** | Rà soát & Cải tiến Sprint 14 | `✅ COMPLETED` |
+| **Tiến độ Code của các Sprint** | Hoàn thành nâng cấp chất lượng & tái cấu trúc Sprint 5 | `✅ CODE DONE` |
+| **Mốc Sprint hiện tại** | Sprint 6 (Đặt lịch & Ca trực) | `✅ READY` |
 
 ---
 
@@ -68,14 +68,14 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 
 ---
 
-### 🎯 Sprint 5: Hồ Sơ Thú Cưng (IDOR Protected)
-*   **Mục tiêu:** CRUD quản lý thông tin thú cưng bảo mật.
+### 🎯 Sprint 5: Hồ Sơ Thú Cưng (Tái Cấu Trúc Chất Lượng Cao & Chống IDOR)
+*   **Mục tiêu:** Nâng cấp chất lượng code, tối ưu truy vấn, bảo mật IDOR qua ActionFilter và xây dựng giao diện Premium Glassmorphic.
 *   **Danh sách Task chi tiết:**
 
 | Mã Task | Tên công việc / Nội dung chi tiết | Người thực hiện | Trạng thái | Minh chứng & Ghi chú |
 | :--- | :--- | :--- | :--- | :--- |
-| **T16** | PB08 - Quản lý hồ sơ thú cưng (Backend CRUD & Chống IDOR bằng cách check OwnerId) | Nam | `✅ CODE DONE` | Xác thực `OwnerId == currentUserId` tại `PetService.cs` chặn đứng IDOR 100%. |
-| **T17** | PB08 - Quản lý hồ sơ thú cưng (Frontend Grid & Modal Form thêm/sửa có ảnh) | Lâm | `✅ CODE DONE` | Giao diện form CRUD thú cưng kèm tải ảnh đại diện lên server, hiển thị ảnh động trong thẻ thú cưng và chi tiết hồ sơ. |
+| **T16** | PB08 - Quản lý hồ sơ thú cưng (Backend CRUD & Chống IDOR bằng ActionFilter) | Nam | `✅ CODE DONE` | Hoàn thành ActionFilter chặn đứng IDOR, tối ưu LINQ queries và phủ đầy đủ Unit Tests. |
+| **T17** | PB08 - Quản lý hồ sơ thú cưng (Frontend Grid & Modal Form Glassmorphic) | Lâm | `✅ CODE DONE` | Tái cấu trúc giao diện sang Premium Light-Theme Glassmorphism, sửa lỗi hiển thị & lặp chữ, validate ảnh client-side. |
 
 ---
 
