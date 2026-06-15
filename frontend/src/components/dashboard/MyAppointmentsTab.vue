@@ -11,9 +11,14 @@
           </h3>
           <p class="text-muted mb-0 small">Theo dõi và quản lý các buổi hẹn khám bệnh cho thú cưng.</p>
         </div>
-        <button class="btn btn-premium-appt" @click="openBookModal">
-          <i class="bi bi-plus-circle-fill me-2"></i> Đặt lịch mới
-        </button>
+        <div class="d-flex gap-2 mt-3 mt-sm-0">
+          <button class="btn btn-outline-success fw-bold rounded-pill px-3" style="border-width: 2px; border-color: #10b981; color: #10b981;" @click="showQrListModal = true">
+            <i class="bi bi-qr-code-scan me-2"></i>Mã QR Check-in
+          </button>
+          <button class="btn btn-premium-appt" @click="openBookModal">
+            <i class="bi bi-plus-circle-fill me-2"></i> Đặt lịch mới
+          </button>
+        </div>
       </div>
     </div>
 
@@ -155,319 +160,491 @@
       </div>
     </div>
 
+    
     <!-- ===== BOOKING MODAL ===== -->
     <Teleport to="body">
       <Transition name="modal-fade">
-        <div v-if="showBookModal" class="appt-modal-overlay" @click.self="closeBookModal">
-          <div class="appt-modal-card">
-            <div class="appt-modal-header">
-              <h5 class="fw-bold mb-0">
-                <i class="bi bi-calendar-plus-fill me-2 text-warning"></i>
-                Đặt lịch hẹn mới
-              </h5>
-              <button class="modal-close-btn" @click="closeBookModal">
+        <div v-if="showBookModal" class="appt-modal-overlay wizard-overlay" @click.self="closeBookModal">
+          <div class="appt-modal-card wizard-modal" style="max-width: 1000px; height: 85vh; display: flex; flex-direction: column;">
+            <div class="appt-modal-header border-0 pb-0">
+              <button class="modal-close-btn ms-auto" @click="closeBookModal">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
 
-            <div class="appt-modal-body">
+            <div class="appt-modal-body wizard-body p-0 d-flex flex-column" style="flex-grow: 1; overflow: hidden;">
               <!-- Progress steps -->
-              <div class="booking-steps mb-4">
-                <div v-for="(step, idx) in bookingSteps" :key="idx" class="step-item" :class="{ active: currentStep >= idx, done: currentStep > idx }">
-                  <div class="step-circle">
-                    <i v-if="currentStep > idx" class="bi bi-check-lg"></i>
-                    <span v-else>{{ idx + 1 }}</span>
+              <div class="stepper-container px-5 pt-3 mb-4">
+                <div class="progress-container position-relative">
+                  <div class="progress-line position-absolute top-50 start-0 end-0 translate-middle-y" style="height: 3px; background: #e9ecef; z-index: 1;">
+                    <div class="progress-fill" :style="{ width: `${(currentStep / (maxSteps)) * 100}%`, background: '#0d6efd', height: '100%', transition: 'width 0.4s ease' }"></div>
                   </div>
-                  <span class="step-label">{{ step }}</span>
-                  <div v-if="idx < bookingSteps.length - 1" class="step-line"></div>
+                  <div class="step-items d-flex justify-content-between position-relative" style="z-index: 2;">
+                    <div v-for="(step, idx) in bookingSteps" :key="idx" class="step-item d-flex flex-column align-items-center gap-2" :class="{ 'active': currentStep >= idx, 'current': currentStep === idx }">
+                      <div class="step-circle d-flex align-items-center justify-content-center" 
+                           :style="currentStep >= idx ? 'width: 32px; height: 32px; border-radius: 50%; background: #0d6efd; color: white; border: 2px solid #0d6efd; font-weight: bold; transition: all 0.3s ease;' : 'width: 32px; height: 32px; border-radius: 50%; background: white; color: #adb5bd; border: 2px solid #dee2e6; font-weight: bold; transition: all 0.3s ease;'">
+                        <i v-if="currentStep > idx" class="bi bi-check-lg"></i>
+                        <span v-else>{{ idx + 1 }}</span>
+                      </div>
+                      <span class="step-label" :style="currentStep >= idx ? 'font-size: 0.8rem; font-weight: 600; color: #212529;' : 'font-size: 0.8rem; font-weight: 600; color: #adb5bd;'">{{ step }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div v-if="bookingSuccess" class="text-center py-4">
-                <div style="font-size: 4rem;">🎉</div>
-                <h5 class="fw-bold text-success mt-3 mb-2">Đặt lịch thành công!</h5>
-                <p class="text-muted small">Chúng tôi sẽ xác nhận lịch hẹn của bạn sớm nhất có thể.</p>
+              <div class="step-content-wrapper px-5 pb-4" style="flex-grow: 1; overflow-y: auto;">
+                <div v-if="bookingSuccess" class="text-center py-5">
+                  <div style="font-size: 5rem;">🎉</div>
+                  <h4 class="fw-bold text-success mt-4 mb-2">Đặt lịch thành công!</h4>
+                  <p class="text-muted">Chúng tôi sẽ xác nhận lịch hẹn của bạn sớm nhất có thể.</p>
 
-                <!-- QR Code Box -->
-                <div v-if="lastBookedAppt && lastBookedAppt.qrToken" id="booking-success-qr-box" class="qr-token-box my-4 p-3 mx-auto" style="max-width: 250px; background: #fafafa; border: 1.5px dashed #10b981; border-radius: 16px;">
-                  <div class="small fw-bold text-muted mb-2">MÃ CHECK-IN (QR TOKEN)</div>
-                  <div class="qr-placeholder-graphics mb-2" style="font-size: 5rem; line-height: 1; color: #1f2937;">
-                    <i class="bi bi-qr-code"></i>
-                  </div>
-                  <div class="badge bg-dark text-white font-monospace p-2 px-3 fs-6" style="letter-spacing: 1px;">
-                    {{ lastBookedAppt.qrToken }}
-                  </div>
-                  <div class="small text-muted mt-2" style="font-size: 0.75rem;">
-                    Vui lòng xuất trình mã này tại quầy lễ tân để check-in nhanh.
+                  <div v-if="lastBookedAppt && lastBookedAppt.qrToken" class="qr-token-box my-4 p-4 mx-auto" style="max-width: 300px; background: #f8f9fa; border: 2px dashed #10b981; border-radius: 16px;">
+                    <div class="small fw-bold text-muted mb-3">MÃ CHECK-IN (QR TOKEN)</div>
+                    <div class="qr-placeholder-graphics mb-3" style="font-size: 4rem; line-height: 1; color: #212529;">
+                      <i class="bi bi-qr-code"></i>
+                    </div>
+                    <div class="badge bg-dark text-white font-monospace py-2 px-4 fs-5" style="letter-spacing: 2px;">
+                      {{ lastBookedAppt.qrToken }}
+                    </div>
+                    <div class="small text-muted mt-3">
+                      Vui lòng xuất trình mã này tại quầy lễ tân để check-in nhanh.
+                    </div>
                   </div>
                 </div>
 
-                <button class="btn btn-premium-appt mt-2" @click="closeBookModal">
-                  <i class="bi bi-check2-circle me-2"></i> Hoàn tất
+                <form v-else @submit.prevent="submitBooking" class="h-100">
+                  <!-- Step 0: Choose Pet -->
+                  <div v-if="currentStep === 0" class="step-content animate-fade-in">
+                    <h3 class="fw-bold text-dark mb-1">Chọn thú cưng</h3>
+                    <p class="text-muted mb-4">Chọn thú cưng cho lần khám này.</p>
+
+                    <div class="d-flex justify-content-end mb-4">
+                      <button class="btn btn-outline-primary rounded-pill fw-bold" @click.prevent="$emit('switch-tab', 'my-pets')">
+                        <i class="bi bi-plus-circle me-1"></i> Thêm thú cưng mới
+                      </button>
+                    </div>
+
+                    <div v-if="myPets.length === 0" class="text-center py-5 text-muted">
+                      Bạn chưa có thú cưng nào. Hãy thêm mới để tiếp tục.
+                    </div>
+                    <div v-else class="row g-4">
+                      <div v-for="pet in myPets" :key="pet.id" class="col-md-6">
+                        <div
+                          class="pet-select-card position-relative"
+                          :class="{
+                            'pet-selected': bookForm.petId === pet.id,
+                            'pet-has-warning': petActiveAppointments.has(pet.id)
+                          }"
+                          @click="selectPet(pet.id)"
+                        >
+                          <!-- Warning ribbon if pet has active appt -->
+                          <div v-if="petActiveAppointments.has(pet.id)" class="pet-warning-ribbon">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Có lịch hẹn
+                          </div>
+
+                          <div class="d-flex gap-3 mb-3">
+                            <div class="pet-avatar-wrapper" style="width: 70px; height: 70px; border-radius: 12px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; font-size: 2.5rem;">
+                              {{ getSpeciesEmoji(pet.species) }}
+                            </div>
+                            <div class="flex-grow-1">
+                              <h5 class="fw-bold mb-1">{{ pet.name }}</h5>
+                              <p class="small text-muted mb-0">{{ pet.species }}</p>
+                              <!-- Mini badge count -->
+                              <span v-if="petActiveAppointments.has(pet.id)" class="badge bg-warning text-dark mt-1" style="font-size:0.7rem;">
+                                {{ petActiveAppointments.get(pet.id)!.length }} lịch đang hoạt động
+                              </span>
+                            </div>
+                          </div>
+                          <div class="border-top pt-3 mt-auto d-flex justify-content-between align-items-center small">
+                            <span class="text-muted">Nhấn để chọn</span>
+                            <i class="bi bi-check-circle-fill" :class="bookForm.petId === pet.id ? 'text-primary' : 'text-light'"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Duplicate appointment warning banner -->
+                    <Transition name="fade-slide">
+                      <div
+                        v-if="selectedPetActiveAppts.length > 0 && !petWarningDismissed"
+                        class="pet-dup-warning mt-4"
+                      >
+                        <div class="d-flex align-items-start gap-3">
+                          <div class="flex-shrink-0" style="font-size: 1.8rem;">⚠️</div>
+                          <div class="flex-grow-1">
+                            <p class="fw-bold mb-1 text-warning-emphasis">
+                              {{ getSelectedPetName() }} đang có {{ selectedPetActiveAppts.length }} lịch hẹn chưa hoàn tất!
+                            </p>
+                            <ul class="mb-2 ps-3 small text-muted">
+                              <li v-for="a in selectedPetActiveAppts" :key="a.id">
+                                <strong>{{ formatDateFull(a.appointmentDate) }}</strong>
+                                — {{ a.serviceName }} 
+                                <span class="badge rounded-pill ms-1" :class="getStatusBadgeClass(a.status ?? '')">{{ getStatusLabel(a.status ?? '') }}</span>
+                              </li>
+                            </ul>
+                            <div class="d-flex gap-2 mt-2 flex-wrap">
+                              <button type="button" class="btn btn-sm btn-outline-warning rounded-pill fw-bold" @click="petWarningDismissed = true">
+                                <i class="bi bi-arrow-right-circle me-1"></i>Vẫn tiếp tục đặt lịch mới
+                              </button>
+                              <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" @click="closeBookModal">
+                                <i class="bi bi-x-circle me-1"></i>Đóng lại
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Transition>
+                  </div>
+
+                  <!-- Step 1: Choose Service -->
+                  <div v-else-if="currentStep === 1" class="step-content animate-fade-in">
+                    <h3 class="fw-bold text-dark mb-1">Chọn dịch vụ</h3>
+                    <p class="text-muted mb-4">Chọn dịch vụ khám chữa bệnh cho thú cưng.</p>
+
+                    <div class="row g-4">
+                      <div class="col-md-6" v-for="svc in services" :key="svc.id">
+                        <div class="service-card h-100" :style="bookForm.serviceId === svc.id ? 'background: #f8fbff; border-radius: 16px; border: 2px solid #0d6efd; padding: 25px; cursor: pointer; position: relative;' : 'background: white; border-radius: 16px; border: 2px solid transparent; box-shadow: 0 4px 15px rgba(0,0,0,0.03); padding: 25px; cursor: pointer; position: relative;'" @click="bookForm.serviceId = svc.id">
+                          <div class="service-radio" :style="bookForm.serviceId === svc.id ? 'position: absolute; top: 25px; right: 25px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #0d6efd; display: flex; align-items: center; justify-content: center;' : 'position: absolute; top: 25px; right: 25px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #dee2e6;'">
+                            <div v-if="bookForm.serviceId === svc.id" style="width: 12px; height: 12px; border-radius: 50%; background: #0d6efd;"></div>
+                          </div>
+                          <div class="service-icon mb-3" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(13,110,253,0.1); color: #0d6efd; font-size: 1.5rem;">
+                            <i class="bi" :class="svc.name.toLowerCase().includes('vaccine') || svc.name.toLowerCase().includes('tiêm') ? 'bi-syringe' : (svc.name.toLowerCase().includes('spa') || svc.name.toLowerCase().includes('cắt tỉa') ? 'bi-scissors' : 'bi-heart-pulse')"></i>
+                          </div>
+                          <h5 class="fw-bold mb-2 pe-4">{{ svc.name }}</h5>
+                          <p class="text-muted small mb-4">{{ (svc as any).description || 'Dịch vụ chăm sóc sức khoẻ tốt nhất cho thú cưng.' }}</p>
+                          <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <span class="badge bg-light text-muted px-3 py-2 rounded-pill"><i class="bi bi-clock me-1"></i> {{ (svc as any).durationMinutes || 30 }} phút</span>
+                            <h5 class="fw-bold text-primary mb-0">{{ svc.price ? formatCurrency(svc.price) : 'Miễn phí' }}</h5>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  
+                  <!-- Step 2: Choose Time -->
+                  <div v-else-if="currentStep === 2" class="step-content animate-fade-in d-flex flex-column h-100">
+                    <div class="row g-4 h-100 overflow-hidden">
+                      <!-- Calendar Area -->
+                      <div class="col-md-5 border-end pe-4 h-100 overflow-auto">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                          <h5 class="fw-bold text-dark mb-0">Tháng {{ currentMonth + 1 }}, {{ currentYear }}</h5>
+                          <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-light rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" @click.prevent="prevMonth">
+                              <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-light rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" @click.prevent="nextMonth">
+                              <i class="bi bi-chevron-right"></i>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div class="calendar-grid mb-4">
+                          <div class="d-grid" style="grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; font-size: 0.8rem; color: #6c757d; margin-bottom: 10px;">
+                            <div>CN</div><div>T2</div><div>T3</div><div>T4</div><div>T5</div><div>T6</div><div>T7</div>
+                          </div>
+                          <div class="d-grid gap-1" style="grid-template-columns: repeat(7, 1fr); text-align: center;">
+                            <div v-for="(day, idx) in calendarDays" :key="idx" 
+                                 class="calendar-day rounded-circle d-flex align-items-center justify-content-center mx-auto"
+                                 :class="{
+                                   'text-muted opacity-50': !day.isCurrentMonth || day.isPast,
+                                   'fw-bold': day.isCurrentMonth && !day.isPast,
+                                   'bg-primary text-white': selectedBookingDate === day.dateStr,
+                                   'border border-primary': day.isToday && selectedBookingDate !== day.dateStr
+                                 }"
+                                 :style="`width: 36px; height: 36px; cursor: ${day.isPast ? 'not-allowed' : 'pointer'}; ${selectedBookingDate === day.dateStr ? 'box-shadow: 0 4px 10px rgba(13,110,253,0.3);' : ''} ${!day.isPast && selectedBookingDate !== day.dateStr && day.isCurrentMonth ? 'background: #f8f9fa;' : ''}`"
+                                 @click="!day.isPast && onCalendarDateSelect(day.dateStr)">
+                              {{ day.dayNum }}
+                              <div v-if="day.hasAvailability && !day.isPast" class="availability-dot" style="width: 4px; height: 4px; background: #10b981; border-radius: 50%; position: absolute; bottom: 4px;"></div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div class="mt-3 pt-2 border-top">
+                          <p class="small text-muted mb-2 fw-semibold"><i class="bi bi-info-circle me-1"></i> Chú giải màu khung giờ:</p>
+                          <div class="d-flex flex-wrap gap-2">
+                            <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
+                            <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#f8f9fa;border:1.5px solid #e9ecef;display:inline-block"></span> <span class="text-muted">Đã qua</span></span>
+                            <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff8ec;border:1.5px solid #ffc107;display:inline-block"></span> <span class="text-muted">Quá gần</span></span>
+                            <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã đặt</span></span>
+                          </div>
+                        </div>
+
+                      </div>
+
+                      <!-- Slots Area -->
+                      <div class="col-md-7 ps-4 d-flex flex-column h-100">
+                        <div class="d-flex align-items-center mb-4 p-3 rounded-3" style="background: #f8fbff; border: 1px solid rgba(13,110,253,0.1);">
+                          <i class="bi bi-calendar-event text-primary fs-4 me-3"></i>
+                          <div class="flex-grow-1">
+                            <h6 class="fw-bold mb-0 text-dark">{{ selectedBookingDate ? formatDateOnly(selectedBookingDate) : 'Chưa chọn ngày' }}</h6>
+                            <small class="text-muted">{{ getSelectedServiceName() }}</small>
+                          </div>
+                          <div>
+                            <select v-model="selectedDoctorFilter" class="form-select form-select-sm border-0 bg-transparent text-primary fw-bold" style="width: auto; cursor: pointer; box-shadow: none;">
+                              <option value="auto">✨ Tự động phân công</option>
+                              <option v-for="doc in doctorAvailableSlots" :key="doc.doctorId" :value="doc.doctorId">
+                                👨‍⚕️ {{ doc.doctorName }}
+                              </option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div v-if="fetchingSlots" class="text-center py-5">
+                          <div class="spinner-border text-primary"></div>
+                          <div class="text-muted mt-2">Đang tải lịch trống...</div>
+                        </div>
+                        <div v-else-if="!selectedBookingDate" class="text-center py-5 text-muted">
+                          Vui lòng chọn ngày để xem giờ trống.
+                        </div>
+                        <!-- The no-slots fallback has been removed because we always render the greyed out slots -->
+                        <div v-else class="d-flex flex-column flex-grow-1 overflow-hidden">
+                          <div class="slots-scroll-area flex-grow-1 overflow-auto" style="padding-right: 10px; margin-right: -10px;">
+                            <!-- Morning Slots -->
+                            <div class="mb-4">
+                              <h6 class="text-muted fw-bold mb-3 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-high me-1"></i> BUỔI SÁNG</h6>
+                              <div class="d-flex flex-wrap gap-2">
+                                <button
+                                  v-for="slot in displayMorningSlots"
+                                  :key="slot.time"
+                                  type="button"
+                                  class="time-slot-btn"
+                                  :class="{
+                                    'slot-selected': bookForm.appointmentDate === slot.slotStr,
+                                    'slot-past': slot.isPast,
+                                    'slot-too-soon': slot.isTooSoon,
+                                    'slot-booked': slot.isBooked,
+                                    'slot-available': slot.isAvailable
+                                  }"
+                                  :disabled="!slot.isAvailable"
+                                  :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần đặt trước ít nhất 1 tiếng' : (slot.isBooked ? 'Khung giờ này đã được đặt' : ''))"
+                                  @click="slot.isAvailable && selectTimeSlot(selectedDoctorFilter === 'auto' ? null : selectedDoctorFilter, slot.slotStr)"
+                                >
+                                  <span class="slot-time-text">{{ slot.time }}</span>
+                                  <i v-if="bookForm.appointmentDate === slot.slotStr" class="bi bi-check-circle-fill ms-1"></i>
+                                  <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                                  <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                                  <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            <!-- Afternoon Slots -->
+                            <div class="mb-4">
+                              <h6 class="text-muted fw-bold mb-3 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-low me-1"></i> BUỔI CHIỀU</h6>
+                              <div class="d-flex flex-wrap gap-2">
+                                <button
+                                  v-for="slot in displayAfternoonSlots"
+                                  :key="slot.time"
+                                  type="button"
+                                  class="time-slot-btn"
+                                  :class="{
+                                    'slot-selected': bookForm.appointmentDate === slot.slotStr,
+                                    'slot-past': slot.isPast,
+                                    'slot-too-soon': slot.isTooSoon,
+                                    'slot-booked': slot.isBooked,
+                                    'slot-available': slot.isAvailable
+                                  }"
+                                  :disabled="!slot.isAvailable"
+                                  :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần đặt trước ít nhất 1 tiếng' : (slot.isBooked ? 'Khung giờ này đã được đặt' : ''))"
+                                  @click="slot.isAvailable && selectTimeSlot(selectedDoctorFilter === 'auto' ? null : selectedDoctorFilter, slot.slotStr)"
+                                >
+                                  <span class="slot-time-text">{{ slot.time }}</span>
+                                  <i v-if="bookForm.appointmentDate === slot.slotStr" class="bi bi-check-circle-fill ms-1"></i>
+                                  <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                                  <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                                  <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Step 3: Choose Vaccine (Optional) -->
+                  <div v-else-if="isVaccinationService && currentStep === 3" class="step-content animate-fade-in">
+                    <h3 class="fw-bold text-dark mb-1">Chọn Vaccine</h3>
+                    <p class="text-muted mb-4">Vui lòng chọn loại vắc-xin cho bé <strong>{{ getSelectedPetName() }}</strong>.</p>
+                    
+                    <div class="row g-3">
+                      <div class="col-md-6" v-for="vac in filteredVaccines" :key="vac.id">
+                        <div class="service-card" :style="bookForm.vaccineId === vac.id ? 'background: #f8fbff; border-radius: 16px; border: 2px solid #0d6efd; padding: 20px; cursor: pointer;' : 'background: white; border-radius: 16px; border: 2px solid #dee2e6; padding: 20px; cursor: pointer;'" @click="selectVaccine(vac.id)">
+                          <h6 class="fw-bold mb-1">{{ vac.name }}</h6>
+                          <div class="small text-muted mb-2">{{ vac.description }}</div>
+                          <span class="badge bg-success-subtle text-success">Còn: {{ vac.stockQuantity }} liều</span>
+                        </div>
+                      </div>
+                    </div>
+
+
+                  </div>
+
+                  <!-- Step 4: Confirm -->
+                  <div v-else-if="currentStep === (isVaccinationService ? 4 : 3)" class="step-content animate-fade-in d-flex flex-column h-100">
+                    <div v-if="bookingError" class="alert alert-danger mb-2 border-0 rounded-3 small text-start py-2">
+                      <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ bookingError }}
+                    </div>
+
+                    <div class="confirm-layout flex-grow-1 overflow-hidden pe-2 mt-1">
+                      <div class="confirm-details">
+                        <!-- Patient Info -->
+                        <div class="booking-confirm-card">
+                          <div class="card-header-flex border-bottom pb-2 mb-3">
+                            <h6 class="mb-0 fw-bold" style="color: #1e293b;"><i class="bi bi-person-vcard text-primary me-2"></i> Thông tin bệnh nhân</h6>
+                            <span class="edit-link text-primary fw-bold" style="font-size: 0.75rem; cursor: pointer;" @click="currentStep = 0">SỬA</span>
+                          </div>
+                          <div class="d-flex align-items-center">
+                            <img v-if="getSelectedPetObj()?.imageUrl" :src="getSelectedPetObj()?.imageUrl" alt="Pet" class="rounded-circle" style="width: 65px; height: 65px; object-fit: cover;">
+                            <div v-else class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 65px; height: 65px; font-size: 2.2rem; border: 1px solid #e2e8f0;">
+                              {{ getSpeciesEmoji(selectedPetSpecies || 'Chó') }}
+                            </div>
+                            <div class="ms-3 flex-grow-1">
+                              <div class="d-flex align-items-center mb-1">
+                                <h5 class="fw-bold text-dark mb-0 me-2" style="font-size: 1.2rem;">{{ getSelectedPetName() }}</h5>
+                                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 py-1" style="font-size: 0.65rem;">{{ selectedPetSpecies }}{{ getSelectedPetObj()?.breed ? ' (' + getSelectedPetObj()?.breed + ')' : '' }}</span>
+                              </div>
+                              <div class="row gx-2 mt-2">
+                                <div class="col-6">
+                                  <small class="text-muted d-block" style="font-size: 0.7rem;">Tuổi</small>
+                                  <strong class="text-dark small" style="font-size: 0.85rem;">{{ getSelectedPetObj()?.birthDate ? calculateAge(getSelectedPetObj()?.birthDate || '') : '--' }}</strong>
+                                </div>
+                                <div class="col-6">
+                                  <small class="text-muted d-block" style="font-size: 0.7rem;">Cân nặng</small>
+                                  <strong class="text-dark small" style="font-size: 0.85rem;">{{ getSelectedPetObj()?.weight || '--' }} kg</strong>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Service Info -->
+                        <div class="booking-confirm-card mt-3" style="border-left: 4px solid #198754; padding-top: 15px; padding-bottom: 15px;">
+                          <div class="card-header-flex pb-2 mb-2">
+                            <h6 class="mb-0 fw-bold" style="color: #1e293b;"><i class="bi bi-medical-mac text-success me-2"></i> Dịch vụ đăng ký</h6>
+                            <span class="edit-link text-primary fw-bold" style="font-size: 0.75rem; cursor: pointer;" @click="currentStep = 1">SỬA</span>
+                          </div>
+                          <div class="border rounded-3 p-3 d-flex align-items-center" style="border-color: #e2e8f0 !important;">
+                            <div class="bg-success bg-opacity-25 text-success rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; flex-shrink: 0;">
+                              <i :class="(services.find(s => s.id === bookForm.serviceId) as any)?.icon || 'bi-bandaid'" style="font-size: 1.3rem;"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                              <h6 class="fw-bold text-dark mb-0" style="font-size: 0.95rem;">
+                                {{ getSelectedServiceName() }}<template v-if="bookForm.vaccineId"> &amp; Tiêm phòng</template>
+                              </h6>
+                              <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
+                                {{ bookForm.vaccineId ? getSelectedVaccineName() : ((services.find(s => s.id === bookForm.serviceId) as any)?.description || 'Gói khám dịch vụ') }}
+                              </small>
+                            </div>
+                            <div class="fw-bold text-dark ms-2" style="font-size: 0.95rem;">
+                              {{ getSelectedServicePrice() ? formatCurrency(getSelectedServicePrice()) : 'Liên hệ' }}
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="booking-confirm-card mt-3">
+                          <div class="card-header-flex border-0 pb-0 mb-2">
+                            <h6 class="mb-0 fw-bold" style="color: #1e293b;"><i class="bi bi-justify-left text-muted me-2"></i> Ghi chú cho bác sĩ (Tùy chọn)</h6>
+                          </div>
+                          <div class="p-0">
+                            <textarea 
+                              v-model="bookForm.symptom" 
+                              class="form-control bg-light border-0 rounded-3" 
+                              rows="2" 
+                              style="min-height: 50px; font-size: 0.85rem;" 
+                              placeholder="Nhập các triệu chứng, thói quen đặc biệt hoặc yêu cầu khác..."
+                            ></textarea>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="confirm-sidebar">
+                        <div class="receipt-card">
+                          <div class="receipt-header">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                              <span class="text-uppercase fw-bold text-muted small tracking-wide">LỊCH HẸN</span>
+                              <span class="edit-link text-white opacity-75" @click="currentStep = 2">Thay đổi</span>
+                            </div>
+                            <h3 class="fw-bold text-white mb-1">
+                              {{ formatTimeOnly(bookForm.appointmentDate) }}
+                            </h3>
+                            <div class="text-white d-flex align-items-center gap-2 opacity-90 small mt-2">
+                              <i class="bi bi-calendar-event"></i> {{ formatDateFull(bookForm.appointmentDate) }}
+                            </div>
+                          </div>
+                          
+                          <div class="receipt-doctor p-2 pb-1">
+                            <div class="d-flex align-items-center gap-3">
+                              <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; font-size: 1rem;">
+                                <i class="bi bi-person-fill"></i>
+                              </div>
+                              <div>
+                                <small class="text-muted d-block" style="font-size: 0.7rem;">Bác sĩ phụ trách</small>
+                                <strong class="text-dark small">{{ selectedDoctorFilter !== 'auto' && doctorAvailableSlots.find(d => d.doctorId === selectedDoctorFilter) ? doctorAvailableSlots.find(d => d.doctorId === selectedDoctorFilter)?.doctorName : 'Hệ thống tự phân công' }}</strong>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="receipt-body p-3 pt-2">
+                            <h6 class="text-muted small fw-bold mb-1 tracking-wide" style="font-size: 0.75rem;">CHI TIẾT DỊCH VỤ</h6>
+                            <div class="d-flex justify-content-between mb-2">
+                              <span class="text-dark fw-medium" style="font-size: 0.85rem;">{{ getSelectedServiceName() }}<template v-if="bookForm.vaccineId"><br/><small class="text-muted">+ {{ getSelectedVaccineName() }}</small></template></span>
+                              <span class="edit-link" @click="currentStep = 1">SỬA</span>
+                            </div>
+
+                            <h6 class="text-muted small fw-bold mb-1 tracking-wide" style="font-size: 0.75rem;">CHI TIẾT CHI PHÍ</h6>
+                            <div class="d-flex justify-content-between mb-1">
+                              <span class="text-muted" style="font-size: 0.8rem;">Phí khám dịch vụ</span>
+                              <strong class="text-dark" style="font-size: 0.85rem;">{{ getSelectedServicePrice() ? formatCurrency(getSelectedServicePrice()) : '0 ₫' }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 border-bottom pb-2">
+                              <span class="text-muted" style="font-size: 0.8rem;">Phí mở hồ sơ mới</span>
+                              <strong class="text-dark" style="font-size: 0.85rem;">0 ₫</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                              <span class="fw-bold text-dark" style="font-size: 0.9rem;">Tổng cộng</span>
+                              <strong class="text-primary fs-5">{{ getSelectedServicePrice() ? formatCurrency(getSelectedServicePrice()) : '0 ₫' }}</strong>
+                            </div>
+                            <p class="text-center text-muted mb-0" style="font-size: 0.65rem;">Thanh toán tại phòng khám</p>
+                          </div>
+                        </div>
+
+
+                      </div>
+                    </div>
+                  </div>
+
+                </form>
+              </div>
+
+
+              <!-- Footer Buttons -->
+              <div v-if="!bookingSuccess" class="border-top bg-white p-4 d-flex justify-content-between align-items-center" style="z-index: 10;">
+                <button v-if="currentStep > 0" type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" @click="currentStep--" :disabled="bookingLoading">
+                  <i class="bi bi-arrow-left me-2"></i> Quay lại
+                </button>
+                <button v-else type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" @click="closeBookModal">Hủy</button>
+
+                <button v-if="currentStep < maxSteps" type="button" class="btn btn-primary px-4 py-2 rounded-pill fw-bold" @click="nextStep" :disabled="!canProceed">
+                  Tiếp theo <i class="bi bi-arrow-right ms-2"></i>
+                </button>
+                <button v-else type="button" class="btn btn-primary px-5 py-2 rounded-pill fw-bold d-flex align-items-center" @click="submitBooking" :disabled="bookingLoading">
+                  <span v-if="bookingLoading" class="spinner-border spinner-border-sm me-2"></span>
+                  <span v-else><i class="bi bi-check2-circle me-2"></i>Xác nhận đặt lịch</span>
                 </button>
               </div>
-
-              <form v-else @submit.prevent="submitBooking">
-                <!-- Step 1: Choose Pet -->
-                <div v-if="currentStep === 0">
-                  <p class="text-muted small mb-3">Chọn thú cưng bạn muốn đặt lịch khám:</p>
-                  <div v-if="myPets.length === 0" class="alert alert-warning border-0 rounded-3">
-                    <i class="bi bi-exclamation-triangle me-2"></i>Bạn chưa có thú cưng. <a href="#" @click.prevent="$emit('switch-tab', 'my-pets')">Thêm thú cưng ngay</a>
-                  </div>
-                  <div v-else class="pet-select-grid">
-                    <div
-                      v-for="pet in myPets"
-                      :key="pet.id"
-                      class="pet-select-card"
-                      :class="{ selected: bookForm.petId === pet.id }"
-                      @click="bookForm.petId = pet.id"
-                    >
-                      <div class="pet-select-emoji">{{ getSpeciesEmoji(pet.species) }}</div>
-                      <div class="pet-select-name">{{ pet.name }}</div>
-                      <div class="pet-select-species text-muted">{{ pet.species }}</div>
-                      <div v-if="bookForm.petId === pet.id" class="pet-select-check">
-                        <i class="bi bi-check-circle-fill text-success"></i>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Step 2: Choose Service & Date -->
-                <div v-else-if="currentStep === 1">
-                  <div class="row g-3">
-                    <div class="col-12">
-                      <label class="form-label-custom">Dịch vụ <span class="text-danger">*</span></label>
-                      <select v-model="bookForm.serviceId" class="form-control-custom" required>
-                        <option value="">-- Chọn dịch vụ --</option>
-                        <option v-for="svc in services" :key="svc.id" :value="svc.id">
-                          {{ svc.name }} {{ svc.price ? `— ${formatCurrency(svc.price)}` : '' }}
-                        </option>
-                      </select>
-                    </div>
-
-                    <div class="col-12">
-                      <label class="form-label-custom">Chọn Ngày khám <span class="text-danger">*</span></label>
-                      <input
-                        v-model="selectedBookingDate"
-                        type="date"
-                        class="form-control-custom"
-                        :min="minDateOnlyStr"
-                        @change="onBookingDateChange"
-                        required
-                      />
-                    </div>
-
-                    <!-- Available Slots Picker -->
-                    <div class="col-12" v-if="selectedBookingDate">
-                      <div class="mb-3">
-                        <label class="form-label-custom">Bác sĩ mong muốn (Không bắt buộc)</label>
-                        <select v-model="selectedDoctorFilter" class="form-control-custom">
-                          <option value="auto">✨ Tự động phân công (Phòng khám tự xếp bác sĩ rảnh)</option>
-                          <option v-for="doc in doctorAvailableSlots" :key="doc.doctorId" :value="doc.doctorId">
-                            👨‍⚕️ {{ doc.doctorName }}
-                          </option>
-                        </select>
-                      </div>
-
-                      <label class="form-label-custom">Chọn Giờ khám trống <span class="text-danger">*</span></label>
-                      
-                      <div v-if="fetchingSlots" class="text-center py-3">
-                        <span class="spinner-border spinner-border-sm text-warning me-2"></span>
-                        <span class="text-muted small">Đang kiểm tra lịch làm việc của bác sĩ...</span>
-                      </div>
-
-                      <div v-else-if="slotFetchError" class="alert alert-danger py-2 px-3 small border-0 rounded-3">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ slotFetchError }}
-                      </div>
-
-                      <div v-else-if="doctorAvailableSlots.length === 0" class="alert alert-warning py-2 px-3 small border-0 rounded-3">
-                        <i class="bi bi-info-circle-fill me-2"></i>Không có bác sĩ nào trực hoặc còn lịch trống trong ngày này. Vui lòng chọn ngày khác.
-                      </div>
-
-                      <div v-else>
-                        <div v-if="computedAvailableSlots.length === 0" class="alert alert-warning py-2 px-3 small border-0 rounded-3">
-                          <i class="bi bi-info-circle-fill me-2"></i>Không có giờ khám nào còn trống cho lựa chọn này. Vui lòng chọn ngày khác hoặc đổi bác sĩ.
-                        </div>
-                        <div v-else class="time-slots-grid d-flex flex-wrap gap-2 pt-2">
-                          <button
-                            v-for="slot in computedAvailableSlots"
-                            :key="slot"
-                            type="button"
-                            class="btn-time-pill"
-                            :class="{ active: bookForm.appointmentDate === slot }"
-                            @click="selectTimeSlot(selectedDoctorFilter === 'auto' ? null : selectedDoctorFilter, slot)"
-                          >
-                            {{ formatTimeOnly(slot) }}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="col-12">
-                      <label class="form-label-custom">Triệu chứng / Lý do khám <span class="text-danger">*</span></label>
-                      <textarea
-                        v-model="bookForm.symptom"
-                        class="form-control-custom"
-                        rows="3"
-                        placeholder="Mô tả triệu chứng của thú cưng, lý do muốn khám..."
-                        required
-                      ></textarea>
-                    </div>
-                    <div class="col-12">
-                      <label class="form-label-custom">Ghi chú thêm</label>
-                      <textarea
-                        v-model="bookForm.note"
-                        class="form-control-custom"
-                        rows="2"
-                        placeholder="VD: thú cưng hay cắn, cần bác sĩ nữ..."
-                      ></textarea>
-                    </div>
-                  </div>
-                </div>
-
-
-                <!-- Step 2.5: Choose Vaccine -->
-                <div v-else-if="isVaccinationService && currentStep === 2">
-                  <p class="text-muted small mb-3">Vui lòng chọn loại vắc-xin cho bé <strong>{{ getSelectedPetName() }}</strong>:</p>
-                  
-                  <div id="vaccine-select-list-container" class="vaccine-select-list mb-3" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-                    <div
-                      v-for="vac in filteredVaccines"
-                      :key="vac.id"
-                      :id="'vaccine-option-card-' + vac.id"
-                      class="vaccine-card-select"
-                      :class="{ selected: bookForm.vaccineId === vac.id }"
-                      @click="selectVaccine(vac.id)"
-                    >
-                      <div class="d-flex justify-content-between align-items-center w-100">
-                        <div>
-                          <strong class="text-dark">{{ vac.name }}</strong>
-                          <div class="text-muted small" style="font-size: 0.78rem;">
-                            Nhà sản xuất: {{ vac.manufacturer || 'Không rõ' }}
-                          </div>
-                          <div class="text-muted small mt-1" style="font-size: 0.75rem;">
-                            {{ vac.description }}
-                          </div>
-                        </div>
-                        <div class="text-end">
-                          <span class="badge" :class="vac.stockQuantity > 2 ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'">
-                            Còn: {{ vac.stockQuantity }} liều
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div id="vaccine-validation-loading" v-if="checkingValidation" class="text-center py-3">
-                    <span class="spinner-border spinner-border-sm text-warning me-2"></span>
-                    <span class="text-muted small">Đang đối chiếu phác đồ tiêm chủng...</span>
-                  </div>
-
-                  <div v-else-if="vaccineValidation">
-                    <!-- Warning banner if validation fails but allows override -->
-                    <div v-if="!vaccineValidation.isValid" id="vaccine-validation-alert-warning" class="alert rounded-3 p-3" :class="vaccineValidation.requiresDoctorOverride ? 'alert-warning border-warning' : 'alert-danger border-danger'">
-                      <div class="d-flex gap-2">
-                        <i class="bi flex-shrink-0" :class="vaccineValidation.requiresDoctorOverride ? 'bi-exclamation-triangle-fill text-warning' : 'bi-dash-circle-fill text-danger'" style="font-size: 1.25rem;"></i>
-                        <div>
-                          <strong class="d-block mb-1">{{ vaccineValidation.requiresDoctorOverride ? 'Cảnh báo phác đồ y khoa' : 'Không đạt điều kiện tiêm chủng' }}</strong>
-                          <span class="small">{{ vaccineValidation.warningMessage }}</span>
-                          <span v-if="vaccineValidation.requiresDoctorOverride" class="d-block mt-2 small text-muted font-italic">
-                            * Lưu ý: Lịch tiêm của bé sẽ được bác sĩ thú y trực tiếp rà soát và ghi đè chấp thuận tại phòng khám.
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <!-- Success banner if valid -->
-                    <div v-else id="vaccine-validation-alert-success" class="alert alert-success border-success rounded-3 p-3">
-                      <div class="d-flex gap-2 align-items-center">
-                        <i class="bi bi-patch-check-fill text-success" style="font-size: 1.25rem;"></i>
-                        <div>
-                          <strong class="d-block">Phác đồ hợp lệ</strong>
-                          <span class="small">Bé đủ điều kiện để thực hiện mũi tiêm này theo đúng lịch sử tiêm chủng.</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Step 3: Confirm -->
-                <div v-else-if="currentStep === (isVaccinationService ? 3 : 2)">
-                  <div class="booking-confirm-card">
-                    <h6 class="fw-bold mb-3 text-dark">
-                      <i class="bi bi-clipboard-check text-warning me-2"></i>Xác nhận thông tin đặt lịch
-                    </h6>
-                    <div class="confirm-row">
-                      <span class="confirm-label">Thú cưng</span>
-                      <span class="confirm-value">{{ getSelectedPetName() }}</span>
-                    </div>
-                    <div class="confirm-row">
-                      <span class="confirm-label">Dịch vụ</span>
-                      <span class="confirm-value">{{ getSelectedServiceName() }}</span>
-                    </div>
-                    <div v-if="bookForm.vaccineId" class="confirm-row">
-                      <span class="confirm-label">Loại Vaccine</span>
-                      <span class="confirm-value">{{ getSelectedVaccineName() }}</span>
-                    </div>
-                    <div class="confirm-row">
-                      <span class="confirm-label">Thời gian</span>
-                      <span class="confirm-value">{{ formatDatetimeLocal(bookForm.appointmentDate) }}</span>
-                    </div>
-                    <div class="confirm-row">
-                      <span class="confirm-label">Lý do khám</span>
-                      <span class="confirm-value">{{ bookForm.symptom }}</span>
-                    </div>
-                    <div v-if="bookForm.note" class="confirm-row">
-                      <span class="confirm-label">Ghi chú</span>
-                      <span class="confirm-value">{{ bookForm.note }}</span>
-                    </div>
-                  </div>
-                  <div v-if="bookingError" class="alert alert-danger border-0 rounded-3 mt-3 py-2 px-3">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ bookingError }}
-                  </div>
-                </div>
-
-                <!-- Navigation buttons -->
-                <div class="booking-nav-btns mt-4">
-                  <button
-                    v-if="currentStep > 0"
-                    type="button"
-                    class="btn btn-outline-secondary rounded-pill px-4"
-                    @click="currentStep--"
-                    :disabled="bookingLoading"
-                  >
-                    <i class="bi bi-arrow-left me-1"></i> Quay lại
-                  </button>
-                  <div class="ms-auto d-flex gap-2">
-                    <button
-                      v-if="currentStep < maxSteps"
-                      type="button"
-                      class="btn btn-premium-appt"
-                      @click="nextStep"
-                      :disabled="!canProceed"
-                    >
-                      Tiếp theo <i class="bi bi-arrow-right ms-1"></i>
-                    </button>
-                    <button
-                      v-else
-                      type="submit"
-                      class="btn btn-premium-appt"
-                      :disabled="bookingLoading"
-                    >
-                      <span v-if="bookingLoading" class="spinner-border spinner-border-sm me-2"></span>
-                      <i v-else class="bi bi-check2-circle me-2"></i>
-                      Xác nhận đặt lịch
-                    </button>
-                  </div>
-                </div>
-              </form>
             </div>
           </div>
         </div>
       </Transition>
     </Teleport>
 
-    <!-- ===== DETAIL MODAL ===== -->
+<!-- ===== DETAIL MODAL ===== -->
     <Teleport to="body">
       <Transition name="modal-fade">
         <div v-if="showDetailModal && detailAppt" class="appt-modal-overlay" @click.self="showDetailModal = false">
@@ -534,11 +711,31 @@
                     </div>
                   </div>
                 </div>
-                <div v-if="detailAppt.qrToken" class="col-12">
+                <div v-if="detailAppt.status === 'pending'" class="col-12">
+                  <div class="detail-item text-center p-3" style="background: #fafafa; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <div class="detail-label"><i class="bi bi-info-circle me-1 text-primary"></i>Mã QR Check-in</div>
+                    <div class="small text-muted mt-2">Vui lòng chờ phòng khám xác nhận lịch hẹn. Mã QR sẽ hiển thị tại đây sau khi lịch được xác nhận.</div>
+                  </div>
+                </div>
+                <div v-else-if="detailAppt.status === 'confirmed' && detailAppt.qrToken" class="col-12">
                   <div id="appointment-detail-qr-box" class="detail-item text-center p-3" style="background: #fafafa; border: 1.5px dashed #10b981; border-radius: 12px;">
                     <div class="detail-label"><i class="bi bi-qr-code me-1"></i>Mã QR Check-in</div>
-                    <div class="fs-5 fw-bold text-dark font-monospace my-1">{{ detailAppt.qrToken }}</div>
-                    <div class="small text-muted" style="font-size: 0.75rem;">Đưa mã này cho nhân viên lễ tân khi đến phòng khám để check-in nhanh.</div>
+                    <div class="d-flex justify-content-center my-3 position-relative">
+                      <qrcode-vue :value="detailAppt.qrToken" :size="150" level="M" />
+                      <div class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.8); cursor: pointer; transition: all 0.2s;" @click="$router.push(`/qr-checkin/${detailAppt.id}`)" onmouseover="this.style.background='rgba(255,255,255,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.8)'">
+                        <span class="btn btn-primary btn-sm rounded-pill shadow-sm fw-bold"><i class="bi bi-arrows-fullscreen me-1"></i>Mở thẻ</span>
+                      </div>
+                    </div>
+                    <div class="fs-5 fw-bold text-dark font-monospace mb-2">{{ detailAppt.qrToken }}</div>
+                    <button class="btn btn-outline-success btn-sm rounded-pill w-100 fw-bold" @click="$router.push(`/qr-checkin/${detailAppt.id}`)">
+                      <i class="bi bi-box-arrow-up-right me-1"></i> Xem thẻ Check-in lớn
+                    </button>
+                  </div>
+                </div>
+                <div v-else-if="['waiting', 'in_progress', 'ready_to_pay', 'completed'].includes(detailAppt.status)" class="col-12">
+                  <div class="detail-item text-center p-3" style="background: #f0fdf4; border: 1px solid #10b981; border-radius: 12px;">
+                    <div class="detail-label text-success"><i class="bi bi-check-circle-fill me-1"></i>Trạng thái Check-in</div>
+                    <div class="small text-success fw-bold mt-2">Bạn đã check-in thành công.</div>
                   </div>
                 </div>
               </div>
@@ -584,6 +781,54 @@
         </div>
       </Transition>
     </Teleport>
+    <!-- ===== QR LIST MODAL ===== -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showQrListModal" class="appt-modal-overlay" @click.self="showQrListModal = false">
+          <div class="appt-modal-card">
+            <div class="appt-modal-header border-bottom mb-3 pb-3">
+              <h5 class="fw-bold mb-0">
+                <i class="bi bi-qr-code-scan me-2 text-success"></i>Mã QR Check-in của tôi
+              </h5>
+              <button class="modal-close-btn" @click="showQrListModal = false">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <div class="appt-modal-body text-center">
+              <div v-if="confirmedAppointments.length === 0" class="py-4">
+                <i class="bi bi-box-seam text-muted" style="font-size: 3rem;"></i>
+                <h6 class="mt-3 text-dark fw-bold">Chưa có mã QR nào</h6>
+                <p class="text-muted small mb-0">Bạn hiện không có lịch hẹn nào đang chờ check-in. Mã QR chỉ hiển thị khi phòng khám đã duyệt lịch hẹn của bạn.</p>
+              </div>
+
+              <div v-else class="qr-carousel">
+                <div v-for="(appt, index) in confirmedAppointments" :key="appt.id" class="qr-item mb-4 pb-4 border-bottom">
+                  <h6 class="fw-bold text-dark mb-1">
+                    Lịch khám #{{ appt.id }} - {{ appt.petName }}
+                  </h6>
+                  <p class="text-muted small mb-3">Ngày: {{ formatDateFull(appt.appointmentDate) }}</p>
+                  
+                  <div class="d-flex justify-content-center my-3 position-relative">
+                    <qrcode-vue :value="appt.qrToken" :size="180" level="M" />
+                  </div>
+                  
+                  <div class="fs-5 fw-bold text-dark font-monospace mb-3">{{ appt.qrToken }}</div>
+                  
+                  <button class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" @click="$router.push(`/qr-checkin/${appt.id}`)">
+                    <i class="bi bi-person-vcard me-2"></i>Mở thẻ Check-in
+                  </button>
+                </div>
+              </div>
+
+              <div class="mt-2 text-center">
+                <button class="btn btn-outline-secondary rounded-pill px-4" @click="showQrListModal = false">Đóng</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
   </div>
 </template>
@@ -591,6 +836,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import api from '../../services/api';
+import QrcodeVue from 'qrcode.vue';
 
 // ===== Emits =====
 const emit = defineEmits<{
@@ -658,6 +904,12 @@ const showCancelModal = ref(false);
 const apptToCancel = ref<AppointmentDetail | null>(null);
 const cancelLoading = ref(false);
 
+// QR List modal
+const showQrListModal = ref(false);
+const confirmedAppointments = computed(() => {
+  return appointments.value.filter(a => a.status === 'confirmed' && a.qrToken);
+});
+
 // Book modal
 const showBookModal = ref(false);
 const currentStep = ref(0);
@@ -699,17 +951,19 @@ const computedAvailableSlots = computed(() => {
 });
 
 const isVaccinationService = computed(() => {
-  const svc = services.value.find(s => s.id === bookForm.value.serviceId);
-  return svc ? (svc.name.toLowerCase().includes('tiêm') || svc.name.toLowerCase().includes('vaccine') || svc.name.toLowerCase().includes('chích')) : false;
+  const service = services.value.find(s => s.id === bookForm.value.serviceId);
+  if (!service || !service.name) return false;
+  const nameLower = service.name.toLowerCase();
+  return nameLower.includes('tiêm phòng') || nameLower.includes('vaccine');
 });
 
 const bookingSteps = computed(() => {
   return isVaccinationService.value 
-    ? ['Chọn thú cưng', 'Dịch vụ & Thời gian', 'Chọn Vaccine', 'Xác nhận'] 
-    : ['Chọn thú cưng', 'Dịch vụ & Thời gian', 'Xác nhận'];
+    ? ['Thú cưng', 'Dịch vụ', 'Thời gian', 'Vaccine', 'Xác nhận'] 
+    : ['Thú cưng', 'Dịch vụ', 'Thời gian', 'Xác nhận'];
 });
 
-const maxSteps = computed(() => isVaccinationService.value ? 3 : 2);
+const maxSteps = computed(() => isVaccinationService.value ? 4 : 3);
 
 const vaccines = ref<Vaccine[]>([]);
 const vaccineValidation = ref<ValidationResult | null>(null);
@@ -745,6 +999,129 @@ const filterOptions = [
   { value: 'cancelled', label: 'Đã huỷ', icon: 'bi bi-x-circle' },
 ];
 
+
+// ===== Calendar State & Computed =====
+const currentMonth = ref(new Date().getMonth());
+const currentYear = ref(new Date().getFullYear());
+
+const toLocalDateStr = (d: Date) => {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const calendarDays = computed(() => {
+  const firstDay = new Date(currentYear.value, currentMonth.value, 1).getDay();
+  const daysInMonth = new Date(currentYear.value, currentMonth.value + 1, 0).getDate();
+  const daysInPrevMonth = new Date(currentYear.value, currentMonth.value, 0).getDate();
+  
+  const days = [];
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  
+  for (let i = 0; i < firstDay; i++) {
+    const d = new Date(currentYear.value, currentMonth.value - 1, daysInPrevMonth - firstDay + i + 1);
+    days.push({
+      dayNum: d.getDate(),
+      dateStr: toLocalDateStr(d),
+      isCurrentMonth: false,
+      isPast: d < today,
+      isToday: false,
+      hasAvailability: false
+    });
+  }
+  
+  for (let i = 1; i <= daysInMonth; i++) {
+    const d = new Date(currentYear.value, currentMonth.value, i);
+    days.push({
+      dayNum: i,
+      dateStr: toLocalDateStr(d),
+      isCurrentMonth: true,
+      isPast: d < today,
+      isToday: d.getTime() === today.getTime(),
+      hasAvailability: ! (d < today)
+    });
+  }
+  
+  const remaining = 42 - days.length;
+  for (let i = 1; i <= remaining; i++) {
+    const d = new Date(currentYear.value, currentMonth.value + 1, i);
+    days.push({
+      dayNum: d.getDate(),
+      dateStr: toLocalDateStr(d),
+      isCurrentMonth: false,
+      isPast: d < today,
+      isToday: false,
+      hasAvailability: false
+    });
+  }
+  return days;
+});
+
+const prevMonth = () => {
+  if (currentMonth.value === 0) {
+    currentMonth.value = 11;
+    currentYear.value--;
+  } else {
+    currentMonth.value--;
+  }
+};
+
+const nextMonth = () => {
+  if (currentMonth.value === 11) {
+    currentMonth.value = 0;
+    currentYear.value++;
+  } else {
+    currentMonth.value++;
+  }
+};
+
+const onCalendarDateSelect = (dateStr: string) => {
+  selectedBookingDate.value = dateStr;
+  onBookingDateChange();
+};
+
+
+const masterMorningTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00'];
+const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];
+
+interface SlotDisplay {
+  time: string;
+  slotStr: string;
+  isAvailable: boolean;
+  isPast: boolean;
+  isBooked: boolean;
+  isTooSoon: boolean;
+}
+
+// Buffer: slots must be at least 60 minutes from now to be bookable
+const BOOKING_BUFFER_MS = 60 * 60 * 1000;
+
+const buildSlots = (times: string[]): SlotDisplay[] => {
+  if (!selectedBookingDate.value) return [];
+  const now = Date.now();
+  const cutoff = now + BOOKING_BUFFER_MS;
+  const [year, month, day] = selectedBookingDate.value.split('-');
+  return times.map(time => {
+    const slotStr = `${selectedBookingDate.value}T${time}:00`;
+    const [hour, minute] = time.split(':');
+    const slotDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0);
+    const slotMs = slotDate.getTime();
+    const isPast = slotMs < now;
+    const isTooSoon = !isPast && slotMs < cutoff;
+    const isAvailableFromApi = computedAvailableSlots.value.includes(slotStr);
+    const isBooked = !isPast && !isTooSoon && !isAvailableFromApi;
+    const isAvailable = !isPast && !isTooSoon && isAvailableFromApi;
+    return { time, slotStr, isAvailable, isPast, isBooked, isTooSoon };
+  });
+};
+
+const displayMorningSlots = computed<SlotDisplay[]>(() => buildSlots(masterMorningTimes));
+const displayAfternoonSlots = computed<SlotDisplay[]>(() => buildSlots(masterAfternoonTimes));
+
+// ===== End Calendar State =====
+
 // ===== Computed =====
 const filteredAppointments = computed(() => {
   return appointments.value;
@@ -757,16 +1134,46 @@ const minDateOnlyStr = computed(() => {
 
 
 const canProceed = computed(() => {
-  if (currentStep.value === 0) return bookForm.value.petId > 0;
-  if (currentStep.value === 1) {
-    return bookForm.value.serviceId > 0 && 
-           bookForm.value.appointmentDate !== '' && 
-           bookForm.value.symptom.trim() !== '' && 
-           (bookForm.value.doctorId !== null || selectedDoctorFilter.value === 'auto');
+  if (currentStep.value === 0) {
+    if (bookForm.value.petId <= 0) return false;
+    if (selectedPetActiveAppts.value.length > 0 && !petWarningDismissed.value) return false;
+    return true;
   }
-  if (isVaccinationService.value && currentStep.value === 2) return bookForm.value.vaccineId !== null && bookForm.value.vaccineId > 0;
+  if (currentStep.value === 1) return bookForm.value.serviceId > 0;
+  if (currentStep.value === 2) return bookForm.value.appointmentDate !== '';
+  if (isVaccinationService.value && currentStep.value === 3) return bookForm.value.vaccineId !== null && bookForm.value.vaccineId > 0;
   return true;
 });
+
+// ===== Pet Duplicate Warning =====
+const ACTIVE_STATUSES = ['pending', 'confirmed', 'waiting', 'in_progress'];
+
+// Map petId → active appointments (pending/confirmed/waiting/in_progress)
+const petActiveAppointments = computed(() => {
+  const map = new Map<number, AppointmentDetail[]>();
+  for (const appt of appointments.value) {
+    if (appt.petId && ACTIVE_STATUSES.includes(appt.status ?? '')) {
+      if (!map.has(appt.petId)) map.set(appt.petId, []);
+      map.get(appt.petId)!.push(appt);
+    }
+  }
+  return map;
+});
+
+// Active appointments for the currently selected pet in the booking wizard
+const selectedPetActiveAppts = computed(() => {
+  if (!bookForm.value.petId) return [];
+  return petActiveAppointments.value.get(bookForm.value.petId) ?? [];
+});
+
+// Whether user has dismissed the warning (allow them to proceed anyway)
+const petWarningDismissed = ref(false);
+
+const selectPet = (petId: number) => {
+  if (bookForm.value.petId === petId) return; // deselect logic: keep selected
+  bookForm.value.petId = petId;
+  petWarningDismissed.value = false; // reset dismissal when changing pet
+};
 
 
 // ===== API =====
@@ -821,7 +1228,26 @@ const fetchPets = async () => {
 const fetchServices = async () => {
   try {
     const res = await api.get('/my-appointments/services');
-    services.value = res.data;
+    const khamSvc = res.data.find((s: any) => s.name.toLowerCase().includes('khám'));
+    const tiemSvc = res.data.find((s: any) => s.name.toLowerCase().includes('tiêm'));
+    
+    const mappedServices = [];
+    if (khamSvc) {
+      mappedServices.push({
+        ...khamSvc,
+        name: 'Khám bệnh',
+        description: 'Kiểm tra sức khỏe tổng quát, chẩn đoán và tư vấn điều trị cho thú cưng của bạn.'
+      });
+    }
+    if (tiemSvc) {
+      mappedServices.push({
+        ...tiemSvc,
+        name: 'Tiêm phòng',
+        description: 'Tiêm các loại vaccine cần thiết định kỳ để phòng ngừa bệnh truyền nhiễm cho thú cưng.'
+      });
+    }
+    
+    services.value = mappedServices.length > 0 ? mappedServices : res.data;
   } catch { /* silent */ }
 };
 
@@ -913,6 +1339,7 @@ const openBookModal = async () => {
   bookingSuccess.value = false;
   vaccineValidation.value = null;
   lastBookedAppt.value = null;
+  petWarningDismissed.value = false;
   await fetchPets();
   await fetchServices();
   await fetchVaccines();
@@ -925,7 +1352,26 @@ const closeBookModal = () => {
 };
 
 const nextStep = () => {
-  if (currentStep.value < maxSteps.value) currentStep.value++;
+  console.log('nextStep called. currentStep:', currentStep.value, 'maxSteps:', maxSteps.value, 'canProceed:', canProceed.value);
+  console.log('bookForm.serviceId:', bookForm.value.serviceId, 'type:', typeof bookForm.value.serviceId);
+  console.log('isVaccinationService:', isVaccinationService.value);
+  if (!canProceed.value) {
+    console.log('Cannot proceed!');
+    return;
+  }
+  if (currentStep.value < maxSteps.value) {
+    console.log('Incrementing currentStep');
+    currentStep.value++;
+    if (currentStep.value === 2 && !selectedBookingDate.value) {
+      console.log('Setting default date');
+      selectedBookingDate.value = toLocalDateStr(new Date());
+      currentMonth.value = new Date().getMonth();
+      currentYear.value = new Date().getFullYear();
+      onBookingDateChange();
+    }
+  } else {
+    console.log('Already at max steps');
+  }
 };
 
 const openDetailModal = (appt: AppointmentDetail) => {
@@ -953,11 +1399,24 @@ const getStatusLabel = (status: string | null): string => {
   const map: Record<string, string> = {
     pending: 'Chờ xác nhận',
     confirmed: 'Đã xác nhận',
+    waiting: 'Chờ khám',
     in_progress: 'Đang khám',
     completed: 'Hoàn thành',
     cancelled: 'Đã huỷ',
   };
   return map[status ?? ''] || (status ?? 'Không rõ');
+};
+
+const getStatusBadgeClass = (status: string): string => {
+  const map: Record<string, string> = {
+    pending: 'bg-warning text-dark',
+    confirmed: 'bg-info text-white',
+    waiting: 'bg-primary text-white',
+    in_progress: 'bg-warning text-dark',
+    completed: 'bg-success text-white',
+    cancelled: 'bg-danger text-white',
+  };
+  return map[status] ?? 'bg-secondary text-white';
 };
 
 const getStatusIcon = (status: string | null): string => {
@@ -995,6 +1454,29 @@ const getSelectedPetName = (): string => {
 const getSelectedServiceName = (): string => {
   const svc = services.value.find(s => s.id === bookForm.value.serviceId);
   return svc?.name ?? '—';
+};
+
+const getSelectedServicePrice = (): number => {
+  const svc = services.value.find(s => s.id === bookForm.value.serviceId);
+  return (svc as any)?.price || 0;
+};
+
+const getSelectedPetObj = (): any => {
+  return myPets.value.find(p => p.id === bookForm.value.petId);
+};
+
+const calculateAge = (birthDate: string): string => {
+  if (!birthDate) return '--';
+  const birth = new Date(birthDate);
+  const now = new Date();
+  let years = now.getFullYear() - birth.getFullYear();
+  let months = now.getMonth() - birth.getMonth();
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  if (years > 0) return `${years} tuổi${months > 0 ? ` ${months} tháng` : ''}`;
+  return `${months} tháng`;
 };
 
 const getSelectedVaccineName = (): string => {
@@ -1083,13 +1565,17 @@ const formatDatetimeLocal = (val: string): string => {
   if (!val) return '—';
   let date = new Date(val);
   if (isNaN(date.getTime())) {
-    // Fallback for Safari/WebKit: replace 'T' with ' '
     date = new Date(val.replace('T', ' '));
   }
-  if (isNaN(date.getTime())) {
-    return val; // Return raw value if parsing completely fails
-  }
-  return date.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  if (isNaN(date.getTime())) return val;
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+const formatDateOnly = (dateStr: string): string => {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-');
+  return `${day}/${month}/${year}`;
 };
 
 const formatCurrency = (amount: number | null | undefined): string => {
@@ -1606,11 +2092,112 @@ textarea.form-control-custom { resize: vertical; min-height: 80px; }
 
 /* Booking confirm card */
 .booking-confirm-card {
-  background: #f9fafb;
-  border-radius: 14px;
-  padding: 1.25rem;
-  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  border: 1px solid #f1f3f5;
 }
+
+.confirm-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 30px;
+}
+
+.card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.edit-link {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #0d6efd;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.card-body-flex {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.confirm-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.confirm-avatar.placeholder {
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+}
+
+.service-summary-box {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.service-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.premium-textarea {
+  background: #f8f9fa;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 15px;
+  resize: none;
+}
+.premium-textarea:focus {
+  background: white;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+}
+
+.receipt-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+  overflow: hidden;
+  border: 1px solid #f1f3f5;
+}
+.receipt-header {
+  background: #e3f2fd;
+  padding: 15px 20px;
+  position: relative;
+}
+.receipt-header::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background: white;
+  border-radius: 20px 20px 0 0;
+}
+.tracking-wide {
+  letter-spacing: 1px;
+}
+
 
 .confirm-row {
   display: flex;
@@ -1749,5 +2336,302 @@ textarea.form-control-custom { resize: vertical; min-height: 80px; }
   box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
   transform: scale(1.03);
 }
-</style>
 
+<style scoped>
+/* Injecting Wizard CSS into MyAppointmentsTab.vue */
+.wizard-body {
+  padding: 1.5rem 2rem;
+  max-height: 75vh;
+  overflow-y: auto;
+  background: #f8fafc;
+}
+
+.stepper-container {
+  background: transparent;
+  padding: 0;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 2;
+  cursor: pointer;
+  flex: 1;
+}
+
+.step-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.step.active .step-icon, .step.completed .step-icon {
+  background: var(--bs-primary);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
+}
+
+.step-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.step.active .step-label {
+  color: var(--bs-primary);
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Pet Card Select */
+.pet-select-card {
+  background: white;
+  border: 2px solid transparent;
+  border-radius: 1rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+.pet-select-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
+.pet-select-card.selected { border-color: var(--bs-primary); background: rgba(13, 110, 253, 0.02); }
+.pet-select-card .check-icon { position: absolute; top: 1rem; right: 1rem; font-size: 1.2rem; color: var(--bs-primary); opacity: 0; transform: scale(0.5); transition: all 0.2s ease; }
+.pet-select-card.selected .check-icon { opacity: 1; transform: scale(1); }
+
+.pet-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Service Card */
+.service-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 100%;
+  position: relative;
+}
+.service-card:hover { border-color: #cbd5e1; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
+.service-card.selected { border-color: var(--bs-primary); box-shadow: 0 0 0 1px var(--bs-primary); background: #f8fbff; }
+.check-circle-empty { position: absolute; top: 1rem; right: 1rem; color: #cbd5e1; font-size: 1.2rem; }
+.check-circle-filled { position: absolute; top: 1rem; right: 1rem; font-size: 1.2rem; opacity: 0; transition: opacity 0.2s; }
+.service-card.selected .check-circle-empty { opacity: 0; }
+.service-card.selected .check-circle-filled { opacity: 1; }
+.price-tag { font-weight: 700; color: var(--bs-primary); }
+
+.slot-pill {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #334155;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+  text-align: center;
+}
+.slot-pill:hover { border-color: var(--bs-primary); color: var(--bs-primary); }
+.slot-pill.selected { background: var(--bs-primary); color: white; border-color: var(--bs-primary); }
+
+/* ===== Time Slot Buttons ===== */
+.time-slot-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 calc(25% - 0.5rem);
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  gap: 2px;
+  min-width: 72px;
+  line-height: 1.2;
+}
+
+/* Available slot */
+.time-slot-btn.slot-available {
+  background: #fff;
+  border-color: #dee2e6;
+  color: #495057;
+}
+.time-slot-btn.slot-available:hover {
+  border-color: #0d6efd;
+  color: #0d6efd;
+  background: #f0f6ff;
+  box-shadow: 0 2px 8px rgba(13,110,253,0.12);
+}
+
+/* Selected slot */
+.time-slot-btn.slot-selected {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+  box-shadow: 0 4px 12px rgba(13,110,253,0.3);
+}
+
+/* Past slot — grey, italic, strikethrough */
+.time-slot-btn.slot-past {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+  color: #adb5bd;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.time-slot-btn.slot-past .slot-time-text {
+  text-decoration: line-through;
+  font-style: italic;
+}
+
+/* Too soon — amber/orange warning */
+.time-slot-btn.slot-too-soon {
+  background: #fff8ec;
+  border-color: #ffc107;
+  color: #b45309;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Booked by someone else — red/rose */
+.time-slot-btn.slot-booked {
+  background: #fff5f5;
+  border-color: #fca5a5;
+  color: #dc3545;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Small label badge below the time text */
+.slot-badge-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.date-picker-lg { padding: 0.75rem; border-radius: 0.5rem; }
+
+.receipt-card { background: #e0f2fe; border-radius: 1rem; padding: 1.5rem; height: 100%; }
+.receipt-header { background: #bae6fd; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; text-align: center; }
+.receipt-doctor { background: white; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+.doctor-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+.summary-card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.5rem; }
+.summary-title { font-size: 0.9rem; font-weight: 700; color: #334155; margin-bottom: 1rem; }
+
+/* ===== Pet Select Card (Step 0) ===== */
+.pet-select-card {
+  background: white;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  cursor: pointer;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+.pet-select-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+.pet-select-card.pet-selected {
+  border-color: #0d6efd;
+  box-shadow: 0 8px 25px rgba(13,110,253,0.15);
+}
+.pet-select-card.pet-has-warning {
+  border-color: #fbbf24;
+}
+.pet-select-card.pet-selected.pet-has-warning {
+  border-color: #f59e0b;
+  box-shadow: 0 8px 25px rgba(245,158,11,0.2);
+}
+
+/* Warning ribbon in top-right corner */
+.pet-warning-ribbon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 4px 10px 4px 14px;
+  border-radius: 0 16px 0 12px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+
+/* Duplicate appointment warning banner */
+.pet-dup-warning {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border: 1.5px solid #fcd34d;
+  border-radius: 14px;
+  padding: 1.1rem 1.3rem;
+  animation: warning-pulse 2s ease-in-out infinite;
+}
+
+@keyframes warning-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.25); }
+  50%       { box-shadow: 0 0 0 6px rgba(251,191,36,0); }
+}
+
+/* Fade-slide transition for the warning banner */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+</style>

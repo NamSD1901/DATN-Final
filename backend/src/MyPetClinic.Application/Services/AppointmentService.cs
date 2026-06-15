@@ -1023,6 +1023,44 @@ namespace MyPetClinic.Application.Services
 
             return result;
         }
+
+        public async Task<AppointmentDetailDto?> CheckInByQrAsync(string qrToken)
+        {
+            var appointments = await _unitOfWork.Appointments.FindWithIncludesAsync(
+                a => a.QrToken == qrToken,
+                a => a.Customer!, a => a.Pet!, a => a.Doctor!, a => a.Service!, a => a.Vaccine!, a => a.Invoice!
+            );
+            
+            var appointment = appointments.FirstOrDefault();
+
+            if (appointment == null)
+            {
+                return null;
+            }
+
+            if (appointment.Status.ToLower() != "confirmed")
+            {
+                throw new InvalidOperationException($"Lịch hẹn đang ở trạng thái '{appointment.Status}', không thể check-in. Chỉ có thể check-in khi lịch hẹn đã được xác nhận.");
+            }
+
+            // Xếp hàng đợi tương tự như Walk-in
+            if (appointment.QueueNumber == 0)
+            {
+                var today = DateTime.UtcNow.Date;
+                var todayAppointments = await _unitOfWork.Appointments.FindAsync(x => x.AppointmentDate.Date == today && x.QueueNumber > 0);
+                var lastQueue = todayAppointments.Any() ? todayAppointments.Max(x => (int?)x.QueueNumber) ?? 0 : 0;
+                
+                appointment.QueueNumber = lastQueue + 1;
+            }
+
+            appointment.Status = "waiting";
+            appointment.CheckInTime = DateTime.UtcNow;
+
+            _unitOfWork.Appointments.Update(appointment);
+            await _unitOfWork.SaveChangesAsync();
+
+            return await GetAppointmentDetailAsync(appointment.Id);
+        }
     }
 }
 

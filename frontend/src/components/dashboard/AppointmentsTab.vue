@@ -604,6 +604,19 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast Notification -->
+    <div class="position-fixed top-0 end-0 p-3 mt-5 pt-5" style="z-index: 9999;">
+      <div class="toast align-items-center text-white border-0 shadow-lg" :class="[`bg-${toastInfo.type}`, { 'show': toastInfo.show, 'hide': !toastInfo.show }]" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body fw-bold">
+            <i class="bi me-2" :class="toastInfo.type === 'success' ? 'bi-check-circle-fill' : (toastInfo.type === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill')"></i>
+            {{ toastInfo.message }}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" @click="toastInfo.show = false" aria-label="Close"></button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -632,6 +645,20 @@ const showCreateModal = ref(false);
 const showDetailModal = ref(false);
 const detailLoading = ref(false);
 const selectedDetail = ref<any>(null);
+
+// Toast
+const toastInfo = ref({
+  show: false,
+  message: '',
+  type: 'success'
+});
+
+const showToast = (message: string, type: 'success' | 'danger' | 'warning' = 'success') => {
+  toastInfo.value = { show: true, message, type };
+  setTimeout(() => {
+    toastInfo.value.show = false;
+  }, 3000);
+};
 
 // Forms
 const createAptType = ref<'old' | 'new'>('old');
@@ -792,7 +819,7 @@ const openCreateModal = () => {
 
 const submitCreateAppointment = async () => {
   if (!formPayload.value.timeOnly) {
-    alert('Vui lòng chọn khung giờ hẹn khám!');
+    showToast('Vui lòng chọn khung giờ hẹn khám!', 'warning');
     return;
   }
 
@@ -811,7 +838,7 @@ const submitCreateAppointment = async () => {
       };
       const res = await api.post('/appointment', payload);
       if (res.data.success) {
-        alert('Tạo lịch hẹn thành công!');
+        showToast('Tạo lịch hẹn thành công!', 'success');
         showCreateModal.value = false;
         await loadAllData();
       }
@@ -830,13 +857,13 @@ const submitCreateAppointment = async () => {
       };
       const res = await api.post('/appointment/with-new-customer', payload);
       if (res.data.success) {
-        alert('Đăng ký khách mới và tạo lịch hẹn thành công!');
+        showToast('Đăng ký khách mới và tạo lịch hẹn thành công!', 'success');
         showCreateModal.value = false;
         await loadAllData();
       }
     }
   } catch (err: any) {
-    alert(err.response?.data?.message || 'Lỗi khi tạo lịch hẹn.');
+    showToast(err.response?.data?.message || 'Lỗi khi tạo lịch hẹn.', 'danger');
   }
 };
 
@@ -850,7 +877,7 @@ const openDetailModal = async (apptId: number) => {
     selectedDetail.value = res.data;
   } catch (err) {
     console.error(err);
-    alert('Không thể tải chi tiết lịch hẹn.');
+    showToast('Không thể tải chi tiết lịch hẹn.', 'danger');
     showDetailModal.value = false;
   } finally {
     detailLoading.value = false;
@@ -861,17 +888,17 @@ const updateStatus = async (apptId: number, status: string) => {
   try {
     const res = await api.put(`/appointment/${apptId}/status`, { status });
     if (res.data.success) {
-      alert('Cập nhật trạng thái thành công!');
+      showToast('Cập nhật trạng thái thành công!', 'success');
       if (showDetailModal.value) {
         showDetailModal.value = false;
       }
       await loadAllData();
     } else {
-      alert('Không thể cập nhật trạng thái.');
+      showToast('Không thể cập nhật trạng thái.', 'danger');
     }
   } catch (err) {
     console.error(err);
-    alert('Đã xảy ra lỗi.');
+    showToast('Đã xảy ra lỗi.', 'danger');
   }
 };
 

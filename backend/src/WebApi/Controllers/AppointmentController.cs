@@ -117,6 +117,34 @@ namespace MyPetClinic.Controllers
                 return BadRequest(new { success = false, message = "Đã xảy ra lỗi: " + ex.Message });
             }
         }
+        [HttpPost("check-in")]
+        public async Task<IActionResult> CheckIn([FromBody] CheckInRequest req)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(req.QrToken))
+                {
+                    return BadRequest(new { success = false, message = "Mã QR không hợp lệ." });
+                }
+
+                var appt = await _appointmentService.CheckInByQrAsync(req.QrToken);
+                if (appt == null)
+                {
+                    return NotFound(new { success = false, message = "Không tìm thấy lịch hẹn với mã QR này." });
+                }
+
+                return Ok(new { success = true, message = "Check-in thành công!", appointment = appt });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+    }
+
+    public class CheckInRequest
+    {
+        public string QrToken { get; set; } = string.Empty;
     }
 
     public class UpdateStatusRequest

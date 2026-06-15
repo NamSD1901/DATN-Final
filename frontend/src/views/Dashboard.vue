@@ -88,6 +88,9 @@
           <li :class="{ 'active': activeTab === 'my-history' }">
             <a href="#" @click.prevent="activeTab = 'my-history'"><i class="bi bi-clock-history text-warning opacity-75"></i> Lịch sử khám bệnh</a>
           </li>
+          <li :class="{ 'active': activeTab === 'my-services-invoices' }">
+            <a href="#" @click.prevent="activeTab = 'my-services-invoices'"><i class="bi bi-receipt text-warning opacity-75"></i> Dịch vụ & Hóa đơn</a>
+          </li>
         </template>
       </ul>
 
@@ -151,110 +154,105 @@
           
           <!-- tab: Overview Tab -->
           <div v-if="activeTab === 'overview'" class="container-fluid p-0">
-            <div class="row g-4">
-              <!-- QR Code Card (Customer Only) -->
-              <div v-if="role === 'customer'" class="col-lg-4 col-md-6">
-                <div class="card border-0 shadow-sm rounded-4 h-100 text-center p-4 bg-white">
-                  <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-qr-code-scan text-warning me-2"></i>QR Check-in</h5>
-                  <p class="text-muted small mb-4">Sử dụng mã này để check-in nhanh khi đến bệnh viện thú y.</p>
-                  <div class="mt-auto">
-                    <button type="button" @click="showQrModal = true" class="btn btn-outline-warning rounded-pill px-4 fw-bold shadow-sm">
-                      <i class="bi bi-eye me-1"></i> Xem thẻ QR
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Admin Quick Info (Admin Only) -->
-              <div v-else class="col-lg-4 col-md-6">
-                <div class="card border-0 shadow-sm rounded-4 h-100 p-4 bg-white">
-                  <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-shield-check text-warning me-2"></i>Trạng Thái Hệ Thống</h5>
-                  <p class="text-muted small mb-3">Tất cả các cổng dịch vụ hiện đang hoạt động bình thường ở môi trường Development.</p>
-                  <div class="mt-auto">
-                    <span class="badge bg-success px-3 py-2 rounded-pill fw-bold text-uppercase shadow-sm">
-                      <i class="bi bi-cpu me-1"></i> Online
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Quick Action Card -->
-              <div class="col-lg-4 col-md-6">
-                <div class="card border-0 shadow-sm rounded-4 h-100 p-4 bg-gold-gradient text-white position-relative overflow-hidden">
-                  <div class="position-absolute top-0 end-0 p-3 opacity-25">
-                    <i class="bi bi-calendar-plus-fill" style="font-size: 8rem;"></i>
-                  </div>
-                  <h4 class="fw-bold mb-3 position-relative z-index-1">Đặt Lịch Hẹn Mới</h4>
-                  <p class="mb-4 position-relative z-index-1 opacity-75">Tiết kiệm thời gian chờ đợi. Đăng ký trước lịch khám, tiêm phòng hoặc spa cho thú cưng của bạn ngay hôm nay.</p>
-                  <div class="mt-auto position-relative z-index-1">
-                    <button @click="handleSidebarBookNew" class="btn btn-light text-warning fw-bold px-4 py-2 rounded-pill shadow-sm">
-                      Đặt Lịch Ngay <i class="bi bi-arrow-right ms-1"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Stats Summary Cards -->
-              <div class="col-lg-4 col-md-12">
-                <div class="row g-3 h-100">
-                  <div class="col-md-6 col-lg-12">
-                    <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row align-items-center h-100 bg-white">
-                      <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-circle me-3">
-                        <i class="bi bi-heptagon-fill fs-3"></i>
-                      </div>
-                      <div>
-                        <h6 class="text-muted mb-1 small">Thú cưng của tôi</h6>
-                        <h4 class="fw-bold text-dark mb-0">0 <span class="fs-6 fw-normal text-muted">bé</span></h4>
-                      </div>
+            <!-- For Customer Role -->
+            <template v-if="role === 'customer'">
+              <CustomerOverviewTab @switch-tab="activeTab = $event" />
+            </template>
+            
+            <!-- For Admin/Staff Roles -->
+            <template v-else>
+              <div class="row g-4">
+                <!-- Admin Quick Info (Admin Only) -->
+                <div class="col-lg-4 col-md-6">
+                  <div class="card border-0 shadow-sm rounded-4 h-100 p-4 bg-white">
+                    <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-shield-check text-warning me-2"></i>Trạng Thái Hệ Thống</h5>
+                    <p class="text-muted small mb-3">Tất cả các cổng dịch vụ hiện đang hoạt động bình thường ở môi trường Development.</p>
+                    <div class="mt-auto">
+                      <span class="badge bg-success px-3 py-2 rounded-pill fw-bold text-uppercase shadow-sm">
+                        <i class="bi bi-cpu me-1"></i> Online
+                      </span>
                     </div>
                   </div>
-                  <div class="col-md-6 col-lg-12">
-                    <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row align-items-center h-100 bg-white">
-                      <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle me-3">
-                        <i class="bi bi-calendar-check-fill fs-3"></i>
+                </div>
+
+                <!-- Quick Action Card -->
+                <div class="col-lg-4 col-md-6">
+                  <div class="card border-0 shadow-sm rounded-4 h-100 p-4 bg-gold-gradient text-white position-relative overflow-hidden">
+                    <div class="position-absolute top-0 end-0 p-3 opacity-25">
+                      <i class="bi bi-calendar-plus-fill" style="font-size: 8rem;"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3 position-relative z-index-1">Đặt Lịch Hẹn Mới</h4>
+                    <p class="mb-4 position-relative z-index-1 opacity-75">Tiết kiệm thời gian chờ đợi. Đăng ký trước lịch khám, tiêm phòng hoặc spa cho thú cưng của bạn ngay hôm nay.</p>
+                    <div class="mt-auto position-relative z-index-1">
+                      <button @click="handleSidebarBookNew" class="btn btn-light text-warning fw-bold px-4 py-2 rounded-pill shadow-sm">
+                        Đặt Lịch Ngay <i class="bi bi-arrow-right ms-1"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Stats Summary Cards -->
+                <div class="col-lg-4 col-md-12">
+                  <div class="row g-3 h-100">
+                    <div class="col-md-6 col-lg-12">
+                      <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row align-items-center h-100 bg-white">
+                        <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-circle me-3">
+                          <i class="bi bi-heptagon-fill fs-3"></i>
+                        </div>
+                        <div>
+                          <h6 class="text-muted mb-1 small">Tổng số thú cưng</h6>
+                          <h4 class="fw-bold text-dark mb-0">-- <span class="fs-6 fw-normal text-muted">bé</span></h4>
+                        </div>
                       </div>
-                      <div>
-                        <h6 class="text-muted mb-1 small">Lịch sắp tới</h6>
-                        <h4 class="fw-bold text-dark mb-0">0 <span class="fs-6 fw-normal text-muted">lịch</span></h4>
+                    </div>
+                    <div class="col-md-6 col-lg-12">
+                      <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row align-items-center h-100 bg-white">
+                        <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle me-3">
+                          <i class="bi bi-calendar-check-fill fs-3"></i>
+                        </div>
+                        <div>
+                          <h6 class="text-muted mb-1 small">Lịch hẹn hôm nay</h6>
+                          <h4 class="fw-bold text-dark mb-0">-- <span class="fs-6 fw-normal text-muted">lịch</span></h4>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Recent Appointments Table List -->
-            <div class="row mt-4 g-4">
-              <div class="col-12">
-                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-                  <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold text-dark mb-0">Lịch sử khám gần đây</h5>
-                    <a href="#" class="text-warning text-decoration-none small fw-bold hover-underline">Xem tất cả <i class="bi bi-arrow-right"></i></a>
-                  </div>
-                  <div class="table-responsive">
-                    <table class="table align-middle border-bottom mb-0">
-                      <thead class="table-light">
-                        <tr>
-                          <th class="border-0 text-muted small py-3">Ngày khám</th>
-                          <th class="border-0 text-muted small py-3">Thú cưng</th>
-                          <th class="border-0 text-muted small py-3">Dịch vụ</th>
-                          <th class="border-0 text-muted small py-3">Bác sĩ</th>
-                          <th class="border-0 text-muted small py-3">Trạng thái</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td colspan="5" class="text-center py-5 text-muted">
-                            <i class="bi bi-folder2-open fs-1 d-block mb-2 text-black-50 opacity-50"></i>
-                            Chưa có dữ liệu lịch sử khám
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+              <!-- Recent Appointments Table List -->
+              <div class="row mt-4 g-4">
+                <div class="col-12">
+                  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                      <h5 class="fw-bold text-dark mb-0">Lịch sử khám gần đây</h5>
+                      <a href="#" class="text-warning text-decoration-none small fw-bold hover-underline">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table align-middle border-bottom mb-0">
+                        <thead class="table-light">
+                          <tr>
+                            <th class="border-0 text-muted small py-3">Ngày khám</th>
+                            <th class="border-0 text-muted small py-3">Thú cưng</th>
+                            <th class="border-0 text-muted small py-3">Dịch vụ</th>
+                            <th class="border-0 text-muted small py-3">Bác sĩ</th>
+                            <th class="border-0 text-muted small py-3">Trạng thái</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                              <i class="bi bi-folder2-open fs-1 d-block mb-2 text-black-50 opacity-50"></i>
+                              Chưa có dữ liệu lịch sử khám
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </template>
           </div>
 
           <!-- tab: Profile Details Tab -->
@@ -336,6 +334,11 @@
           <!-- tab: My History Tab (Customer) -->
           <div v-else-if="activeTab === 'my-history'" class="container-fluid p-0">
             <MyHistoryTab />
+          </div>
+
+          <!-- tab: My Services & Invoices Tab (Customer) -->
+          <div v-else-if="activeTab === 'my-services-invoices'" class="container-fluid p-0">
+            <MyServicesInvoicesTab />
           </div>
 
           <!-- tab: Doctor Cases Tab -->
@@ -426,6 +429,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../services/api';
 import BookingModal from '../components/shared/BookingModal.vue';
+import CustomerOverviewTab from '../components/dashboard/CustomerOverviewTab.vue';
 import QueueTab from '../components/dashboard/QueueTab.vue';
 import CustomersTab from '../components/dashboard/CustomersTab.vue';
 import AppointmentsTab from '../components/dashboard/AppointmentsTab.vue';
@@ -433,6 +437,7 @@ import InvoicesTab from '../components/dashboard/InvoicesTab.vue';
 import MyPetsTab from '../components/dashboard/MyPetsTab.vue';
 import MyAppointmentsTab from '../components/dashboard/MyAppointmentsTab.vue';
 import MyHistoryTab from '../components/dashboard/MyHistoryTab.vue';
+import MyServicesInvoicesTab from '../components/dashboard/MyServicesInvoicesTab.vue';
 import DoctorQueueTab from '../components/dashboard/DoctorQueueTab.vue';
 import MedicalRecordsTab from '../components/dashboard/MedicalRecordsTab.vue';
 import StaffTab from '../components/dashboard/StaffTab.vue';
@@ -490,6 +495,7 @@ const getTitle = computed(() => {
   if (activeTab.value === 'my-pets') return 'Thú cưng của tôi';
   if (activeTab.value === 'my-appointments') return 'Lịch hẹn của tôi';
   if (activeTab.value === 'my-history') return 'Lịch sử khám bệnh';
+  if (activeTab.value === 'my-services-invoices') return 'Dịch vụ & Hóa đơn';
   if (activeTab.value === 'doctor-cases') return 'Hàng khám của tôi';
   if (activeTab.value === 'medical-records') return 'Hồ sơ bệnh án & Khám bệnh';
   if (activeTab.value === 'staff') return 'Quản lý Nhân sự';

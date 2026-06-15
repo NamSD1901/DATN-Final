@@ -75,7 +75,7 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 | Mã Task | Tên công việc / Nội dung chi tiết | Người thực hiện | Trạng thái | Minh chứng & Ghi chú |
 | :--- | :--- | :--- | :--- | :--- |
 | **T16** | PB08 - Quản lý hồ sơ thú cưng (Backend CRUD & Chống IDOR bằng ActionFilter) | Nam | `✅ CODE DONE` | Hoàn thành ActionFilter chặn đứng IDOR, tối ưu LINQ queries và phủ đầy đủ Unit Tests. |
-| **T17** | PB08 - Quản lý hồ sơ thú cưng (Frontend Grid & Modal Form Glassmorphic) | Lâm | `✅ CODE DONE` | Tái cấu trúc giao diện sang Premium Light-Theme Glassmorphism, sửa lỗi hiển thị & lặp chữ, validate ảnh client-side. |
+| **T17** | PB08 - Quản lý hồ sơ thú cưng (Frontend Grid & Modal Form Glassmorphic) | Lâm | `✅ CODE DONE` | Tái cấu trúc giao diện danh sách sang Premium Light-Theme Glassmorphism, sửa lỗi hiển thị. <br> **Cải tiến:** Redesign toàn diện trang Chi tiết Hồ sơ Thú cưng (`PetProfile.vue`) sang kiến trúc Clean Modern Dashboard (Nền trắng tinh tế, biểu đồ Chart.js theo dõi cân nặng, hệ thống Cards chi tiết trực quan). |
 
 ---
 
@@ -95,7 +95,8 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
     *   Frontend chọn Vaccine (T22).
     *   **Cải tiến tối ưu hóa UX & Concurrency:** 
         *   Tích hợp endpoint `GET /api/my-appointments/available-slots` tự động truy vấn lịch trực bác sĩ và tính toán slot trống thời gian thực.
-        *   Refactor bước chọn ngày giờ trong Wizard đặt lịch thành bộ chọn ngày -> tự động load các bác sĩ trực kèm pills giờ trống để chọn, tránh nhập tay lỗi.
+        *   Refactor toàn bộ `BookingModal.vue` từ form truyền thống thành **Multi-step Booking Wizard (4 Bước)** sang trọng (Chọn Thú cưng -> Dịch vụ -> Giờ khám -> Xác nhận) bám sát trải nghiệm người dùng Premium.
+        *   Cải tiến Custom Calendar và giao diện Time Slots dạng viên thuốc (Pills) chia sáng/chiều mang lại trải nghiệm mượt mà không cần dùng input date native.
         *   Thay đổi cơ chế check trùng giờ khám của bác sĩ sang toán tử bất đẳng thức nghiêm ngặt (`>` và `<`), cho phép đặt lịch liên tiếp (back-to-back appointments) không bị kẹt biên.
         *   Bổ sung Unit Test xác thực tính toán slot rảnh chính xác.
 
@@ -103,10 +104,13 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 ---
 
 ### 🎯 Sprint 8: Theo Dõi Cuộc Hẹn & Lịch Sử
-*   **Mục tiêu:** Theo dõi và xem lại lịch sử y tế.
+*   **Mục tiêu:** Theo dõi và xem lại lịch sử y tế qua Dashboard Khách hàng.
 *   **Trạng thái chung:** `✅ CODE DONE` (T23, T24, T44).
-
----
+*   **Chi tiết & Cải tiến triển khai:**
+    *   Tái thiết kế toàn bộ **Customer Overview Tab (Trang Tổng Quan Khách Hàng)** sang phong cách Premium Glassmorphism.
+    *   Xây dựng hệ thống 3 thẻ thống kê động: Lịch hẹn sắp tới, Số lượng thú cưng, Số lần khám bệnh dựa trên dữ liệu thật.
+    *   Phân rã giao diện theo tỷ lệ 60/40: Bên trái là Grid thẻ thú cưng nổi bật, bên phải là Timeline (dòng thời gian) Hoạt động y tế gần đây gọi từ API lịch sử cuộc hẹn.
+    *   Tách rời hoàn toàn giao diện giữa Customer và Admin/Staff trong `Dashboard.vue` thành các Component độc lập, gọn gàng dễ bảo trì.
 
 ### 🎯 Sprint 9: Tiếp Nhận & Duyệt Lịch Hẹn
 *   **Mục tiêu:** Cổng lễ tân duyệt lịch hẹn và check-in.

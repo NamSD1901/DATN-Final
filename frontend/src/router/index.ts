@@ -21,6 +21,19 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/my-pets/:id',
+    name: 'PetProfile',
+    component: () => import('../views/PetProfile.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/qr-checkin/:id',
+    name: 'QrCheckIn',
+    component: () => import('../views/QrCheckIn.vue'),
+    meta: { requiresAuth: true }
+  },
+
+  {
     path: '/history',
     name: 'History',
     component: () => import('../views/History.vue')

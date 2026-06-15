@@ -117,7 +117,7 @@
               </div>
 
               <!-- View Details Button -->
-              <button class="btn-view-detail-glass w-100 mt-3" @click="openDetailModal(pet)">
+              <button class="btn-view-detail-glass w-100 mt-3" @click="router.push('/my-pets/' + pet.id)">
                 Xem hồ sơ đầy đủ <i class="bi bi-arrow-right ms-2 transition-arrow"></i>
               </button>
             </div>
@@ -394,9 +394,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import api from '../../services/api';
 
 const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5150';
+const router = useRouter();
 
 // ===== Types =====
 interface Pet {

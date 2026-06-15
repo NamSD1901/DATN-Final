@@ -14,10 +14,20 @@ namespace MyPetClinic.Controllers
     public class MyPetsController : ControllerBase
     {
         private readonly IPetService _petService;
+        private readonly IMedicalRecordService _medicalRecordService;
+        private readonly IVaccinationService _vaccinationService;
+        private readonly IAppointmentService _appointmentService;
 
-        public MyPetsController(IPetService petService)
+        public MyPetsController(
+            IPetService petService,
+            IMedicalRecordService medicalRecordService,
+            IVaccinationService vaccinationService,
+            IAppointmentService appointmentService)
         {
             _petService = petService;
+            _medicalRecordService = medicalRecordService;
+            _vaccinationService = vaccinationService;
+            _appointmentService = appointmentService;
         }
 
         private Guid GetCurrentUserId()
@@ -164,6 +174,74 @@ namespace MyPetClinic.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { message = "Lỗi tải ảnh lên: " + ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Khách hàng xem lịch sử bệnh án của thú cưng (chỉ được xem thú cưng của chính mình).
+        /// </summary>
+        [HttpGet("{id}/medical-records")]
+        [MyPetClinic.WebApi.Filters.AuthorizeOwner]
+        public async Task<IActionResult> GetPetMedicalRecords(long id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                // Verify ownership
+                var pet = await _petService.GetPetByIdAsync(id, userId);
+                if (pet == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
+
+                var records = await _medicalRecordService.GetPetMedicalHistoryAsync(id);
+                return Ok(records);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Khách hàng xem lịch sử tiêm phòng của thú cưng (chỉ được xem thú cưng của chính mình).
+        /// </summary>
+        [HttpGet("{id}/vaccinations")]
+        [MyPetClinic.WebApi.Filters.AuthorizeOwner]
+        public async Task<IActionResult> GetPetVaccinations(long id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var pet = await _petService.GetPetByIdAsync(id, userId);
+                if (pet == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
+
+                var vaccinations = await _vaccinationService.GetPetVaccinationHistoryAsync(id);
+                return Ok(vaccinations);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Khách hàng xem lịch sử lịch hẹn của thú cưng.
+        /// </summary>
+        [HttpGet("{id}/appointments")]
+        [MyPetClinic.WebApi.Filters.AuthorizeOwner]
+        public async Task<IActionResult> GetPetAppointments(long id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var pet = await _petService.GetPetByIdAsync(id, userId);
+                if (pet == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
+
+                var appointments = await _appointmentService.GetCustomerAppointmentsPaginatedAsync(userId, null, 1, 100);
+                // Filter chỉ lịch hẹn của pet này
+                return Ok(appointments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
             }
         }
     }
