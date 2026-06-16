@@ -88,15 +88,11 @@
           <div class="card border rounded-4 h-100 qr-center-card" style="border-color: #e2e8f0 !important;">
             <div class="card-body p-5 d-flex flex-column align-items-center text-center justify-content-center">
               
-              <!-- Phone Mockup -->
-              <div class="phone-mockup mb-4 shadow-lg" id="qr-export-area">
-                <div class="phone-notch"></div>
-                <div class="phone-screen d-flex flex-column justify-content-center align-items-center p-3">
-                  <div v-if="appointment.qrToken" class="qr-container bg-white p-3 rounded-4 shadow-sm">
-                    <qrcode-vue :value="appointment.qrToken" :size="200" level="M" />
-                  </div>
-                  <div v-else class="text-danger">Lỗi: Không tìm thấy mã QR.</div>
+              <div class="mb-4" id="qr-export-area">
+                <div v-if="appointment.qrToken" class="qr-container bg-white p-3 rounded-4 shadow-sm border" style="display: inline-block;">
+                  <qrcode-vue :value="appointment.qrToken" :size="200" level="M" />
                 </div>
+                <div v-else class="text-danger">Lỗi: Không tìm thấy mã QR.</div>
               </div>
 
               <div class="text-muted small fw-bold mb-1 text-uppercase">Mã định danh buổi khám</div>
@@ -252,39 +248,7 @@ const formatTime = (dateString: string) => {
   font-family: 'Inter', sans-serif;
 }
 
-/* Phone Mockup */
-.phone-mockup {
-  width: 250px;
-  height: 480px;
-  background-color: #1e293b; /* Dark slate */
-  border-radius: 40px;
-  padding: 12px;
-  position: relative;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), inset 0 0 0 2px #475569;
-  margin: 0 auto;
-}
 
-.phone-notch {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90px;
-  height: 25px;
-  background-color: #1e293b;
-  border-bottom-left-radius: 16px;
-  border-bottom-right-radius: 16px;
-  z-index: 10;
-}
-
-.phone-screen {
-  width: 100%;
-  height: 100%;
-  background-color: #111;
-  border-radius: 28px;
-  overflow: hidden;
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-}
 
 .qr-container {
   transition: transform 0.3s ease;

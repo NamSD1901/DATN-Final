@@ -225,105 +225,390 @@
           <!-- ===== OTHER TABS (Placeholder/Basic UI to keep logic) ===== -->
           
           <div v-show="activeTab === 'history'" class="tab-pane">
-            <div class="dashboard-panel">
-              <div class="panel-header"><h6 class="panel-title">Lịch sử khám bệnh</h6></div>
-              <div class="panel-body">
-                <div v-if="medicalRecords.length === 0" class="text-center py-5 text-muted">Chưa có lịch sử khám bệnh.</div>
-                <div v-else class="table-responsive">
-                  <table class="table table-hover align-middle">
-                    <thead>
-                      <tr>
-                        <th>Ngày khám</th>
-                        <th>Dịch vụ</th>
-                        <th>Bác sĩ</th>
-                        <th>Chẩn đoán</th>
-                        <th>Cân nặng</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="rec in medicalRecords" :key="rec.id">
-                        <td>{{ formatDate(rec.examinationDate || rec.createdAt) }}</td>
-                        <td>{{ rec.serviceName || '—' }}</td>
-                        <td>{{ rec.doctorName || '—' }}</td>
-                        <td>{{ rec.diagnosis || '—' }}</td>
-                        <td>{{ rec.weight ? rec.weight + ' kg' : '—' }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+            <div class="row g-4">
+              <div class="col-lg-8">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <h4 class="fw-bold text-dark mb-0">Medical History Timeline</h4>
+                  <button class="btn btn-light btn-sm text-muted fw-medium border rounded-3 px-3">
+                    <i class="bi bi-funnel me-1"></i> Filter by: All <i class="bi bi-chevron-down ms-1"></i>
+                  </button>
+                </div>
+                
+                <div v-if="medicalRecords.length === 0" class="text-center py-5 text-muted bg-white rounded-4 shadow-sm border">
+                  Chưa có lịch sử khám bệnh.
+                </div>
+                <div v-else class="timeline-container position-relative ps-4 ms-2 mt-4">
+                  <!-- Vertical Line -->
+                  <div class="position-absolute h-100" style="left: 0; top: 0; width: 2px; background-color: #e2e8f0;"></div>
+
+                  <div v-for="(rec, index) in medicalRecords" :key="rec.id" class="position-relative mb-4">
+                    <!-- Dot -->
+                    <div class="position-absolute rounded-circle" :style="`width: 12px; height: 12px; left: -29px; top: 24px; background-color: ${rec.followUpDate ? '#f97316' : '#1e3a8a'}; border: 2px solid white; box-shadow: 0 0 0 1px ${rec.followUpDate ? '#f97316' : '#1e3a8a'};`"></div>
+                    
+                    <!-- Card -->
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden" :style="`border-left: 4px solid ${rec.followUpDate ? '#f97316' : '#1e3a8a'} !important;`">
+                      <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                           <div class="d-flex align-items-center flex-wrap gap-3">
+                             <h5 class="fw-bold mb-0 text-dark">{{ rec.serviceName || rec.diagnosis || 'Kiểm tra định kỳ' }}</h5>
+                             <span class="badge rounded-pill px-3 py-1" :class="rec.followUpDate ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success'" style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;">
+                               {{ rec.followUpDate ? 'FOLLOW-UP REQUIRED' : 'COMPLETED' }}
+                             </span>
+                           </div>
+                           <button class="btn btn-link text-muted p-0"><i class="bi bi-three-dots-vertical"></i></button>
+                        </div>
+                        
+                        <div class="d-flex gap-4 small text-muted mb-4 fw-medium">
+                          <div class="d-flex align-items-center"><i class="bi bi-calendar3 me-1"></i> {{ formatDate(rec.createdAt) }}</div>
+                          <div class="d-flex align-items-center" v-if="rec.doctorName"><i class="bi bi-person-badge me-1"></i> {{ rec.doctorName }}</div>
+                        </div>
+
+                        <p class="text-secondary mb-4" style="line-height: 1.6; font-size: 0.95rem;">
+                          {{ rec.note || rec.treatmentPlan || rec.diagnosis || 'Không có ghi chú thêm.' }}
+                        </p>
+
+                        <div class="d-flex gap-2">
+                          <button v-if="rec.followUpDate" class="btn btn-primary btn-sm rounded-3 px-4 py-2 fw-bold shadow-sm d-flex align-items-center">
+                            <i class="bi bi-calendar-plus me-2"></i> Book Follow-up
+                          </button>
+                          <button class="btn btn-light btn-sm rounded-3 px-4 py-2 fw-bold text-dark border d-flex align-items-center" style="background: #f8fafc;">
+                            <i class="bi bi-eye me-2 text-muted"></i> View Details
+                          </button>
+                          <button v-if="!rec.followUpDate" class="btn btn-light btn-sm rounded-3 px-4 py-2 fw-bold text-dark border d-flex align-items-center" style="background: #f8fafc;">
+                            <i class="bi bi-download me-2 text-muted"></i> Report
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Right Column -->
+              <div class="col-lg-4">
+                <!-- Quick Summary -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4 mt-2">
+                  <div class="card-body p-4">
+                    <h5 class="fw-bold text-dark mb-4">Quick Summary</h5>
+                    
+                    <div class="mb-4">
+                      <div class="text-muted small fw-bold mb-2" style="font-size: 0.7rem; letter-spacing: 1px;">LAST VISIT</div>
+                      <div class="d-flex align-items-center gap-3 p-3 rounded-4" style="border: 1px solid #f1f5f9; background: #f8fafc;">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: #e0f2fe; color: #0284c7;">
+                          <i class="bi bi-calendar-check fs-5"></i>
+                        </div>
+                        <div>
+                          <div class="fw-bold text-dark mb-1" style="font-size: 0.95rem;">{{ medicalRecords.length > 0 ? formatDate(medicalRecords[0].createdAt) : 'Chưa có' }}</div>
+                          <div class="small text-muted fw-medium">{{ medicalRecords.length > 0 ? (medicalRecords[0].serviceName || 'Kiểm tra định kỳ') : '-' }}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="text-muted small fw-bold mb-2" style="font-size: 0.7rem; letter-spacing: 1px;">NEXT DUE</div>
+                      <div class="d-flex align-items-center gap-3 p-3 rounded-4" style="border: 1px solid #f1f5f9; background: #f8fafc;">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: #ffedd5; color: #ea580c;">
+                          <i class="bi bi-capsule fs-5"></i>
+                        </div>
+                        <div>
+                          <div class="fw-bold text-dark mb-1" style="font-size: 0.95rem;">{{ nextAppointment ? formatDate(nextAppointment.appointmentDate) : 'Chưa có lịch' }}</div>
+                          <div class="small text-muted fw-medium">{{ nextAppointment ? nextAppointment.serviceName : 'Vui lòng đặt lịch khám' }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Medical Alerts -->
+                <div class="card border-0 rounded-4" style="box-shadow: 0 4px 20px rgba(220, 38, 38, 0.08); border: 2px solid #fecaca !important;">
+                  <div class="card-body p-4">
+                    <h5 class="fw-bold text-danger mb-4 d-flex align-items-center gap-2">
+                      <i class="bi bi-exclamation-triangle-fill"></i> Medical Alerts
+                    </h5>
+                    
+                    <div class="mb-4 p-3 rounded-4" style="background-color: #fef2f2;">
+                      <div class="text-danger small fw-bold mb-2" style="font-size: 0.7rem; letter-spacing: 1px;">KNOWN ALLERGIES</div>
+                      <div class="fw-bold text-dark d-flex align-items-center gap-2 mb-2" style="font-size: 0.95rem;">
+                        <div class="rounded-circle bg-danger" style="width: 6px; height: 6px;"></div> {{ pet?.allergyNote ? 'Có lưu ý dị ứng' : 'Không phát hiện dị ứng' }}
+                      </div>
+                      <div class="small text-muted fw-medium" style="line-height: 1.5;">{{ pet?.allergyNote || 'Chưa ghi nhận phản ứng phụ với thành phần nào.' }}</div>
+                    </div>
+
+                    <div class="p-3 rounded-4" style="border: 1px solid #f1f5f9; background: #f8fafc;">
+                      <div class="text-muted small fw-bold mb-2" style="font-size: 0.7rem; letter-spacing: 1px;">DIETARY NOTES</div>
+                      <div class="small text-dark fw-medium" style="line-height: 1.6;">
+                        {{ pet?.currentDiet || 'Không có yêu cầu đặc biệt về khẩu phần ăn. Dùng thức ăn tiêu chuẩn.' }}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           <div v-show="activeTab === 'appointments'" class="tab-pane">
-            <div class="dashboard-panel">
-              <div class="panel-header"><h6 class="panel-title">Lịch hẹn</h6></div>
-              <div class="panel-body">
-                 <div v-if="petAppointments.length === 0" class="text-center py-5 text-muted">Chưa có lịch hẹn.</div>
-                 <div v-else class="table-responsive">
-                   <table class="table table-hover align-middle">
-                     <thead>
-                       <tr>
-                         <th>Ngày hẹn</th>
-                         <th>Dịch vụ</th>
-                         <th>Trạng thái</th>
-                         <th>Bác sĩ</th>
-                       </tr>
-                     </thead>
-                     <tbody>
-                       <tr v-for="appt in petAppointments" :key="appt.id">
-                         <td>{{ formatDateTime(appt.appointmentDate) }}</td>
-                         <td>{{ appt.serviceName }}</td>
-                         <td><span class="badge" :class="getStatusClass(appt.status)">{{ getStatusLabel(appt.status) }}</span></td>
-                         <td>{{ appt.doctorName || 'Hệ thống tự động' }}</td>
-                       </tr>
-                     </tbody>
-                   </table>
-                 </div>
+            <div class="row g-4">
+              <!-- Cột Lịch sắp tới -->
+              <div class="col-lg-6">
+                <h5 class="fw-bold text-dark mb-4 d-flex align-items-center gap-2">
+                  <i class="bi bi-calendar-event text-primary"></i> Sắp tới
+                </h5>
+                <div v-if="upcomingAppointments.length === 0" class="text-center py-5 text-muted bg-white rounded-4 shadow-sm border">
+                  Không có lịch hẹn sắp tới.
+                </div>
+                <div v-else class="d-flex flex-column gap-3">
+                  <div v-for="appt in upcomingAppointments" :key="appt.id" class="card border-0 shadow-sm rounded-4 overflow-hidden" style="transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                    <div class="card-body p-4 d-flex gap-4 align-items-center">
+                      <!-- Mini Calendar -->
+                      <div class="text-center rounded-3 bg-light border border-light-subtle shadow-sm overflow-hidden" style="width: 70px; flex-shrink: 0;">
+                        <div class="bg-primary text-white small fw-bold py-1" style="font-size: 0.75rem; letter-spacing: 1px;">
+                          T{{ new Date(appt.appointmentDate).getMonth() + 1 }}
+                        </div>
+                        <div class="fw-bold text-dark py-2 fs-4" style="line-height: 1;">
+                          {{ new Date(appt.appointmentDate).getDate() }}
+                        </div>
+                      </div>
+                      
+                      <!-- Details -->
+                      <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                          <h6 class="fw-bold text-dark mb-0 fs-6">{{ appt.serviceName }}</h6>
+                          <span class="badge rounded-pill px-3 py-1" :class="getStatusClass(appt.status)" style="font-weight: 700; font-size: 0.7rem;">
+                            {{ getStatusLabel(appt.status) }}
+                          </span>
+                        </div>
+                        <div class="text-muted small fw-medium mb-1 d-flex align-items-center gap-2">
+                          <i class="bi bi-clock"></i> {{ formatTimeOnly(appt.appointmentDate) }}
+                        </div>
+                        <div class="text-muted small fw-medium d-flex align-items-center gap-2">
+                          <i class="bi bi-person-badge"></i> {{ appt.doctorName || 'Hệ thống tự động' }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cột Lịch đã qua -->
+              <div class="col-lg-6">
+                <h5 class="fw-bold text-dark mb-4 d-flex align-items-center gap-2">
+                  <i class="bi bi-clock-history text-secondary"></i> Đã qua
+                </h5>
+                <div v-if="pastAppointments.length === 0" class="text-center py-5 text-muted bg-white rounded-4 shadow-sm border">
+                  Chưa có lịch sử.
+                </div>
+                <div v-else class="d-flex flex-column gap-3">
+                  <div v-for="appt in pastAppointments" :key="appt.id" class="card border-0 shadow-sm rounded-4 overflow-hidden" style="opacity: 0.85;">
+                    <div class="card-body p-4 d-flex gap-4 align-items-center">
+                      <div class="text-center rounded-3 bg-light border border-light-subtle shadow-sm overflow-hidden" style="width: 70px; flex-shrink: 0;">
+                        <div class="bg-secondary text-white small fw-bold py-1" style="font-size: 0.75rem; letter-spacing: 1px;">
+                          T{{ new Date(appt.appointmentDate).getMonth() + 1 }}
+                        </div>
+                        <div class="fw-bold text-secondary py-2 fs-4" style="line-height: 1;">
+                          {{ new Date(appt.appointmentDate).getDate() }}
+                        </div>
+                      </div>
+                      
+                      <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                          <h6 class="fw-bold text-secondary mb-0 fs-6">{{ appt.serviceName }}</h6>
+                          <span class="badge rounded-pill px-3 py-1" :class="getStatusClass(appt.status)" style="font-weight: 700; font-size: 0.7rem;">
+                            {{ getStatusLabel(appt.status) }}
+                          </span>
+                        </div>
+                        <div class="text-muted small fw-medium mb-1 d-flex align-items-center gap-2">
+                          <i class="bi bi-clock"></i> {{ formatTimeOnly(appt.appointmentDate) }}
+                        </div>
+                        <div class="text-muted small fw-medium d-flex align-items-center gap-2">
+                          <i class="bi bi-person-badge"></i> {{ appt.doctorName || 'Hệ thống tự động' }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <div v-show="activeTab === 'vaccines'" class="tab-pane">
-            <div class="dashboard-panel">
-              <div class="panel-header"><h6 class="panel-title">Lịch sử tiêm phòng Vaccine</h6></div>
-              <div class="panel-body">
-                <div v-if="vaccinations.length === 0" class="text-center py-5 text-muted">Chưa có dữ liệu tiêm phòng.</div>
-                <div v-else class="table-responsive">
-                  <table class="table table-hover align-middle">
-                    <thead>
-                      <tr>
-                        <th>Ngày tiêm</th>
-                        <th>Tên Vaccine</th>
-                        <th>Bác sĩ</th>
-                        <th>Lịch nhắc lại</th>
-                        <th>Trạng thái</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="vac in vaccinations" :key="vac.id">
-                        <td>{{ formatDate(vac.administeredAt) }}</td>
-                        <td class="fw-medium text-dark">{{ vac.vaccineName }}</td>
-                        <td>{{ vac.doctorName || '—' }}</td>
-                        <td>{{ formatDate(vac.nextDueDate) }}</td>
-                        <td>
-                          <span v-if="vac.nextDueDate && isVaccineOverdue(vac.nextDueDate)" class="badge bg-danger">Quá hạn</span>
-                          <span v-else-if="vac.nextDueDate && isSoonDue(vac.nextDueDate)" class="badge bg-warning text-dark">Sắp đến hạn</span>
-                          <span v-else class="badge bg-success">Hoàn tất</span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+            <div class="row g-4">
+              <!-- Cột Trái: Nhắc lịch sắp tới -->
+              <div class="col-lg-5">
+                <div class="d-flex align-items-center mb-3">
+                  <i class="bi bi-bell-fill text-warning fs-5 me-2"></i>
+                  <h6 class="fw-bold mb-0 text-dark">Nhắc lịch sắp tới</h6>
+                </div>
+                
+                <div v-if="upcomingVaccines.length === 0" class="p-4 text-center rounded-4 border bg-white shadow-sm">
+                  <i class="bi bi-check-circle text-success fs-1 mb-2 d-block opacity-50"></i>
+                  <p class="text-muted mb-0">Không có lịch tiêm chủng nào sắp đến hạn.</p>
+                </div>
+                
+                <div v-else class="d-flex flex-column gap-3">
+                  <div v-for="vac in upcomingVaccines" :key="'up-' + vac.id" class="vaccine-card upcoming-card p-4 rounded-4 bg-white border">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-2 fw-bold">Nhắc lại</span>
+                      <span class="small fw-bold" :class="isVaccineOverdue(vac.nextDueDate) ? 'text-danger' : 'text-muted'">
+                        {{ isVaccineOverdue(vac.nextDueDate) ? 'Đã quá hạn' : 'Sắp đến hạn' }}
+                      </span>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">{{ vac.vaccineName }}</h5>
+                    <div class="d-flex align-items-center text-dark mb-4">
+                      <i class="bi bi-calendar3 me-2 text-muted"></i>
+                      <span class="fw-medium">Đến hạn: {{ formatDate(vac.nextDueDate) }}</span>
+                    </div>
+                    <button class="btn btn-outline-warning w-100 rounded-pill fw-bold" style="border-width: 2px;">Đặt lịch tiêm</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cột Phải: Lịch sử tiêm chủng -->
+              <div class="col-lg-7">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-clock-history text-success fs-5 me-2"></i>
+                    <h6 class="fw-bold mb-0 text-dark">Lịch sử tiêm chủng</h6>
+                  </div>
+                  <button class="btn btn-sm btn-light text-primary fw-bold rounded-pill px-3" style="background: transparent;">
+                    <i class="bi bi-filter me-1"></i>Lọc
+                  </button>
+                </div>
+
+                <div v-if="historyVaccines.length === 0" class="p-5 text-center rounded-4 border bg-white shadow-sm">
+                  <p class="text-muted mb-0">Chưa có dữ liệu tiêm phòng.</p>
+                </div>
+                
+                <div v-else class="d-flex flex-column gap-3">
+                  <div v-for="vac in historyVaccines" :key="'hist-' + vac.id" class="vaccine-card history-card p-4 rounded-4 bg-white border d-flex gap-4">
+                    <div class="vac-icon-wrap">
+                      <div class="vac-icon bg-success-subtle text-success d-flex align-items-center justify-content-center rounded-circle" style="width: 48px; height: 48px;">
+                        <i class="bi bi-syringe fs-4"></i>
+                      </div>
+                    </div>
+                    <div class="flex-grow-1">
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                          <h5 class="fw-bold text-dark mb-1">{{ vac.vaccineName }}</h5>
+                          <div class="small text-muted mb-3">{{ vac.note || 'Mũi tiêm định kỳ' }}</div>
+                        </div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-bold">
+                          <i class="bi bi-check-circle-fill me-1"></i>Đã tiêm
+                        </span>
+                      </div>
+                      
+                      <div class="p-3 bg-light rounded-3 d-flex gap-4">
+                        <div class="flex-1">
+                          <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Ngày tiêm</div>
+                          <div class="fw-medium text-dark">{{ formatDate(vac.administeredAt) }}</div>
+                        </div>
+                        <div class="flex-1">
+                          <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Bác sĩ phụ trách</div>
+                          <div class="fw-medium text-dark">{{ vac.doctorName || 'Bs. Thú y' }}</div>
+                        </div>
+                      </div>
+                      <div class="mt-3" v-if="vac.notes">
+                         <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Ghi chú</div>
+                         <p class="small text-dark mb-0">{{ vac.notes }}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           <div v-show="activeTab === 'prescriptions'" class="tab-pane">
-             <div class="dashboard-panel">
-              <div class="panel-body text-center py-5">
-                <i class="bi bi-prescription text-muted" style="font-size: 3rem;"></i>
-                <p class="text-muted mt-3 mb-0">Tính năng đang được phát triển hoặc chưa có dữ liệu toa thuốc.</p>
+            <div class="row g-4">
+              <!-- Cột Trái: Lọc đơn thuốc -->
+              <div class="col-lg-3">
+                <div class="dashboard-panel p-4 border-0 shadow-sm rounded-4">
+                  <h6 class="fw-bold mb-4 text-dark fs-5">Lọc đơn thuốc</h6>
+                  
+                  <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted mb-2">Trạng thái</label>
+                    <select v-model="filterPrescriptionStatus" class="form-select rounded-3 border-light shadow-none" style="background-color: #f8fafc; font-weight: 500;">
+                      <option value="all">Tất cả</option>
+                      <option value="active">Đang dùng</option>
+                      <option value="completed">Đã hoàn thành</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="form-label small fw-bold text-muted mb-2">Thời gian</label>
+                    <select v-model="filterPrescriptionTime" class="form-select rounded-3 border-light shadow-none" style="background-color: #f8fafc; font-weight: 500;">
+                      <option value="6m">6 tháng gần đây</option>
+                      <option value="1y">1 năm gần đây</option>
+                      <option value="all">Tất cả</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cột Phải: Danh sách Đơn thuốc -->
+              <div class="col-lg-9">
+                <div class="d-flex flex-column gap-4">
+                  <div v-for="rx in filteredPrescriptions" :key="rx.id" class="prescription-card bg-white rounded-4 shadow-sm border overflow-hidden" :class="rx.status === 'active' ? 'border-left-success' : 'border-left-secondary'">
+                    
+                    <!-- Card Header -->
+                    <div class="p-4 border-bottom">
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                          <h5 class="fw-bold text-dark mb-0">{{ rx.diagnosis }}</h5>
+                          <span class="badge rounded-pill px-3 py-1 fw-bold" :class="rx.status === 'active' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">
+                            {{ rx.status === 'active' ? 'Đang dùng' : 'Đã hoàn thành' }}
+                          </span>
+                        </div>
+
+                      </div>
+                      
+                      <div class="d-flex gap-4 small text-muted">
+                        <div class="d-flex align-items-center"><i class="bi bi-calendar3 me-1"></i> Kê đơn: {{ formatDate(rx.date) }}</div>
+                        <div class="d-flex align-items-center"><i class="bi bi-person-badge me-1"></i> {{ rx.doctor }}</div>
+                        <div class="d-flex align-items-center fw-medium text-dark"><i class="bi bi-hash text-muted"></i>{{ rx.id }}</div>
+                      </div>
+                    </div>
+
+                    <!-- Card Body: Medicines Table -->
+                    <div class="p-4 pb-2">
+                      <div class="table-responsive">
+                        <table class="table table-borderless align-middle mb-0 rx-table">
+                          <thead class="border-bottom">
+                            <tr>
+                              <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Tên thuốc</th>
+                              <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Liều lượng</th>
+                              <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Cách dùng</th>
+                              <th class="text-muted fw-semibold pb-3 text-end" style="font-size: 0.85rem; width: 90px;">Số lượng</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="(med, idx) in rx.medicines" :key="idx" class="border-bottom">
+                              <td class="py-3">
+                                <div class="fw-bold text-primary">{{ med.name }}</div>
+                                <div class="small text-muted" style="font-size: 0.75rem;">{{ med.activeIngredient }}</div>
+                              </td>
+                              <td class="py-3 fw-medium text-dark" style="font-size: 0.9rem;">{{ med.dosage }}</td>
+                              <td class="py-3 text-dark" style="font-size: 0.9rem;">{{ med.usage }}</td>
+                              <td class="py-3 text-end fw-bold text-dark">{{ med.quantity }} {{ med.unit }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <!-- Doctor Notes & Footer -->
+                    <div class="p-4 pt-2 d-flex justify-content-between align-items-end">
+                      <div class="flex-grow-1 pe-4">
+                        <div v-if="rx.notes" class="p-3 rounded-3 mt-2" style="background-color: #fffbeb;">
+                          <div class="small fw-bold mb-1" style="color: #d97706;">Ghi chú của bác sĩ:</div>
+                          <div class="small fw-medium" style="color: #f59e0b;">{{ rx.notes }}</div>
+                        </div>
+                      </div>
+                      
+
+                    </div>
+
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -365,6 +650,34 @@ const medicalRecords = ref<any[]>([]);
 const vaccinations = ref<any[]>([]);
 const appointments = ref<any[]>([]);
 
+const prescriptions = ref<any[]>([]);
+
+const filterPrescriptionStatus = ref('all');
+const filterPrescriptionTime = ref('6m');
+
+const filteredPrescriptions = computed(() => {
+  let result = prescriptions.value;
+  
+  if (filterPrescriptionStatus.value !== 'all') {
+    result = result.filter(rx => rx.status === filterPrescriptionStatus.value);
+  }
+  
+  if (filterPrescriptionTime.value !== 'all') {
+    const now = new Date();
+    result = result.filter(rx => {
+      const rxDate = new Date(rx.date);
+      if (filterPrescriptionTime.value === '6m') {
+        return (now.getTime() - rxDate.getTime()) <= 6 * 30 * 24 * 60 * 60 * 1000;
+      } else if (filterPrescriptionTime.value === '1y') {
+        return (now.getTime() - rxDate.getTime()) <= 365 * 24 * 60 * 60 * 1000;
+      }
+      return true;
+    });
+  }
+  
+  return result;
+});
+
 const activeTab = ref('overview');
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
 const chartInstance = shallowRef<Chart | null>(null);
@@ -382,6 +695,24 @@ const tabs = computed(() => [
 // ===== Computed =====
 const petAppointments = computed(() => {
   return appointments.value.filter((a: any) => a.petId === pet.value?.id || a.petName === pet.value?.name);
+});
+
+const upcomingAppointments = computed(() => {
+  return petAppointments.value.filter(a => ['waiting', 'pending', 'confirmed', 'in_progress', 'checked_in'].includes(a.status?.toLowerCase()))
+    .sort((a, b) => new Date(a.appointmentDate).getTime() - new Date(b.appointmentDate).getTime());
+});
+
+const pastAppointments = computed(() => {
+  return petAppointments.value.filter(a => ['completed', 'cancelled'].includes(a.status?.toLowerCase()))
+    .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime());
+});
+
+const upcomingVaccines = computed(() => {
+  return vaccinations.value.filter((v: any) => v.nextDueDate && (isVaccineOverdue(v.nextDueDate) || isSoonDue(v.nextDueDate)));
+});
+
+const historyVaccines = computed(() => {
+  return [...vaccinations.value].sort((a: any, b: any) => new Date(b.administeredAt).getTime() - new Date(a.administeredAt).getTime());
 });
 
 const nextAppointment = computed(() => {
@@ -416,6 +747,7 @@ const fetchAll = async () => {
       fetchMedicalRecords(), 
       fetchVaccinations(), 
       fetchAppointments(),
+      fetchPrescriptions(),
       fetchOwnerProfile()
     ]);
   } catch (e: any) {
@@ -464,6 +796,15 @@ const fetchAppointments = async () => {
     appointments.value = all.filter((a: any) => String(a.petId) === String(petId.value));
   } catch {
     appointments.value = [];
+  }
+};
+
+const fetchPrescriptions = async () => {
+  try {
+    const res = await api.get(`/mypets/${petId.value}/prescriptions`);
+    prescriptions.value = Array.isArray(res.data) ? res.data : (res.data.items || []);
+  } catch {
+    prescriptions.value = [];
   }
 };
 
@@ -619,10 +960,12 @@ const formatTimeOnly = (dateStr: string | null): string => {
 
 const getStatusLabel = (status: string): string => {
   const map: Record<string, string> = {
+    waiting: 'Chờ xác nhận',
     pending: 'Chờ xác nhận',
     confirmed: 'Đã xác nhận',
+    in_progress: 'Đang tiến hành',
     completed: 'Hoàn thành',
-    cancelled: 'Đã huỷ',
+    cancelled: 'Đã hủy',
     checked_in: 'Đã check-in',
   };
   return map[status?.toLowerCase()] || status;
@@ -630,10 +973,11 @@ const getStatusLabel = (status: string): string => {
 
 const getStatusClass = (status: string): string => {
   const s = status?.toLowerCase();
-  if (s === 'completed' || s === 'confirmed') return 'bg-success';
-  if (s === 'cancelled') return 'bg-danger';
-  if (s === 'checked_in') return 'bg-info text-dark';
-  return 'bg-warning text-dark';
+  if (s === 'completed') return 'bg-success-subtle text-success border border-success border-opacity-25';
+  if (s === 'confirmed' || s === 'checked_in') return 'bg-info-subtle text-info border border-info border-opacity-25';
+  if (s === 'in_progress') return 'bg-primary-subtle text-primary border border-primary border-opacity-25';
+  if (s === 'cancelled') return 'bg-danger-subtle text-danger border border-danger border-opacity-25';
+  return 'bg-warning-subtle text-warning border border-warning border-opacity-25';
 };
 
 const isVaccineOverdue = (nextDueDate: string): boolean => {
@@ -974,6 +1318,57 @@ onMounted(fetchAll);
   align-items: center;
   justify-content: center;
   font-size: 1.25rem;
+}
+
+/* VACCINE CARDS */
+.vaccine-card {
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+.vaccine-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+}
+.upcoming-card {
+  border-left: 4px solid #f59e0b !important;
+}
+
+/* PRESCRIPTION CARDS */
+.prescription-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.prescription-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -8px rgba(0,0,0,0.08) !important;
+}
+.border-left-success {
+  border-left: 4px solid #22c55e !important;
+}
+.border-left-secondary {
+  border-left: 4px solid #94a3b8 !important;
+}
+.rx-table td {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.rx-table th {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.rx-table tbody tr:last-child {
+  border-bottom: none !important;
+}
+
+@media (max-width: 992px) {
+  .top-cards-row {
+    flex-direction: column;
+  }
+  .info-cards-group {
+    flex-wrap: wrap;
+  }
+  .overview-main-layout {
+    flex-direction: column;
+  }
 }
 
 .bg-primary-light { background: #f0f9ff; }

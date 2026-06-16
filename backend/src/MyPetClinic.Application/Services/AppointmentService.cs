@@ -577,7 +577,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss") + "Z",
+                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 QrToken = a.QrToken,
@@ -638,7 +638,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss") + "Z",
+                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 Status = a.Status,
@@ -702,7 +702,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss") + "Z",
+                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 Status = a.Status,
@@ -769,7 +769,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss") + "Z",
+                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 Status = a.Status,
@@ -848,7 +848,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss") + "Z",
+                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 Status = a.Status,
@@ -951,7 +951,7 @@ namespace MyPetClinic.Application.Services
                     {
                         DoctorId = schedule.DoctorId,
                         DoctorName = schedule.Doctor?.FullName ?? "Bác sĩ thú y",
-                        AvailableSlots = availableTimes
+                        AvailableSlots = availableTimes.Select(t => t.ToString("HH:mm")).ToList()
                     });
                 }
             }
@@ -1015,7 +1015,7 @@ namespace MyPetClinic.Application.Services
                         {
                             DoctorId = doctor.Id,
                             DoctorName = doctor.FullName,
-                            AvailableSlots = availableTimes
+                            AvailableSlots = availableTimes.Select(t => t.ToString("HH:mm")).ToList()
                         });
                     }
                 }

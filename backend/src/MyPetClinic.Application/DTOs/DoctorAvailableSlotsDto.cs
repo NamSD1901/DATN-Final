@@ -7,6 +7,6 @@ namespace MyPetClinic.Application.DTOs
     {
         public Guid DoctorId { get; set; }
         public string DoctorName { get; set; } = null!;
-        public List<DateTime> AvailableSlots { get; set; } = new();
+        public List<string> AvailableSlots { get; set; } = new();
     }
 }

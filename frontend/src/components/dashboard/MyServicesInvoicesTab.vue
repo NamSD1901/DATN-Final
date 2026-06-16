@@ -218,14 +218,7 @@
               </table>
             </div>
 
-            <!-- Follow up Alert (CREATIVE ADDITION 1) -->
-            <div v-if="selectedInvoice.nextAppointment" class="mt-4 p-3 bg-warning-subtle border border-warning-subtle rounded-3 d-flex gap-3 align-items-start">
-              <i class="bi bi-calendar-heart text-warning fs-4 mt-1"></i>
-              <div>
-                <h6 class="fw-bold text-warning-emphasis mb-1">Nhắc nhở lịch tái khám sắp tới</h6>
-                <p class="mb-0 small text-dark opacity-75">{{ selectedInvoice.nextAppointment }}</p>
-              </div>
-            </div>
+
             
             <!-- VNPay QR (CREATIVE ADDITION 2) -->
             <div v-if="selectedInvoice.status === 'pending'" class="mt-4 p-3 border border-primary-subtle rounded-3 bg-primary-subtle d-flex gap-3 align-items-center justify-content-between">
@@ -244,7 +237,7 @@
           <div class="col-md-4">
             <!-- Payment Card -->
             <div class="text-white rounded-4 p-4 mb-3 shadow-sm position-relative overflow-hidden" style="background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);">
-              <h6 class="fw-bold mb-4">Tổng thanh toán</h6>
+              <h6 class="fw-bold text-white mb-4">Tổng thanh toán</h6>
               
               <div class="d-flex justify-content-between mb-2 small opacity-75" v-if="selectedInvoice.serviceFee">
                 <span>Tiền dịch vụ</span>

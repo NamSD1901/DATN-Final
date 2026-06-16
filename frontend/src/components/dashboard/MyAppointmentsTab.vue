@@ -12,7 +12,7 @@
           <p class="text-muted mb-0 small">Theo dõi và quản lý các buổi hẹn khám bệnh cho thú cưng.</p>
         </div>
         <div class="d-flex gap-2 mt-3 mt-sm-0">
-          <button class="btn btn-outline-success fw-bold rounded-pill px-3" style="border-width: 2px; border-color: #10b981; color: #10b981;" @click="showQrListModal = true">
+          <button class="btn btn-outline-success fw-bold rounded-pill px-3" style="border-width: 2px; border-color: #10b981; color: #10b981;" @click="openQrModal">
             <i class="bi bi-qr-code-scan me-2"></i>Mã QR Check-in
           </button>
           <button class="btn btn-premium-appt" @click="openBookModal">
@@ -732,7 +732,7 @@
                     </button>
                   </div>
                 </div>
-                <div v-else-if="['waiting', 'in_progress', 'ready_to_pay', 'completed'].includes(detailAppt.status)" class="col-12">
+                <div v-else-if="detailAppt.status && ['waiting', 'in_progress', 'ready_to_pay', 'completed'].includes(detailAppt.status)" class="col-12">
                   <div class="detail-item text-center p-3" style="background: #f0fdf4; border: 1px solid #10b981; border-radius: 12px;">
                     <div class="detail-label text-success"><i class="bi bi-check-circle-fill me-1"></i>Trạng thái Check-in</div>
                     <div class="small text-success fw-bold mt-2">Bạn đã check-in thành công.</div>
@@ -802,23 +802,48 @@
                 <p class="text-muted small mb-0">Bạn hiện không có lịch hẹn nào đang chờ check-in. Mã QR chỉ hiển thị khi phòng khám đã duyệt lịch hẹn của bạn.</p>
               </div>
 
-              <div v-else class="qr-carousel">
-                <div v-for="(appt, index) in confirmedAppointments" :key="appt.id" class="qr-item mb-4 pb-4 border-bottom">
-                  <h6 class="fw-bold text-dark mb-1">
-                    Lịch khám #{{ appt.id }} - {{ appt.petName }}
-                  </h6>
-                  <p class="text-muted small mb-3">Ngày: {{ formatDateFull(appt.appointmentDate) }}</p>
+              <div v-else class="qr-single-view text-start">
+                
+                <!-- Appointment Selector -->
+                <div class="mb-4">
+                  <label class="form-label text-muted small fw-bold text-uppercase mb-2">CHỌN LỊCH HẸN</label>
+                  <select v-model="selectedQrApptId" class="form-select form-select-lg shadow-sm fw-bold text-dark" style="border: 2px solid #0f766e; border-radius: 12px; cursor: pointer;">
+                    <option v-for="appt in confirmedAppointments" :key="appt.id" :value="appt.id">
+                      #{{ appt.id }} · {{ formatTime(appt.appointmentDate) }} {{ formatDateOnly(appt.appointmentDate) }} — {{ appt.petName }}
+                    </option>
+                  </select>
+                </div>
+
+                <div v-if="selectedQrAppt" class="p-4 rounded-4" style="background-color: #f8fafc; border: 1px solid #f1f5f9;">
                   
-                  <div class="d-flex justify-content-center my-3 position-relative">
-                    <qrcode-vue :value="appt.qrToken" :size="180" level="M" />
+                  <!-- Info Grid -->
+                  <div class="row g-3 mb-4">
+                    <div class="col-6">
+                      <div class="text-muted small mb-1">Ngày khám</div>
+                      <div class="fw-bold text-dark">{{ formatDateOnly(selectedQrAppt.appointmentDate) }}</div>
+                    </div>
+                    <div class="col-6">
+                      <div class="text-muted small mb-1">Giờ</div>
+                      <div class="fw-bold text-dark">{{ formatTime(selectedQrAppt.appointmentDate) }}</div>
+                    </div>
+                    <div class="col-12 mt-2">
+                      <div class="text-muted small mb-1">Bác sĩ / Dịch vụ</div>
+                      <div class="text-dark fw-medium">{{ selectedQrAppt.doctorName || 'Chưa phân công' }} <span class="text-muted px-1">•</span> {{ selectedQrAppt.serviceName }}</div>
+                    </div>
+                  </div>
+
+                  <!-- QR Display -->
+                  <div class="bg-white p-3 rounded-4 shadow-sm border text-center mb-4">
+                    <qrcode-vue :value="selectedQrAppt.qrToken || ''" :size="160" level="M" />
+                    <div class="fs-5 fw-bolder text-primary font-monospace mt-2 mb-1">{{ selectedQrAppt.qrToken }}</div>
                   </div>
                   
-                  <div class="fs-5 fw-bold text-dark font-monospace mb-3">{{ appt.qrToken }}</div>
-                  
-                  <button class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" @click="$router.push(`/qr-checkin/${appt.id}`)">
-                    <i class="bi bi-person-vcard me-2"></i>Mở thẻ Check-in
+                  <button class="btn w-100 rounded-pill fw-bold py-2" style="background-color: #0f766e; color: white;" @click="$router.push(`/qr-checkin/${selectedQrAppt.id}`)">
+                    <i class="bi bi-box-arrow-up-right me-2"></i>Mở thẻ Check-in
                   </button>
+                  
                 </div>
+
               </div>
 
               <div class="mt-2 text-center">
@@ -906,9 +931,22 @@ const cancelLoading = ref(false);
 
 // QR List modal
 const showQrListModal = ref(false);
+const selectedQrApptId = ref<number | null>(null);
+
 const confirmedAppointments = computed(() => {
   return appointments.value.filter(a => a.status === 'confirmed' && a.qrToken);
 });
+
+const selectedQrAppt = computed(() => {
+  return confirmedAppointments.value.find(a => a.id === selectedQrApptId.value);
+});
+
+const openQrModal = () => {
+  if (confirmedAppointments.value.length > 0) {
+    selectedQrApptId.value = confirmedAppointments.value[0].id;
+  }
+  showQrListModal.value = true;
+};
 
 // Book modal
 const showBookModal = ref(false);
@@ -943,7 +981,7 @@ const computedAvailableSlots = computed(() => {
         }
       });
     });
-    return allSlots.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+    return allSlots.sort((a, b) => a.localeCompare(b));
   } else {
     const doc = doctorAvailableSlots.value.find(d => d.doctorId === selectedDoctorFilter.value);
     return doc ? doc.availableSlots : [];
@@ -1110,7 +1148,7 @@ const buildSlots = (times: string[]): SlotDisplay[] => {
     const slotMs = slotDate.getTime();
     const isPast = slotMs < now;
     const isTooSoon = !isPast && slotMs < cutoff;
-    const isAvailableFromApi = computedAvailableSlots.value.includes(slotStr);
+    const isAvailableFromApi = computedAvailableSlots.value.includes(time);
     const isBooked = !isPast && !isTooSoon && !isAvailableFromApi;
     const isAvailable = !isPast && !isTooSoon && isAvailableFromApi;
     return { time, slotStr, isAvailable, isPast, isBooked, isTooSoon };
@@ -1574,7 +1612,11 @@ const formatDatetimeLocal = (val: string): string => {
 
 const formatDateOnly = (dateStr: string): string => {
   if (!dateStr) return '';
-  const [year, month, day] = dateStr.split('-');
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
   return `${day}/${month}/${year}`;
 };
 

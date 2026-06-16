@@ -17,17 +17,20 @@ namespace MyPetClinic.Controllers
         private readonly IMedicalRecordService _medicalRecordService;
         private readonly IVaccinationService _vaccinationService;
         private readonly IAppointmentService _appointmentService;
+        private readonly IPrescriptionService _prescriptionService;
 
         public MyPetsController(
             IPetService petService,
             IMedicalRecordService medicalRecordService,
             IVaccinationService vaccinationService,
-            IAppointmentService appointmentService)
+            IAppointmentService appointmentService,
+            IPrescriptionService prescriptionService)
         {
             _petService = petService;
             _medicalRecordService = medicalRecordService;
             _vaccinationService = vaccinationService;
             _appointmentService = appointmentService;
+            _prescriptionService = prescriptionService;
         }
 
         private Guid GetCurrentUserId()
@@ -238,6 +241,27 @@ namespace MyPetClinic.Controllers
                 var appointments = await _appointmentService.GetCustomerAppointmentsPaginatedAsync(userId, null, 1, 100);
                 // Filter chỉ lịch hẹn của pet này
                 return Ok(appointments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+        /// <summary>
+        /// Khách hàng xem lịch sử đơn thuốc của thú cưng (chỉ được xem thú cưng của chính mình).
+        /// </summary>
+        [HttpGet("{id}/prescriptions")]
+        [MyPetClinic.WebApi.Filters.AuthorizeOwner]
+        public async Task<IActionResult> GetPetPrescriptions(long id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var pet = await _petService.GetPetByIdAsync(id, userId);
+                if (pet == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
+
+                var prescriptions = await _prescriptionService.GetPetPrescriptionsAsync(id);
+                return Ok(prescriptions);
             }
             catch (Exception ex)
             {
