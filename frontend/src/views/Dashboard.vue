@@ -313,7 +313,7 @@
 
           <!-- tab: Appointments Tab -->
           <div v-else-if="activeTab === 'appointments'" class="container-fluid p-0">
-            <AppointmentsTab />
+            <AppointmentsTab ref="appointmentsTabRef" />
           </div>
 
           <!-- tab: Invoices Tab -->
@@ -462,6 +462,7 @@ const isSidebarActive = ref(false);
 const showBookingModal = ref(false);
 const showQrModal = ref(false);
 const myAppointmentsTabRef = ref<any>(null);
+const appointmentsTabRef = ref<any>(null);
 
 const handleSidebarBookNew = () => {
   if (role.value.toLowerCase() === 'customer') {
@@ -469,6 +470,13 @@ const handleSidebarBookNew = () => {
     setTimeout(() => {
       if (myAppointmentsTabRef.value && typeof myAppointmentsTabRef.value.openBookModal === 'function') {
         myAppointmentsTabRef.value.openBookModal();
+      }
+    }, 100);
+  } else if (role.value.toLowerCase() === 'receptionist' || role.value.toLowerCase() === 'admin') {
+    activeTab.value = 'appointments';
+    setTimeout(() => {
+      if (appointmentsTabRef.value && typeof appointmentsTabRef.value.openCreateModal === 'function') {
+        appointmentsTabRef.value.openCreateModal();
       }
     }, 100);
   } else {

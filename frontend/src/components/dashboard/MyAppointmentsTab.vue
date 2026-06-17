@@ -67,73 +67,77 @@
           class="appt-card"
           :class="`status-${appt.status}`"
         >
-          <!-- Left accent bar -->
-          <div class="appt-accent-bar"></div>
+          <!-- Top status border handled via CSS per status class -->
 
-          <!-- Content -->
-          <div class="appt-card-content">
-            <!-- Top row: date + status -->
-            <div class="appt-top-row">
-              <div class="appt-date-block">
-                <div class="appt-date-day">{{ formatDay(appt.appointmentDate) }}</div>
-                <div class="appt-date-rest">{{ formatMonthYear(appt.appointmentDate) }}</div>
-                <div class="appt-date-time">🕐 {{ formatTime(appt.appointmentDate) }}</div>
+          <div class="appt-card-inner">
+            <!-- LEFT: Date Pill Block -->
+            <div class="appt-date-pill">
+              <div class="appt-date-pill-day">{{ formatDay(appt.appointmentDate) }}</div>
+              <div class="appt-date-pill-month">{{ formatMonthYear(appt.appointmentDate) }}</div>
+              <div class="appt-date-pill-time">
+                <i class="bi bi-clock me-1"></i>{{ formatTime(appt.appointmentDate) }}
               </div>
-              <div class="d-flex flex-column align-items-end gap-2">
+            </div>
+
+            <!-- DIVIDER -->
+            <div class="appt-divider"></div>
+
+            <!-- RIGHT: Info + Actions -->
+            <div class="appt-right">
+              <!-- Top: status badge -->
+              <div class="appt-right-top">
                 <span class="appt-status-badge" :class="`badge-${appt.status}`">
-                  <i :class="getStatusIcon(appt.status)" class="me-1"></i>
+                  <i :class="getStatusIcon(appt.status)" class="me-1"
+                    :style="appt.status === 'in_progress' ? 'animation: pulse-dot 1.2s infinite;' : ''"
+                  ></i>
                   {{ getStatusLabel(appt.status) }}
                 </span>
-                <span v-if="appt.invoiceStatus" class="invoice-badge">
+                <span v-if="appt.invoiceStatus" class="invoice-badge ms-2">
                   <i class="bi bi-receipt me-1"></i>
                   {{ getInvoiceStatusLabel(appt.invoiceStatus) }}
                 </span>
               </div>
-            </div>
 
-            <!-- Middle: pet & service info -->
-            <div class="appt-info-grid">
-              <div class="appt-info-item">
-                <span class="appt-info-label">Thú cưng</span>
-                <span class="appt-info-value">
-                  <span class="pet-inline-badge">{{ appt.petName || '—' }}</span>
-                  <small class="text-muted ms-1">{{ appt.species }}</small>
-                </span>
+              <!-- Middle: 3-col fixed info grid -->
+              <div class="appt-info-grid">
+                <div class="appt-info-item">
+                  <span class="appt-info-label">Thú cưng</span>
+                  <span class="appt-info-value">
+                    <span class="pet-inline-badge">{{ appt.petName || '—' }}</span>
+                    <small class="text-muted ms-1">{{ appt.species }}</small>
+                  </span>
+                </div>
+                <div class="appt-info-item">
+                  <span class="appt-info-label">Dịch vụ</span>
+                  <span class="appt-info-value">{{ appt.serviceName }}</span>
+                </div>
+                <div class="appt-info-item">
+                  <span class="appt-info-label">Bác sĩ phụ trách</span>
+                  <span class="appt-info-value">{{ appt.doctorName || 'Chưa phân công' }}</span>
+                </div>
               </div>
-              <div class="appt-info-item">
-                <span class="appt-info-label">Dịch vụ</span>
-                <span class="appt-info-value">{{ appt.serviceName }}</span>
-              </div>
-              <div class="appt-info-item">
-                <span class="appt-info-label">Bác sĩ phụ trách</span>
-                <span class="appt-info-value">{{ appt.doctorName || 'Chưa phân công' }}</span>
-              </div>
-              <div v-if="appt.symptom" class="appt-info-item">
-                <span class="appt-info-label">Lý do khám</span>
-                <span class="appt-info-value appt-symptom">{{ appt.symptom }}</span>
-              </div>
-            </div>
 
-            <!-- Note -->
-            <div v-if="appt.note" class="appt-note">
-              <i class="bi bi-chat-left-text-fill me-1 text-muted"></i>
-              <span>{{ appt.note }}</span>
-            </div>
+              <!-- Note -->
+              <div v-if="appt.note || appt.symptom" class="appt-note">
+                <i class="bi bi-chat-left-text-fill me-1 text-muted"></i>
+                <span>{{ appt.symptom || appt.note }}</span>
+              </div>
 
-            <!-- Actions -->
-            <div class="appt-actions">
-              <button class="btn-appt-detail" @click="openDetailModal(appt)">
-                <i class="bi bi-eye me-1"></i> Xem chi tiết
-              </button>
-              <button
-                v-if="canCancel(appt.status)"
-                class="btn-appt-cancel"
-                @click="confirmCancel(appt)"
-              >
-                <i class="bi bi-x-circle me-1"></i> Huỷ lịch
-              </button>
-              <div v-if="appt.invoiceTotalAmount && appt.invoiceTotalAmount > 0" class="appt-price-tag">
-                {{ formatCurrency(appt.invoiceTotalAmount) }}
+              <!-- Actions -->
+              <div class="appt-actions">
+                <button class="btn-appt-detail" @click="openDetailModal(appt)">
+                  <i class="bi bi-eye me-1"></i> Xem chi tiết
+                </button>
+                <button
+                  v-if="canCancel(appt.status)"
+                  class="btn-appt-cancel"
+                  @click="confirmCancel(appt)"
+                >
+                  <i class="bi bi-x-circle me-1"></i> Huỷ lịch
+                </button>
+                <div v-if="appt.invoiceTotalAmount && appt.invoiceTotalAmount > 0" class="appt-price-tag">
+                  {{ formatCurrency(appt.invoiceTotalAmount) }}
+                </div>
               </div>
             </div>
           </div>
@@ -1722,79 +1726,117 @@ defineExpose({
   gap: 1rem;
 }
 
+/* ===== Appointment Card — Redesigned ===== */
 .appt-card {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
-  display: flex;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border: 1px solid #f1f5f9;
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: box-shadow 0.25s ease;
+  border-top: 3px solid transparent;
 }
 
 .appt-card:hover {
-  transform: translateY(-5px) scale(1.01);
-  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.1);
-  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
-/* Status colored left bar */
-.appt-accent-bar {
-  width: 5px;
-  flex-shrink: 0;
-}
+/* Top border color by status */
+.status-pending    { border-top-color: #f59e0b; }
+.status-confirmed  { border-top-color: #3b82f6; }
+.status-waiting    { border-top-color: #f59e0b; }
+.status-in_progress { border-top-color: #8b5cf6; }
+.status-completed  { border-top-color: #10b981; }
+.status-cancelled  { border-top-color: #9ca3af; }
+.status-ready_to_pay { border-top-color: #10b981; }
 
-.status-pending .appt-accent-bar { background: linear-gradient(180deg, #f59e0b, #d97706); }
-.status-confirmed .appt-accent-bar { background: linear-gradient(180deg, #3b82f6, #1d4ed8); }
-.status-in_progress .appt-accent-bar { background: linear-gradient(180deg, #8b5cf6, #6d28d9); }
-.status-completed .appt-accent-bar { background: linear-gradient(180deg, #10b981, #059669); }
-.status-cancelled .appt-accent-bar { background: linear-gradient(180deg, #6b7280, #4b5563); }
-
-.appt-card-content {
-  flex: 1;
+/* Inner flex layout */
+.appt-card-inner {
+  display: flex;
+  align-items: stretch;
   padding: 1.1rem 1.25rem;
+  gap: 1.25rem;
 }
 
-/* Top row */
-.appt-top-row {
+/* LEFT: Date Pill Block */
+.appt-date-pill {
+  flex-shrink: 0;
+  width: 80px;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 0.9rem;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  gap: 2px;
 }
 
-.appt-date-block {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+.status-pending    .appt-date-pill,
+.status-waiting    .appt-date-pill { background: #fef3c7; }
+.status-confirmed  .appt-date-pill { background: #dbeafe; }
+.status-in_progress .appt-date-pill { background: #ede9fe; }
+.status-completed  .appt-date-pill,
+.status-ready_to_pay .appt-date-pill { background: #d1fae5; }
+.status-cancelled  .appt-date-pill { background: #f3f4f6; }
 
-.appt-date-day {
-  font-size: 1.8rem;
+.appt-date-pill-day {
+  font-size: 2rem;
   font-weight: 800;
-  color: #1e293b;
   line-height: 1;
-  background: linear-gradient(135deg, #1e293b, #475569);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #1e293b;
 }
 
-.appt-date-rest {
-  font-size: 0.82rem;
+.status-pending    .appt-date-pill-day,
+.status-waiting    .appt-date-pill-day { color: #92400e; }
+.status-confirmed  .appt-date-pill-day { color: #1e40af; }
+.status-in_progress .appt-date-pill-day { color: #5b21b6; }
+.status-completed  .appt-date-pill-day,
+.status-ready_to_pay .appt-date-pill-day { color: #065f46; }
+.status-cancelled  .appt-date-pill-day { color: #6b7280; }
+
+.appt-date-pill-month {
+  font-size: 0.7rem;
   font-weight: 600;
-  color: #6b7280;
+  opacity: 0.7;
+  color: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.appt-date-time {
-  font-size: 0.82rem;
-  color: #64748b;
-  font-weight: 600;
-  width: 100%;
-  margin-top: 4px;
+.appt-date-pill-time {
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.6);
+  color: #374151;
+  white-space: nowrap;
+}
+
+/* Divider */
+.appt-divider {
+  width: 1px;
+  background: #f1f5f9;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+/* RIGHT side */
+.appt-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.appt-right-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 /* Status badge */
@@ -1808,11 +1850,11 @@ defineExpose({
   white-space: nowrap;
 }
 
-.badge-pending { background: #fef3c7; color: #92400e; }
-.badge-confirmed { background: #dbeafe; color: #1e40af; }
-.badge-in_progress { background: #ede9fe; color: #5b21b6; }
-.badge-completed { background: #d1fae5; color: #065f46; }
-.badge-cancelled { background: #f3f4f6; color: #4b5563; }
+.badge-pending, .badge-waiting { background: #fef3c7; color: #92400e; }
+.badge-confirmed               { background: #dbeafe; color: #1e40af; }
+.badge-in_progress             { background: #ede9fe; color: #5b21b6; }
+.badge-completed, .badge-ready_to_pay { background: #d1fae5; color: #065f46; }
+.badge-cancelled               { background: #f3f4f6; color: #4b5563; }
 
 .invoice-badge {
   display: inline-flex;
@@ -1826,31 +1868,35 @@ defineExpose({
   border: 1px solid #fde68a;
 }
 
-/* Info grid */
+/* Info grid — 3 fixed columns */
 .appt-info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 8px;
-  margin-bottom: 0.75rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem 1rem;
 }
 
 .appt-info-item {
   display: flex;
   flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .appt-info-label {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: #9ca3af;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
 }
 
 .appt-info-value {
-  font-size: 0.88rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pet-inline-badge {
@@ -1859,6 +1905,7 @@ defineExpose({
   padding: 1px 8px;
   border-radius: 10px;
   font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .appt-symptom {
@@ -1874,7 +1921,7 @@ defineExpose({
   background: #f9fafb;
   border-radius: 8px;
   padding: 6px 10px;
-  margin-bottom: 0.75rem;
+  border-left: 3px solid #e5e7eb;
 }
 
 /* Actions */
@@ -1883,6 +1930,7 @@ defineExpose({
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  margin-top: 2px;
 }
 
 .btn-appt-detail {
@@ -1929,10 +1977,32 @@ defineExpose({
   border-radius: 20px;
 }
 
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 /* ===== Cards animation ===== */
 .appt-card-enter-active, .appt-card-leave-active { transition: all 0.35s ease; }
 .appt-card-enter-from { opacity: 0; transform: translateX(-20px); }
 .appt-card-leave-to { opacity: 0; transform: translateX(20px); }
+
+@media (max-width: 640px) {
+  .appt-card-inner {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .appt-date-pill {
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+  }
+  .appt-date-pill-day { font-size: 1.4rem; }
+  .appt-divider { width: 100%; height: 1px; }
+  .appt-info-grid { grid-template-columns: 1fr 1fr; }
+}
 
 /* ===== Modal ===== */
 .appt-modal-overlay {

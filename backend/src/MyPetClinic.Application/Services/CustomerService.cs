@@ -59,14 +59,35 @@ namespace MyPetClinic.Application.Services
                 throw new Exception("Role 'customer' not found in database.");
             }
 
-            // Tạo mật khẩu ngẫu nhiên tạm thời (hoặc sinh hash mặc định)
+            // Kiểm tra email đã tồn tại chưa
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+            {
+                var existingByEmail = await _userRepository.GetUserByEmailAsync(dto.Email.Trim().ToLower());
+                if (existingByEmail != null)
+                {
+                    throw new InvalidOperationException($"Email '{dto.Email}' đã được sử dụng bởi một tài khoản khác. Vui lòng dùng email khác hoặc để trống.");
+                }
+            }
+
+            // Kiểm tra số điện thoại đã tồn tại chưa
+            if (!string.IsNullOrWhiteSpace(dto.Phone))
+            {
+                var existingByPhone = await _userRepository.SearchUsersAsync(dto.Phone.Trim());
+                var phoneExists = existingByPhone.Any(u => u.Phone == dto.Phone.Trim() && u.IsActive == true);
+                if (phoneExists)
+                {
+                    throw new InvalidOperationException($"Số điện thoại '{dto.Phone}' đã được đăng ký. Khách hàng này có thể đã có hồ sơ trong hệ thống.");
+                }
+            }
+
+            // Tạo mật khẩu ngẫu nhiên tạm thời
             string tempPassword = BCrypt.Net.BCrypt.HashPassword("123456");
 
             var newUser = new User
             {
                 Id = Guid.NewGuid(),
                 FullName = dto.FullName?.Trim(),
-                Email = dto.Email?.Trim().ToLower(),
+                Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim().ToLower(),
                 Phone = dto.Phone?.Trim(),
                 Address = dto.Address?.Trim(),
                 Gender = dto.Gender,

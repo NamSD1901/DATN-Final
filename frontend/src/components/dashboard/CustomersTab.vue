@@ -677,18 +677,36 @@ const openCreateCustomerModalWithPhone = () => {
 
 const submitCreateCustomer = async () => {
   try {
-    const res = await api.post('/receptionist/customers', createForm.value);
+    // Map flat form sang đúng cấu trúc CustomerCreateDto
+    const payload = {
+      fullName: createForm.value.fullName,
+      phone: createForm.value.phone,
+      email: createForm.value.email || null,
+      address: createForm.value.address || null,
+      pets: createForm.value.petName ? [
+        {
+          name: createForm.value.petName,
+          species: createForm.value.species,
+          gender: createForm.value.gender,
+          weight: createForm.value.weight,
+          breed: createForm.value.breed || null,
+          sterilized: createForm.value.sterilized
+        }
+      ] : []
+    };
+
+    const res = await api.post('/receptionist/customers', payload);
     if (res.data.success) {
       alert(res.data.message || 'Tạo hồ sơ khách hàng thành công!');
       showCreateCustomerModal.value = false;
       await loadCustomers();
-      // Auto open detailed medical history
       if (res.data.customerId) {
         await viewCustomerDetail(res.data.customerId);
       }
     }
   } catch (err: any) {
-    alert(err.response?.data?.message || 'Lỗi khi tạo hồ sơ chủ nuôi.');
+    const msg = err.response?.data?.message || err.response?.data || 'Đã xảy ra lỗi khi tạo hồ sơ. Vui lòng kiểm tra lại thông tin.';
+    alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
   }
 };
 

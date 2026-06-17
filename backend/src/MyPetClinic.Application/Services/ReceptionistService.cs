@@ -14,11 +14,15 @@ namespace MyPetClinic.Application.Services
     public class ReceptionistService : IReceptionistService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICustomerService _customerService;
+        private readonly IAppointmentService _appointmentService;
         private static readonly SemaphoreSlim _queueSemaphore = new SemaphoreSlim(1, 1);
 
-        public ReceptionistService(IUnitOfWork unitOfWork)
+        public ReceptionistService(IUnitOfWork unitOfWork, ICustomerService customerService, IAppointmentService appointmentService)
         {
             _unitOfWork = unitOfWork;
+            _customerService = customerService;
+            _appointmentService = appointmentService;
         }
 
         private (DateTime Start, DateTime End) GetVietnamTodayUtcRange()
@@ -490,6 +494,102 @@ namespace MyPetClinic.Application.Services
                 Email = user.Email,
                 Pets = pets
             };
+        }
+
+        // --- HÀM REFACTOR TỪ CONTROLLER SANG ---
+
+        public async Task<IEnumerable<MyPetClinic.Domain.Entities.User>> GetAllCustomersAsync() => await _customerService.GetAllCustomersAsync();
+
+        public async Task<IEnumerable<MyPetClinic.Domain.Entities.User>> SearchCustomersAsync(string search) => await _customerService.SearchCustomersAsync(search);
+
+        public async Task<System.Guid> CreateCustomerWithPetsAsync(CustomerCreateDto dto) => await _customerService.CreateCustomerWithPetsAsync(dto);
+
+        public async Task<long> CreateAppointmentAsync(AppointmentCreateDto dto, System.Guid createdBy) => await _appointmentService.CreateAppointmentAsync(dto, createdBy);
+
+        public async Task<CustomerDashboardDetailDto?> GetCustomerDashboardDetailAsync(System.Guid id)
+        {
+            var customer = await _customerService.GetCustomerDetailAsync(id);
+            if (customer == null) return null;
+
+            var pets = await _customerService.GetPetsByCustomerAsync(id);
+            var doctors = await GetActiveDoctorsAsync();
+            var services = await _appointmentService.GetServicesAsync();
+            var appointments = await _appointmentService.GetCustomerAppointmentsAsync(id);
+
+            return new CustomerDashboardDetailDto
+            {
+                Customer = customer,
+                Pets = pets,
+                ActiveDoctors = doctors,
+                Services = services,
+                Appointments = appointments,
+                TotalVisits = appointments.Count(a => a.Status == "completed" || a.Status == "ready_to_pay"),
+                TotalSpent = appointments.Where(a => a.InvoiceStatus == "paid").Sum(a => a.InvoiceTotalAmount ?? 0),
+                NoShowCount = appointments.Count(a => a.Status == "cancelled"),
+                UnpaidBalance = appointments.Where(a => a.InvoiceStatus == "unpaid").Sum(a => a.InvoiceTotalAmount ?? 0)
+            };
+        }
+
+        public async Task<PetDashboardDetailDto?> GetPetDashboardDetailAsync(long id)
+        {
+            var pet = await _unitOfWork.Pets.GetFirstOrDefaultWithIncludesAsync(p => p.Id == id, p => p.Owner!);
+            if (pet == null) return null;
+
+            var appointments = await _appointmentService.GetPetAppointmentsAsync(id);
+
+            return new PetDashboardDetailDto
+            {
+                Pet = pet,
+                Customer = pet.Owner!,
+                Appointments = appointments
+            };
+        }
+
+        public async Task<long> AddPetAsync(System.Guid customerId, MyPetClinic.Domain.Entities.Pet model)
+        {
+            var customer = await _customerService.GetCustomerDetailAsync(customerId);
+            if (customer == null) throw new InvalidOperationException("Không tìm thấy khách hàng");
+
+            var newPet = new MyPetClinic.Domain.Entities.Pet
+            {
+                OwnerId = customerId,
+                Name = model.Name?.Trim(),
+                Species = model.Species?.Trim(),
+                Breed = model.Breed?.Trim(),
+                Gender = model.Gender,
+                BirthDate = model.BirthDate,
+                Weight = model.Weight,
+                Color = model.Color?.Trim(),
+                AllergyNote = model.AllergyNote?.Trim(),
+                Sterilized = model.Sterilized,
+                MicrochipCode = model.MicrochipCode?.Trim(),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.Pets.AddAsync(newPet);
+            await _unitOfWork.SaveChangesAsync();
+
+            return newPet.Id;
+        }
+
+        public async Task UpdatePetAsync(long petId, MyPetClinic.Domain.Entities.Pet model)
+        {
+            var pet = await _unitOfWork.Pets.GetByIdAsync(petId);
+            if (pet == null) throw new InvalidOperationException("Không tìm thấy thú cưng");
+
+            pet.Name = model.Name?.Trim();
+            pet.Species = model.Species?.Trim();
+            pet.Breed = model.Breed?.Trim();
+            pet.Gender = model.Gender;
+            pet.BirthDate = model.BirthDate;
+            pet.Weight = model.Weight;
+            pet.Color = model.Color?.Trim();
+            pet.AllergyNote = model.AllergyNote?.Trim();
+            pet.Sterilized = model.Sterilized;
+            pet.MicrochipCode = model.MicrochipCode?.Trim();
+
+            _unitOfWork.Pets.Update(pet);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

@@ -14,8 +14,7 @@ public class AiChatbotService : IAiChatbotService
 
     public AiChatbotService(IConfiguration config)
     {
-        // Tạm mượn luôn config GeminiAI để bạn đỡ phải đổi tên biến trong appsettings.json
-        _apiKey = config["GeminiAI:ApiKey"] ?? string.Empty;
+        _apiKey = config["GroqAI:ApiKey"] ?? string.Empty;
     }
 
     public async Task<string> ChatAsync(string userMessage)

@@ -208,6 +208,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import Swal from 'sweetalert2';
 import api from '../services/api';
 import Header from '../components/layout/Header.vue';
 import Footer from '../components/layout/Footer.vue';
@@ -264,7 +265,30 @@ const handleBookingBtnClick = () => {
   if (isLoggedIn.value) {
     showBookingModal.value = true;
   } else {
-    router.push('/login');
+    Swal.fire({
+      title: 'Chưa đăng nhập!',
+      text: 'Để đặt lịch khám cho bé cưng, bạn vui lòng đăng nhập vào hệ thống nhé.',
+      icon: 'info',
+      iconColor: '#f59e0b',
+      showCancelButton: true,
+      confirmButtonText: 'Đăng nhập ngay',
+      cancelButtonText: 'Để sau',
+      confirmButtonColor: '#f59e0b',
+      cancelButtonColor: '#f3f4f6',
+      background: '#ffffff',
+      customClass: {
+        popup: 'rounded-4 shadow-lg border-0',
+        title: 'fw-bold text-dark fs-4 mb-2',
+        htmlContainer: 'text-muted mb-4',
+        confirmButton: 'btn btn-warning rounded-pill px-4 fw-bold shadow-sm me-2',
+        cancelButton: 'btn btn-light rounded-pill px-4 fw-bold shadow-sm border text-muted'
+      },
+      buttonsStyling: false
+    }).then((result) => {
+      if (result.isConfirmed) {
+        router.push('/login');
+      }
+    });
   }
 };
 

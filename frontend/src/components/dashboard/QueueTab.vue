@@ -224,7 +224,7 @@
             <span class="badge bg-secondary rounded-pill px-3 shadow-sm">{{ filteredWaiting.length }}</span>
           </div>
 
-          <div class="kanban-list flex-grow-1" style="min-height: 450px;">
+          <div class="kanban-list flex-grow-1" style="min-height: 450px;" v-auto-animate>
             <div v-if="filteredWaiting.length === 0" class="text-center py-5 text-muted">
               <i class="bi bi-emoji-smile fs-2 text-muted mb-2 d-block"></i>
               <span class="small">Không có bệnh nhi nào đang chờ.</span>
@@ -262,10 +262,10 @@
                   <i class="bi bi-link-45deg"></i> Ghép Hồ Sơ
                 </button>
                 <div class="dropdown w-100">
-                  <button class="btn btn-sm btn-outline-warning w-100 rounded-pill py-1 dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown">
+                  <button class="btn btn-sm btn-outline-warning w-100 rounded-pill py-1 dropdown-toggle fw-bold" type="button" @click.stop="toggleDropdown(card.appointmentId)">
                     Thao tác
                   </button>
-                  <ul class="dropdown-menu shadow border-0">
+                  <ul class="dropdown-menu shadow border-0" :class="{ 'show': activeDropdownId === card.appointmentId }" style="width: 100%; top: 100%; left: 0;">
                     <li><a class="dropdown-menu-item text-dark p-2 d-block text-decoration-none cursor-pointer" @click="updateStatus(card.appointmentId, 'in_progress')"><i class="bi bi-activity text-warning me-2"></i>Chuyển khám</a></li>
                     <li><a class="dropdown-menu-item text-dark p-2 d-block text-decoration-none cursor-pointer" @click="updateStatus(card.appointmentId, 'ready_to_pay')"><i class="bi bi-cash text-success me-2"></i>Thanh toán</a></li>
                     <li><a class="dropdown-menu-item text-dark p-2 d-block text-decoration-none cursor-pointer" @click="updateStatus(card.appointmentId, 'cancelled')"><i class="bi bi-trash text-danger me-2"></i>Hủy ca</a></li>
@@ -287,7 +287,7 @@
             <span class="badge bg-warning text-dark rounded-pill px-3 shadow-sm">{{ filteredInProgress.length }}</span>
           </div>
 
-          <div class="kanban-list flex-grow-1" style="min-height: 450px;">
+          <div class="kanban-list flex-grow-1" style="min-height: 450px;" v-auto-animate>
             <div v-if="filteredInProgress.length === 0" class="text-center py-5 text-muted">
               <i class="bi bi-stethoscope fs-2 text-muted mb-2 d-block"></i>
               <span class="small">Chưa có ca nào đang thực hiện khám.</span>
@@ -321,10 +321,10 @@
                   <i class="bi bi-link-45deg"></i> Ghép Hồ Sơ
                 </button>
                 <div class="dropdown w-100">
-                  <button class="btn btn-sm btn-outline-warning w-100 rounded-pill py-1 dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown">
+                  <button class="btn btn-sm btn-outline-warning w-100 rounded-pill py-1 dropdown-toggle fw-bold" type="button" @click.stop="toggleDropdown(card.appointmentId)">
                     Thao tác
                   </button>
-                  <ul class="dropdown-menu shadow border-0">
+                  <ul class="dropdown-menu shadow border-0" :class="{ 'show': activeDropdownId === card.appointmentId }" style="width: 100%; top: 100%; left: 0;">
                     <li><a class="dropdown-menu-item text-dark p-2 d-block text-decoration-none cursor-pointer" @click="updateStatus(card.appointmentId, 'waiting')"><i class="bi bi-hourglass-split text-secondary me-2"></i>Trả lại hàng chờ</a></li>
                     <li><a class="dropdown-menu-item text-dark p-2 d-block text-decoration-none cursor-pointer" @click="updateStatus(card.appointmentId, 'ready_to_pay')"><i class="bi bi-cash text-success me-2"></i>Thanh toán</a></li>
                     <li><a class="dropdown-menu-item text-dark p-2 d-block text-decoration-none cursor-pointer" @click="updateStatus(card.appointmentId, 'cancelled')"><i class="bi bi-trash text-danger me-2"></i>Hủy ca</a></li>
@@ -346,7 +346,7 @@
             <span class="badge bg-success text-white rounded-pill px-3 shadow-sm">{{ filteredReadyToPay.length }}</span>
           </div>
 
-          <div class="kanban-list flex-grow-1" style="min-height: 450px;">
+          <div class="kanban-list flex-grow-1" style="min-height: 450px;" v-auto-animate>
             <div v-if="filteredReadyToPay.length === 0" class="text-center py-5 text-muted">
               <i class="bi bi-check-circle fs-2 text-muted mb-2 d-block"></i>
               <span class="small">Không có ca khám chờ thanh toán.</span>
@@ -602,6 +602,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { vAutoAnimate } from '@formkit/auto-animate/vue';
+import Swal from 'sweetalert2';
 import api from '../../services/api';
 import { Html5Qrcode } from 'html5-qrcode';
 
@@ -624,6 +626,11 @@ const intakeForm = ref({
 });
 
 const selectedDoctor = ref('ALL');
+const activeDropdownId = ref<number | null>(null);
+const toggleDropdown = (id: number) => {
+  activeDropdownId.value = activeDropdownId.value === id ? null : id;
+};
+
 const doctorList = ref<any[]>([]);
 const queueList = ref<any[]>([]);
 const intervals = ref<any[]>([]);
@@ -764,14 +771,69 @@ const loadDoctors = async () => {
 };
 
 const updateStatus = async (appointmentId: number, status: string) => {
-  try {
-    const res = await api.put(`/receptionist/queue/${appointmentId}/status`, { status });
-    if (res.data.success) {
-      await loadQueue();
+  activeDropdownId.value = null;
+  let title = 'Xác nhận thao tác';
+  let text = 'Bạn có chắc chắn muốn chuyển trạng thái ca khám này?';
+  let icon: any = 'question';
+  let confirmButtonColor = '#f59e0b'; // warning (vàng)
+  let confirmButtonText = 'Đồng ý';
+
+  if (status === 'cancelled') {
+    title = 'Xác nhận Hủy Ca';
+    text = 'Sau khi hủy ca khám, bạn sẽ không thể hoàn tác. Bạn có chắc chắn?';
+    icon = 'warning';
+    confirmButtonColor = '#dc3545'; // danger (đỏ)
+    confirmButtonText = 'Có, Hủy ngay!';
+  } else if (status === 'ready_to_pay') {
+    title = 'Chuyển sang Thu Ngân';
+    text = 'Xác nhận ca khám đã hoàn tất và chuyển bệnh nhi sang quầy thanh toán?';
+    icon = 'info';
+    confirmButtonColor = '#198754'; // success (xanh lá)
+    confirmButtonText = 'Đồng ý chuyển';
+  } else if (status === 'in_progress') {
+    title = 'Bắt đầu Khám';
+    text = 'Chuyển bệnh nhi vào phòng khám ngay bây giờ?';
+    confirmButtonText = 'Chuyển khám';
+  }
+
+  const result = await Swal.fire({
+    title,
+    text,
+    icon,
+    showCancelButton: true,
+    confirmButtonColor,
+    cancelButtonColor: '#6c757d',
+    confirmButtonText,
+    cancelButtonText: 'Đóng lại',
+    customClass: {
+      popup: 'rounded-4' // Thêm bo góc cho popup
     }
-  } catch (err) {
-    alert('Không thể cập nhật trạng thái');
-    console.error(err);
+  });
+
+  if (result.isConfirmed) {
+    try {
+      const res = await api.put(`/receptionist/queue/${appointmentId}/status`, { status });
+      if (res.data.success) {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Đã cập nhật trạng thái thành công!',
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true
+        });
+        await loadQueue();
+      }
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Thất bại',
+        text: 'Đã xảy ra lỗi kết nối. Vui lòng thử lại!',
+        customClass: { popup: 'rounded-4' }
+      });
+      console.error(err);
+    }
   }
 };
 
@@ -1051,8 +1113,16 @@ const openEmergencyModal = () => {
 
 // Mount/Unmount hooks
 onMounted(() => {
-  loadQueue();
   loadDoctors();
+  loadQueue();
+
+  // Close dropdown on click outside
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.dropdown')) {
+      activeDropdownId.value = null;
+    }
+  });
 
   // Poll server for updates every 15 seconds
   const queueInterval = setInterval(loadQueue, 15000);

@@ -132,20 +132,27 @@ const sendMessage = async () => {
   loading.value = true;
 
   try {
+    const startTime = Date.now();
     const res = await api.post('/AiChatbot/chat', {
       message: userPrompt
     });
+    
+    // Groq phản hồi quá nhanh (thường dưới 200ms), ta sẽ thêm delay ảo để hiển thị hiệu ứng typing "tự nhiên" hơn
+    const elapsed = Date.now() - startTime;
+    if (elapsed < 1200) {
+      await new Promise(resolve => setTimeout(resolve, 1200 - elapsed));
+    }
     
     messages.value.push({
       sender: 'ai',
       text: res.data.reply || 'Rất tiếc, tôi gặp sự cố khi phản hồi.',
       timestamp: new Date()
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error('AI Chat Error:', err);
     messages.value.push({
       sender: 'ai',
-      text: 'Kết nối với máy chủ bị gián đoạn. Vui lòng thử lại sau ít phút!',
+      text: err.response?.data?.reply || 'Kết nối với máy chủ bị gián đoạn. Vui lòng thử lại sau ít phút!',
       timestamp: new Date()
     });
   } finally {

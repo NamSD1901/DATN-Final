@@ -227,6 +227,14 @@ const toasts = ref<Toast[]>([]);
 let toastId = 0;
 
 const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  // Loại bỏ thông báo cũ nếu trùng nội dung (tránh spam khi click liên tục)
+  toasts.value = toasts.value.filter(t => t.message !== message);
+  
+  // Giới hạn tối đa 3 thông báo hiển thị cùng lúc
+  if (toasts.value.length >= 3) {
+    toasts.value.shift();
+  }
+
   const id = toastId++;
   let icon = Info;
   if (type === 'success') icon = CheckCircle2;

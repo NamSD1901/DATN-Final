@@ -66,8 +66,19 @@
           <i class="bi bi-calendar-check-fill me-2 text-warning"></i> Lịch Hẹn & Điều Phối
         </h5>
         <div class="d-flex align-items-center gap-3">
+          <span class="text-muted small fw-bold">Trạng thái:</span>
+          <select v-model="selectedStatus" class="form-select border-warning rounded-pill px-3 py-1.5 shadow-sm" style="width: 160px;">
+            <option value="ALL">Tất cả</option>
+            <option value="pending">Chờ xác nhận</option>
+            <option value="confirmed">Đã xác nhận</option>
+            <option value="waiting">Chờ khám</option>
+            <option value="in_progress">Đang khám</option>
+            <option value="ready_to_pay">Chờ thanh toán</option>
+            <option value="completed">Hoàn thành</option>
+            <option value="cancelled">Đã hủy</option>
+          </select>
           <span class="text-muted small fw-bold">Bác sĩ:</span>
-          <select v-model="selectedDoctor" @change="loadEvents" class="form-select border-warning rounded-pill px-3 py-1.5 shadow-sm" style="width: 200px;">
+          <select v-model="selectedDoctor" @change="loadEvents" class="form-select border-warning rounded-pill px-3 py-1.5 shadow-sm" style="width: 180px;">
             <option value="ALL">Tất cả bác sĩ</option>
             <option v-for="doc in doctorList" :key="doc.id" :value="doc.id">Bs. {{ doc.fullName }}</option>
           </select>
@@ -156,10 +167,10 @@
                   </thead>
                   <tbody>
                     <tr 
-                      v-for="evt in eventsList" 
+                      v-for="evt in filteredEventsList" 
                       :key="evt.id" 
                       class="cursor-pointer" 
-                      @click="openDetailModal(evt.id)"
+                      @click="handleRowClick($event, evt.id)"
                     >
                       <td class="ps-3 fw-bold text-dark">{{ formatTimeOnly(evt.appointmentTime || evt.start) }}</td>
                       <td>
@@ -184,24 +195,24 @@
                       </td>
                       <td class="text-center">
                         <div class="dropdown">
-                          <button class="btn btn-sm btn-light border rounded-pill" type="button" data-bs-toggle="dropdown" aria-expanded="false" @click.stop>
+                          <button class="btn btn-sm btn-light border rounded-pill" type="button" @click.stop="toggleDropdown(evt.id)">
                             <i class="bi bi-three-dots-vertical"></i>
                           </button>
-                          <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                          <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" :class="{ 'show': activeDropdownId === evt.id }" style="position: absolute; right: 0; z-index: 1000; margin-top: 5px;">
                             <li><a class="dropdown-item" href="#" @click.prevent.stop="openDetailModal(evt.id)"><i class="bi bi-eye text-primary me-2"></i>Xem chi tiết</a></li>
                             
                             <!-- Change Doctor -->
-                            <li v-if="['pending', 'confirmed', 'checked_in'].includes(evt.status)"><a class="dropdown-item" href="#" @click.prevent.stop="openChangeDoctorModal(evt)"><i class="bi bi-person-hearts text-info me-2"></i>Điều phối bác sĩ</a></li>
+                            <li v-if="['pending', 'confirmed', 'waiting'].includes(evt.status)"><a class="dropdown-item" href="#" @click.prevent.stop="openChangeDoctorModal(evt)"><i class="bi bi-person-hearts text-info me-2"></i>Điều phối bác sĩ</a></li>
                             
                             <!-- Reschedule -->
-                            <li v-if="['pending', 'confirmed'].includes(evt.status)"><a class="dropdown-item" href="#" @click.prevent.stop="openRescheduleModal(evt)"><i class="bi bi-calendar-range text-warning me-2"></i>Dời lịch khám</a></li>
+                            <li v-if="['pending', 'confirmed', 'waiting'].includes(evt.status)"><a class="dropdown-item" href="#" @click.prevent.stop="openRescheduleModal(evt)"><i class="bi bi-calendar-range text-warning me-2"></i>Dời lịch khám</a></li>
                             
                             <!-- No show -->
-                            <li v-if="['pending', 'confirmed'].includes(evt.status) && isPastDue(evt)"><a class="dropdown-item" href="#" @click.prevent.stop="markNoShow(evt.id)"><i class="bi bi-person-x text-secondary me-2"></i>Khách vắng mặt</a></li>
+                            <li v-if="['pending', 'confirmed', 'waiting'].includes(evt.status) && isPastDue(evt)"><a class="dropdown-item" href="#" @click.prevent.stop="markNoShow(evt.id)"><i class="bi bi-person-x text-secondary me-2"></i>Khách vắng mặt</a></li>
                             
                             <!-- Cancel -->
-                            <li v-if="['pending', 'confirmed'].includes(evt.status)"><hr class="dropdown-divider"></li>
-                            <li v-if="['pending', 'confirmed'].includes(evt.status)"><a class="dropdown-item text-danger" href="#" @click.prevent.stop="openCancelModal(evt)"><i class="bi bi-x-circle me-2"></i>Hủy lịch</a></li>
+                            <li v-if="['pending', 'confirmed', 'waiting'].includes(evt.status)"><hr class="dropdown-divider"></li>
+                            <li v-if="['pending', 'confirmed', 'waiting'].includes(evt.status)"><a class="dropdown-item text-danger" href="#" @click.prevent.stop="openCancelModal(evt)"><i class="bi bi-x-circle me-2"></i>Hủy lịch</a></li>
                           </ul>
                         </div>
                       </td>
@@ -844,7 +855,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, nextTick, computed } from 'vue';
 import api from '../../services/api';
 import { Html5Qrcode } from 'html5-qrcode';
 
@@ -852,12 +863,22 @@ import { Html5Qrcode } from 'html5-qrcode';
 const activeSubTab = ref<'calendar' | 'pending' | 'flow'>('calendar');
 const selectedDate = ref(new Date().toISOString().slice(0, 10));
 const selectedDoctor = ref('ALL');
+const selectedStatus = ref('ALL');
+const activeDropdownId = ref<number | null>(null);
+
+const toggleDropdown = (id: number) => {
+  activeDropdownId.value = activeDropdownId.value === id ? null : id;
+};
 
 // Data
 const stats = ref({ total: 0, pending: 0, confirmed: 0, waiting: 0, completed: 0 });
 const doctorList = ref<any[]>([]);
 const serviceList = ref<any[]>([]);
 const eventsList = ref<any[]>([]);
+const filteredEventsList = computed(() => {
+  if (selectedStatus.value === 'ALL') return eventsList.value;
+  return eventsList.value.filter((evt: any) => evt.status === selectedStatus.value);
+});
 const pendingList = ref<any[]>([]);
 const flowList = ref<any[]>([]);
 
@@ -865,6 +886,7 @@ const flowList = ref<any[]>([]);
 const loadingEvents = ref(false);
 
 // Modals
+const showDetailModal = ref(false);
 const showCreateModal = ref(false);
 const showCustomerModal = ref(false);
 const showQrModal = ref(false);
@@ -1213,6 +1235,12 @@ const submitCreateAppointment = async () => {
 };
 
 // Detail modal
+const handleRowClick = (event: MouseEvent, apptId: number) => {
+  const target = event.target as HTMLElement;
+  if (target.closest('.dropdown') || target.closest('button')) return;
+  openDetailModal(apptId);
+};
+
 const openDetailModal = async (apptId: number) => {
   showDetailModal.value = true;
   // detailLoading.value = true; // Placeholder for loading state if needed
@@ -1448,9 +1476,19 @@ const confirmChangeDoctor = async () => {
 };
 
 onMounted(() => {
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.dropdown')) {
+      activeDropdownId.value = null;
+    }
+  });
   loadDoctors();
   loadServices();
   loadAllData();
+});
+
+defineExpose({
+  openCreateModal
 });
 </script>
 

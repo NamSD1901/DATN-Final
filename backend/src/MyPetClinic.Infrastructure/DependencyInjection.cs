@@ -27,6 +27,7 @@ namespace MyPetClinic.Infrastructure
             services.AddScoped<IAppointmentService, AppointmentService>();
             services.AddScoped<IReceptionistService, ReceptionistService>();
             services.AddScoped<IInvoiceService, InvoiceService>();
+            services.AddScoped<IAdminService, AdminService>();
             
             services.AddScoped<IPetService, PetService>();
             services.AddScoped<IMedicalRecordService, MedicalRecordService>();

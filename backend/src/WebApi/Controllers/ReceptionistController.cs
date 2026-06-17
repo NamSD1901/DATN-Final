@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using MyPetClinic.Domain.Entities;
-using MyPetClinic.Infrastructure.Persistence;
 using System.Security.Claims;
-
 using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Services;
-using MyPetClinic.Application.Interfaces.Repositories;
+using MyPetClinic.Domain.Entities;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace MyPetClinic.Controllers
 {
@@ -16,20 +15,10 @@ namespace MyPetClinic.Controllers
     [Route("api/[controller]")]
     public class ReceptionistController : ControllerBase
     {
-        private readonly ICustomerService _customerService;
-        private readonly IPetRepository _petRepository;
-        private readonly IAppointmentService _appointmentService;
         private readonly IReceptionistService _receptionistService;
 
-        public ReceptionistController(
-            ICustomerService customerService, 
-            IPetRepository petRepository, 
-            IAppointmentService appointmentService,
-            IReceptionistService receptionistService)
+        public ReceptionistController(IReceptionistService receptionistService)
         {
-            _customerService = customerService;
-            _petRepository = petRepository;
-            _appointmentService = appointmentService;
             _receptionistService = receptionistService;
         }
 
@@ -37,34 +26,16 @@ namespace MyPetClinic.Controllers
         public async Task<IActionResult> Customers([FromQuery] string? search)
         {
             var customers = string.IsNullOrWhiteSpace(search) 
-                ? await _customerService.GetAllCustomersAsync() 
-                : await _customerService.SearchCustomersAsync(search);
+                ? await _receptionistService.GetAllCustomersAsync() 
+                : await _receptionistService.SearchCustomersAsync(search);
             return Ok(customers);
         }
 
         [HttpGet("customers/{id}")]
         public async Task<IActionResult> CustomerDetail(Guid id)
         {
-            var customer = await _customerService.GetCustomerDetailAsync(id);
-            if (customer == null) return NotFound();
-
-            var pets = await _customerService.GetPetsByCustomerAsync(id);
-            var doctors = await _receptionistService.GetActiveDoctorsAsync();
-            var services = await _appointmentService.GetServicesAsync();
-            var appointments = await _appointmentService.GetCustomerAppointmentsAsync(id);
-
-            var viewModel = new 
-            {
-                Customer = customer,
-                Pets = pets,
-                ActiveDoctors = doctors,
-                Services = services,
-                Appointments = appointments,
-                TotalVisits = appointments.Count(a => a.Status == "completed" || a.Status == "ready_to_pay"),
-                TotalSpent = appointments.Where(a => a.InvoiceStatus == "paid").Sum(a => a.InvoiceTotalAmount ?? 0),
-                NoShowCount = appointments.Count(a => a.Status == "cancelled"),
-                UnpaidBalance = appointments.Where(a => a.InvoiceStatus == "unpaid").Sum(a => a.InvoiceTotalAmount ?? 0)
-            };
+            var viewModel = await _receptionistService.GetCustomerDashboardDetailAsync(id);
+            if (viewModel == null) return NotFound();
 
             return Ok(viewModel);
         }
@@ -72,17 +43,8 @@ namespace MyPetClinic.Controllers
         [HttpGet("pets/{id}")]
         public async Task<IActionResult> PetDetail(long id)
         {
-            var pet = await _petRepository.GetPetByIdAsync(id);
-            if (pet == null) return NotFound();
-
-            var appointments = await _appointmentService.GetPetAppointmentsAsync(id);
-
-            var viewModel = new 
-            {
-                Pet = pet,
-                Customer = pet.Owner!,
-                Appointments = appointments
-            };
+            var viewModel = await _receptionistService.GetPetDashboardDetailAsync(id);
+            if (viewModel == null) return NotFound();
 
             return Ok(viewModel);
         }
@@ -98,8 +60,13 @@ namespace MyPetClinic.Controllers
 
             try
             {
-                var customerId = await _customerService.CreateCustomerWithPetsAsync(model);
+                var customerId = await _receptionistService.CreateCustomerWithPetsAsync(model);
                 return Ok(new { success = true, customerId = customerId, message = $"Đã tạo hồ sơ cho khách hàng {model.FullName} thành công!" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Lỗi nghiệp vụ: trùng email, SĐT, v.v.
+                return BadRequest(new { success = false, message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -121,7 +88,7 @@ namespace MyPetClinic.Controllers
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 var createdBy = userIdClaim != null ? Guid.Parse(userIdClaim.Value) : Guid.Empty;
 
-                var appointmentId = await _appointmentService.CreateAppointmentAsync(dto, createdBy);
+                var appointmentId = await _receptionistService.CreateAppointmentAsync(dto, createdBy);
 
                 return Ok(new { success = true, message = "Đã tạo phiếu tiếp nhận khám thành công!", id = appointmentId });
             }
@@ -134,52 +101,37 @@ namespace MyPetClinic.Controllers
         [HttpPost("customers/{customerId}/pets")]
         public async Task<IActionResult> AddPet(Guid customerId, [FromBody] Pet model)
         {
-            var customer = await _customerService.GetCustomerDetailAsync(customerId);
-            if (customer == null) return NotFound(new { message = "Không tìm thấy khách hàng" });
-
-            var newPet = new Pet
+            try
             {
-                OwnerId = customerId,
-                Name = model.Name?.Trim(),
-                Species = model.Species?.Trim(),
-                Breed = model.Breed?.Trim(),
-                Gender = model.Gender,
-                BirthDate = model.BirthDate,
-                Weight = model.Weight,
-                Color = model.Color?.Trim(),
-                AllergyNote = model.AllergyNote?.Trim(),
-                Sterilized = model.Sterilized,
-                MicrochipCode = model.MicrochipCode?.Trim(),
-                CreatedAt = DateTime.UtcNow
-            };
-
-            await _petRepository.CreatePetAsync(newPet);
-            await _petRepository.SaveChangesAsync();
-
-            return Ok(new { success = true, message = $"Đã thêm thú cưng '{newPet.Name}' thành công!", petId = newPet.Id });
+                var petId = await _receptionistService.AddPetAsync(customerId, model);
+                return Ok(new { success = true, message = $"Đã thêm thú cưng '{model.Name}' thành công!", petId = petId });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPut("pets/{id}")]
         public async Task<IActionResult> EditPet(long id, [FromBody] Pet model)
         {
-            var pet = await _petRepository.GetPetByIdAsync(id);
-            if (pet == null) return NotFound();
-
-            pet.Name = model.Name?.Trim();
-            pet.Species = model.Species?.Trim();
-            pet.Breed = model.Breed?.Trim();
-            pet.Gender = model.Gender;
-            pet.BirthDate = model.BirthDate;
-            pet.Weight = model.Weight;
-            pet.Color = model.Color?.Trim();
-            pet.AllergyNote = model.AllergyNote?.Trim();
-            pet.Sterilized = model.Sterilized;
-            pet.MicrochipCode = model.MicrochipCode?.Trim();
-
-            await _petRepository.UpdatePetAsync(pet);
-            await _petRepository.SaveChangesAsync();
-
-            return Ok(new { success = true, message = $"Đã cập nhật thông tin thú cưng '{pet.Name}' thành công!" });
+            try
+            {
+                await _receptionistService.UpdatePetAsync(id, model);
+                return Ok(new { success = true, message = $"Đã cập nhật thông tin thú cưng '{model.Name}' thành công!" });
+            }
+            catch (InvalidOperationException)
+            {
+                return NotFound();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpGet("quick-search")]
@@ -315,16 +267,5 @@ namespace MyPetClinic.Controllers
             }
             return BadRequest(new { success = false, message = "Không thể ghép nối hồ sơ. Ca khám có thể không tồn tại hoặc không phải ca cấp cứu ẩn danh." });
         }
-    }
-
-    public class UpdateQueueStatusRequest
-    {
-        public string Status { get; set; }
-    }
-
-    public class UpdateEmergencyCustomerRequest
-    {
-        public Guid CustomerId { get; set; }
-        public long PetId { get; set; }
     }
 }
