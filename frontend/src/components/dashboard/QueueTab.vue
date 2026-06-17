@@ -1,55 +1,190 @@
 <template>
   <div class="queue-tab container-fluid p-0">
-    <!-- Action Bar & Omni Search -->
+    <!-- Smart Intake Flow -->
     <div class="row mb-4">
       <div class="col-12">
-        <div class="card border-0 shadow-sm rounded-4 p-4 bg-gold-gradient position-relative overflow-hidden">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-gold-gradient position-relative overflow-visible">
+          <!-- Main Search Input -->
           <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 position-relative z-index-1">
-            <div class="flex-grow-1" style="min-width: 300px; max-width: 600px;">
-              <label class="form-label fw-bold text-dark mb-2"><i class="bi bi-search me-1 text-warning"></i>Tìm kiếm nhanh chủ nuôi, thú cưng hoặc mã số</label>
-              <div class="input-group">
+            <div class="flex-grow-1">
+              <label class="form-label fw-bold text-dark mb-2"><i class="bi bi-telephone-fill me-1 text-warning"></i>Tiếp Nhận Thông Minh (Smart Intake)</label>
+              <div class="input-group input-group-lg shadow-sm">
                 <span class="input-group-text bg-white border-end-0 rounded-start-pill"><i class="bi bi-search text-muted"></i></span>
                 <input 
                   type="text" 
-                  v-model="searchQuery" 
-                  @input="handleOmniSearch"
-                  class="form-control border-start-0 rounded-end-pill input-premium" 
-                  placeholder="Nhập tên khách hàng, SĐT, loài, tên thú cưng..." 
+                  v-model="intakePhone" 
+                  @input="handleIntakeSearch"
+                  class="form-control border-start-0 rounded-end-pill fs-5" 
+                  placeholder="Nhập số điện thoại khách hàng (10 số)..." 
+                  maxlength="15"
                 />
               </div>
-              <!-- Search Autocomplete Results -->
-              <div v-if="searchResult.length > 0" class="position-absolute bg-white shadow-lg border rounded-4 mt-2 p-2 w-100 search-dropdown" style="z-index: 1050; max-height: 300px; overflow-y: auto;">
-                <div 
-                  v-for="item in searchResult" 
-                  :key="item.id" 
-                  class="p-2 border-bottom hover-bg-light cursor-pointer rounded-3 d-flex justify-content-between align-items-center"
-                  @click="selectSearchResult(item)"
-                >
-                  <div>
-                    <span class="fw-bold text-dark">{{ item.fullName }}</span> 
-                    <span class="text-muted small ms-2">({{ item.phone }})</span>
-                    <div class="text-muted small" v-if="item.pets && item.pets.length > 0">
-                      Thú cưng: {{ item.pets.map((p: any) => p.name).join(', ') }}
-                    </div>
-                  </div>
-                  <button class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1">Chọn</button>
-                </div>
-              </div>
             </div>
-
-            <div class="d-flex flex-wrap gap-2">
+            <div class="d-flex flex-wrap gap-2 mt-4">
               <button class="btn btn-premium px-4 py-2 rounded-pill shadow-sm" @click="openQrScanModal">
                 <i class="bi bi-qr-code-scan"></i> Quét QR
               </button>
-              <button class="btn btn-danger px-4 py-2 rounded-pill shadow-sm fw-bold" @click="openEmergencyModal">
-                <i class="bi bi-exclamation-triangle-fill"></i> CẤP CỨU
-              </button>
-              <button class="btn btn-warning text-dark px-4 py-2 rounded-pill shadow-sm fw-bold" @click="openWalkInModal">
-                <i class="bi bi-person-walking"></i> Khách Vãng Lai
-              </button>
-              <router-link to="/tv-board" target="_blank" class="btn btn-outline-dark px-4 py-2 rounded-pill shadow-sm fw-bold" style="background: white; border: 1.5px solid #1e293b;">
-                <i class="bi bi-display-fill text-warning"></i> Mở TV Board 🖥️
-              </router-link>
+            </div>
+          </div>
+
+          <!-- Slide Down Panel: Searching -->
+          <div v-if="intakeState === 'searching'" class="mt-3 p-3 bg-white rounded-4 shadow-sm text-center">
+            <div class="spinner-border text-warning spinner-border-sm me-2" role="status"></div>
+            <span class="text-muted fw-bold">Đang tra cứu dữ liệu...</span>
+          </div>
+
+          <!-- Slide Down Panel: Found Customer -->
+          <div v-if="intakeState === 'found'" class="mt-4 p-4 bg-white rounded-4 shadow slide-down-animation border-top-premium">
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+              <h5 class="fw-bold text-dark mb-0"><i class="bi bi-person-check-fill text-success me-2"></i>Hồ sơ Khách Hàng Cũ</h5>
+              <button class="btn btn-sm btn-light rounded-pill" @click="resetIntake"><i class="bi bi-x-lg"></i> Đóng</button>
+            </div>
+            <div class="row g-4">
+              <!-- Cột 1: Thông tin khách -->
+              <div class="col-md-4 border-end">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="bg-light p-3 rounded-circle me-3">
+                    <i class="bi bi-person fs-3 text-warning"></i>
+                  </div>
+                  <div>
+                    <h6 class="fw-bold mb-1 fs-5">{{ intakeCustomer.fullName }}</h6>
+                    <span class="text-muted"><i class="bi bi-telephone me-1"></i>{{ intakeCustomer.phone }}</span>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <button class="btn btn-outline-warning btn-sm rounded-pill fw-bold w-100 mb-2" @click="intakeWantsNewPet = !intakeWantsNewPet">
+                    {{ intakeWantsNewPet ? 'Hủy thêm thú cưng' : '+ Thêm thú cưng mới' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Cột 2: Chọn thú cưng & Triệu chứng -->
+              <div class="col-md-8">
+                <!-- List existing pets -->
+                <div v-if="!intakeWantsNewPet" class="mb-3">
+                  <label class="form-label text-muted small fw-bold d-block">Chọn thú cưng cần khám *</label>
+                  <div class="d-flex flex-wrap gap-2">
+                    <button 
+                      v-for="pet in intakePets" :key="pet.id"
+                      class="btn rounded-pill px-4 py-2 fw-bold"
+                      :class="intakeForm.petId === pet.id ? 'btn-warning text-dark shadow-sm' : 'btn-outline-secondary'"
+                      @click="intakeForm.petId = pet.id"
+                    >
+                      {{ getAnimalEmoji(pet.species) }} {{ pet.name }}
+                    </button>
+                  </div>
+                  <div v-if="!intakeForm.petId" class="text-danger small mt-2"><i class="bi bi-exclamation-circle"></i> Vui lòng chọn một thú cưng.</div>
+                </div>
+
+                <!-- Add new pet form -->
+                <div v-if="intakeWantsNewPet" class="mb-3 p-3 bg-light rounded-4 border border-warning">
+                  <h6 class="fw-bold text-warning mb-2">Đăng ký Thú cưng mới</h6>
+                  <div class="row g-2">
+                    <div class="col-md-6">
+                      <input type="text" v-model="intakeForm.petName" class="form-control" placeholder="Tên bé..." />
+                    </div>
+                    <div class="col-md-3">
+                      <select v-model="intakeForm.species" class="form-select">
+                        <option value="Chó">Chó</option>
+                        <option value="Mèo">Mèo</option>
+                        <option value="Khác">Khác</option>
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <select v-model="intakeForm.gender" class="form-select">
+                        <option :value="1">Đực</option>
+                        <option :value="2">Cái</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Info for appointment -->
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label text-muted small fw-bold">Bác sĩ chỉ định (Tùy chọn)</label>
+                    <select v-model="intakeForm.doctorId" class="form-select">
+                      <option value="">-- Tự động phân bổ --</option>
+                      <option v-for="doc in doctorList" :key="doc.id" :value="doc.id">Bs. {{ doc.fullName }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label text-muted small fw-bold">Triệu chứng (Ghi chú)</label>
+                    <input type="text" v-model="intakeForm.symptom" class="form-control" placeholder="Sốt, bỏ ăn..." @keyup.enter="submitIntake" />
+                  </div>
+                </div>
+                
+                <div class="mt-4 text-end border-top pt-3">
+                  <button class="btn btn-premium rounded-pill px-5 py-2 fw-bold fs-6" :disabled="!intakeWantsNewPet && !intakeForm.petId" @click="submitIntake">
+                    <i class="bi bi-calendar-check me-2"></i>Tạo Ca Khám
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide Down Panel: Not Found (New Customer) -->
+          <div v-if="intakeState === 'not_found'" class="mt-4 p-4 bg-white rounded-4 shadow slide-down-animation border-top-warning">
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+              <h5 class="fw-bold text-dark mb-0"><i class="bi bi-person-plus-fill text-warning me-2"></i>Đăng ký Khách Hàng Mới</h5>
+              <button class="btn btn-sm btn-light rounded-pill" @click="resetIntake"><i class="bi bi-x-lg"></i> Đóng</button>
+            </div>
+            
+            <div class="row g-4">
+              <!-- Cột 1: Thông tin chủ -->
+              <div class="col-md-5 border-end">
+                <div class="mb-3">
+                  <label class="form-label text-muted small fw-bold">Số điện thoại *</label>
+                  <input type="text" :value="intakePhone" class="form-control bg-light" readonly />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label text-muted small fw-bold">Họ và tên Chủ Nuôi *</label>
+                  <input type="text" v-model="intakeForm.fullName" class="form-control border-warning" placeholder="Nhập họ tên..." autofocus />
+                </div>
+              </div>
+
+              <!-- Cột 2: Thông tin thú cưng & Khám -->
+              <div class="col-md-7">
+                <h6 class="fw-bold text-dark mb-3">Thông tin Bệnh nhi</h6>
+                <div class="row g-2 mb-3">
+                  <div class="col-md-6">
+                    <input type="text" v-model="intakeForm.petName" class="form-control" placeholder="Tên bé..." />
+                  </div>
+                  <div class="col-md-3">
+                    <select v-model="intakeForm.species" class="form-select">
+                      <option value="Chó">Chó</option>
+                      <option value="Mèo">Mèo</option>
+                      <option value="Khác">Khác</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <select v-model="intakeForm.gender" class="form-select">
+                      <option :value="1">Đực</option>
+                      <option :value="2">Cái</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label text-muted small fw-bold">Bác sĩ</label>
+                    <select v-model="intakeForm.doctorId" class="form-select">
+                      <option value="">-- Tự động --</option>
+                      <option v-for="doc in doctorList" :key="doc.id" :value="doc.id">Bs. {{ doc.fullName }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label text-muted small fw-bold">Triệu chứng</label>
+                    <input type="text" v-model="intakeForm.symptom" class="form-control" placeholder="Sốt, bỏ ăn..." @keyup.enter="submitIntake" />
+                  </div>
+                </div>
+
+                <div class="mt-4 text-end border-top pt-3">
+                  <button class="btn btn-warning rounded-pill px-5 py-2 fw-bold text-dark fs-6 shadow-sm" :disabled="!intakeForm.fullName || !intakeForm.petName" @click="submitIntake">
+                    <i class="bi bi-calendar-check me-2"></i>Lưu & Tiếp Nhận
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -254,102 +389,6 @@
       </div>
     </div>
 
-    <!-- 1. Walk-in Modal -->
-    <div v-if="showWalkInModal" class="zalo-modal-overlay" @click.self="showWalkInModal = false">
-      <div class="zalo-modal-card modal-lg max-w-700">
-        <div class="zalo-modal-header bg-warning text-dark">
-          <h5 class="modal-title fw-bold"><i class="bi bi-person-walking me-2"></i> Tạo Ca Khách Vãng Lai</h5>
-          <button class="modal-close text-dark border-0 bg-transparent" @click="showWalkInModal = false"><i class="bi bi-x-lg fs-5"></i></button>
-        </div>
-        <div class="zalo-modal-body text-start">
-          <form @submit.prevent="submitWalkIn">
-            <div class="row g-3">
-              <!-- Owner Info -->
-              <div class="col-md-6 border-end pe-md-4">
-                <h6 class="text-warning fw-bold mb-3 border-bottom pb-2">1. Thông tin Chủ nuôi</h6>
-                <div class="mb-3">
-                  <label class="form-label text-muted small fw-bold">Số điện thoại *</label>
-                  <div class="input-group">
-                    <span class="input-group-text bg-light"><i class="bi bi-telephone"></i></span>
-                    <input 
-                      type="text" 
-                      v-model="walkInForm.phone" 
-                      @input="searchWalkInCustomer"
-                      class="form-control" 
-                      required 
-                      placeholder="Nhập SĐT khách hàng..."
-                    />
-                  </div>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label text-muted small fw-bold">Họ và tên *</label>
-                  <input type="text" v-model="walkInForm.fullName" class="form-control" required :disabled="isOldCustomerFound" />
-                  <div v-if="isOldCustomerFound" class="form-text text-success"><i class="bi bi-check-circle-fill"></i> Nhận dạng khách hàng đã có trong hệ thống</div>
-                </div>
-              </div>
-
-              <!-- Pet & Doctor info -->
-              <div class="col-md-6 ps-md-4">
-                <h6 class="text-warning fw-bold mb-3 border-bottom pb-2">2. Bệnh nhi & Dịch vụ</h6>
-                
-                <div class="mb-3">
-                  <label class="form-label text-muted small fw-bold">Chọn thú cưng *</label>
-                  <select v-if="isOldCustomerFound && existingPets.length > 0 && !wantsNewPet" v-model="walkInForm.petId" class="form-select border-warning" required>
-                    <option value="">-- Chọn thú cưng --</option>
-                    <option v-for="pet in existingPets" :key="pet.id" :value="pet.id">{{ pet.name }} ({{ pet.species }})</option>
-                  </select>
-                  
-                  <input v-else type="text" v-model="walkInForm.petName" class="form-control" required placeholder="Nhập tên bé..." />
-                  
-                  <div v-if="isOldCustomerFound && existingPets.length > 0" class="mt-2">
-                    <a href="#" class="small text-warning text-decoration-none fw-bold" @click.prevent="wantsNewPet = !wantsNewPet">
-                      {{ wantsNewPet ? '← Chọn thú cưng cũ' : '+ Đăng ký thú cưng mới cho khách này' }}
-                    </a>
-                  </div>
-                </div>
-
-                <div class="row g-2 mb-3" v-if="!isOldCustomerFound || wantsNewPet">
-                  <div class="col-6">
-                    <label class="form-label text-muted small fw-bold">Giống loài</label>
-                    <select v-model="walkInForm.species" class="form-select">
-                      <option value="Chó">Chó</option>
-                      <option value="Mèo">Mèo</option>
-                      <option value="Khác">Khác</option>
-                    </select>
-                  </div>
-                  <div class="col-6">
-                    <label class="form-label text-muted small fw-bold">Giới tính</label>
-                    <select v-model="walkInForm.gender" class="form-select">
-                      <option :value="1">Đực</option>
-                      <option :value="2">Cái</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label text-muted small fw-bold">Bác sĩ chỉ định *</label>
-                  <select v-model="walkInForm.doctorId" class="form-select" required>
-                    <option value="">-- Tự động / Chọn bác sĩ --</option>
-                    <option v-for="doc in doctorList" :key="doc.id" :value="doc.id">Bs. {{ doc.fullName }}</option>
-                  </select>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label text-muted small fw-bold">Triệu chứng ban đầu</label>
-                  <textarea v-model="walkInForm.symptom" class="form-control" rows="2" placeholder="VD: Sốt nhẹ, bỏ ăn..."></textarea>
-                </div>
-              </div>
-            </div>
-
-            <div class="mt-4 pt-3 border-top text-end">
-              <button type="button" class="btn btn-outline-secondary rounded-pill px-4 me-2" @click="showWalkInModal = false">Hủy</button>
-              <button type="submit" class="btn btn-premium rounded-pill px-5">Tạo ca khám</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
     <!-- 2. Triage Emergency Modal -->
     <div v-if="showEmergencyModal" class="zalo-modal-overlay" @click.self="showEmergencyModal = false">
       <div class="zalo-modal-card modal-lg max-w-650">
@@ -476,28 +515,85 @@
     </div>
 
     <!-- 4. QR Checkin Dialog -->
-    <div v-if="showQrModal" class="zalo-modal-overlay" @click.self="showQrModal = false">
-      <div class="zalo-modal-card max-w-400">
-        <div class="zalo-modal-header bg-success text-white">
-          <h5 class="modal-title fw-bold"><i class="bi bi-qr-code-scan me-2"></i> Quét Mã Check-in</h5>
-          <button class="modal-close text-white border-0 bg-transparent" @click="showQrModal = false"><i class="bi bi-x-lg fs-5"></i></button>
+    <div v-if="showQrModal" class="zalo-modal-overlay d-flex align-items-center justify-content-center" @click.self="closeQrModal">
+      <div class="zalo-modal-card border-0 shadow-lg" style="max-width: 420px; width: 100%; margin: 0 auto; border-radius: 16px; overflow: hidden;">
+        <div class="zalo-modal-header bg-success bg-gradient text-white p-3 border-0 d-flex justify-content-between align-items-center">
+          <h5 class="modal-title fw-bold mb-0"><i class="bi bi-qr-code-scan me-2"></i> Quét Mã Check-in</h5>
+          <button class="modal-close text-white border-0 bg-transparent ms-auto" @click="closeQrModal"><i class="bi bi-x-lg fs-5"></i></button>
         </div>
-        <div class="zalo-modal-body text-center">
-          <p class="text-muted small mb-3">Nhập mã check-in / UserId của khách hàng hoặc đưa mã QR của khách vào trước camera để quét tự động.</p>
+        <div class="zalo-modal-body p-4 bg-white">
           
-          <div class="mb-3">
-            <input 
-              type="text" 
-              v-model="qrManualCode" 
-              class="form-control text-center fw-bold fs-5 border-success rounded-pill" 
-              placeholder="Nhập mã check-in..."
-              @keyup.enter="submitCheckInByCode"
-            />
+          <div v-if="previewAppointment">
+            <!-- Preview Card -->
+            <div class="text-center mb-4">
+              <div :class="['rounded-circle d-inline-flex align-items-center justify-content-center mb-3', previewAppointment.hasError ? 'bg-danger bg-opacity-10' : 'bg-success bg-opacity-10']" style="width: 70px; height: 70px;">
+                <i :class="['bi fs-1', previewAppointment.hasError ? 'bi-exclamation-triangle-fill text-danger' : 'bi-check-circle-fill text-success']"></i>
+              </div>
+              <h5 :class="['fw-bold mb-1', previewAppointment.hasError ? 'text-danger' : 'text-success']">
+                {{ previewAppointment.hasError ? 'Mã Không Hợp Lệ!' : 'Mã Hợp Lệ!' }}
+              </h5>
+              <p class="text-muted small">
+                {{ previewAppointment.hasError ? 'Không thể check-in lúc này.' : 'Vui lòng xác nhận thông tin trước khi đưa vào hàng đợi' }}
+              </p>
+            </div>
+
+            <div v-if="previewAppointment.hasError" class="alert alert-danger border-danger border-opacity-25 rounded-3 mb-4 text-start">
+              <i class="bi bi-info-circle-fill me-2"></i> <strong>Lưu ý:</strong> {{ previewAppointment.errorMessage }}
+            </div>
+
+            <div v-if="previewAppointment.appointmentId !== 0" class="card border-0 bg-light rounded-4 mb-4">
+              <div class="card-body p-3">
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Thời gian hẹn:</span>
+                  <span class="fw-bold text-dark">{{ formatTimeOnly(previewAppointment.appointmentDate) }} - {{ formatDate(previewAppointment.appointmentDate) }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Khách hàng:</span>
+                  <span class="fw-bold text-dark">{{ previewAppointment.customerName }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Thú cưng:</span>
+                  <span class="fw-bold text-dark">{{ previewAppointment.petName }} <span v-if="previewAppointment.petSpecies">({{ previewAppointment.petSpecies }})</span></span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Bác sĩ:</span>
+                  <span class="fw-bold text-dark">{{ previewAppointment.doctorName || 'Tự động xếp' }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span class="text-muted small">Dịch vụ:</span>
+                  <span class="fw-bold text-dark">{{ previewAppointment.serviceName || 'Khám bệnh' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button class="btn btn-light w-50 rounded-pill py-2.5 fw-bold" @click="cancelPreview">Hủy quét</button>
+              <button v-if="!previewAppointment.hasError" class="btn btn-success w-50 rounded-pill py-2.5 fw-bold shadow-sm" @click="confirmCheckIn">Vào Hàng Đợi <i class="bi bi-arrow-right ms-1"></i></button>
+              <button v-else class="btn btn-danger w-50 rounded-pill py-2.5 fw-bold shadow-sm" @click="closeQrModal">Đóng</button>
+            </div>
           </div>
 
-          <button class="btn btn-success w-100 rounded-pill py-2.5 fw-bold shadow-sm" @click="submitCheckInByCode">
-            Xác Nhận Check-in
-          </button>
+          <div v-else class="text-center">
+            <!-- Camera Scanner Area -->
+            <div id="qr-reader" class="mb-3 rounded-4 overflow-hidden border border-success border-opacity-25" style="width: 100%; min-height: 250px; background: #f8f9fa;"></div>
+            
+            <p class="text-muted small mb-3">Đưa mã QR của khách vào khung hình để quét tự động, hoặc nhập tay mã check-in bên dưới.</p>
+            
+            <div class="mb-4">
+              <input 
+                type="text" 
+                v-model="qrManualCode" 
+                class="form-control text-center fw-bold fs-4 border-success border-2 rounded-3 py-2" 
+                style="letter-spacing: 2px;"
+                placeholder="Nhập mã..."
+                @keyup.enter="previewCheckIn"
+              />
+            </div>
+
+            <button class="btn btn-success w-100 rounded-pill py-2.5 fw-bold shadow-sm" @click="previewCheckIn">
+              Kiểm Tra Mã
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -505,39 +601,40 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import api from '../../services/api';
+import { Html5Qrcode } from 'html5-qrcode';
 
 const emit = defineEmits(['switch-tab', 'select-invoice']);
 
 // State
-const searchQuery = ref('');
-const searchResult = ref<any[]>([]);
+const intakePhone = ref('');
+const intakeState = ref<'idle'|'searching'|'found'|'not_found'>('idle');
+const intakeCustomer = ref<any>(null);
+const intakePets = ref<any[]>([]);
+const intakeWantsNewPet = ref(false);
+const intakeForm = ref({
+  fullName: '',
+  petId: '',
+  petName: '',
+  species: 'Chó',
+  gender: 1,
+  doctorId: '',
+  symptom: ''
+});
+
 const selectedDoctor = ref('ALL');
 const doctorList = ref<any[]>([]);
 const queueList = ref<any[]>([]);
 const intervals = ref<any[]>([]);
 
 // Modals state
-const showWalkInModal = ref(false);
 const showEmergencyModal = ref(false);
 const showLinkCustomerModal = ref(false);
 const showQrModal = ref(false);
+const previewAppointment = ref<any>(null);
 
-// Forms
-const walkInForm = ref({
-  phone: '',
-  fullName: '',
-  petName: '',
-  petId: '',
-  species: 'Chó',
-  gender: 1,
-  doctorId: '',
-  symptom: '',
-});
-const isOldCustomerFound = ref(false);
-const wantsNewPet = ref(false);
-const existingPets = ref<any[]>([]);
+let html5QrCode: Html5Qrcode | null = null;
 
 const level1Symptoms = ['Khó thở / Tím tái', 'Co giật liên tục', 'Mất máu ồ ạt', 'Sốc / Bất tỉnh'];
 const level2Symptoms = ['Gãy xương / Đa chấn thương', 'Nôn mửa / Tiêu chảy cấp', 'Nuốt dị vật', 'Ngộ độc'];
@@ -625,6 +722,18 @@ const formatQueueNumber = (num: number | string) => {
   return `Q-${String(n).padStart(3, '0')}`;
 };
 
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const formatTimeOnly = (dateStr: string) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+};
+
 const getLastWord = (name: string) => {
   if (!name) return '—';
   const parts = name.trim().split(/\s+/);
@@ -666,104 +775,84 @@ const updateStatus = async (appointmentId: number, status: string) => {
   }
 };
 
-// Search actions
-const handleOmniSearch = async () => {
-  const q = searchQuery.value.trim();
-  if (q.length < 2) {
-    searchResult.value = [];
+// Smart Intake logic
+let intakeDebounce: any = null;
+const handleIntakeSearch = () => {
+  const phone = intakePhone.value.trim();
+  if (phone.length < 10) {
+    intakeState.value = 'idle';
     return;
   }
-  try {
-    const res = await api.get(`/receptionist/omni-search?q=${encodeURIComponent(q)}`);
-    searchResult.value = res.data || [];
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-const selectSearchResult = (item: any) => {
-  searchQuery.value = '';
-  searchResult.value = [];
   
-  // Prefill check-in or quick actions
-  if (item.customerId) {
-    openWalkInModal();
-    walkInForm.value.phone = item.phone || '';
-    searchWalkInCustomer();
-  }
-};
-
-// Customer phone search in Walk-in
-let debounceTimer: any = null;
-const searchWalkInCustomer = () => {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(async () => {
-    const phone = walkInForm.value.phone.trim();
-    if (!phone) return;
+  intakeState.value = 'searching';
+  clearTimeout(intakeDebounce);
+  intakeDebounce = setTimeout(async () => {
     try {
       const res = await api.get(`/receptionist/customer-by-phone?phone=${encodeURIComponent(phone)}`);
       if (res.data.success) {
-        isOldCustomerFound.value = true;
-        walkInForm.value.fullName = res.data.customer.fullName;
-        existingPets.value = res.data.pets || [];
-        wantsNewPet.value = false;
+        intakeState.value = 'found';
+        intakeCustomer.value = res.data.customer;
+        intakePets.value = res.data.pets || [];
+        intakeWantsNewPet.value = false;
+        
+        // Reset form
+        intakeForm.value.fullName = res.data.customer.fullName;
+        intakeForm.value.petId = '';
+        intakeForm.value.petName = '';
+        intakeForm.value.symptom = '';
+        intakeForm.value.doctorId = '';
       } else {
-        isOldCustomerFound.value = false;
-        existingPets.value = [];
+        intakeState.value = 'not_found';
+        // Reset form
+        intakeForm.value.fullName = '';
+        intakeForm.value.petId = '';
+        intakeForm.value.petName = '';
+        intakeForm.value.symptom = '';
+        intakeForm.value.doctorId = '';
       }
     } catch (err) {
       console.error(err);
+      intakeState.value = 'idle';
     }
-  }, 400);
+  }, 500);
 };
 
-// Link customer to anonymous emergency case
-let linkDebounce: any = null;
-const searchLinkCustomer = () => {
-  clearTimeout(linkDebounce);
-  linkDebounce = setTimeout(async () => {
-    const phone = linkForm.value.phone.trim();
-    if (!phone) return;
-    try {
-      const res = await api.get(`/receptionist/customer-by-phone?phone=${encodeURIComponent(phone)}`);
-      if (res.data.success) {
-        linkCustomerFound.value = true;
-        linkCustomerData.value = res.data.customer;
-        linkCustomerPets.value = res.data.pets || [];
-      } else {
-        linkCustomerFound.value = false;
-        linkCustomerPets.value = [];
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }, 400);
+const resetIntake = () => {
+  intakePhone.value = '';
+  intakeState.value = 'idle';
 };
 
-// Submit Walk-in
-const submitWalkIn = async () => {
+const submitIntake = async () => {
   try {
     const reqBody: any = {
-      phone: walkInForm.value.phone,
-      fullName: walkInForm.value.fullName,
-      symptom: walkInForm.value.symptom,
-      doctorId: walkInForm.value.doctorId || null,
+      phone: intakePhone.value,
+      fullName: intakeForm.value.fullName,
+      symptom: intakeForm.value.symptom,
+      doctorId: intakeForm.value.doctorId || null,
       isEmergency: false,
-      serviceId: 1 // default service
+      serviceId: 1
     };
 
-    if (isOldCustomerFound.value && !wantsNewPet.value) {
-      reqBody.petName = existingPets.value.find(p => p.id === walkInForm.value.petId)?.name || 'Chưa chọn';
+    if (intakeState.value === 'found' && !intakeWantsNewPet.value) {
+      if (!intakeForm.value.petId) {
+        alert("Vui lòng chọn thú cưng!");
+        return;
+      }
+      reqBody.petName = intakePets.value.find(p => p.id === intakeForm.value.petId)?.name || 'Chưa chọn';
     } else {
-      reqBody.petName = walkInForm.value.petName;
-      reqBody.species = walkInForm.value.species;
-      reqBody.gender = walkInForm.value.gender;
+      if (!intakeForm.value.petName) {
+        alert("Vui lòng nhập tên thú cưng!");
+        return;
+      }
+      reqBody.petName = intakeForm.value.petName;
+      reqBody.species = intakeForm.value.species;
+      reqBody.gender = intakeForm.value.gender;
     }
 
     const res = await api.post('/receptionist/walk-in', reqBody);
     if (res.data.success) {
-      alert('Đã tạo ca tiếp nhận vãng lai thành công!');
-      showWalkInModal.value = false;
+      // alert('Tiếp nhận ca khám thành công!');
+      resetIntake();
       await loadQueue();
     }
   } catch (err: any) {
@@ -830,18 +919,105 @@ const submitLinkCustomer = async () => {
   }
 };
 
+let linkDebounce: any = null;
+const searchLinkCustomer = () => {
+  clearTimeout(linkDebounce);
+  linkDebounce = setTimeout(async () => {
+    const phone = linkForm.value.phone.trim();
+    if (!phone) return;
+    try {
+      const res = await api.get(`/receptionist/customer-by-phone?phone=${encodeURIComponent(phone)}`);
+      if (res.data.success) {
+        linkCustomerFound.value = true;
+        linkCustomerData.value = res.data.customer;
+        linkCustomerPets.value = res.data.pets || [];
+      } else {
+        linkCustomerFound.value = false;
+        linkCustomerPets.value = [];
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, 400);
+};
+
 // QR actions
-const submitCheckInByCode = async () => {
+
+const startScanner = async () => {
+  try {
+    await nextTick();
+    html5QrCode = new Html5Qrcode("qr-reader");
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 30, qrbox: { width: 300, height: 300 } },
+      (decodedText) => {
+        qrManualCode.value = decodedText;
+        previewCheckIn();
+      },
+      (errorMessage) => {
+        // parse error, ignore
+      }
+    );
+  } catch (err) {
+    console.error("Lỗi khởi động camera:", err);
+  }
+};
+
+const stopScanner = async () => {
+  if (html5QrCode) {
+    try {
+      if (html5QrCode.isScanning) {
+        await html5QrCode.stop();
+      }
+      html5QrCode.clear();
+      html5QrCode = null;
+    } catch (e) {
+      console.error("Lỗi dừng camera:", e);
+    }
+  }
+};
+
+const closeQrModal = () => {
+  showQrModal.value = false;
+  previewAppointment.value = null;
+  stopScanner();
+};
+
+const previewCheckIn = async () => {
   const token = qrManualCode.value.trim();
   if (!token) return;
   try {
+    await stopScanner();
+    const res = await api.get(`/receptionist/appointment-preview?qrToken=${token}`);
+    if (res.data.success) {
+      previewAppointment.value = res.data.data;
+    } else {
+      alert(res.data.message);
+      startScanner();
+    }
+  } catch (err: any) {
+    alert(err.response?.data?.message || 'Không thể kiểm tra mã. Vui lòng thử lại.');
+    startScanner();
+  }
+};
+
+const cancelPreview = () => {
+  previewAppointment.value = null;
+  qrManualCode.value = '';
+  startScanner();
+};
+
+const confirmCheckIn = async () => {
+  if (!previewAppointment.value) return;
+  try {
     const res = await api.post('/receptionist/check-in', {
-      qrToken: token,
+      qrToken: previewAppointment.value.qrToken,
       isEmergency: false
     });
     if (res.data.success) {
       alert(res.data.message);
       showQrModal.value = false;
+      previewAppointment.value = null;
       qrManualCode.value = '';
       await loadQueue();
     } else {
@@ -860,7 +1036,9 @@ const goToInvoiceTab = (appointmentId: number) => {
 
 const openQrScanModal = () => {
   qrManualCode.value = '';
+  previewAppointment.value = null;
   showQrModal.value = true;
+  startScanner();
 };
 
 const openEmergencyModal = () => {
@@ -869,23 +1047,6 @@ const openEmergencyModal = () => {
   emergencyForm.value.phone = '';
   emergencyForm.value.doctorId = '';
   showEmergencyModal.value = true;
-};
-
-const openWalkInModal = () => {
-  walkInForm.value = {
-    phone: '',
-    fullName: '',
-    petName: '',
-    petId: '',
-    species: 'Chó',
-    gender: 1,
-    doctorId: '',
-    symptom: '',
-  };
-  isOldCustomerFound.value = false;
-  wantsNewPet.value = false;
-  existingPets.value = [];
-  showWalkInModal.value = true;
 };
 
 // Mount/Unmount hooks
@@ -1019,4 +1180,16 @@ onUnmounted(() => {
 .tracking-wider {
   letter-spacing: 0.05em;
 }
+
+.slide-down-animation {
+  animation: slideDown 0.3s ease-out forwards;
+  transform-origin: top;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.border-top-premium { border-top: 4px solid var(--primary-color) !important; }
+.border-top-warning { border-top: 4px solid #f59e0b !important; }
+
 </style>

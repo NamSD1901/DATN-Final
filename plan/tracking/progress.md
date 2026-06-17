@@ -118,17 +118,16 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 
 ---
 
-### 🎯 Sprint 10: Điều Phối Hàng Đợi & TV Board
-*   **Mục tiêu:** Cấp số thứ tự tự động (định dạng `Q-XXX`) và màn hình trình chiếu TV Board sảnh chờ công cộng.
+### 🎯 Sprint 10: Điều Phối Hàng Đợi
+*   **Mục tiêu:** Cấp số thứ tự tự động (định dạng `Q-XXX`) cho hàng khám.
 *   **Trạng thái chung:** `✅ CODE DONE`
 *   **Chi tiết:** 
     *   Tự động cấp số thứ tự khám (T29).
-    *   Thiết kế giao diện TV Board và Bảng điều khiển Lễ tân (T30).
+    *   Thiết kế Bảng điều khiển Lễ tân (T30).
     *   **Cải tiến triển khai:**
-        *   Tạo API công khai không cần đăng nhập `GET /api/queue/lobby-board` để các thiết bị Smart TV trình chiếu dễ dàng.
-        *   Dựng view công khai `/tv-board` bằng kính mờ (Glassmorphism) cực kỳ sang trọng, cập nhật trạng thái tự động mỗi 4 giây.
+        *   Cải tiến API lấy hàng đợi thời gian thực.
         *   Tích hợp bộ máy phát âm thanh giọng nói tiếng Việt (Web Speech API) tự động đọc số thứ tự khi bác sĩ kích hoạt khám ca mới.
-        *   Đồng bộ định dạng số thứ tự `Q-XXX` (ví dụ `Q-001`) xuyên suốt từ Lễ tân cho đến màn hình sảnh chờ, đi kèm nút mở nhanh TV Board ngay trên thanh công cụ Hàng khám.
+        *   Đồng bộ định dạng số thứ tự `Q-XXX` (ví dụ `Q-001`) xuyên suốt các giao diện quản lý.
 
 
 ---

@@ -10,8 +10,9 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<long> CreateAppointmentAsync(AppointmentCreateDto dto, Guid createdBy);
         Task<long> CreateAppointmentWithNewCustomerAsync(AppointmentWithNewCustomerDto dto, Guid createdBy);
         Task<IEnumerable<CalendarEventDto>> GetCalendarEventsAsync(DateTime start, DateTime end, Guid? doctorId);
-        Task<bool> UpdateAppointmentStatusAsync(long id, string status);
-        Task<bool> RescheduleAppointmentAsync(long id, DateTime newStart);
+        Task<bool> UpdateAppointmentStatusAsync(long id, string status, string? reason = null);
+        Task<bool> RescheduleAppointmentAsync(long id, DateTime newStart, bool force = false);
+        Task<bool> UpdateAppointmentDoctorAsync(long id, Guid newDoctorId, bool force = false);
         Task<IEnumerable<ServiceDto>> GetServicesAsync();
         Task<AppointmentStatsDto> GetAppointmentStatsAsync();
         Task<IEnumerable<AppointmentDetailDto>> GetPendingAppointmentsAsync();

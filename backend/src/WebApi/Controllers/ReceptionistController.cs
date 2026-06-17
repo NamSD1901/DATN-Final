@@ -210,6 +210,23 @@ namespace MyPetClinic.Controllers
             var results = await _receptionistService.OmniSearchAsync(q);
             return Ok(results);
         }
+        [HttpGet("appointment-preview")]
+        public async Task<IActionResult> GetAppointmentPreview([FromQuery] string qrToken)
+        {
+            try
+            {
+                var preview = await _receptionistService.GetAppointmentPreviewByQrAsync(qrToken);
+                return Ok(new { success = true, data = preview });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return BadRequest(new { success = false, message = "Lỗi hệ thống. Vui lòng thử lại sau." });
+            }
+        }
 
         [HttpPost("check-in")]
         public async Task<IActionResult> CheckIn([FromBody] CheckInRequestDto request)

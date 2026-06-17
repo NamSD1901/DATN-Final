@@ -108,3 +108,25 @@ Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving 
 - Việc đổi sang so sánh loại trừ khớp hoàn toàn với logic tính toán slot trống trong [SlotCalculationHelper.cs](file:///e:/DATN/MyPetClinic/backend/src/MyPetClinic.Application/Helpers/SlotCalculationHelper.cs), cho phép đặt các ca liền kề nhau hoàn hảo (back-to-back) mà vẫn chặn đứng 100% các ca thực sự bị chồng chéo thời gian.
 - Chạy lại toàn bộ bộ kiểm thử tự động, 28/28 tests passed thành công.
 
+---
+
+## 📅 Lỗi 6: Tất cả lịch hẹn hiển thị 00:00 và lỗi "không trùng lịch mà đã đặt" (Double-Booking Bypass)
+
+- **Trạng thái:** `✅ FIXED`
+- **Thời gian phát hiện:** 16-06-2026
+
+### 1. Mô tả lỗi (Symptom)
+- Ở giao diện Dashboard khách hàng (MyAppointmentsTab) và Lễ tân, thời gian đặt lịch của tất cả các lịch hẹn luôn hiển thị là `00:00` thay vì giờ thực tế.
+- Khách hàng than phiền "không trùng lịch mà đã đặt", nghĩa là chức năng chống đặt trùng (Double-Booking Check) trên UI không hoạt động. Các slot đã được đặt bởi người khác vẫn hiển thị là "Trống" (Available) cho người tiếp theo, dẫn đến tình trạng hai người cùng đặt thành công vào một slot giờ.
+
+### 2. Nguyên nhân (Root Cause)
+- **Kiến trúc DB:** Entity `Appointment` tách biệt phần thời gian ra thành 2 thuộc tính: `AppointmentDate` (chỉ lưu phần ngày) và `StartTime` (lưu phần giờ). 
+- **Lỗi logic khi Tạo Lịch:** Trong hàm `CreateAppointmentAsync` ở `AppointmentService.cs`, code cũ chỉ gán `AppointmentDate = appointmentDate`, nhưng **quên gán** thuộc tính `StartTime`. Kết quả là `StartTime` nhận giá trị mặc định `TimeSpan.Zero` (tức `00:00:00`). Do backend đang bật `EnableLegacyTimestampBehavior`, EF Core Npgsql cắt bỏ múi giờ nhưng PostgreSQL vẫn chỉ lưu phần thời gian là 00:00:00 nếu ta chỉ ánh xạ `DateTime` sang dạng Date thuần.
+- **Lỗi mapping DTO:** Khi lấy dữ liệu lịch hẹn (`GetCustomerAppointmentsPaginatedAsync`), logic `.ToString("yyyy-MM-ddTHH:mm:ss")` được gọi thẳng trên `AppointmentDate` thay vì cộng gộp với `StartTime`. Kết quả là frontend luôn nhận chuỗi thời gian kết thúc bằng `T00:00:00`.
+- **Hệ lụy Double-Booking:** Hàm sinh slot trống `SlotCalculationHelper.GetAvailableSlots` so sánh `slot` (chứa giờ cụ thể, ví dụ 14:30) với `appt.AppointmentDate` (bị reset về 00:00:00). Kết quả so sánh khoảng cách lệch nhau vài trăm phút, do đó logic luôn coi là "không trùng lặp", hiển thị slot đó thành `Trống`.
+
+### 3. Giải pháp khắc phục (Fix)
+- Cập nhật logic lưu lịch hẹn ở [AppointmentService.cs](file:///e:/DATN/MyPetClinic/backend/src/MyPetClinic.Application/Services/AppointmentService.cs): Phân rã thành `AppointmentDate = appointmentDate.Date` và ép gán `StartTime = appointmentDate.TimeOfDay`.
+- Cập nhật toàn bộ các bộ ánh xạ DTO trong Service: Sử dụng biểu thức `a.AppointmentDate.Date.Add(a.StartTime).ToString(...)` để tái tạo lại cấu trúc Datetime chuẩn gửi cho Client.
+- Chỉnh sửa [SlotCalculationHelper.cs](file:///e:/DATN/MyPetClinic/backend/src/MyPetClinic.Application/Helpers/SlotCalculationHelper.cs) để tính toán chuẩn xác biến `apptTime` bằng cách cộng gộp `AppointmentDate` và `StartTime`, từ đó khắc phục triệt để khả năng bypass cơ chế kiểm tra chống đặt lịch trùng.
+

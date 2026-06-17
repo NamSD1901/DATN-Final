@@ -1,8 +1,25 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyPetClinic.Domain.Entities;
 
 namespace MyPetClinic.Infrastructure.Persistence
 {
+    public class DateTimeUtcConverter : ValueConverter<DateTime, DateTime>
+    {
+        public DateTimeUtcConverter() : base(
+            v => v.ToUniversalTime(),
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc))
+        { }
+    }
+
+    public class NullableDateTimeUtcConverter : ValueConverter<DateTime?, DateTime?>
+    {
+        public NullableDateTimeUtcConverter() : base(
+            v => v.HasValue ? v.Value.ToUniversalTime() : v,
+            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v)
+        { }
+    }
+
     public class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -27,6 +44,12 @@ namespace MyPetClinic.Infrastructure.Persistence
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Post> Posts { get; set; }
+
+        protected override void ConfigureConventions(ModelConfigurationBuilder builder)
+        {
+            builder.Properties<DateTime>().HaveConversion<DateTimeUtcConverter>();
+            builder.Properties<DateTime?>().HaveConversion<NullableDateTimeUtcConverter>();
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -59,6 +82,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.Address).HasColumnName("address");
                 entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+                entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
 
                 entity.HasOne(d => d.Role).WithMany(p => p.Users).HasForeignKey(d => d.RoleId).OnDelete(DeleteBehavior.Restrict);
             });
@@ -144,8 +168,15 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.Status).HasColumnName("status").HasDefaultValue("pending").HasMaxLength(50);
                 entity.Property(e => e.Symptom).HasColumnName("symptom");
                 entity.Property(e => e.Note).HasColumnName("note");
+                entity.Property(e => e.CancelReason).HasColumnName("cancel_reason");
+                entity.Property(e => e.CheckInTime).HasColumnName("check_in_time");
+                entity.Property(e => e.CheckOutTime).HasColumnName("check_out_time");
+                entity.Property(e => e.IsWalkIn).HasColumnName("is_walk_in").HasDefaultValue(false);
+                entity.Property(e => e.IsEmergency).HasColumnName("is_emergency").HasDefaultValue(false);
+                entity.Property(e => e.QueueNumber).HasColumnName("queue_number").HasDefaultValue(0);
                 entity.Property(e => e.CreatedBy).HasColumnName("created_by");
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+                entity.Property(e => e.QrToken).HasColumnName("qr_token");
 
                 entity.HasOne(d => d.Pet).WithMany(p => p.Appointments).HasForeignKey(d => d.PetId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Customer).WithMany().HasForeignKey(d => d.CustomerId).OnDelete(DeleteBehavior.Restrict);

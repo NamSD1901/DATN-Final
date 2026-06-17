@@ -15,10 +15,18 @@ namespace MyPetClinic.Infrastructure.Persistence
             try
             {
                 await context.Database.ExecuteSqlRawAsync("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS vaccine_id BIGINT REFERENCES vaccines(id);");
+                await context.Database.ExecuteSqlRawAsync("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS cancel_reason TEXT;");
+                await context.Database.ExecuteSqlRawAsync("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS check_in_time TIMESTAMP WITH TIME ZONE;");
+                await context.Database.ExecuteSqlRawAsync("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS check_out_time TIMESTAMP WITH TIME ZONE;");
+                await context.Database.ExecuteSqlRawAsync("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS is_walk_in BOOLEAN DEFAULT FALSE;");
+                await context.Database.ExecuteSqlRawAsync("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS is_emergency BOOLEAN DEFAULT FALSE;");
+                await context.Database.ExecuteSqlRawAsync("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS queue_number INT DEFAULT 0;");
+                await context.Database.ExecuteSqlRawAsync("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS qr_token TEXT;");
                 await context.Database.ExecuteSqlRawAsync("ALTER TABLE vaccines ADD COLUMN IF NOT EXISTS stock_quantity INT DEFAULT 10;");
                 await context.Database.ExecuteSqlRawAsync("ALTER TABLE vaccines ADD COLUMN IF NOT EXISTS target_species VARCHAR(50);");
                 await context.Database.ExecuteSqlRawAsync("ALTER TABLE vaccines ADD COLUMN IF NOT EXISTS min_age_weeks INT;");
                 await context.Database.ExecuteSqlRawAsync("ALTER TABLE vaccines ADD COLUMN IF NOT EXISTS interval_days INT;");
+                await context.Database.ExecuteSqlRawAsync("ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;");
             }
             catch { /* Chạy local sqlite test có thể ném exception do EF In-memory hoặc SQLite không nhận, bỏ qua để test pass */ }
 

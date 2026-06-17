@@ -83,8 +83,8 @@
              <i class="bi bi-calendar-check-fill" style="font-size: 8rem;"></i>
           </div>
           <div class="d-flex align-items-center gap-3 mb-4 position-relative z-index-1">
-             <div class="pet-avatar bg-warning bg-opacity-25 text-warning" style="width: 60px; height: 60px; font-size: 2rem;">
-                🐾
+             <div class="pet-avatar-img-wrapper" style="width: 60px; height: 60px; border-radius: 12px; overflow: hidden; border: 2px solid rgba(245, 158, 11, 0.2);">
+                <img :src="getSpeciesImageUrl(nextAppointment.petSpecies)" alt="Pet Avatar" style="width: 100%; height: 100%; object-fit: cover;" />
              </div>
              <div>
                 <h4 class="fw-bold text-dark mb-1">{{ nextAppointment.serviceName }}</h4>
@@ -239,6 +239,18 @@ const calculateAge = (birthDate: string): string => {
 const getSpeciesEmoji = (species: string): string => {
   const map: Record<string, string> = { 'Chó': '🐕', 'Mèo': '🐈', 'Thỏ': '🐇', 'Chim': '🦜', 'Cá': '🐟', 'Bò sát': '🦎' };
   return map[species] || '🐾';
+};
+
+const getSpeciesImageUrl = (species: string | null): string => {
+  const map: Record<string, string> = {
+    'Chó': 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=300&h=300&fit=crop',
+    'Mèo': 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=300&h=300&fit=crop',
+    'Thỏ': 'https://images.unsplash.com/photo-1585110396000-c9fd45c265fc?w=300&h=300&fit=crop',
+    'Chim': 'https://images.unsplash.com/photo-1522926193341-e9eb1b369405?w=300&h=300&fit=crop',
+    'Cá': 'https://images.unsplash.com/photo-1524704796725-9fc3044a58b2?w=300&h=300&fit=crop',
+    'Bò sát': 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=300&h=300&fit=crop',
+  };
+  return map[species ?? ''] || 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=300&h=300&fit=crop';
 };
 
 const getSpeciesClass = (species: string): string => {

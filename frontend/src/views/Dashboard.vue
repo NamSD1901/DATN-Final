@@ -139,7 +139,7 @@
 
           <!-- User Profile Details -->
           <div class="d-flex align-items-center gap-2">
-            <img :src="avatarUrl" alt="Avatar" class="rounded-circle shadow-sm border" width="45" height="45" style="object-fit: cover;">
+            <img :src="avatarUrl" @error="handleAvatarError" alt="Avatar" class="rounded-circle shadow-sm border" width="45" height="45" style="object-fit: cover;">
             <div class="d-none d-md-block text-dark text-start">
               <span class="d-block fw-bold small">{{ userName }}</span>
               <span class="d-block text-muted" style="font-size: 0.75rem;">{{ getRoleLabel }}</span>
@@ -261,7 +261,7 @@
               <div class="row g-4">
                 <div class="col-md-4 text-center border-end-md">
                   <div class="position-relative d-inline-block mb-3">
-                    <img :src="avatarUrl" alt="User Avatar" class="rounded-circle shadow-sm border border-4 border-warning" width="130" height="130" style="object-fit: cover;">
+                    <img :src="avatarUrl" @error="handleAvatarError" alt="User Avatar" class="rounded-circle shadow-sm border border-4 border-warning" width="130" height="130" style="object-fit: cover;">
                   </div>
                   <h4 class="fw-bold text-dark mb-1">{{ userName }}</h4>
                   <p class="text-muted small mb-3">{{ getRoleLabel }}</p>
@@ -540,6 +540,10 @@ const fetchDashboardData = async () => {
     console.error('Lỗi khi lấy dữ liệu dashboard:', err);
     router.push('/login');
   }
+};
+
+const handleAvatarError = () => {
+  avatarUrl.value = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName.value || 'User')}&background=f59e0b&color=fff&rounded=true`;
 };
 
 const handleLogout = async () => {

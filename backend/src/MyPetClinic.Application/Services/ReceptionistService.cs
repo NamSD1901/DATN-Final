@@ -82,6 +82,80 @@ namespace MyPetClinic.Application.Services
             return result;
         }
 
+        public async Task<AppointmentPreviewDto> GetAppointmentPreviewByQrAsync(string qrToken)
+        {
+            var appointment = await _unitOfWork.Appointments.GetFirstOrDefaultWithIncludesAsync(
+                a => a.QrToken == qrToken,
+                a => a.Pet!,
+                a => a.Pet!.Owner!,
+                a => a.Doctor!,
+                a => a.Service!
+            );
+
+            if (appointment == null)
+            {
+                return new AppointmentPreviewDto
+                {
+                    AppointmentId = 0,
+                    QrToken = qrToken,
+                    CustomerName = "Không xác định",
+                    CustomerPhone = "",
+                    PetName = "Không xác định",
+                    Status = "invalid",
+                    HasError = true,
+                    ErrorMessage = "Mã QR không hợp lệ hoặc không tồn tại trên hệ thống."
+                };
+            }
+
+            bool hasError = false;
+            string? errorMessage = null;
+
+            if (appointment.Status == "cancelled")
+            {
+                hasError = true;
+                errorMessage = "Lịch hẹn này đã bị hủy, không thể Check-in.";
+            }
+            else if (appointment.Status == "completed")
+            {
+                hasError = true;
+                errorMessage = "Lịch hẹn này đã hoàn thành.";
+            }
+            else if (appointment.Status == "waiting" || appointment.Status == "in_progress" || appointment.Status == "ready_to_pay")
+            {
+                hasError = true;
+                errorMessage = "Khách hàng này đã nằm trong hàng đợi rồi.";
+            }
+            else
+            {
+                // Chỉ kiểm tra ngày khám nếu các trạng thái khác hợp lệ
+                var (todayStartUtc, todayEndUtc) = GetVietnamTodayUtcRange();
+                if (appointment.AppointmentDate < todayStartUtc || appointment.AppointmentDate >= todayEndUtc)
+                {
+                    var localApptDate = appointment.AppointmentDate.AddHours(7).Date;
+                    hasError = true;
+                    errorMessage = $"Lịch hẹn này dành cho ngày {localApptDate:dd/MM/yyyy}. Không thể Check-in hôm nay.";
+                }
+            }
+
+            return new AppointmentPreviewDto
+            {
+                AppointmentId = appointment.Id,
+                QrToken = appointment.QrToken!,
+                CustomerName = appointment.Pet?.Owner?.FullName ?? "Khách vãng lai",
+                CustomerPhone = appointment.Pet?.Owner?.Phone ?? "",
+                PetName = appointment.Pet?.Name ?? "Thú cưng",
+                PetSpecies = appointment.Pet?.Species,
+                PetWeight = (double?)appointment.Pet?.Weight,
+                DoctorName = appointment.Doctor?.FullName,
+                ServiceName = appointment.Service?.Name,
+                AppointmentDate = appointment.AppointmentDate,
+                Status = appointment.Status,
+                Notes = appointment.Note,
+                HasError = hasError,
+                ErrorMessage = errorMessage
+            };
+        }
+
         public async Task<bool> CheckInAsync(CheckInRequestDto request)
         {
             Appointment? appointment = null;

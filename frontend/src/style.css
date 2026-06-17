@@ -1,5 +1,5 @@
 /* Premium Gold Design System & Global Styles */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Quicksand:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   /* Warm Gold Color Palette */
@@ -42,7 +42,7 @@ html, body {
   padding: 0;
   background-color: var(--bg-light);
   color: var(--text-dark);
-  font-family: 'Quicksand', 'Outfit', sans-serif;
+  font-family: 'Inter', sans-serif;
   line-height: 1.6;
   min-height: 100vh;
   overflow-x: clip;
@@ -90,7 +90,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   color: var(--text-dark);
   letter-spacing: -0.02em;
-  font-family: 'Outfit', 'Quicksand', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 p {

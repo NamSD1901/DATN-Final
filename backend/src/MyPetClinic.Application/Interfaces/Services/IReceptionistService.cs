@@ -9,6 +9,9 @@ namespace MyPetClinic.Application.Interfaces.Services
         // Trả về danh sách kết hợp cả Chủ và Thú cưng khi search 1 từ khóa bất kỳ
         Task<List<OmniSearchDto>> OmniSearchAsync(string query);
 
+        // Lấy thông tin xem trước của Lịch hẹn thông qua QR Token
+        Task<AppointmentPreviewDto> GetAppointmentPreviewByQrAsync(string qrToken);
+
         // Check-in một ca khám đã đặt trước
         Task<bool> CheckInAsync(CheckInRequestDto request);
 

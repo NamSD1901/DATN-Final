@@ -30,15 +30,50 @@ namespace MyPetClinic.Controllers
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateStatus(long id, [FromBody] UpdateStatusRequest req)
         {
-            var success = await _appointmentService.UpdateAppointmentStatusAsync(id, req.Status);
+            var success = await _appointmentService.UpdateAppointmentStatusAsync(id, req.Status, req.Reason);
             return Ok(new { success });
         }
 
         [HttpPut("{id}/reschedule")]
         public async Task<IActionResult> Reschedule(long id, [FromBody] RescheduleRequest req)
         {
-            var success = await _appointmentService.RescheduleAppointmentAsync(id, req.NewStart);
-            return Ok(new { success });
+            try
+            {
+                var success = await _appointmentService.RescheduleAppointmentAsync(id, req.NewStart, req.Force);
+                return Ok(new { success });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("available-slots")]
+        public async Task<IActionResult> GetAvailableSlots([FromQuery] DateTime date)
+        {
+            try
+            {
+                var slots = await _appointmentService.GetAvailableSlotsAsync(date);
+                return Ok(slots);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}/doctor")]
+        public async Task<IActionResult> UpdateDoctor(long id, [FromBody] UpdateDoctorRequest req)
+        {
+            try
+            {
+                var success = await _appointmentService.UpdateAppointmentDoctorAsync(id, req.DoctorId, req.Force);
+                return Ok(new { success });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPost("with-new-customer")]
@@ -150,10 +185,18 @@ namespace MyPetClinic.Controllers
     public class UpdateStatusRequest
     {
         public string Status { get; set; }
+        public string? Reason { get; set; }
     }
 
     public class RescheduleRequest
     {
         public DateTime NewStart { get; set; }
+        public bool Force { get; set; } = false;
+    }
+
+    public class UpdateDoctorRequest
+    {
+        public Guid DoctorId { get; set; }
+        public bool Force { get; set; } = false;
     }
 }

@@ -71,6 +71,9 @@
             <option value="ALL">Tất cả bác sĩ</option>
             <option v-for="doc in doctorList" :key="doc.id" :value="doc.id">Bs. {{ doc.fullName }}</option>
           </select>
+          <button class="btn btn-outline-warning text-dark rounded-pill px-4 fw-bold shadow-sm me-2" @click="openQrScanModal">
+            <i class="bi bi-qr-code-scan me-1"></i> Quét mã QR
+          </button>
           <button class="btn btn-premium rounded-pill px-4 fw-bold shadow-sm" @click="openCreateModal">
             <i class="bi bi-plus-lg me-1"></i> Tạo lịch hẹn mới
           </button>
@@ -148,6 +151,7 @@
                       <th>Bác sĩ phụ trách</th>
                       <th>Dịch vụ</th>
                       <th class="text-center">Trạng thái</th>
+                      <th class="text-center">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -177,6 +181,29 @@
                         <span class="badge rounded-pill" :class="getStatusBadgeClass(evt.status)">
                           {{ getStatusLabel(evt.status) }}
                         </span>
+                      </td>
+                      <td class="text-center">
+                        <div class="dropdown">
+                          <button class="btn btn-sm btn-light border rounded-pill" type="button" data-bs-toggle="dropdown" aria-expanded="false" @click.stop>
+                            <i class="bi bi-three-dots-vertical"></i>
+                          </button>
+                          <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                            <li><a class="dropdown-item" href="#" @click.prevent.stop="openDetailModal(evt.id)"><i class="bi bi-eye text-primary me-2"></i>Xem chi tiết</a></li>
+                            
+                            <!-- Change Doctor -->
+                            <li v-if="['pending', 'confirmed', 'checked_in'].includes(evt.status)"><a class="dropdown-item" href="#" @click.prevent.stop="openChangeDoctorModal(evt)"><i class="bi bi-person-hearts text-info me-2"></i>Điều phối bác sĩ</a></li>
+                            
+                            <!-- Reschedule -->
+                            <li v-if="['pending', 'confirmed'].includes(evt.status)"><a class="dropdown-item" href="#" @click.prevent.stop="openRescheduleModal(evt)"><i class="bi bi-calendar-range text-warning me-2"></i>Dời lịch khám</a></li>
+                            
+                            <!-- No show -->
+                            <li v-if="['pending', 'confirmed'].includes(evt.status) && isPastDue(evt)"><a class="dropdown-item" href="#" @click.prevent.stop="markNoShow(evt.id)"><i class="bi bi-person-x text-secondary me-2"></i>Khách vắng mặt</a></li>
+                            
+                            <!-- Cancel -->
+                            <li v-if="['pending', 'confirmed'].includes(evt.status)"><hr class="dropdown-divider"></li>
+                            <li v-if="['pending', 'confirmed'].includes(evt.status)"><a class="dropdown-item text-danger" href="#" @click.prevent.stop="openCancelModal(evt)"><i class="bi bi-x-circle me-2"></i>Hủy lịch</a></li>
+                          </ul>
+                        </div>
                       </td>
                     </tr>
                   </tbody>
@@ -617,12 +644,209 @@
         </div>
       </div>
     </div>
+    <!-- Cancel Modal -->
+    <Teleport to="body">
+      <div v-if="showCancelModal" class="modal-backdrop fade show"></div>
+      <div v-if="showCancelModal" class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+              <h5 class="fw-bold"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Hủy lịch hẹn</h5>
+              <button type="button" class="btn-close" @click="showCancelModal = false"></button>
+            </div>
+            <div class="modal-body pt-3">
+              <p class="text-muted mb-3">Bạn đang hủy lịch hẹn của khách hàng <strong>{{ cancelTarget?.customerName }}</strong> cho bé <strong>{{ cancelTarget?.petName }}</strong>.</p>
+              <div class="mb-3">
+                <label class="form-label fw-bold small text-muted">Lý do hủy (Bắt buộc)</label>
+                <textarea v-model="cancelReason" class="form-control rounded-3" rows="3" placeholder="Nhập lý do khách hủy hoặc lý do phòng khám..."></textarea>
+              </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+              <button type="button" class="btn btn-light rounded-pill px-4" @click="showCancelModal = false">Đóng</button>
+              <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" @click="confirmCancel" :disabled="!cancelReason.trim()">Xác nhận Hủy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Change Doctor Modal -->
+    <Teleport to="body">
+      <div v-if="showChangeDoctorModal" class="modal-backdrop fade show"></div>
+      <div v-if="showChangeDoctorModal" class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+              <h5 class="fw-bold"><i class="bi bi-person-hearts text-info me-2"></i>Điều phối Bác sĩ</h5>
+              <button type="button" class="btn-close" @click="showChangeDoctorModal = false"></button>
+            </div>
+            <div class="modal-body pt-3">
+              <p class="text-muted mb-3">Ca khám: <strong>{{ formatTimeOnly(changeDoctorTarget?.appointmentTime || changeDoctorTarget?.start) }}</strong> - <strong>{{ changeDoctorTarget?.petName }}</strong></p>
+              <p class="text-muted mb-3">Bác sĩ hiện tại: <strong>Bs. {{ getLastWord(changeDoctorTarget?.doctorName) }}</strong></p>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold small text-muted">Chọn bác sĩ thay thế</label>
+                <select v-model="selectedNewDoctorId" class="form-select rounded-3">
+                  <option value="" disabled>-- Chọn bác sĩ --</option>
+                  <option v-for="doc in doctorList.filter(d => d.id !== changeDoctorTarget?.extendedProps?.doctorId && d.id !== changeDoctorTarget?.doctorId)" :key="doc.id" :value="doc.id">
+                    Bs. {{ doc.fullName }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-check form-switch mt-3">
+                <input class="form-check-input" type="checkbox" role="switch" id="forceChangeDoctor" v-model="forceChangeDoctor">
+                <label class="form-check-label text-muted small" for="forceChangeDoctor">Ép buộc chuyển ca (Bypass trùng lịch - chỉ dùng khi khẩn cấp)</label>
+              </div>
+
+            </div>
+            <div class="modal-footer border-0 pt-0">
+              <button type="button" class="btn btn-light rounded-pill px-4" @click="showChangeDoctorModal = false">Đóng</button>
+              <button type="button" class="btn btn-info text-white rounded-pill px-4 fw-bold" @click="confirmChangeDoctor" :disabled="!selectedNewDoctorId">Xác nhận chuyển</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Reschedule Modal -->
+    <Teleport to="body">
+      <div v-if="showRescheduleModal" class="modal-backdrop fade show"></div>
+      <div v-if="showRescheduleModal" class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+              <h5 class="fw-bold"><i class="bi bi-calendar-range text-warning me-2"></i>Dời Lịch Khám</h5>
+              <button type="button" class="btn-close" @click="showRescheduleModal = false"></button>
+            </div>
+            <div class="modal-body pt-3">
+              <p class="text-muted mb-3">Đang dời lịch cho bé <strong>{{ rescheduleTarget?.petName }}</strong> - Khách hàng <strong>{{ rescheduleTarget?.customerName }}</strong></p>
+              
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small text-muted">Ngày khám mới</label>
+                  <input type="date" class="form-control" v-model="rescheduleDate" @change="fetchRescheduleSlots">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small text-muted">Giờ khám mới</label>
+                  <select class="form-select" v-model="rescheduleTime" :disabled="!rescheduleDate || loadingSlots">
+                    <option value="" disabled>-- Chọn giờ --</option>
+                    <option v-for="slot in availableSlots" :key="slot" :value="slot">{{ slot }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div v-if="loadingSlots" class="mt-2 small text-muted text-center"><i class="spinner-border spinner-border-sm me-1"></i> Đang tải lịch trống...</div>
+              <div v-else-if="rescheduleDate && availableSlots.length === 0" class="mt-2 small text-danger text-center"><i class="bi bi-exclamation-circle me-1"></i> Bác sĩ không có giờ trống trong ngày này.</div>
+
+              <div class="form-check form-switch mt-4">
+                <input class="form-check-input" type="checkbox" role="switch" id="forceReschedule" v-model="forceReschedule">
+                <label class="form-check-label text-muted small" for="forceReschedule">Dời lùi lịch (Bypass chặn giờ quá khứ / sát giờ)</label>
+              </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+              <button type="button" class="btn btn-light rounded-pill px-4" @click="showRescheduleModal = false">Đóng</button>
+              <button type="button" class="btn btn-warning text-dark rounded-pill px-4 fw-bold" @click="confirmReschedule" :disabled="!rescheduleDate || !rescheduleTime">Xác nhận Dời</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- QR Checkin Dialog -->
+    <Teleport to="body">
+      <div v-if="showQrModal" class="zalo-modal-overlay d-flex align-items-center justify-content-center" @click.self="closeQrModal">
+        <div class="zalo-modal-card border-0 shadow-lg" style="max-width: 420px; width: 100%; margin: 0 auto; border-radius: 16px; overflow: hidden;">
+          <div class="zalo-modal-header bg-success bg-gradient text-white p-3 border-0 d-flex justify-content-between align-items-center">
+            <h5 class="modal-title fw-bold mb-0"><i class="bi bi-qr-code-scan me-2"></i> Quét Mã Check-in</h5>
+            <button class="modal-close text-white border-0 bg-transparent" @click="closeQrModal"><i class="bi bi-x-lg fs-5"></i></button>
+          </div>
+          
+          <div class="zalo-modal-body p-4 bg-white">
+          
+          <div v-if="previewAppointment">
+            <!-- Preview Card -->
+            <div class="text-center mb-4">
+              <div :class="['rounded-circle d-inline-flex align-items-center justify-content-center mb-3', previewAppointment.hasError ? 'bg-danger bg-opacity-10' : 'bg-success bg-opacity-10']" style="width: 70px; height: 70px;">
+                <i :class="['bi fs-1', previewAppointment.hasError ? 'bi-exclamation-triangle-fill text-danger' : 'bi-check-circle-fill text-success']"></i>
+              </div>
+              <h5 :class="['fw-bold mb-1', previewAppointment.hasError ? 'text-danger' : 'text-success']">
+                {{ previewAppointment.hasError ? 'Mã Không Hợp Lệ!' : 'Mã Hợp Lệ!' }}
+              </h5>
+              <p class="text-muted small">
+                {{ previewAppointment.hasError ? 'Không thể check-in lúc này.' : 'Vui lòng xác nhận thông tin trước khi đưa vào hàng đợi' }}
+              </p>
+            </div>
+
+            <div v-if="previewAppointment.hasError" class="alert alert-danger border-danger border-opacity-25 rounded-3 mb-4 text-start">
+              <i class="bi bi-info-circle-fill me-2"></i> <strong>Lưu ý:</strong> {{ previewAppointment.errorMessage }}
+            </div>
+
+            <div v-if="previewAppointment.appointmentId !== 0" class="card border-0 bg-light rounded-4 mb-4">
+              <div class="card-body p-3">
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Thời gian hẹn:</span>
+                  <span class="fw-bold text-dark">{{ formatTimeOnly(previewAppointment.appointmentDate) }} - {{ formatDate(previewAppointment.appointmentDate) }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Khách hàng:</span>
+                  <span class="fw-bold text-dark">{{ previewAppointment.customerName }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Thú cưng:</span>
+                  <span class="fw-bold text-dark">{{ previewAppointment.petName }} <span v-if="previewAppointment.petSpecies">({{ previewAppointment.petSpecies }})</span></span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Bác sĩ:</span>
+                  <span class="fw-bold text-dark">{{ previewAppointment.doctorName || 'Tự động xếp' }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span class="text-muted small">Dịch vụ:</span>
+                  <span class="fw-bold text-dark">{{ previewAppointment.serviceName || 'Khám bệnh' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button class="btn btn-light w-50 rounded-pill py-2.5 fw-bold" @click="cancelPreview">Hủy quét</button>
+              <button v-if="!previewAppointment.hasError" class="btn btn-success w-50 rounded-pill py-2.5 fw-bold shadow-sm" @click="confirmCheckIn">Vào Hàng Đợi <i class="bi bi-arrow-right ms-1"></i></button>
+              <button v-else class="btn btn-danger w-50 rounded-pill py-2.5 fw-bold shadow-sm" @click="closeQrModal">Đóng</button>
+            </div>
+          </div>
+
+          <div v-else class="text-center">
+            <!-- Camera Scanner Area -->
+            <div id="qr-reader" class="mb-3 rounded-4 overflow-hidden border border-success border-opacity-25" style="width: 100%; min-height: 250px; background: #f8f9fa;"></div>
+            
+            <p class="text-muted small mb-3">Đưa mã QR của khách vào khung hình để quét tự động, hoặc nhập tay mã check-in bên dưới.</p>
+            
+            <div class="mb-4">
+              <input 
+                type="text" 
+                v-model="qrManualCode" 
+                class="form-control text-center fw-bold fs-4 border-success border-2 rounded-3 py-2" 
+                style="letter-spacing: 2px;"
+                placeholder="Nhập mã..."
+                @keyup.enter="previewCheckIn"
+              />
+            </div>
+
+            <button class="btn btn-success w-100 rounded-pill py-2.5 fw-bold shadow-sm" @click="previewCheckIn">
+              Kiểm Tra Mã
+            </button>
+          </div>
+        </div>
+        </div>
+      </div>
+    </Teleport>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import api from '../../services/api';
+import { Html5Qrcode } from 'html5-qrcode';
 
 // Tab states
 const activeSubTab = ref<'calendar' | 'pending' | 'flow'>('calendar');
@@ -642,9 +866,31 @@ const loadingEvents = ref(false);
 
 // Modals
 const showCreateModal = ref(false);
-const showDetailModal = ref(false);
-const detailLoading = ref(false);
+const showCustomerModal = ref(false);
+const showQrModal = ref(false);
+const previewAppointment = ref<any>(null);
+const qrManualCode = ref('');
 const selectedDetail = ref<any>(null);
+
+// Cancel Modal
+const showCancelModal = ref(false);
+const cancelTarget = ref<any>(null);
+const cancelReason = ref('');
+
+// Change Doctor Modal
+const showChangeDoctorModal = ref(false);
+const changeDoctorTarget = ref<any>(null);
+const selectedNewDoctorId = ref('');
+const forceChangeDoctor = ref(false);
+
+// Reschedule Modal
+const showRescheduleModal = ref(false);
+const rescheduleTarget = ref<any>(null);
+const rescheduleDate = ref('');
+const rescheduleTime = ref('');
+const forceReschedule = ref(false);
+const availableSlots = ref<string[]>([]);
+const loadingSlots = ref(false);
 
 // Toast
 const toastInfo = ref({
@@ -731,7 +977,12 @@ const loadEvents = async () => {
     const endStr = `${selectedDate.value}T23:59:59`;
     const docParam = selectedDoctor.value === 'ALL' ? '' : `&doctorId=${selectedDoctor.value}`;
     const res = await api.get(`/appointment/events?start=${startStr}&end=${endStr}${docParam}`);
-    eventsList.value = res.data || [];
+    const rawEvents = res.data || [];
+    eventsList.value = rawEvents.map((e: any) => ({
+      ...e,
+      ...(e.extendedProps || {}),
+      customerPhone: e.extendedProps?.phone
+    }));
   } catch (err) {
     console.error(err);
   } finally {
@@ -789,6 +1040,100 @@ const searchOldCustomer = async () => {
   } catch (err) {
     console.error(err);
     searchOldCustError.value = true;
+  }
+};
+
+let html5QrCode: Html5Qrcode | null = null;
+
+const startScanner = async () => {
+  try {
+    await nextTick();
+    html5QrCode = new Html5Qrcode("qr-reader");
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 30, qrbox: { width: 300, height: 300 } },
+      (decodedText) => {
+        qrManualCode.value = decodedText;
+        previewCheckIn();
+      },
+      (errorMessage) => {
+        // parse error, ignore
+      }
+    );
+  } catch (err) {
+    console.error("Lỗi khởi động camera:", err);
+  }
+};
+
+const stopScanner = async () => {
+  if (html5QrCode) {
+    try {
+      if (html5QrCode.isScanning) {
+        await html5QrCode.stop();
+      }
+      html5QrCode.clear();
+      html5QrCode = null;
+    } catch (e) {
+      console.error("Lỗi dừng camera:", e);
+    }
+  }
+};
+
+const openQrScanModal = () => {
+  qrManualCode.value = '';
+  previewAppointment.value = null;
+  showQrModal.value = true;
+  startScanner();
+};
+
+const closeQrModal = () => {
+  showQrModal.value = false;
+  previewAppointment.value = null;
+  stopScanner();
+};
+
+const previewCheckIn = async () => {
+  const token = qrManualCode.value.trim();
+  if (!token) return;
+  try {
+    await stopScanner();
+    const res = await api.get(`/receptionist/appointment-preview?qrToken=${token}`);
+    if (res.data.success) {
+      previewAppointment.value = res.data.data;
+    } else {
+      showToast(res.data.message || 'Lỗi kiểm tra mã', 'danger');
+      startScanner();
+    }
+  } catch (err: any) {
+    showToast(err.response?.data?.message || 'Không thể kiểm tra mã. Vui lòng thử lại.', 'danger');
+    startScanner();
+  }
+};
+
+const cancelPreview = () => {
+  previewAppointment.value = null;
+  qrManualCode.value = '';
+  startScanner();
+};
+
+const confirmCheckIn = async () => {
+  if (!previewAppointment.value) return;
+  try {
+    const res = await api.post('/receptionist/check-in', {
+      qrToken: previewAppointment.value.qrToken,
+      isEmergency: false
+    });
+    if (res.data.success) {
+      showToast(res.data.message || 'Check-in thành công', 'success');
+      showQrModal.value = false;
+      previewAppointment.value = null;
+      qrManualCode.value = '';
+      await loadEvents();
+    } else {
+      showToast(res.data.message || 'Check-in thất bại', 'danger');
+    }
+  } catch (err: any) {
+    showToast(err.response?.data?.message || 'Không thể check-in. Vui lòng kiểm tra lại mã.', 'danger');
   }
 };
 
@@ -870,7 +1215,7 @@ const submitCreateAppointment = async () => {
 // Detail modal
 const openDetailModal = async (apptId: number) => {
   showDetailModal.value = true;
-  detailLoading.value = true;
+  // detailLoading.value = true; // Placeholder for loading state if needed
   selectedDetail.value = null;
   try {
     const res = await api.get(`/appointment/${apptId}`);
@@ -880,7 +1225,7 @@ const openDetailModal = async (apptId: number) => {
     showToast('Không thể tải chi tiết lịch hẹn.', 'danger');
     showDetailModal.value = false;
   } finally {
-    detailLoading.value = false;
+    // detailLoading.value = false;
   }
 };
 
@@ -913,6 +1258,12 @@ const formatTimeOnly = (dateStr: string) => {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+};
+
+const isPastDue = (evt: any) => {
+  if (!evt.start && !evt.appointmentTime) return false;
+  const aptDate = new Date(evt.appointmentTime || evt.start);
+  return aptDate.getTime() < new Date().getTime();
 };
 
 const formatDateFull = (dateStr: string) => {
@@ -958,14 +1309,17 @@ const getStatusBadgeClass = (status: string) => {
 
 const getStatusLabel = (status: string) => {
   const s = (status || '').toLowerCase();
-  if (s === 'pending') return 'Chờ duyệt';
-  if (s === 'confirmed') return 'Xác nhận';
-  if (s === 'waiting') return 'Chờ khám';
-  if (s === 'in_progress') return 'Đang khám';
-  if (s === 'ready_to_pay') return 'Chờ thanh toán';
-  if (s === 'completed') return 'Hoàn thành';
-  if (s === 'cancelled') return 'Đã hủy';
-  return status;
+  switch (s) {
+    case 'pending': return 'Chờ duyệt';
+    case 'confirmed': return 'Xác nhận';
+    case 'waiting': return 'Chờ khám';
+    case 'in_progress': return 'Đang khám';
+    case 'ready_to_pay': return 'Chờ thanh toán';
+    case 'completed': return 'Đã xong';
+    case 'cancelled': return 'Đã hủy';
+    case 'no_show': return 'Vắng mặt';
+    default: return status;
+  }
 };
 
 const getWaitingTimeText = (card: any) => {
@@ -973,6 +1327,124 @@ const getWaitingTimeText = (card: any) => {
   const checkIn = new Date(card.checkInTime);
   const diffMins = Math.max(0, Math.floor((new Date().getTime() - checkIn.getTime()) / 60000));
   return `Chờ ${diffMins} phút`;
+};
+
+// Cancel, NoShow, Reschedule, ChangeDoctor
+const openCancelModal = (evt: any) => {
+  cancelTarget.value = evt;
+  cancelReason.value = '';
+  showCancelModal.value = true;
+};
+
+const confirmCancel = async () => {
+  if (!cancelTarget.value || !cancelReason.value.trim()) return;
+  try {
+    const res = await api.put(`/appointment/${cancelTarget.value.id}/status`, {
+      status: 'cancelled',
+      reason: cancelReason.value.trim()
+    });
+    if (res.data.success) {
+      showToast('Đã hủy lịch hẹn!', 'success');
+      showCancelModal.value = false;
+      loadEvents();
+      loadPending();
+    }
+  } catch (err) {
+    showToast('Lỗi khi hủy lịch', 'danger');
+  }
+};
+
+const markNoShow = async (id: number) => {
+  if (!confirm('Đánh dấu khách hàng này vắng mặt (No-show)?')) return;
+  try {
+    const res = await api.put(`/appointment/${id}/status`, { status: 'no_show' });
+    if (res.data.success) {
+      showToast('Đã đánh dấu vắng mặt', 'success');
+      loadEvents();
+      loadPending();
+    }
+  } catch (err) {
+    showToast('Lỗi thao tác', 'danger');
+  }
+};
+
+const openRescheduleModal = (evt: any) => {
+  rescheduleTarget.value = evt;
+  const oldDate = new Date(evt.appointmentTime || evt.start);
+  rescheduleDate.value = oldDate.toISOString().slice(0, 10);
+  rescheduleTime.value = '';
+  forceReschedule.value = false;
+  availableSlots.value = [];
+  showRescheduleModal.value = true;
+  fetchRescheduleSlots();
+};
+
+const fetchRescheduleSlots = async () => {
+  if (!rescheduleDate.value || !rescheduleTarget.value) return;
+  loadingSlots.value = true;
+  try {
+    const res = await api.get(`/appointment/available-slots?date=${rescheduleDate.value}`);
+    const doctorId = rescheduleTarget.value.extendedProps?.doctorId || rescheduleTarget.value.doctorId;
+    
+    // Find slots for this specific doctor
+    const docData = res.data.find((d: any) => d.doctorId === doctorId);
+    if (docData && docData.availableSlots) {
+      availableSlots.value = docData.availableSlots;
+    } else {
+      availableSlots.value = [];
+    }
+  } catch (err) {
+    showToast('Lỗi khi tải lịch trống', 'danger');
+    availableSlots.value = [];
+  } finally {
+    loadingSlots.value = false;
+  }
+};
+
+const confirmReschedule = async () => {
+  if (!rescheduleTarget.value || !rescheduleDate.value || !rescheduleTime.value) return;
+  try {
+    const newStart = `${rescheduleDate.value}T${rescheduleTime.value}:00`;
+    const res = await api.put(`/appointment/${rescheduleTarget.value.id}/reschedule`, {
+      newStart: newStart,
+      force: forceReschedule.value
+    });
+    if (res.data.success) {
+      showToast('Đã dời lịch khám thành công!', 'success');
+      showRescheduleModal.value = false;
+      loadEvents();
+      loadPending();
+    }
+  } catch (err: any) {
+    const msg = err.response?.data?.message || 'Lỗi khi dời lịch';
+    showToast(msg, 'danger');
+  }
+};
+
+const openChangeDoctorModal = (evt: any) => {
+  changeDoctorTarget.value = evt;
+  selectedNewDoctorId.value = '';
+  forceChangeDoctor.value = false;
+  showChangeDoctorModal.value = true;
+};
+
+const confirmChangeDoctor = async () => {
+  if (!changeDoctorTarget.value || !selectedNewDoctorId.value) return;
+  try {
+    const res = await api.put(`/appointment/${changeDoctorTarget.value.id}/doctor`, {
+      doctorId: selectedNewDoctorId.value,
+      force: forceChangeDoctor.value
+    });
+    if (res.data.success) {
+      showToast('Đã chuyển bác sĩ phụ trách!', 'success');
+      showChangeDoctorModal.value = false;
+      loadEvents();
+      loadPending();
+    }
+  } catch (err: any) {
+    const msg = err.response?.data?.message || 'Lỗi khi chuyển đổi bác sĩ';
+    showToast(msg, 'danger');
+  }
 };
 
 onMounted(() => {

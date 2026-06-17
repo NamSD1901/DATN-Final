@@ -57,7 +57,8 @@ namespace MyPetClinic.Application.Helpers
                 // Kiểm tra xem có lịch hẹn nào trùng hoặc cách slot dưới slotDurationMinutes không (giãn cách cứng)
                 var hasConflict = activeAppointments.Any(appt =>
                 {
-                    var diffMinutes = Math.Abs((appt.AppointmentDate - slot).TotalMinutes);
+                    var apptTime = appt.AppointmentDate.Date.Add(appt.StartTime);
+                    var diffMinutes = Math.Abs((apptTime - slot).TotalMinutes);
                     return diffMinutes < slotDurationMinutes;
                 });
 

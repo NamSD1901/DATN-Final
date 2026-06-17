@@ -73,8 +73,8 @@
               <div v-if="pet.avatar" class="pet-avatar-img-wrapper">
                 <img :src="getPetAvatarUrl(pet.avatar)" alt="Pet Avatar" class="pet-avatar-img" />
               </div>
-              <div v-else class="pet-avatar" :style="{ background: getPetAvatarColor(pet.species) }">
-                <span>{{ getSpeciesEmoji(pet.species) }}</span>
+              <div v-else class="pet-avatar-img-wrapper" style="background: transparent; border: 2px solid rgba(245, 158, 11, 0.2);">
+                <img :src="getSpeciesImageUrl(pet.species)" alt="Pet Avatar" class="pet-avatar-img" />
               </div>
               <div v-if="pet.sterilized" class="sterilized-badge" title="Đã triệt sản">
                 <i class="bi bi-shield-check-fill"></i>
@@ -155,8 +155,8 @@
                 <div class="pet-upload-section mb-4 text-center">
                   <div class="pet-upload-container mx-auto">
                     <img v-if="form.avatar" :src="getPetAvatarUrl(form.avatar)" alt="Pet Preview" class="pet-upload-preview" />
-                    <div v-else class="pet-upload-placeholder">
-                      <span class="fs-1">🐾</span>
+                    <div v-else class="pet-upload-placeholder overflow-hidden" style="padding: 0;">
+                      <img :src="getSpeciesImageUrl(form.species)" class="w-100 h-100" style="object-fit: cover;" />
                     </div>
                     <label for="pet-avatar-upload" class="pet-upload-label" :class="{ uploading: avatarUploading }">
                       <span v-if="avatarUploading" class="spinner-border spinner-border-sm text-white" role="status"></span>
@@ -275,7 +275,9 @@
                 <div v-if="selectedPet.avatar" class="detail-avatar-img-wrapper mb-2 mx-auto">
                   <img :src="getPetAvatarUrl(selectedPet.avatar)" alt="Pet Avatar" class="detail-avatar-img" />
                 </div>
-                <div v-else class="detail-avatar mb-2 mx-auto">{{ getSpeciesEmoji(selectedPet.species) }}</div>
+                <div v-else class="detail-avatar-img-wrapper mb-2 mx-auto">
+                  <img :src="getSpeciesImageUrl(selectedPet.species)" alt="Pet Avatar" class="detail-avatar-img" />
+                </div>
                 <h4 class="fw-bold text-white mt-2 mb-0">{{ selectedPet.name }}</h4>
                 <p class="text-white opacity-75 small mb-0">{{ selectedPet.species }} · {{ selectedPet.breed || 'Chưa xác định' }}</p>
               </div>
@@ -373,7 +375,9 @@
               <button class="modal-close-btn-glass text-dark" @click="showDeleteModal = false"><i class="bi bi-x-lg"></i></button>
             </div>
             <div class="pet-modal-body-glass p-4 text-center">
-              <div style="font-size: 4rem; margin-bottom: 0.5rem;" class="pulse-icon">{{ getSpeciesEmoji(petToDelete.species) }}</div>
+              <div class="mx-auto mb-3 pulse-icon" style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; border: 3px solid #fecaca;">
+                 <img :src="getSpeciesImageUrl(petToDelete.species)" class="w-100 h-100" style="object-fit: cover;" />
+              </div>
               <p class="text-dark fw-bold mb-1 fs-5">{{ petToDelete.name }}</p>
               <p class="text-secondary-muted small mb-4">Bạn có chắc muốn xoá hồ sơ của <strong>{{ petToDelete.name }}</strong>? Hành động này không thể hoàn tác.</p>
               <div class="d-flex gap-2 justify-content-center">
@@ -664,6 +668,18 @@ const getSpeciesEmoji = (species: string | null): string => {
     'Chó': '🐕', 'Mèo': '🐈', 'Thỏ': '🐇', 'Chim': '🦜', 'Cá': '🐟', 'Bò sát': '🦎',
   };
   return map[species ?? ''] || '🐾';
+};
+
+const getSpeciesImageUrl = (species: string | null): string => {
+  const map: Record<string, string> = {
+    'Chó': 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=300&h=300&fit=crop',
+    'Mèo': 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=300&h=300&fit=crop',
+    'Thỏ': 'https://images.unsplash.com/photo-1585110396000-c9fd45c265fc?w=300&h=300&fit=crop',
+    'Chim': 'https://images.unsplash.com/photo-1522926193341-e9eb1b369405?w=300&h=300&fit=crop',
+    'Cá': 'https://images.unsplash.com/photo-1524704796725-9fc3044a58b2?w=300&h=300&fit=crop',
+    'Bò sát': 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=300&h=300&fit=crop',
+  };
+  return map[species ?? ''] || 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=300&h=300&fit=crop';
 };
 
 const getSpeciesClass = (species: string | null): string => {

@@ -159,12 +159,13 @@ namespace MyPetClinic.Application.Services
                         Status = "waiting", // Khám ngay / Chờ khám
                         CreatedBy = createdBy,
                         CreatedAt = DateTime.UtcNow,
-                        AppointmentDate = appointmentDate,
+                        AppointmentDate = appointmentDate.Date,
+                        StartTime = appointmentDate.TimeOfDay,
                         QrToken = qrToken
                     };
 
                     // Nếu thời gian lớn hơn hiện tại 1 giờ thì là đặt lịch trước
-                    if (appointment.AppointmentDate > DateTime.UtcNow.AddHours(1))
+                    if (appointmentDate > DateTime.UtcNow.AddHours(1))
                     {
                         appointment.Status = "pending"; 
                     }
@@ -336,7 +337,7 @@ namespace MyPetClinic.Application.Services
                         QrToken = qrToken
                     };
 
-                    if (appointment.AppointmentDate > DateTime.UtcNow.AddHours(1))
+                    if (appointmentDate > DateTime.UtcNow.AddHours(1))
                     {
                         appointment.Status = "pending"; 
                     }
@@ -391,7 +392,7 @@ namespace MyPetClinic.Application.Services
                 else if (a.Status == "ready_to_pay" || a.Status == "completed") color = "#198754"; // green
                 else if (a.Status == "cancelled") color = "#dc3545"; // red
 
-                var startDateTime = a.AppointmentDate;
+                var startDateTime = a.AppointmentDate.Date.Add(a.StartTime);
                 if (startDateTime.TimeOfDay == TimeSpan.Zero)
                 {
                     // If time is 00:00:00 UTC (created from month view without setting time), 
@@ -429,7 +430,7 @@ namespace MyPetClinic.Application.Services
             return events;
         }
 
-        public async Task<bool> UpdateAppointmentStatusAsync(long id, string status)
+        public async Task<bool> UpdateAppointmentStatusAsync(long id, string status, string? reason = null)
         {
             var appointments = await _unitOfWork.Appointments.FindAsync(a => a.Id == id);
             var appointment = appointments.FirstOrDefault();
@@ -450,6 +451,11 @@ namespace MyPetClinic.Application.Services
             }
 
             appointment.Status = newStatus;
+            
+            if (newStatus == "cancelled" && !string.IsNullOrWhiteSpace(reason))
+            {
+                appointment.CancelReason = reason;
+            }
 
             // Nếu Check-in -> chuyển sang waiting và cấp số queue (logic giống Walk-in)
             if (newStatus == "waiting" && appointment.QueueNumber == 0)
@@ -467,10 +473,10 @@ namespace MyPetClinic.Application.Services
             return true;
         }
 
-        public async Task<bool> RescheduleAppointmentAsync(long id, DateTime newStart)
+        public async Task<bool> RescheduleAppointmentAsync(long id, DateTime newStart, bool force = false)
         {
             var newDate = DateTime.SpecifyKind(newStart, DateTimeKind.Utc);
-            if (newDate < DateTime.UtcNow.AddMinutes(-5)) // Trừ hao 5 phút do lệch giờ
+            if (!force && newDate < DateTime.UtcNow.AddMinutes(-5)) // Trừ hao 5 phút do lệch giờ
             {
                 throw new InvalidOperationException("Không thể dời lịch về quá khứ.");
             }
@@ -478,6 +484,12 @@ namespace MyPetClinic.Application.Services
             var appointments = await _unitOfWork.Appointments.FindAsync(a => a.Id == id);
             var appointment = appointments.FirstOrDefault();
             if (appointment == null) return false;
+
+            var currentStatus = appointment.Status.ToLower();
+            if (currentStatus == "completed" || currentStatus == "cancelled" || currentStatus == "no_show")
+            {
+                throw new InvalidOperationException("Không thể dời lịch hẹn đã kết thúc hoặc bị hủy.");
+            }
 
             // Kiểm tra double booking
             // Sử dụng so sánh loại trừ (strict inequality) để cho phép dời lịch liền kề nhau (back-to-back)
@@ -494,6 +506,41 @@ namespace MyPetClinic.Application.Services
             }
 
             appointment.AppointmentDate = newDate;
+            _unitOfWork.Appointments.Update(appointment);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateAppointmentDoctorAsync(long id, Guid newDoctorId, bool force = false)
+        {
+            var appointments = await _unitOfWork.Appointments.FindAsync(a => a.Id == id);
+            var appointment = appointments.FirstOrDefault();
+            if (appointment == null) return false;
+
+            var currentStatus = appointment.Status.ToLower();
+            if (currentStatus == "completed" || currentStatus == "cancelled" || currentStatus == "no_show")
+            {
+                throw new InvalidOperationException("Không thể đổi bác sĩ cho lịch hẹn đã kết thúc hoặc bị hủy.");
+            }
+
+            if (!force)
+            {
+                // Kiểm tra double booking cho Bác sĩ mới
+                var isDoubleBooked = await _unitOfWork.Appointments
+                    .AnyAsync(a => a.DoctorId == newDoctorId 
+                                && a.Id != id
+                                && a.Status != "cancelled"
+                                && a.Status != "no_show"
+                                && a.AppointmentDate > appointment.AppointmentDate.AddMinutes(-30) 
+                                && a.AppointmentDate < appointment.AppointmentDate.AddMinutes(30));
+
+                if (isDoubleBooked)
+                {
+                    throw new InvalidOperationException("Bác sĩ mới đang có lịch hẹn bị trùng giờ.");
+                }
+            }
+
+            appointment.DoctorId = newDoctorId;
             _unitOfWork.Appointments.Update(appointment);
             await _unitOfWork.SaveChangesAsync();
             return true;
@@ -552,6 +599,7 @@ namespace MyPetClinic.Application.Services
                     a.DoctorId,
                     DoctorName = a.Doctor != null ? a.Doctor.FullName : null,
                     a.AppointmentDate,
+                    a.StartTime,
                     a.Symptom,
                     a.Note,
                     a.QrToken,
@@ -577,7 +625,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss"),
+                AppointmentDate = a.AppointmentDate.Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 QrToken = a.QrToken,
@@ -610,6 +658,7 @@ namespace MyPetClinic.Application.Services
                     x.DoctorId,
                     DoctorName = x.Doctor != null ? x.Doctor.FullName : null,
                     x.AppointmentDate,
+                    x.StartTime,
                     x.Symptom,
                     x.Note,
                     x.Status,
@@ -638,7 +687,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss"),
+                AppointmentDate = a.AppointmentDate.Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 Status = a.Status,
@@ -673,6 +722,7 @@ namespace MyPetClinic.Application.Services
                     a.DoctorId,
                     DoctorName = a.Doctor != null ? a.Doctor.FullName : null,
                     a.AppointmentDate,
+                    a.StartTime,
                     a.Symptom,
                     a.Note,
                     a.Status,
@@ -702,7 +752,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss"),
+                AppointmentDate = a.AppointmentDate.Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 Status = a.Status,
@@ -740,6 +790,7 @@ namespace MyPetClinic.Application.Services
                     a.DoctorId,
                     DoctorName = a.Doctor != null ? a.Doctor.FullName : null,
                     a.AppointmentDate,
+                    a.StartTime,
                     a.Symptom,
                     a.Note,
                     a.Status,
@@ -769,7 +820,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss"),
+                AppointmentDate = a.AppointmentDate.Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 Status = a.Status,
@@ -817,6 +868,7 @@ namespace MyPetClinic.Application.Services
                     a.DoctorId,
                     DoctorName = a.Doctor != null ? a.Doctor.FullName : null,
                     a.AppointmentDate,
+                    a.StartTime,
                     a.Symptom,
                     a.Note,
                     a.Status,
@@ -848,7 +900,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss"),
+                AppointmentDate = a.AppointmentDate.Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 Status = a.Status,
@@ -923,7 +975,7 @@ namespace MyPetClinic.Application.Services
 
         public async Task<IEnumerable<DoctorAvailableSlotsDto>> GetAvailableSlotsAsync(DateTime date)
         {
-            var targetDate = date.Date;
+            var targetDate = DateTime.SpecifyKind(date.Date, DateTimeKind.Utc);
             
             // 1. Lấy tất cả ca trực của bác sĩ còn hoạt động vào ngày chỉ định
             var schedules = await _unitOfWork.DoctorSchedules.FindWithIncludesAsync(

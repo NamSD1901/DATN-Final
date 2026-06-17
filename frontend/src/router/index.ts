@@ -80,11 +80,6 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/tv-board',
-    name: 'TVQueueBoard',
-    component: () => import('../views/TVQueueBoard.vue')
-  },
-  {
     path: '/',
     name: 'Home',
     component: () => import('../views/Home.vue')

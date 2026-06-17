@@ -74,10 +74,10 @@ Tài liệu này đặc tả chi tiết **Sprint Backlog** gồm 17 Sprints phá
 *   **T27:** PB17 - Xác nhận/Hủy lịch hẹn (Backend Update trạng thái & gửi mail lý do hủy) [Nam - 8 giờ]
 *   **T28:** PB17 - Xác nhận/Hủy lịch hẹn (Frontend Dashboard chờ duyệt & cancel modal) [Lâm - 10 giờ]
 
-### 🎯 Sprint 10: Điều Phối Hàng Đợi & TV Board
+### 🎯 Sprint 10: Điều Phối Hàng Đợi
 **Mục tiêu:** Cấp số thứ tự tự động và màn hình sảnh chờ công cộng.
 *   **T29:** PB18 - Quản lý hàng đợi (Backend logic Queue tự động cấp số thứ tự khám) [Hạnh - 10 giờ]
-*   **T30:** PB18 - Quản lý hàng đợi (Frontend TV Board ngoài sảnh & nút lễ tân điều phối) [Lâm - 10 giờ]
+*   **T30:** PB18 - Quản lý hàng đợi (Frontend nút lễ tân điều phối) [Lâm - 10 giờ]
 
 ### 🎯 Sprint 11: Cổng Bác Sĩ & Tiếp Nhận Khám
 **Mục tiêu:** Bác sĩ theo dõi và kích hoạt ca khám bệnh.

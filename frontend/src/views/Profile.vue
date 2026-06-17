@@ -27,7 +27,7 @@
           <div class="sidebar-card">
             <div class="avatar-section">
               <div class="avatar-container">
-                <img :src="getAvatarUrl(profile.avatar)" alt="Avatar" class="avatar-img" />
+                <img :src="getAvatarUrl(profile.avatar)" @error="handleAvatarError" alt="Avatar" class="avatar-img" />
                 <label for="avatar-upload" class="avatar-upload-label" :class="{ uploading }">
                   <Camera class="camera-icon" v-if="!uploading" />
                   <div class="mini-spinner" v-else></div>
@@ -275,9 +275,14 @@ const showSuccessToast = (msg: string) => showToast(msg, 'success');
 const showErrorToast = (msg: string) => showToast(msg, 'error');
 
 const getAvatarUrl = (avatarPath: string) => {
-  if (!avatarPath) return 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150';
+  if (!avatarPath) return `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName || 'User')}&background=14b8a6&color=fff&rounded=true`;
   if (avatarPath.startsWith('http')) return avatarPath;
   return `${backendUrl}${avatarPath}`;
+};
+
+const handleAvatarError = (event: Event) => {
+  const target = event.target as HTMLImageElement;
+  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName || 'User')}&background=14b8a6&color=fff&rounded=true`;
 };
 
 const translateRole = (role: string) => {

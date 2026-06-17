@@ -57,7 +57,9 @@
               <div class="pet-card-inner">
                 <div class="pet-avatar-wrapper">
                   <img v-if="pet.avatar" :src="getAvatarUrl(pet.avatar)" class="pet-avatar" />
-                  <div v-else class="pet-avatar placeholder">{{ pet.species === 'Mèo' ? '🐈' : '🐕' }}</div>
+                  <div v-else class="pet-avatar-img-wrapper" style="width: 70px; height: 70px; border-radius: 12px; overflow: hidden; border: 2px solid rgba(13, 110, 253, 0.2);">
+                    <img :src="getSpeciesImageUrl(pet.species)" alt="Pet Avatar" class="pet-avatar-img" style="width: 100%; height: 100%; object-fit: cover;" />
+                  </div>
                 </div>
                 <div class="pet-info">
                   <h5 class="pet-name">{{ pet.name }}</h5>
@@ -213,7 +215,9 @@
                 </div>
                 <div class="card-body-flex">
                   <img :src="getAvatarUrl(selectedPet?.avatar)" class="confirm-avatar" v-if="selectedPet?.avatar"/>
-                  <div class="confirm-avatar placeholder" v-else>{{ selectedPet?.species === 'Mèo' ? '🐈' : '🐕' }}</div>
+                  <div class="confirm-avatar-img-wrapper" v-else style="width: 60px; height: 60px; border-radius: 12px; overflow: hidden; border: 2px solid rgba(13, 110, 253, 0.2); margin-right: 15px;">
+                    <img :src="getSpeciesImageUrl(selectedPet?.species)" alt="Pet Avatar" style="width: 100%; height: 100%; object-fit: cover;" />
+                  </div>
                   
                   <div class="flex-grow-1">
                     <h5 class="fw-bold mb-1">{{ selectedPet?.name }} <span class="badge bg-primary bg-opacity-10 text-primary ms-2">{{ selectedPet?.species }}</span></h5>
@@ -412,6 +416,18 @@ const calculateAge = (birthDate: string) => {
   const months = totalMonths % 12;
   if (years === 0) return `${months} mos`;
   return `${years} Years`;
+};
+
+const getSpeciesImageUrl = (species: string | null): string => {
+  const map: Record<string, string> = {
+    'Chó': 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=300&h=300&fit=crop',
+    'Mèo': 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=300&h=300&fit=crop',
+    'Thỏ': 'https://images.unsplash.com/photo-1585110396000-c9fd45c265fc?w=300&h=300&fit=crop',
+    'Chim': 'https://images.unsplash.com/photo-1522926193341-e9eb1b369405?w=300&h=300&fit=crop',
+    'Cá': 'https://images.unsplash.com/photo-1524704796725-9fc3044a58b2?w=300&h=300&fit=crop',
+    'Bò sát': 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=300&h=300&fit=crop',
+  };
+  return map[species ?? ''] || 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=300&h=300&fit=crop';
 };
 
 // --- STEP 3 LOGIC (CALENDAR & SLOTS) ---

@@ -90,7 +90,7 @@
               
               <div class="mb-4" id="qr-export-area">
                 <div v-if="appointment.qrToken" class="qr-container bg-white p-3 rounded-4 shadow-sm border" style="display: inline-block;">
-                  <qrcode-vue :value="appointment.qrToken" :size="200" level="M" />
+                  <qrcode-vue :value="appointment.qrToken" :size="200" level="M" :margin="3" />
                 </div>
                 <div v-else class="text-danger">Lỗi: Không tìm thấy mã QR.</div>
               </div>

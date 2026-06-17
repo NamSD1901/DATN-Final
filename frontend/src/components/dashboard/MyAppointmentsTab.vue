@@ -197,19 +197,6 @@
                   <div style="font-size: 5rem;">🎉</div>
                   <h4 class="fw-bold text-success mt-4 mb-2">Đặt lịch thành công!</h4>
                   <p class="text-muted">Chúng tôi sẽ xác nhận lịch hẹn của bạn sớm nhất có thể.</p>
-
-                  <div v-if="lastBookedAppt && lastBookedAppt.qrToken" class="qr-token-box my-4 p-4 mx-auto" style="max-width: 300px; background: #f8f9fa; border: 2px dashed #10b981; border-radius: 16px;">
-                    <div class="small fw-bold text-muted mb-3">MÃ CHECK-IN (QR TOKEN)</div>
-                    <div class="qr-placeholder-graphics mb-3" style="font-size: 4rem; line-height: 1; color: #212529;">
-                      <i class="bi bi-qr-code"></i>
-                    </div>
-                    <div class="badge bg-dark text-white font-monospace py-2 px-4 fs-5" style="letter-spacing: 2px;">
-                      {{ lastBookedAppt.qrToken }}
-                    </div>
-                    <div class="small text-muted mt-3">
-                      Vui lòng xuất trình mã này tại quầy lễ tân để check-in nhanh.
-                    </div>
-                  </div>
                 </div>
 
                 <form v-else @submit.prevent="submitBooking" class="h-100">
@@ -485,12 +472,12 @@
                   </div>
 
                   <!-- Step 4: Confirm -->
-                  <div v-else-if="currentStep === (isVaccinationService ? 4 : 3)" class="step-content animate-fade-in d-flex flex-column h-100">
+                  <div v-else-if="currentStep === (isVaccinationService ? 4 : 3)" class="step-content animate-fade-in d-flex flex-column" style="min-height: min-content;">
                     <div v-if="bookingError" class="alert alert-danger mb-2 border-0 rounded-3 small text-start py-2">
                       <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ bookingError }}
                     </div>
 
-                    <div class="confirm-layout flex-grow-1 overflow-hidden pe-2 mt-1">
+                    <div class="confirm-layout flex-grow-1 pe-2 mt-1" style="overflow-y: visible;">
                       <div class="confirm-details">
                         <!-- Patient Info -->
                         <div class="booking-confirm-card">
@@ -721,7 +708,7 @@
                   <div id="appointment-detail-qr-box" class="detail-item text-center p-3" style="background: #fafafa; border: 1.5px dashed #10b981; border-radius: 12px;">
                     <div class="detail-label"><i class="bi bi-qr-code me-1"></i>Mã QR Check-in</div>
                     <div class="d-flex justify-content-center my-3 position-relative">
-                      <qrcode-vue :value="detailAppt.qrToken" :size="150" level="M" />
+                      <qrcode-vue :value="detailAppt.qrToken" :size="150" level="M" :margin="3" />
                       <div class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.8); cursor: pointer; transition: all 0.2s;" @click="$router.push(`/qr-checkin/${detailAppt.id}`)" onmouseover="this.style.background='rgba(255,255,255,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.8)'">
                         <span class="btn btn-primary btn-sm rounded-pill shadow-sm fw-bold"><i class="bi bi-arrows-fullscreen me-1"></i>Mở thẻ</span>
                       </div>
@@ -834,7 +821,7 @@
 
                   <!-- QR Display -->
                   <div class="bg-white p-3 rounded-4 shadow-sm border text-center mb-4">
-                    <qrcode-vue :value="selectedQrAppt.qrToken || ''" :size="160" level="M" />
+                    <qrcode-vue :value="selectedQrAppt.qrToken || ''" :size="160" level="M" :margin="3" />
                     <div class="fs-5 fw-bolder text-primary font-monospace mt-2 mb-1">{{ selectedQrAppt.qrToken }}</div>
                   </div>
                   
@@ -1032,7 +1019,6 @@ const filterOptions = [
   { value: 'all', label: 'Tất cả', icon: 'bi bi-list-ul' },
   { value: 'pending', label: 'Chờ xác nhận', icon: 'bi bi-hourglass-split' },
   { value: 'confirmed', label: 'Đã xác nhận', icon: 'bi bi-check-circle' },
-  { value: 'in_progress', label: 'Đang khám', icon: 'bi bi-activity' },
   { value: 'completed', label: 'Hoàn thành', icon: 'bi bi-check2-all' },
   { value: 'cancelled', label: 'Đã huỷ', icon: 'bi bi-x-circle' },
 ];
@@ -1461,6 +1447,7 @@ const getStatusIcon = (status: string | null): string => {
   const map: Record<string, string> = {
     pending: 'bi bi-hourglass-split',
     confirmed: 'bi bi-check-circle-fill',
+    waiting: 'bi bi-person-lines-fill',
     in_progress: 'bi bi-activity',
     completed: 'bi bi-check2-all',
     cancelled: 'bi bi-x-circle-fill',
@@ -1588,7 +1575,9 @@ const formatMonthYear = (dateStr: string): string => {
 
 const formatTime = (dateStr: string): string => {
   if (!dateStr) return '';
-  return new Date(dateStr).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  const time = new Date(dateStr).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  if (time === '00:00' || time === '24:00') return 'Chưa có thông tin giờ';
+  return time;
 };
 
 const formatDateFull = (dateStr: string): string => {
@@ -1734,18 +1723,21 @@ defineExpose({
 }
 
 .appt-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
   display: flex;
   overflow: hidden;
-  transition: all 0.25s ease;
-  border: 1px solid #f0f0f0;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .appt-card:hover {
-  transform: translateX(4px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.1);
+  background: rgba(255, 255, 255, 0.85);
 }
 
 /* Status colored left bar */
@@ -1777,15 +1769,18 @@ defineExpose({
 .appt-date-block {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .appt-date-day {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   font-weight: 800;
-  color: #1a1a2e;
+  color: #1e293b;
   line-height: 1;
+  background: linear-gradient(135deg, #1e293b, #475569);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .appt-date-rest {
@@ -1795,10 +1790,11 @@ defineExpose({
 }
 
 .appt-date-time {
-  font-size: 0.78rem;
-  color: #9ca3af;
+  font-size: 0.82rem;
+  color: #64748b;
+  font-weight: 600;
   width: 100%;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 /* Status badge */
