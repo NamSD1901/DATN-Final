@@ -105,7 +105,7 @@ namespace MyPetClinic.Controllers
     public class AddInvoiceItemRequest
     {
         public long InvoiceId { get; set; }
-        public string ItemType { get; set; }
+        public string ItemType { get; set; } = string.Empty;
         public long ItemId { get; set; }
         public int Quantity { get; set; }
     }
@@ -117,7 +117,7 @@ namespace MyPetClinic.Controllers
 
     public class ProcessPaymentRequest
     {
-        public string PaymentMethod { get; set; }
+        public string PaymentMethod { get; set; } = string.Empty;
         public decimal DiscountAmount { get; set; }
     }
 }

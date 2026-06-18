@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MyPetClinic.Application.Interfaces.Repositories;
-using MyPetClinic.Domain.Entities;
-using System.Linq;
+using MyPetClinic.Application.Interfaces.Services;
 using System.Threading.Tasks;
 
 namespace MyPetClinic.Controllers
@@ -12,32 +10,24 @@ namespace MyPetClinic.Controllers
     [Route("api/medicines")]
     public class MedicinesController : ControllerBase
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IMedicineService _medicineService;
 
-        public MedicinesController(IUnitOfWork unitOfWork)
+        public MedicinesController(IMedicineService medicineService)
         {
-            _unitOfWork = unitOfWork;
+            _medicineService = medicineService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllMedicines()
         {
-            var medicines = await _unitOfWork.Medicines.GetAllAsync();
-            var result = medicines.Select(m => new
-            {
-                id = m.Id,
-                name = m.Name,
-                unit = m.Unit,
-                stockQuantity = m.StockQuantity,
-                sellPrice = m.SellPrice
-            });
+            var result = await _medicineService.GetAllMedicinesAsync();
             return Ok(result);
         }
 
         [HttpGet("{id}/stock")]
         public async Task<IActionResult> GetMedicineStock(long id)
         {
-            var medicine = await _unitOfWork.Medicines.GetByIdAsync(id);
+            var medicine = await _medicineService.GetMedicineStockAsync(id);
             if (medicine == null)
             {
                 return NotFound(new { message = "Không tìm thấy thuốc." });

@@ -1,10 +1,10 @@
-using MyPetClinic.Domain.Entities;
+using MyPetClinic.Application.DTOs;
 using System.Threading.Tasks;
 
 namespace MyPetClinic.Application.Interfaces.Services
 {
     public interface IGoogleAuthService
     {
-        Task<User> ProcessGoogleLoginAsync(string email, string fullName, string providerKey);
+        Task<UserProfileDto> ProcessGoogleLoginAsync(string email, string fullName, string providerKey);
     }
 }

@@ -2,9 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Services;
-using MyPetClinic.Application.Interfaces.Repositories;
 using System;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -20,16 +18,16 @@ namespace MyPetClinic.Controllers
     {
         private readonly IAppointmentService _appointmentService;
         private readonly IPetService _petService;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly ICustomerAppointmentService _customerAppointmentService;
 
         public CustomerAppointmentController(
             IAppointmentService appointmentService,
             IPetService petService,
-            IUnitOfWork unitOfWork)
+            ICustomerAppointmentService customerAppointmentService)
         {
             _appointmentService = appointmentService;
             _petService = petService;
-            _unitOfWork = unitOfWork;
+            _customerAppointmentService = customerAppointmentService;
         }
 
         private Guid GetCurrentUserId()
@@ -187,8 +185,8 @@ namespace MyPetClinic.Controllers
         {
             try
             {
-                var vaccines = await _unitOfWork.Vaccines.FindAsync(v => v.StockQuantity > 0);
-                return Ok(vaccines.OrderBy(v => v.Name));
+                var vaccines = await _customerAppointmentService.GetAvailableVaccinesAsync();
+                return Ok(vaccines);
             }
             catch (Exception ex)
             {
@@ -205,25 +203,16 @@ namespace MyPetClinic.Controllers
             try
             {
                 var customerId = GetCurrentUserId();
-                
-                // Security check: pet must belong to customer
-                var pets = await _unitOfWork.Pets.FindAsync(p => p.Id == dto.PetId && p.OwnerId == customerId);
-                var pet = pets.FirstOrDefault();
-                if (pet == null)
-                    return BadRequest(new { message = "Thú cưng không hợp lệ hoặc không thuộc về bạn." });
-
-                var vaccines = await _unitOfWork.Vaccines.FindAsync(v => v.Id == dto.VaccineId);
-                var vaccine = vaccines.FirstOrDefault();
-                if (vaccine == null)
-                    return NotFound(new { message = "Không tìm thấy vắc-xin." });
-
-                var lastRecords = await _unitOfWork.VaccinationRecords.FindAsync(vr => vr.PetId == dto.PetId && vr.VaccineId == dto.VaccineId);
-                var lastRecord = lastRecords.OrderByDescending(vr => vr.InjectionDate).FirstOrDefault();
-
-                var checker = new MyPetClinic.Application.Helpers.VaccinationScheduleChecker();
-                var validation = checker.ValidateInterval(lastRecord, vaccine, dto.TargetDate, pet);
-                
+                var validation = await _customerAppointmentService.ValidateVaccineAsync(customerId, dto.PetId, dto.VaccineId, dto.TargetDate);
                 return Ok(validation);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -243,7 +232,7 @@ namespace MyPetClinic.Controllers
                 var history = await _appointmentService.GetPetMedicalHistoryAsync(petId, customerId);
                 return Ok(history);
             }
-            catch (UnauthorizedAccessException ex)
+            catch (UnauthorizedAccessException)
             {
                 return Forbid();
             }

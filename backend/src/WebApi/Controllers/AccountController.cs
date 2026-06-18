@@ -1,13 +1,9 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using MyPetClinic.Domain.Entities;
-using MyPetClinic.Infrastructure.Persistence;
 using MyPetClinic.Application.Interfaces.Services;
 using MyPetClinic.Application.DTOs;
 using System.Security.Claims;
-
 
 namespace MyPetClinic.Controllers
 {
@@ -127,7 +123,7 @@ namespace MyPetClinic.Controllers
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.FullName ?? user.Email ?? "Khách Hàng"),
                 new Claim(ClaimTypes.Email, user.Email ?? ""),
-                new Claim(ClaimTypes.Role, user.Role?.Name ?? "customer")
+                new Claim(ClaimTypes.Role, user.RoleName ?? "customer")
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

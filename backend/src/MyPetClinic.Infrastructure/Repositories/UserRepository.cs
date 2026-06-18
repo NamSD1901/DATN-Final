@@ -21,7 +21,7 @@ namespace MyPetClinic.Infrastructure.Repositories
         {
             return await _context.Users
                 .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+                .FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == email.ToLower());
         }
 
         public async Task<User?> GetUserByIdAsync(Guid id)

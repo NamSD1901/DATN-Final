@@ -8,10 +8,10 @@ namespace MyPetClinic.Application.Interfaces.Services
 {
     public interface ICustomerService
     {
-        Task<IEnumerable<User>> SearchCustomersAsync(string keyword);
-        Task<IEnumerable<User>> GetAllCustomersAsync();
-        Task<User?> GetCustomerDetailAsync(Guid id);
-        Task<IEnumerable<Pet>> GetPetsByCustomerAsync(Guid customerId);
+        Task<IEnumerable<UserProfileDto>> SearchCustomersAsync(string keyword);
+        Task<IEnumerable<UserProfileDto>> GetAllCustomersAsync();
+        Task<UserProfileDto?> GetCustomerDetailAsync(Guid id);
+        Task<IEnumerable<PetDto>> GetPetsByCustomerAsync(Guid customerId);
         
         /// <summary>
         /// Tạo mới khách hàng cùng với danh sách thú cưng

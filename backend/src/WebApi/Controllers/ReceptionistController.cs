@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Services;
-using MyPetClinic.Domain.Entities;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -99,7 +98,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPost("customers/{customerId}/pets")]
-        public async Task<IActionResult> AddPet(Guid customerId, [FromBody] Pet model)
+        public async Task<IActionResult> AddPet(Guid customerId, [FromBody] CreatePetDto model)
         {
             try
             {
@@ -117,7 +116,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPut("pets/{id}")]
-        public async Task<IActionResult> EditPet(long id, [FromBody] Pet model)
+        public async Task<IActionResult> EditPet(long id, [FromBody] UpdatePetDto model)
         {
             try
             {

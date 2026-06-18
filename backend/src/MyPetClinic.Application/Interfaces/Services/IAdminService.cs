@@ -14,22 +14,22 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task ToggleUserStatusAsync(string userId, ToggleStatusDto dto, string currentUserId);
 
         // Services
-        Task<IEnumerable<Service>> GetServicesAsync();
-        Task<Service> CreateServiceAsync(CreateServiceDto dto, string currentUserId);
-        Task<Service> UpdateServiceAsync(long id, CreateServiceDto dto, string currentUserId);
+        Task<IEnumerable<ServiceDto>> GetServicesAsync();
+        Task<ServiceDto> CreateServiceAsync(CreateServiceDto dto, string currentUserId);
+        Task<ServiceDto> UpdateServiceAsync(long id, CreateServiceDto dto, string currentUserId);
         Task DeleteServiceAsync(long id, string currentUserId);
 
         // Medicines
-        Task<IEnumerable<Medicine>> GetMedicinesAsync();
+        Task<IEnumerable<MedicineDto>> GetMedicinesAsync();
         Task<object> GetMedicineWarningsAsync();
-        Task<Medicine> CreateMedicineAsync(CreateMedicineDto dto, string currentUserId);
-        Task<Medicine> UpdateMedicineAsync(long id, CreateMedicineDto dto, string currentUserId);
+        Task<MedicineDto> CreateMedicineAsync(CreateMedicineDto dto, string currentUserId);
+        Task<MedicineDto> UpdateMedicineAsync(long id, CreateMedicineDto dto, string currentUserId);
         Task DeleteMedicineAsync(long id, string currentUserId);
 
         // Schedules
         Task<object> GetSchedulesAsync();
-        Task<DoctorSchedule> CreateScheduleAsync(CreateScheduleDto dto, string currentUserId);
-        Task<DoctorSchedule> UpdateScheduleAsync(long id, CreateScheduleDto dto, string currentUserId);
+        Task<DoctorScheduleDto> CreateScheduleAsync(CreateScheduleDto dto, string currentUserId);
+        Task<DoctorScheduleDto> UpdateScheduleAsync(long id, CreateScheduleDto dto, string currentUserId);
         Task DeleteScheduleAsync(long id, string currentUserId);
 
         // Config

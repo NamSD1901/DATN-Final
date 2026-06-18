@@ -22,7 +22,7 @@ namespace MyPetClinic.Infrastructure.Services
         {
             var prescriptions = await _context.Prescriptions
                 .Include(p => p.MedicalRecord)
-                    .ThenInclude(m => m.Appointment)
+                    .ThenInclude(m => m!.Appointment)
                 .Include(p => p.Doctor)
                 .Include(p => p.PrescriptionItems)
                     .ThenInclude(pi => pi.Medicine)

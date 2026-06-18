@@ -256,10 +256,10 @@ namespace MyPetClinic.Tests
             // Possible slots: 09:00, 09:30, 10:00, 10:30
             // Since 09:30 is booked, available should be: 09:00, 10:00, 10:30
             Assert.Equal(3, doctorSlots.AvailableSlots.Count());
-            Assert.Contains(targetDate.AddHours(9), doctorSlots.AvailableSlots);
-            Assert.DoesNotContain(targetDate.AddHours(9.5), doctorSlots.AvailableSlots);
-            Assert.Contains(targetDate.AddHours(10), doctorSlots.AvailableSlots);
-            Assert.Contains(targetDate.AddHours(10.5), doctorSlots.AvailableSlots);
+            Assert.Contains("09:00", doctorSlots.AvailableSlots);
+            Assert.DoesNotContain("09:30", doctorSlots.AvailableSlots);
+            Assert.Contains("10:00", doctorSlots.AvailableSlots);
+            Assert.Contains("10:30", doctorSlots.AvailableSlots);
         }
 
         [Fact]

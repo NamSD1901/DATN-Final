@@ -155,7 +155,7 @@ namespace MyPetClinic.Application.Services
                 i => i.Appointment!.Doctor!
             );
 
-            return MapToDto(invoice);
+            return invoice != null ? MapToDto(invoice) : throw new InvalidOperationException("Lỗi truy xuất hóa đơn vừa tạo.");
         }
 
         public async Task<InvoiceDto> AddInvoiceItemAsync(long invoiceId, string itemType, long itemId, int quantity)

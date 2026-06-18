@@ -1,5 +1,6 @@
 using MyPetClinic.Application.Interfaces.Repositories;
 using MyPetClinic.Application.Interfaces.Services;
+using MyPetClinic.Application.DTOs;
 using MyPetClinic.Domain.Entities;
 using System;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace MyPetClinic.Infrastructure.Services
             _userRepository = userRepository;
         }
 
-        public async Task<User> ProcessGoogleLoginAsync(string email, string fullName, string providerKey)
+        public async Task<UserProfileDto> ProcessGoogleLoginAsync(string email, string fullName, string providerKey)
         {
             // Kiểm tra xem user đã tồn tại theo email chưa
             var user = await _userRepository.GetUserByEmailAsync(email);
@@ -50,7 +51,13 @@ namespace MyPetClinic.Infrastructure.Services
                 user.Role = customerRole; 
             }
 
-            return user;
+            return new UserProfileDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                RoleName = user.Role?.Name
+            };
         }
     }
 }

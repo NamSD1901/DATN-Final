@@ -26,7 +26,9 @@ namespace MyPetClinic.Tests
 
             _context = new ApplicationDbContext(options);
             _unitOfWork = new UnitOfWork(_context);
-            _service = new ReceptionistService(_unitOfWork);
+            var mockCustomerService = new Moq.Mock<MyPetClinic.Application.Interfaces.Services.ICustomerService>();
+            var mockAppointmentService = new Moq.Mock<MyPetClinic.Application.Interfaces.Services.IAppointmentService>();
+            _service = new ReceptionistService(_unitOfWork, mockCustomerService.Object, mockAppointmentService.Object);
         }
 
         [Fact]

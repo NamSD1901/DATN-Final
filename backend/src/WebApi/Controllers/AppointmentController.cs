@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using MyPetClinic.Application.Interfaces.Services;
 using System;
 using System.Linq;
@@ -184,7 +183,7 @@ namespace MyPetClinic.Controllers
 
     public class UpdateStatusRequest
     {
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
         public string? Reason { get; set; }
     }
 

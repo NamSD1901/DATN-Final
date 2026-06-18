@@ -956,11 +956,11 @@ namespace MyPetClinic.Application.Services
                 RecordId = mr.Id,
                 AppointmentId = mr.AppointmentId,
                 PetId = pet.Id,
-                PetName = mr.PetName,
+                PetName = mr.PetName ?? string.Empty,
                 VisitDate = mr.VisitDate,
                 Diagnosis = mr.Diagnosis,
                 Treatment = mr.Treatment,
-                DoctorName = mr.DoctorName,
+                DoctorName = mr.DoctorName ?? string.Empty,
                 DoctorId = mr.DoctorId,
                 Weight = mr.Weight,
                 Temperature = mr.Temperature,
@@ -1066,7 +1066,7 @@ namespace MyPetClinic.Application.Services
                         result.Add(new DoctorAvailableSlotsDto
                         {
                             DoctorId = doctor.Id,
-                            DoctorName = doctor.FullName,
+                            DoctorName = doctor.FullName ?? string.Empty,
                             AvailableSlots = availableTimes.Select(t => t.ToString("HH:mm")).ToList()
                         });
                     }

@@ -25,30 +25,83 @@ namespace MyPetClinic.Application.Services
             return await _userRepository.GetRoleByNameAsync("customer");
         }
 
-        public async Task<IEnumerable<User>> SearchCustomersAsync(string keyword)
+        public async Task<IEnumerable<UserProfileDto>> SearchCustomersAsync(string keyword)
         {
             var role = await GetCustomerRoleAsync();
-            if (role == null) return Enumerable.Empty<User>();
+            if (role == null) return Enumerable.Empty<UserProfileDto>();
 
-            return await _userRepository.SearchUsersAsync(keyword, role.Id);
+            var users = await _userRepository.SearchUsersAsync(keyword, role.Id);
+            return users.Select(u => new UserProfileDto
+            {
+                Id = u.Id,
+                FullName = u.FullName,
+                Email = u.Email,
+                Phone = u.Phone,
+                Address = u.Address,
+                Gender = u.Gender,
+                DateOfBirth = u.DateOfBirth,
+                Avatar = u.Avatar,
+                RoleName = role.Name
+            });
         }
 
-        public async Task<IEnumerable<User>> GetAllCustomersAsync()
+        public async Task<IEnumerable<UserProfileDto>> GetAllCustomersAsync()
         {
             var role = await GetCustomerRoleAsync();
-            if (role == null) return Enumerable.Empty<User>();
+            if (role == null) return Enumerable.Empty<UserProfileDto>();
 
-            return await _userRepository.GetUsersByRoleAsync(role.Id);
+            var users = await _userRepository.GetUsersByRoleAsync(role.Id);
+            return users.Select(u => new UserProfileDto
+            {
+                Id = u.Id,
+                FullName = u.FullName,
+                Email = u.Email,
+                Phone = u.Phone,
+                Address = u.Address,
+                Gender = u.Gender,
+                DateOfBirth = u.DateOfBirth,
+                Avatar = u.Avatar,
+                RoleName = role.Name
+            });
         }
 
-        public async Task<User?> GetCustomerDetailAsync(Guid id)
+        public async Task<UserProfileDto?> GetCustomerDetailAsync(Guid id)
         {
-            return await _userRepository.GetUserByIdAsync(id);
+            var user = await _userRepository.GetUserByIdAsync(id);
+            if (user == null) return null;
+            return new UserProfileDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                Phone = user.Phone,
+                Address = user.Address,
+                Gender = user.Gender,
+                DateOfBirth = user.DateOfBirth,
+                Avatar = user.Avatar,
+                RoleName = user.Role?.Name
+            };
         }
 
-        public async Task<IEnumerable<Pet>> GetPetsByCustomerAsync(Guid customerId)
+        public async Task<IEnumerable<PetDto>> GetPetsByCustomerAsync(Guid customerId)
         {
-            return await _petRepository.GetPetsByOwnerIdAsync(customerId);
+            var pets = await _petRepository.GetPetsByOwnerIdAsync(customerId);
+            return pets.Select(p => new PetDto
+            {
+                Id = p.Id,
+                OwnerId = p.OwnerId,
+                Name = p.Name,
+                Species = p.Species,
+                Breed = p.Breed,
+                Gender = p.Gender,
+                BirthDate = p.BirthDate,
+                Weight = p.Weight,
+                Color = p.Color,
+                BloodType = p.BloodType,
+                Sterilized = p.Sterilized,
+                MicrochipCode = p.MicrochipCode,
+                AllergyNote = p.AllergyNote
+            });
         }
 
         public async Task<Guid> CreateCustomerWithPetsAsync(CustomerCreateDto dto)

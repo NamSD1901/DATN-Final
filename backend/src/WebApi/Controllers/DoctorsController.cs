@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using MyPetClinic.Application.Interfaces.Repositories;
-using System.Collections.Generic;
-using System.Linq;
+using MyPetClinic.Application.Interfaces.Services;
 using System.Threading.Tasks;
 
 namespace MyPetClinic.Controllers
@@ -10,30 +8,17 @@ namespace MyPetClinic.Controllers
     [Route("api/[controller]")]
     public class DoctorsController : ControllerBase
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IDoctorService _doctorService;
 
-        public DoctorsController(IUnitOfWork unitOfWork)
+        public DoctorsController(IDoctorService doctorService)
         {
-            _unitOfWork = unitOfWork;
+            _doctorService = doctorService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetDoctors()
         {
-            var doctors = await _unitOfWork.Users.FindWithIncludesAsync(
-                u => u.Role != null && u.Role.Name.ToLower() == "doctor" && u.IsActive == true,
-                u => u.Role!
-            );
-
-            var result = doctors.Select(d => new
-            {
-                Id = d.Id,
-                FullName = d.FullName,
-                Email = d.Email,
-                Phone = d.Phone,
-                Avatar = d.Avatar
-            });
-
+            var result = await _doctorService.GetDoctorsAsync();
             return Ok(result);
         }
     }

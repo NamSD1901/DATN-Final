@@ -50,7 +50,7 @@ namespace MyPetClinic.Infrastructure.Services
                 .GroupBy(ii => new { ii.ItemType, ii.ItemName })
                 .Select(g => new ServiceRevenueDto
                 {
-                    ServiceName = g.Key.ItemName,
+                    ServiceName = g.Key.ItemName ?? string.Empty,
                     Amount = g.Sum(ii => ii.TotalPrice),
                     Count = g.Sum(ii => ii.Quantity)
                 })

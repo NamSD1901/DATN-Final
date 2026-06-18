@@ -75,12 +75,22 @@ namespace MyPetClinic.Application.Services
             await _auditLogService.LogActionAsync(currentUserId, dto.IsActive ? "ActivateUser" : "SuspendUser", $"Trạng thái hoạt động user {userId} đặt thành {dto.IsActive}");
         }
 
-        public async Task<IEnumerable<Service>> GetServicesAsync()
+        public async Task<IEnumerable<ServiceDto>> GetServicesAsync()
         {
-            return await _unitOfWork.Services.GetAllAsync();
+            var services = await _unitOfWork.Services.GetAllAsync();
+            return services.Select(s => new ServiceDto
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Price = s.Price,
+                CategoryId = s.CategoryId,
+                DurationMinutes = s.DurationMinutes,
+                Description = s.Description,
+                IsActive = s.IsActive
+            });
         }
 
-        public async Task<Service> CreateServiceAsync(CreateServiceDto dto, string currentUserId)
+        public async Task<ServiceDto> CreateServiceAsync(CreateServiceDto dto, string currentUserId)
         {
             var service = new Service
             {
@@ -96,10 +106,19 @@ namespace MyPetClinic.Application.Services
             await _unitOfWork.SaveChangesAsync();
 
             await _auditLogService.LogActionAsync(currentUserId, "CreateService", $"Tạo dịch vụ mới: {dto.Name}");
-            return service;
+            return new ServiceDto
+            {
+                Id = service.Id,
+                Name = service.Name,
+                Price = service.Price,
+                CategoryId = service.CategoryId,
+                DurationMinutes = service.DurationMinutes,
+                Description = service.Description,
+                IsActive = service.IsActive
+            };
         }
 
-        public async Task<Service> UpdateServiceAsync(long id, CreateServiceDto dto, string currentUserId)
+        public async Task<ServiceDto> UpdateServiceAsync(long id, CreateServiceDto dto, string currentUserId)
         {
             var service = await _unitOfWork.Services.GetByIdAsync(id) ?? throw new KeyNotFoundException("Không tìm thấy dịch vụ.");
 
@@ -113,7 +132,16 @@ namespace MyPetClinic.Application.Services
             await _unitOfWork.SaveChangesAsync();
 
             await _auditLogService.LogActionAsync(currentUserId, "UpdateService", $"Cập nhật dịch vụ ID {id}: {dto.Name}");
-            return service;
+            return new ServiceDto
+            {
+                Id = service.Id,
+                Name = service.Name,
+                Price = service.Price,
+                CategoryId = service.CategoryId,
+                DurationMinutes = service.DurationMinutes,
+                Description = service.Description,
+                IsActive = service.IsActive
+            };
         }
 
         public async Task DeleteServiceAsync(long id, string currentUserId)
@@ -127,9 +155,17 @@ namespace MyPetClinic.Application.Services
             await _auditLogService.LogActionAsync(currentUserId, "DeleteService", $"Khóa dịch vụ ID {id}");
         }
 
-        public async Task<IEnumerable<Medicine>> GetMedicinesAsync()
+        public async Task<IEnumerable<MedicineDto>> GetMedicinesAsync()
         {
-            return await _unitOfWork.Medicines.GetAllAsync();
+            var medicines = await _unitOfWork.Medicines.GetAllAsync();
+            return medicines.Select(m => new MedicineDto
+            {
+                Id = m.Id,
+                Name = m.Name,
+                Unit = m.Unit ?? "",
+                StockQuantity = m.StockQuantity,
+                SellPrice = m.SellPrice ?? 0
+            });
         }
 
         public async Task<object> GetMedicineWarningsAsync()
@@ -144,7 +180,7 @@ namespace MyPetClinic.Application.Services
             return new { lowStock, expiring };
         }
 
-        public async Task<Medicine> CreateMedicineAsync(CreateMedicineDto dto, string currentUserId)
+        public async Task<MedicineDto> CreateMedicineAsync(CreateMedicineDto dto, string currentUserId)
         {
             var medicine = new Medicine
             {
@@ -161,10 +197,17 @@ namespace MyPetClinic.Application.Services
             await _unitOfWork.SaveChangesAsync();
 
             await _auditLogService.LogActionAsync(currentUserId, "CreateMedicine", $"Tạo thuốc mới: {dto.Name}");
-            return medicine;
+            return new MedicineDto
+            {
+                Id = medicine.Id,
+                Name = medicine.Name,
+                Unit = medicine.Unit ?? "",
+                StockQuantity = medicine.StockQuantity,
+                SellPrice = medicine.SellPrice ?? 0
+            };
         }
 
-        public async Task<Medicine> UpdateMedicineAsync(long id, CreateMedicineDto dto, string currentUserId)
+        public async Task<MedicineDto> UpdateMedicineAsync(long id, CreateMedicineDto dto, string currentUserId)
         {
             var medicine = await _unitOfWork.Medicines.GetByIdAsync(id) ?? throw new KeyNotFoundException("Không tìm thấy thuốc.");
 
@@ -180,7 +223,14 @@ namespace MyPetClinic.Application.Services
             await _unitOfWork.SaveChangesAsync();
 
             await _auditLogService.LogActionAsync(currentUserId, "UpdateMedicine", $"Cập nhật thuốc ID {id}: {dto.Name}");
-            return medicine;
+            return new MedicineDto
+            {
+                Id = medicine.Id,
+                Name = medicine.Name,
+                Unit = medicine.Unit ?? "",
+                StockQuantity = medicine.StockQuantity,
+                SellPrice = medicine.SellPrice ?? 0
+            };
         }
 
         public async Task DeleteMedicineAsync(long id, string currentUserId)
@@ -209,7 +259,7 @@ namespace MyPetClinic.Application.Services
             });
         }
 
-        public async Task<DoctorSchedule> CreateScheduleAsync(CreateScheduleDto dto, string currentUserId)
+        public async Task<DoctorScheduleDto> CreateScheduleAsync(CreateScheduleDto dto, string currentUserId)
         {
             var workDate = dto.WorkDate.Date;
             var startTime = TimeSpan.Parse(dto.StartTime);
@@ -242,10 +292,19 @@ namespace MyPetClinic.Application.Services
             await _unitOfWork.SaveChangesAsync();
 
             await _auditLogService.LogActionAsync(currentUserId, "CreateSchedule", $"Phân ca trực cho bác sĩ {dto.DoctorId} ngày {workDate:dd/MM/yyyy}");
-            return schedule;
+            return new DoctorScheduleDto
+            {
+                Id = schedule.Id,
+                DoctorId = schedule.DoctorId,
+                WorkDate = schedule.WorkDate,
+                StartTime = schedule.StartTime.ToString(@"hh\:mm"),
+                EndTime = schedule.EndTime.ToString(@"hh\:mm"),
+                MaxAppointments = schedule.MaxAppointments ?? 0,
+                IsAvailable = schedule.IsAvailable
+            };
         }
 
-        public async Task<DoctorSchedule> UpdateScheduleAsync(long id, CreateScheduleDto dto, string currentUserId)
+        public async Task<DoctorScheduleDto> UpdateScheduleAsync(long id, CreateScheduleDto dto, string currentUserId)
         {
             var schedule = await _unitOfWork.DoctorSchedules.GetByIdAsync(id) ?? throw new KeyNotFoundException("Không tìm thấy lịch trực.");
 
@@ -276,7 +335,16 @@ namespace MyPetClinic.Application.Services
             await _unitOfWork.SaveChangesAsync();
 
             await _auditLogService.LogActionAsync(currentUserId, "UpdateSchedule", $"Cập nhật lịch trực ID {id}");
-            return schedule;
+            return new DoctorScheduleDto
+            {
+                Id = schedule.Id,
+                DoctorId = schedule.DoctorId,
+                WorkDate = schedule.WorkDate,
+                StartTime = schedule.StartTime.ToString(@"hh\:mm"),
+                EndTime = schedule.EndTime.ToString(@"hh\:mm"),
+                MaxAppointments = schedule.MaxAppointments ?? 0,
+                IsAvailable = schedule.IsAvailable
+            };
         }
 
         public async Task DeleteScheduleAsync(long id, string currentUserId)

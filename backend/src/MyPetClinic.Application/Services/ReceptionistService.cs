@@ -416,7 +416,7 @@ namespace MyPetClinic.Application.Services
             if (appointment == null) return false;
 
             // Kiểm tra xem đây có phải là ca cấp cứu đang cần update không
-            if (!appointment.IsEmergency || appointment.Customer.FullName != "Khách Cấp Cứu")
+            if (!appointment.IsEmergency || appointment.Customer?.FullName != "Khách Cấp Cứu")
             {
                 return false; 
             }
@@ -457,7 +457,7 @@ namespace MyPetClinic.Application.Services
                 u => u.Role!
             );
 
-            return doctors.Select(u => new DoctorDto { Id = u.Id, FullName = u.FullName }).ToList();
+            return doctors.Select(u => new DoctorDto { Id = u.Id, FullName = u.FullName ?? string.Empty }).ToList();
         }
 
         public async Task<CustomerWithPetsDto?> GetCustomerWithPetsByPhoneAsync(string phone)
@@ -498,9 +498,9 @@ namespace MyPetClinic.Application.Services
 
         // --- HÀM REFACTOR TỪ CONTROLLER SANG ---
 
-        public async Task<IEnumerable<MyPetClinic.Domain.Entities.User>> GetAllCustomersAsync() => await _customerService.GetAllCustomersAsync();
+        public async Task<IEnumerable<UserProfileDto>> GetAllCustomersAsync() => await _customerService.GetAllCustomersAsync();
 
-        public async Task<IEnumerable<MyPetClinic.Domain.Entities.User>> SearchCustomersAsync(string search) => await _customerService.SearchCustomersAsync(search);
+        public async Task<IEnumerable<UserProfileDto>> SearchCustomersAsync(string search) => await _customerService.SearchCustomersAsync(search);
 
         public async Task<System.Guid> CreateCustomerWithPetsAsync(CustomerCreateDto dto) => await _customerService.CreateCustomerWithPetsAsync(dto);
 
@@ -539,13 +539,39 @@ namespace MyPetClinic.Application.Services
 
             return new PetDashboardDetailDto
             {
-                Pet = pet,
-                Customer = pet.Owner!,
+                Pet = new PetDto 
+                { 
+                    Id = pet.Id, 
+                    OwnerId = pet.OwnerId, 
+                    Name = pet.Name, 
+                    Species = pet.Species, 
+                    Breed = pet.Breed, 
+                    Gender = pet.Gender, 
+                    BirthDate = pet.BirthDate, 
+                    Weight = pet.Weight, 
+                    Color = pet.Color, 
+                    BloodType = pet.BloodType, 
+                    Sterilized = pet.Sterilized, 
+                    MicrochipCode = pet.MicrochipCode, 
+                    AllergyNote = pet.AllergyNote 
+                },
+                Customer = new UserProfileDto 
+                { 
+                    Id = pet.Owner?.Id ?? Guid.Empty, 
+                    FullName = pet.Owner?.FullName ?? string.Empty, 
+                    Email = pet.Owner?.Email ?? string.Empty, 
+                    Phone = pet.Owner?.Phone ?? string.Empty, 
+                    Address = pet.Owner?.Address, 
+                    Gender = pet.Owner?.Gender, 
+                    DateOfBirth = pet.Owner?.DateOfBirth, 
+                    Avatar = pet.Owner?.Avatar, 
+                    RoleName = pet.Owner?.Role?.Name 
+                },
                 Appointments = appointments
             };
         }
 
-        public async Task<long> AddPetAsync(System.Guid customerId, MyPetClinic.Domain.Entities.Pet model)
+        public async Task<long> AddPetAsync(System.Guid customerId, CreatePetDto model)
         {
             var customer = await _customerService.GetCustomerDetailAsync(customerId);
             if (customer == null) throw new InvalidOperationException("Không tìm thấy khách hàng");
@@ -572,7 +598,7 @@ namespace MyPetClinic.Application.Services
             return newPet.Id;
         }
 
-        public async Task UpdatePetAsync(long petId, MyPetClinic.Domain.Entities.Pet model)
+        public async Task UpdatePetAsync(long petId, UpdatePetDto model)
         {
             var pet = await _unitOfWork.Pets.GetByIdAsync(petId);
             if (pet == null) throw new InvalidOperationException("Không tìm thấy thú cưng");

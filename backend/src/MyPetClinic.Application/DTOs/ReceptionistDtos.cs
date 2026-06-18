@@ -17,8 +17,8 @@ namespace MyPetClinic.Application.DTOs
 
     public class CustomerDashboardDetailDto
     {
-        public User Customer { get; set; } = null!;
-        public IEnumerable<Pet> Pets { get; set; } = new List<Pet>();
+        public UserProfileDto Customer { get; set; } = null!;
+        public IEnumerable<PetDto> Pets { get; set; } = new List<PetDto>();
         public IEnumerable<DoctorDto> ActiveDoctors { get; set; } = new List<DoctorDto>();
         public IEnumerable<ServiceDto> Services { get; set; } = new List<ServiceDto>();
         public IEnumerable<AppointmentDetailDto> Appointments { get; set; } = new List<AppointmentDetailDto>();
@@ -30,8 +30,8 @@ namespace MyPetClinic.Application.DTOs
 
     public class PetDashboardDetailDto
     {
-        public Pet Pet { get; set; } = null!;
-        public User Customer { get; set; } = null!;
+        public PetDto Pet { get; set; } = null!;
+        public UserProfileDto Customer { get; set; } = null!;
         public IEnumerable<AppointmentDetailDto> Appointments { get; set; } = new List<AppointmentDetailDto>();
     }
 }
