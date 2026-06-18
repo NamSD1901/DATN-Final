@@ -48,11 +48,11 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpGet("available-slots")]
-        public async Task<IActionResult> GetAvailableSlots([FromQuery] DateTime date)
+        public async Task<IActionResult> GetAvailableSlots([FromQuery] DateTime date, [FromQuery] long? serviceId = null)
         {
             try
             {
-                var slots = await _appointmentService.GetAvailableSlotsAsync(date);
+                var slots = await _appointmentService.GetAvailableSlotsAsync(date, serviceId);
                 return Ok(slots);
             }
             catch (Exception ex)

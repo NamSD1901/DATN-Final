@@ -45,9 +45,28 @@ namespace MyPetClinic.Application.Services
                     if (finalDoctorId == Guid.Empty)
                     {
                         var appointmentTime = appointmentDate.TimeOfDay;
+                        var allowedDoctorEmails = new List<string>();
+                        var serviceEntity = _unitOfWork.Services.Query()
+                            .Where(s => s.Id == dto.ServiceId)
+                            .Select(s => new { CategoryName = s.Category != null ? s.Category.Name : null })
+                            .FirstOrDefault();
+
+                        if (serviceEntity != null && serviceEntity.CategoryName != null)
+                        {
+                            if (serviceEntity.CategoryName.Equals("Khám bệnh", StringComparison.OrdinalIgnoreCase))
+                            {
+                                allowedDoctorEmails.AddRange(new[] { "bacsi_test@gmail.com", "bacsituantran@gmail.com" });
+                            }
+                            else if (serviceEntity.CategoryName.Equals("Tiêm phòng", StringComparison.OrdinalIgnoreCase))
+                            {
+                                allowedDoctorEmails.AddRange(new[] { "bacsichung@gmail.com", "bacsiha@gmail.com" });
+                            }
+                        }
+
                         // 1. Lấy tất cả bác sĩ có lịch trực vào ngày hẹn mà thời gian hẹn nằm trong ca trực của họ
                         var doctorsWithSchedules = _unitOfWork.DoctorSchedules.Query()
-                            .Where(s => s.WorkDate == targetDateStart && s.IsAvailable && s.Doctor != null && s.Doctor.IsActive == true)
+                            .Where(s => s.WorkDate == targetDateStart && s.IsAvailable && s.Doctor != null && s.Doctor.IsActive == true
+                                        && (!allowedDoctorEmails.Any() || allowedDoctorEmails.Contains(s.Doctor.Email)))
                             .ToList();
 
                         List<Guid> doctorsList;
@@ -63,14 +82,15 @@ namespace MyPetClinic.Application.Services
                         {
                             // Fallback nếu không có cấu hình lịch trực cho ngày đó
                             doctorsList = _unitOfWork.Users.Query()
-                                .Where(u => u.Role != null && u.Role.Name.ToLower() == "doctor" && u.IsActive == true)
+                                .Where(u => u.Role != null && u.Role.Name.ToLower() == "doctor" && u.IsActive == true
+                                            && (!allowedDoctorEmails.Any() || allowedDoctorEmails.Contains(u.Email)))
                                 .Select(u => u.Id)
                                 .ToList();
                         }
 
                         if (!doctorsList.Any())
                         {
-                            throw new InvalidOperationException("Hệ thống hiện không có bác sĩ nào đang trực vào khung giờ này!");
+                            throw new InvalidOperationException("Hệ thống hiện không có bác sĩ nào đang trực vào khung giờ này cho dịch vụ bạn chọn!");
                         }
 
                         // 2. Lọc ra danh sách các bác sĩ THỰC SỰ RẢNH (không trùng lịch trong khoảng +/- 30 phút)
@@ -404,8 +424,8 @@ namespace MyPetClinic.Application.Services
                 {
                     Id = a.Id.ToString(),
                     Title = $"{a.Pet?.Name} - {a.Customer?.FullName}",
-                    Start = startDateTime.ToString("yyyy-MM-ddTHH:mm:ss") + "Z",
-                    End = startDateTime.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss") + "Z", // Default 30 min block
+                    Start = startDateTime.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    End = startDateTime.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss"), // Default 30 min block
                     Color = color,
                     AllDay = false,
                     ExtendedProps = new
@@ -931,18 +951,20 @@ namespace MyPetClinic.Application.Services
                 {
                     mr.Id,
                     mr.AppointmentId,
-                    PetId = mr.Appointment != null ? mr.Appointment.PetId : 0,
+                    PetId = mr.PetId,
                     PetName = (mr.Appointment != null && mr.Appointment.Pet != null) ? mr.Appointment.Pet.Name : string.Empty,
                     VisitDate = mr.CreatedAt,
+                    RecordType = mr.RecordType,
+                    MedicalHistory = mr.MedicalHistory ?? string.Empty,
                     Diagnosis = mr.Diagnosis ?? string.Empty,
-                    Treatment = mr.TreatmentPlan ?? string.Empty,
+                    TreatmentPlan = mr.TreatmentPlan ?? string.Empty,
                     DoctorName = mr.Doctor != null ? mr.Doctor.FullName : string.Empty,
                     DoctorId = mr.DoctorId.ToString(),
                     mr.Weight,
                     mr.Temperature,
-                    mr.HeartRate,
-                    Symptoms = mr.Symptoms ?? string.Empty,
-                    Note = mr.Note ?? string.Empty,
+                    ClinicalSigns = mr.ClinicalSigns ?? string.Empty,
+                    DoctorNotes = mr.DoctorNotes ?? string.Empty,
+                    mr.FollowUpDate,
                     PrescribedMedicines = mr.Prescriptions
                         .SelectMany(p => p.PrescriptionItems)
                         .Where(pi => pi.Medicine != null)
@@ -958,28 +980,49 @@ namespace MyPetClinic.Application.Services
                 PetId = pet.Id,
                 PetName = mr.PetName ?? string.Empty,
                 VisitDate = mr.VisitDate,
+                RecordType = mr.RecordType,
+                MedicalHistory = mr.MedicalHistory,
                 Diagnosis = mr.Diagnosis,
-                Treatment = mr.Treatment,
+                TreatmentPlan = mr.TreatmentPlan,
                 DoctorName = mr.DoctorName ?? string.Empty,
                 DoctorId = mr.DoctorId,
                 Weight = mr.Weight,
                 Temperature = mr.Temperature,
-                HeartRate = mr.HeartRate,
-                Symptoms = mr.Symptoms,
-                Note = mr.Note,
+                ClinicalSigns = mr.ClinicalSigns,
+                DoctorNotes = mr.DoctorNotes,
+                FollowUpDate = mr.FollowUpDate,
                 PrescribedMedicines = mr.PrescribedMedicines
             });
 
             return await Task.FromResult(mapped);
         }
 
-        public async Task<IEnumerable<DoctorAvailableSlotsDto>> GetAvailableSlotsAsync(DateTime date)
+        public async Task<IEnumerable<DoctorAvailableSlotsDto>> GetAvailableSlotsAsync(DateTime date, long? serviceId = null)
         {
             var targetDate = DateTime.SpecifyKind(date.Date, DateTimeKind.Utc);
             
+            var allowedDoctorEmails = new List<string>();
+            if (serviceId.HasValue)
+            {
+                var service = await _unitOfWork.Services.FindWithIncludesAsync(s => s.Id == serviceId.Value, s => s.Category!);
+                var firstService = service.FirstOrDefault();
+                if (firstService != null && firstService.Category != null)
+                {
+                    if (firstService.Category.Name.Equals("Khám bệnh", StringComparison.OrdinalIgnoreCase))
+                    {
+                        allowedDoctorEmails.AddRange(new[] { "bacsi_test@gmail.com", "bacsituantran@gmail.com" });
+                    }
+                    else if (firstService.Category.Name.Equals("Tiêm phòng", StringComparison.OrdinalIgnoreCase))
+                    {
+                        allowedDoctorEmails.AddRange(new[] { "bacsichung@gmail.com", "bacsiha@gmail.com" });
+                    }
+                }
+            }
+
             // 1. Lấy tất cả ca trực của bác sĩ còn hoạt động vào ngày chỉ định
             var schedules = await _unitOfWork.DoctorSchedules.FindWithIncludesAsync(
-                s => s.WorkDate == targetDate && s.IsAvailable && s.Doctor != null && s.Doctor.IsActive == true,
+                s => s.WorkDate == targetDate && s.IsAvailable && s.Doctor != null && s.Doctor.IsActive == true
+                     && (!allowedDoctorEmails.Any() || allowedDoctorEmails.Contains(s.Doctor.Email)),
                 s => s.Doctor!
             );
 
@@ -1013,6 +1056,7 @@ namespace MyPetClinic.Application.Services
                 // ta tự động lấy toàn bộ các bác sĩ đang hoạt động và tạo ca trực in-memory dựa trên cấu hình slot_config.json
                 var doctors = await _unitOfWork.Users.FindAsync(
                     u => u.Role != null && u.Role.Name.ToLower() == "doctor" && u.IsActive == true
+                         && (!allowedDoctorEmails.Any() || allowedDoctorEmails.Contains(u.Email))
                 );
 
                 if (doctors.Any())

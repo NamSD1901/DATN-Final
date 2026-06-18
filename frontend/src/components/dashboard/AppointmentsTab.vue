@@ -453,11 +453,8 @@
                 </select>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-bold text-dark">Bác sĩ chỉ định *</label>
-                <select v-model="formPayload.doctorId" class="form-select border-primary" required>
-                  <option value="">-- Chọn Bác sĩ phụ trách --</option>
-                  <option v-for="doc in doctorList" :key="doc.id" :value="doc.id">Bs. {{ doc.fullName }}</option>
-                </select>
+                <label class="form-label fw-bold text-dark">Bác sĩ phụ trách</label>
+                <input type="text" class="form-control border-primary bg-light text-muted" readonly value="Hệ thống tự động phân công theo dịch vụ" />
               </div>
             </div>
 
@@ -472,17 +469,82 @@
                   </div>
                   <div class="col-md-8 ps-md-3">
                     <label class="form-label fw-bold small text-muted">Khung giờ làm việc còn trống *</label>
-                    <div class="d-flex flex-wrap gap-2">
-                      <button 
-                        type="button" 
-                        v-for="time in workingHours" 
-                        :key="time"
-                        class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold time-slot-btn"
-                        :class="formPayload.timeOnly === time ? 'btn-primary text-white' : 'btn-outline-primary bg-white'"
-                        @click="formPayload.timeOnly = time"
-                      >
-                        {{ time }}
-                      </button>
+                    <div v-if="fetchingSlots" class="d-flex align-items-center gap-2 text-muted small mt-2">
+                      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                      Đang tải khung giờ trống...
+                    </div>
+                    <div v-else-if="slotFetchError" class="text-danger small mt-2">{{ slotFetchError }}</div>
+                    <div v-else-if="availableTimeSlots.length === 0" class="text-warning small fw-bold mt-2 d-flex align-items-center gap-1">
+                      <i class="bi bi-exclamation-circle"></i> Hiện không có khung giờ làm việc nào còn trống. Bạn vui lòng chọn ngày khác!
+                    </div>
+                    <div v-else class="d-flex flex-column gap-3 mt-2">
+                      <!-- Morning Slots -->
+                      <div>
+                        <h6 class="text-muted fw-bold mb-2 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-high me-1"></i> BUỔI SÁNG</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                          <button
+                            v-for="slot in displayMorningSlots"
+                            :key="slot.time"
+                            type="button"
+                            class="time-slot-btn"
+                            :class="{
+                              'slot-selected': formPayload.timeOnly === slot.time,
+                              'slot-past': slot.isPast,
+                              'slot-too-soon': slot.isTooSoon,
+                              'slot-booked': slot.isBooked,
+                              'slot-available': slot.isAvailable
+                            }"
+                            :disabled="!slot.isAvailable"
+                            :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần đặt trước ít nhất 1 tiếng' : (slot.isBooked ? 'Khung giờ này đã được đặt' : ''))"
+                            @click="slot.isAvailable && (formPayload.timeOnly = slot.time)"
+                          >
+                            <span class="slot-time-text">{{ slot.time }}</span>
+                            <i v-if="formPayload.timeOnly === slot.time" class="bi bi-check-circle-fill ms-1"></i>
+                            <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                            <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                            <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <!-- Afternoon Slots -->
+                      <div>
+                        <h6 class="text-muted fw-bold mb-2 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-low me-1"></i> BUỔI CHIỀU</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                          <button
+                            v-for="slot in displayAfternoonSlots"
+                            :key="slot.time"
+                            type="button"
+                            class="time-slot-btn"
+                            :class="{
+                              'slot-selected': formPayload.timeOnly === slot.time,
+                              'slot-past': slot.isPast,
+                              'slot-too-soon': slot.isTooSoon,
+                              'slot-booked': slot.isBooked,
+                              'slot-available': slot.isAvailable
+                            }"
+                            :disabled="!slot.isAvailable"
+                            :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần đặt trước ít nhất 1 tiếng' : (slot.isBooked ? 'Khung giờ này đã được đặt' : ''))"
+                            @click="slot.isAvailable && (formPayload.timeOnly = slot.time)"
+                          >
+                            <span class="slot-time-text">{{ slot.time }}</span>
+                            <i v-if="formPayload.timeOnly === slot.time" class="bi bi-check-circle-fill ms-1"></i>
+                            <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                            <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                            <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="mt-3 pt-2 border-top">
+                        <p class="small text-muted mb-2 fw-semibold"><i class="bi bi-info-circle me-1"></i> Chú giải màu khung giờ:</p>
+                        <div class="d-flex flex-wrap gap-2">
+                          <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
+                          <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#f8f9fa;border:1.5px solid #e9ecef;display:inline-block"></span> <span class="text-muted">Đã qua</span></span>
+                          <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff8ec;border:1.5px solid #ffc107;display:inline-block"></span> <span class="text-muted">Quá gần</span></span>
+                          <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã đặt</span></span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -605,15 +667,8 @@
               </button>
             </template>
 
-            <!-- Confirmed actions -->
-            <template v-if="selectedDetail.status === 'confirmed'">
-              <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" @click="updateStatus(selectedDetail.id, 'waiting')">
-                <i class="bi bi-person-workspace me-1"></i> Check-in hàng chờ khám
-              </button>
-              <button class="btn btn-outline-danger rounded-pill px-4" @click="updateStatus(selectedDetail.id, 'cancelled')">
-                <i class="bi bi-x-circle me-1"></i> Hủy lịch hẹn
-              </button>
-            </template>
+            <!-- Confirmed: no actions in detail modal -->
+
 
             <!-- Waiting actions -->
             <template v-if="selectedDetail.status === 'waiting'">
@@ -797,7 +852,7 @@
               <div class="card-body p-3">
                 <div class="d-flex justify-content-between mb-2">
                   <span class="text-muted small">Thời gian hẹn:</span>
-                  <span class="fw-bold text-dark">{{ formatTimeOnly(previewAppointment.appointmentDate) }} - {{ formatDate(previewAppointment.appointmentDate) }}</span>
+                  <span class="fw-bold text-dark">{{ previewAppointment.startTime ? previewAppointment.startTime.substring(0, 5) : formatTimeOnly(previewAppointment.appointmentDate) }} - {{ formatDate(previewAppointment.appointmentDate) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                   <span class="text-muted small">Khách hàng:</span>
@@ -855,7 +910,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed } from 'vue';
+import { ref, onMounted, nextTick, computed, watch } from 'vue';
 import api from '../../services/api';
 import { Html5Qrcode } from 'html5-qrcode';
 
@@ -958,6 +1013,97 @@ const workingHours = [
   "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"
 ];
 
+const fetchingSlots = ref(false);
+const slotFetchError = ref('');
+const availableTimeSlots = ref<string[]>([]);
+
+const fetchAvailableSlots = async () => {
+  if (!formPayload.value.dateOnly) {
+    availableTimeSlots.value = [];
+    return;
+  }
+  
+  fetchingSlots.value = true;
+  slotFetchError.value = '';
+  try {
+    const res = await api.get('/Appointment/available-slots', {
+      params: { 
+        date: formPayload.value.dateOnly,
+        serviceId: formPayload.value.serviceId || null
+      }
+    });
+    const allSlots: string[] = [];
+    res.data.forEach((doc: any) => {
+      doc.availableSlots.forEach((slot: string) => {
+        if (!allSlots.includes(slot)) {
+          allSlots.push(slot);
+        }
+      });
+    });
+    availableTimeSlots.value = allSlots.sort((a, b) => a.localeCompare(b));
+  } catch (err: any) {
+    slotFetchError.value = err?.response?.data?.message || 'Lỗi tải khung giờ trống';
+    availableTimeSlots.value = [];
+  } finally {
+    fetchingSlots.value = false;
+  }
+};
+
+const isSlotAvailable = (time: string) => {
+  if (!formPayload.value.dateOnly) return false;
+  const now = new Date();
+  const cutoff = now.getTime() + 2 * 60 * 60 * 1000; // 2 hours buffer
+  const [year, month, day] = formPayload.value.dateOnly.split('-');
+  const [hour, minute] = time.split(':');
+  const slotDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0);
+  const slotMs = slotDate.getTime();
+  const isPastOrTooSoon = slotMs < cutoff;
+  
+  return !isPastOrTooSoon && availableTimeSlots.value.includes(time);
+};
+
+watch([() => formPayload.value.dateOnly, () => formPayload.value.serviceId], () => {
+  formPayload.value.timeOnly = '';
+  fetchAvailableSlots();
+}, { immediate: true });
+
+interface SlotDisplay {
+  time: string;
+  slotStr: string;
+  isAvailable: boolean;
+  isPast: boolean;
+  isBooked: boolean;
+  isTooSoon: boolean;
+}
+
+const masterMorningTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00'];
+const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];
+
+const BOOKING_BUFFER_MS = 15 * 60 * 1000; // 15 phút
+
+const buildSlots = (times: string[]): SlotDisplay[] => {
+  if (!formPayload.value.dateOnly) return [];
+  const now = Date.now();
+  const cutoff = now + BOOKING_BUFFER_MS;
+  const [year, month, day] = formPayload.value.dateOnly.split('-');
+  return times.map(time => {
+    const slotStr = `${formPayload.value.dateOnly}T${time}:00`;
+    const [hour, minute] = time.split(':');
+    const slotDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0);
+    const slotMs = slotDate.getTime();
+    const isPast = slotMs < now;
+    const isTooSoon = !isPast && slotMs < cutoff;
+    const isAvailableFromApi = availableTimeSlots.value.includes(time);
+    const isBooked = !isPast && !isTooSoon && !isAvailableFromApi;
+    const isAvailable = !isPast && !isTooSoon && isAvailableFromApi;
+    return { time, slotStr, isAvailable, isPast, isBooked, isTooSoon };
+  });
+};
+
+const displayMorningSlots = computed<SlotDisplay[]>(() => buildSlots(masterMorningTimes));
+const displayAfternoonSlots = computed<SlotDisplay[]>(() => buildSlots(masterAfternoonTimes));
+
+
 // Flow board groupings
 const flowWaiting = ref<any[]>([]);
 const flowInProgress = ref<any[]>([]);
@@ -985,7 +1131,24 @@ const loadDoctors = async () => {
 const loadServices = async () => {
   try {
     const res = await api.get('/appointment/services');
-    serviceList.value = res.data;
+    const khamSvc = res.data.find((s: any) => s.name.toLowerCase().includes('khám lâm sàng tổng quát'));
+    const tiemSvc = res.data.find((s: any) => s.name.toLowerCase().includes('tiêm vaccine tổng hợp (chó)'));
+    const mappedServices = [];
+    if (khamSvc) {
+      mappedServices.push({
+        ...khamSvc,
+        name: 'Khám bệnh',
+        description: 'Kiểm tra sức khỏe tổng quát, chẩn đoán và tư vấn điều trị cho thú cưng của bạn.'
+      });
+    }
+    if (tiemSvc) {
+      mappedServices.push({
+        ...tiemSvc,
+        name: 'Tiêm phòng',
+        description: 'Tiêm các loại vaccine cần thiết định kỳ để phòng ngừa bệnh truyền nhiễm cho thú cưng.'
+      });
+    }
+    serviceList.value = mappedServices.length > 0 ? mappedServices : res.data;
   } catch (err) {
     console.error(err);
   }
@@ -1194,15 +1357,15 @@ const submitCreateAppointment = async () => {
 
   try {
     if (createAptType.value === 'old') {
-      const payload = {
+      const payload: any = {
         customerId: oldCustData.value.customer.id,
         petId: formPayload.value.petId,
-        doctorId: formPayload.value.doctorId,
         serviceId: formPayload.value.serviceId,
         appointmentDate: fullDateTime,
         symptom: formPayload.value.symptom,
         note: formPayload.value.note
       };
+      if (formPayload.value.doctorId) payload.doctorId = formPayload.value.doctorId;
       const res = await api.post('/appointment', payload);
       if (res.data.success) {
         showToast('Tạo lịch hẹn thành công!', 'success');
@@ -1210,18 +1373,18 @@ const submitCreateAppointment = async () => {
         await loadAllData();
       }
     } else {
-      const payload = {
+      const payload: any = {
         customerName: newCustForm.value.customerName,
         customerPhone: newCustForm.value.customerPhone,
         petName: newCustForm.value.petName,
         species: newCustForm.value.species,
         petWeight: newCustForm.value.petWeight,
-        doctorId: formPayload.value.doctorId,
         serviceId: formPayload.value.serviceId,
         appointmentDate: fullDateTime,
         symptom: formPayload.value.symptom,
         note: formPayload.value.note
       };
+      if (formPayload.value.doctorId) payload.doctorId = formPayload.value.doctorId;
       const res = await api.post('/appointment/with-new-customer', payload);
       if (res.data.success) {
         showToast('Đăng ký khách mới và tạo lịch hẹn thành công!', 'success');
@@ -1529,8 +1692,85 @@ export default {
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
 }
 
+/* ===== Time Slot Buttons ===== */
 .time-slot-btn {
-  transition: all 0.2s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 calc(25% - 0.5rem);
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  gap: 2px;
+  min-width: 72px;
+  line-height: 1.2;
+}
+
+/* Available slot */
+.time-slot-btn.slot-available {
+  background: #fff;
+  border-color: #dee2e6;
+  color: #495057;
+}
+.time-slot-btn.slot-available:hover {
+  border-color: #0d6efd;
+  color: #0d6efd;
+  background: #f0f6ff;
+  box-shadow: 0 2px 8px rgba(13,110,253,0.12);
+}
+
+/* Selected slot */
+.time-slot-btn.slot-selected {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+  box-shadow: 0 4px 12px rgba(13,110,253,0.3);
+}
+
+/* Past slot — grey, italic, strikethrough */
+.time-slot-btn.slot-past {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+  color: #adb5bd;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.time-slot-btn.slot-past .slot-time-text {
+  text-decoration: line-through;
+  font-style: italic;
+}
+
+/* Too soon — amber/orange warning */
+.time-slot-btn.slot-too-soon {
+  background: #fff8ec;
+  border-color: #ffc107;
+  color: #b45309;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Booked by someone else — red/rose */
+.time-slot-btn.slot-booked {
+  background: #fff5f5;
+  border-color: #fca5a5;
+  color: #dc3545;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Small label badge below the time text */
+.slot-badge-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
 /* Modals overlays */

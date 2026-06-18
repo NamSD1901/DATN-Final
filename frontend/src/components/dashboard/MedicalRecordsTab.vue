@@ -8,13 +8,21 @@
             <div>
               <h5 class="fw-bold text-dark mb-1">
                 <i class="bi bi-clipboard2-pulse-fill text-warning me-2"></i>
-                Khám Lâm Sàng & Kê Đơn Thuốc
+                Hồ Sơ Bệnh Án Chuẩn S.O.A.P
               </h5>
-              <p class="text-muted mb-0 small">Bác sĩ hãy nhập chẩn đoán chi tiết và hướng điều trị cho bệnh nhi.</p>
+              <p class="text-muted mb-0 small">Bác sĩ hãy nhập chẩn đoán chi tiết và hướng điều trị theo từng bước.</p>
             </div>
-            <span v-if="activePatient.petName" class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold text-uppercase shadow-sm">
-              {{ activePatient.petName }} (Chủ: {{ activePatient.customerName }})
-            </span>
+            <div class="text-end">
+              <span v-if="activePatient.petName" class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold text-uppercase shadow-sm mb-2 d-block">
+                {{ activePatient.petName }} (Chủ: {{ activePatient.customerName }})
+              </span>
+              <div class="btn-group btn-group-sm" role="group">
+                <input type="radio" class="btn-check" name="recordType" id="typeConsultation" value="Consultation" v-model="form.recordType">
+                <label class="btn btn-outline-warning text-dark fw-bold" for="typeConsultation">Khám Bệnh</label>
+                <input type="radio" class="btn-check" name="recordType" id="typeVaccination" value="Vaccination" v-model="form.recordType">
+                <label class="btn btn-outline-warning text-dark fw-bold" for="typeVaccination">Tiêm Phòng</label>
+              </div>
+            </div>
           </div>
 
           <!-- Active Case Alert / Empty Warning -->
@@ -29,56 +37,104 @@
 
           <!-- Main Diagnostic Form -->
           <form v-else @submit.prevent="submitForm">
-            <!-- Vital Signs Grid -->
-            <div class="row g-3 mb-4">
-              <div class="col-md-4">
-                <label class="form-label small fw-bold text-secondary">Cân nặng (kg)</label>
-                <div class="input-group">
-                  <input type="number" step="0.1" v-model="form.weight" class="form-control rounded-start-3" placeholder="Ví dụ: 5.2">
-                  <span class="input-group-text bg-light text-muted rounded-end-3">kg</span>
+            <div class="accordion mb-4 custom-soap-accordion" id="soapAccordion">
+              
+              <!-- S: Subjective -->
+              <div class="accordion-item border-0 shadow-sm rounded-4 mb-3 overflow-hidden bg-white">
+                <h2 class="accordion-header" id="headingS">
+                  <button class="accordion-button fw-bold text-dark bg-light rounded-top-4" :class="{ 'collapsed': activeAccordion !== 'S' }" type="button" @click="toggleAccordion('S')">
+                    <span class="soap-badge s-badge me-2">S</span> Subjective (Tiền sử & Lời khai)
+                  </button>
+                </h2>
+                <div id="collapseS" class="accordion-collapse collapse" :class="{ 'show': activeAccordion === 'S' }">
+                  <div class="accordion-body border-top">
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold text-secondary">Bệnh sử / Lời khai chủ nuôi <span class="text-danger">*</span></label>
+                      <textarea v-model="form.medicalHistory" class="form-control rounded-3" rows="3" placeholder="Ví dụ: Bé bỏ ăn 2 ngày nay, nôn mửa buổi sáng..." required></textarea>
+                      <div class="form-text small text-muted">Ghi nhận thông tin chủ quan từ chủ nuôi trước khi tiến hành khám.</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="col-md-4">
-                <label class="form-label small fw-bold text-secondary">Nhiệt độ (°C)</label>
-                <div class="input-group">
-                  <input type="number" step="0.1" v-model="form.temperature" class="form-control rounded-start-3" placeholder="Ví dụ: 38.5">
-                  <span class="input-group-text bg-light text-muted rounded-end-3">°C</span>
+
+              <!-- O: Objective -->
+              <div class="accordion-item border-0 shadow-sm rounded-4 mb-3 overflow-hidden bg-white">
+                <h2 class="accordion-header" id="headingO">
+                  <button class="accordion-button fw-bold text-dark bg-light" :class="{ 'collapsed': activeAccordion !== 'O' }" type="button" @click="toggleAccordion('O')">
+                    <span class="soap-badge o-badge me-2">O</span> Objective (Khám lâm sàng)
+                  </button>
+                </h2>
+                <div id="collapseO" class="accordion-collapse collapse" :class="{ 'show': activeAccordion === 'O' }">
+                  <div class="accordion-body border-top">
+                    <!-- Vital Signs Grid -->
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-4">
+                        <label class="form-label small fw-bold text-secondary">Cân nặng (kg) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <input type="number" step="0.1" v-model="form.weight" class="form-control rounded-start-3" placeholder="Ví dụ: 5.2" required>
+                          <span class="input-group-text bg-light text-muted rounded-end-3">kg</span>
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label small fw-bold text-secondary">Nhiệt độ (°C) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                          <input type="number" step="0.1" v-model="form.temperature" class="form-control rounded-start-3" placeholder="Ví dụ: 38.5" required>
+                          <span class="input-group-text bg-light text-muted rounded-end-3">°C</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold text-secondary">Dấu hiệu lâm sàng (Triệu chứng) <span class="text-danger">*</span></label>
+                      <textarea v-model="form.clinicalSigns" class="form-control rounded-3" rows="2" placeholder="Ví dụ: Nhịp tim 120bpm, lông xơ xác, niêm mạc nhợt nhạt..." required></textarea>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="col-md-4">
-                <label class="form-label small fw-bold text-secondary">Nhịp tim (bpm)</label>
-                <div class="input-group">
-                  <input type="number" v-model="form.heartRate" class="form-control rounded-start-3" placeholder="Ví dụ: 100">
-                  <span class="input-group-text bg-light text-muted rounded-end-3">bpm</span>
+
+              <!-- A: Assessment -->
+              <div class="accordion-item border-0 shadow-sm rounded-4 mb-3 overflow-hidden bg-white">
+                <h2 class="accordion-header" id="headingA">
+                  <button class="accordion-button fw-bold text-dark bg-light" :class="{ 'collapsed': activeAccordion !== 'A' }" type="button" @click="toggleAccordion('A')">
+                    <span class="soap-badge a-badge me-2">A</span> Assessment (Chẩn đoán)
+                  </button>
+                </h2>
+                <div id="collapseA" class="accordion-collapse collapse" :class="{ 'show': activeAccordion === 'A' }">
+                  <div class="accordion-body border-top">
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold text-secondary">Chẩn đoán bệnh <span class="text-danger">*</span></label>
+                      <input type="text" v-model="form.diagnosis" class="form-control rounded-3" placeholder="Ví dụ: Viêm phế quản cấp tính / Khỏe mạnh (nếu tiêm phòng)" required>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Symptoms & Diagnosis -->
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-secondary">Triệu chứng lâm sàng</label>
-              <textarea v-model="form.symptoms" class="form-control rounded-3" rows="2" placeholder="Ví dụ: Ho khan, sốt nhẹ, mệt mỏi, bỏ ăn..."></textarea>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-secondary">Chẩn đoán bệnh <span class="text-danger">*</span></label>
-              <input type="text" v-model="form.diagnosis" class="form-control rounded-3" placeholder="Ví dụ: Viêm phế quản cấp tính" required>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-secondary">Phương pháp điều trị / Hướng xử lý <span class="text-danger">*</span></label>
-              <textarea v-model="form.treatmentPlan" class="form-control rounded-3" rows="3" placeholder="Ví dụ: Kê đơn kháng sinh kháng viêm, xông khí dung, kiêng tắm lạnh..." required></textarea>
-            </div>
-
-            <div class="row g-3 mb-4">
-              <div class="col-md-6">
-                <label class="form-label small fw-bold text-secondary">Ngày hẹn tái khám (nếu có)</label>
-                <input type="date" v-model="form.followUpDate" class="form-control rounded-3">
+              <!-- P: Plan -->
+              <div class="accordion-item border-0 shadow-sm rounded-4 mb-3 overflow-hidden bg-white">
+                <h2 class="accordion-header" id="headingP">
+                  <button class="accordion-button fw-bold text-dark bg-light" :class="{ 'collapsed': activeAccordion !== 'P' }" type="button" @click="toggleAccordion('P')">
+                    <span class="soap-badge p-badge me-2">P</span> Plan (Kế hoạch điều trị)
+                  </button>
+                </h2>
+                <div id="collapseP" class="accordion-collapse collapse" :class="{ 'show': activeAccordion === 'P' }">
+                  <div class="accordion-body border-top">
+                    <div class="mb-3">
+                      <label class="form-label small fw-bold text-secondary">Phương pháp điều trị / Hướng xử lý <span class="text-danger">*</span></label>
+                      <textarea v-model="form.treatmentPlan" class="form-control rounded-3" rows="3" placeholder="Ví dụ: Kê đơn kháng sinh, tiêm vắc xin dại, dặn dò kiêng nước..." required></textarea>
+                    </div>
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label small fw-bold text-secondary">Ngày hẹn tái khám (nếu có)</label>
+                        <input type="date" v-model="form.followUpDate" class="form-control rounded-3">
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label small fw-bold text-secondary">Ghi chú bác sĩ (Nội bộ)</label>
+                        <input type="text" v-model="form.doctorNotes" class="form-control rounded-3" placeholder="Ví dụ: Cần theo dõi thêm phản ứng sau tiêm...">
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label small fw-bold text-secondary">Ghi chú thêm</label>
-                <input type="text" v-model="form.note" class="form-control rounded-3" placeholder="Dặn dò thêm chủ nuôi...">
-              </div>
+
             </div>
 
             <!-- Prescription Area -->
@@ -252,6 +308,16 @@ const emit = defineEmits<{
   (e: 'switch-tab', tab: string): void;
 }>();
 
+const activeAccordion = ref('S');
+
+const toggleAccordion = (section: string) => {
+  if (activeAccordion.value === section) {
+    activeAccordion.value = ''; // Collapse if clicking the same
+  } else {
+    activeAccordion.value = section; // Open the new one
+  }
+};
+
 // Active patient details loaded from LocalStorage
 const activePatient = ref({
   appointmentId: '',
@@ -263,13 +329,15 @@ const activePatient = ref({
 // Form states
 const form = ref({
   appointmentId: 0,
+  petId: 0,
+  recordType: 'Consultation',
+  medicalHistory: '',
   weight: null as number | null,
   temperature: null as number | null,
-  heartRate: null as number | null,
-  symptoms: '',
+  clinicalSigns: '',
   diagnosis: '',
   treatmentPlan: '',
-  note: '',
+  doctorNotes: '',
   followUpDate: '',
   prescriptions: [] as Array<{
     medicineId: number | null;
@@ -312,6 +380,7 @@ onMounted(async () => {
       customerName: customerName || 'Khách vãng lai'
     };
     form.value.appointmentId = parseInt(appointmentId, 10);
+    form.value.petId = parseInt(petId, 10);
     
     // Load Medical history of the pet
     fetchPetHistory(parseInt(petId, 10));
@@ -389,13 +458,15 @@ const submitForm = async () => {
   try {
     const payload = {
       appointmentId: form.value.appointmentId,
+      petId: form.value.petId,
+      recordType: form.value.recordType,
+      medicalHistory: form.value.medicalHistory || undefined,
       weight: form.value.weight,
       temperature: form.value.temperature,
-      heartRate: form.value.heartRate,
-      symptoms: form.value.symptoms || undefined,
+      clinicalSigns: form.value.clinicalSigns,
       diagnosis: form.value.diagnosis,
       treatmentPlan: form.value.treatmentPlan,
-      note: form.value.note || undefined,
+      doctorNotes: form.value.doctorNotes || undefined,
       followUpDate: form.value.followUpDate ? new Date(form.value.followUpDate).toISOString() : undefined,
       prescriptions: form.value.prescriptions
         .filter(p => p.medicineId !== null)
@@ -544,4 +615,33 @@ const formatDate = (dateStr: string): string => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.02);
   border: 1px solid #f1f5f9;
 }
+
+/* SOAP Accordion Styles */
+.custom-soap-accordion .accordion-item {
+  border: 1px solid #e9ecef !important;
+}
+.custom-soap-accordion .accordion-button {
+  background-color: #fdfaf0 !important;
+  color: #333 !important;
+}
+.custom-soap-accordion .accordion-button:not(.collapsed) {
+  background-color: #fff8e1 !important;
+  color: #000 !important;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,.125);
+}
+.soap-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.s-badge { background-color: #3b82f6; }
+.o-badge { background-color: #10b981; }
+.a-badge { background-color: #f59e0b; }
+.p-badge { background-color: #ef4444; }
 </style>

@@ -8,5 +8,6 @@ namespace MyPetClinic.Application.Interfaces.Services
     {
         Task<object> GetAvailableVaccinesAsync();
         Task<object> ValidateVaccineAsync(Guid customerId, long petId, long vaccineId, DateTime targetDate);
+        Task<long> BookAppointmentAsync(MyPetClinic.Application.DTOs.CustomerBookingDto dto, Guid customerId);
     }
 }

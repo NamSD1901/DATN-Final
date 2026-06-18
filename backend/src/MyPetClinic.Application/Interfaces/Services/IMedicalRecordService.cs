@@ -9,5 +9,7 @@ namespace MyPetClinic.Application.Interfaces.Services
     {
         Task<long> CreateMedicalRecordAsync(CreateMedicalRecordDto dto, Guid doctorId);
         Task<IEnumerable<MedicalRecordDto>> GetPetMedicalHistoryAsync(long petId);
+        Task<MedicalRecordDto?> GetMedicalRecordByAppointmentAsync(long appointmentId);
+        Task UpdateMedicalRecordAsync(long id, UpdateMedicalRecordDto dto, Guid doctorId);
     }
 }

@@ -106,20 +106,83 @@ namespace MyPetClinic.Infrastructure.Persistence
                 });
             }
 
-            if (doctorRole != null && !await context.Users.AnyAsync(u => u.Email == "bacsi_test@gmail.com"))
+            var newDoctorEmails = new[] { "bacsilong@gmail.com", "bacsituantran@gmail.com", "bacsichung@gmail.com", "bacsiha@gmail.com" };
+
+            if (doctorRole != null)
             {
-                context.Users.Add(new User
+                // Soft delete old doctors to keep data safe (Use Raw SQL for guaranteed execution on Postgres)
+                var sql = "UPDATE users SET is_active = false, deleted_at = CURRENT_TIMESTAMP WHERE role_id = {0} AND email NOT IN ('bacsi_test@gmail.com', 'bacsituantran@gmail.com', 'bacsichung@gmail.com', 'bacsiha@gmail.com')";
+                await context.Database.ExecuteSqlRawAsync(sql, doctorRole.Id);
+
+                // Restore bacsi_test@gmail.com and update its display name & role to doctor
+                var sqlRestore = "UPDATE users SET is_active = true, deleted_at = NULL, full_name = 'BS. Tr\u1ea7n Th\u0103ng Long', role_id = {0} WHERE email = 'bacsi_test@gmail.com'";
+                await context.Database.ExecuteSqlRawAsync(sqlRestore, doctorRole.Id);
+
+                // bacsi_test@gmail.com được dùng thay cho bacsilong, đã restore bằng Raw SQL bên trên
+                // Chỉ tạo mới nếu không có cả 2 email này trong DB
+                if (!await context.Users.AnyAsync(u => u.Email == "bacsi_test@gmail.com" || u.Email == "bacsilong@gmail.com"))
                 {
-                    Id = Guid.NewGuid(),
-                    RoleId = doctorRole.Id,
-                    FullName = "BS. Trần Văn A",
-                    Email = "bacsi_test@gmail.com",
-                    Phone = "0966666666",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
-                    Gender = 1,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                });
+                    context.Users.Add(new User
+                    {
+                        Id = Guid.NewGuid(),
+                        RoleId = doctorRole.Id,
+                        FullName = "BS. Trần Thăng Long",
+                        Email = "bacsi_test@gmail.com",
+                        Phone = "0911111111",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                        Gender = 1,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+
+                if (!await context.Users.AnyAsync(u => u.Email == "bacsituantran@gmail.com"))
+                {
+                    context.Users.Add(new User
+                    {
+                        Id = Guid.NewGuid(),
+                        RoleId = doctorRole.Id,
+                        FullName = "BS. Trần Văn Tuấn",
+                        Email = "bacsituantran@gmail.com",
+                        Phone = "0922222222",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                        Gender = 1,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+
+                if (!await context.Users.AnyAsync(u => u.Email == "bacsichung@gmail.com"))
+                {
+                    context.Users.Add(new User
+                    {
+                        Id = Guid.NewGuid(),
+                        RoleId = doctorRole.Id,
+                        FullName = "BS. Lương Thị Chung",
+                        Email = "bacsichung@gmail.com",
+                        Phone = "0933333333",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                        Gender = 0,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+
+                if (!await context.Users.AnyAsync(u => u.Email == "bacsiha@gmail.com"))
+                {
+                    context.Users.Add(new User
+                    {
+                        Id = Guid.NewGuid(),
+                        RoleId = doctorRole.Id,
+                        FullName = "BS. Hoàng Văn Hà",
+                        Email = "bacsiha@gmail.com",
+                        Phone = "0944444444",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                        Gender = 1,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
             }
 
             await context.SaveChangesAsync();

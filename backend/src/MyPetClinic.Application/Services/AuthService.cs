@@ -129,7 +129,8 @@ namespace MyPetClinic.Application.Services
         {
             var user = await _userRepository.GetUserByEmailAsync(model.Email.Trim().ToLower());
 
-            if (user == null || string.IsNullOrEmpty(user.PasswordHash))
+            // Tài khoản bị xóa mềm (soft-delete) → không được đăng nhập dù mật khẩu đúng
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash) || user.DeletedAt != null)
                 return new AuthResult { Success = false, ErrorMessage = "Email hoặc mật khẩu không chính xác." };
 
             bool isPasswordValid = BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash);

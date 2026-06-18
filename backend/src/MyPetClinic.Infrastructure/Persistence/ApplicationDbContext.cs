@@ -195,18 +195,23 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.AppointmentId).HasColumnName("appointment_id");
                 entity.HasIndex(e => e.AppointmentId).IsUnique();
                 entity.Property(e => e.DoctorId).HasColumnName("doctor_id");
+                entity.Property(e => e.PetId).HasColumnName("pet_id");
+                entity.Property(e => e.RecordType).HasColumnName("record_type").HasMaxLength(50).HasDefaultValue("Consultation");
+                
+                entity.Property(e => e.MedicalHistory).HasColumnName("medical_history");
                 entity.Property(e => e.Weight).HasColumnName("weight");
                 entity.Property(e => e.Temperature).HasColumnName("temperature");
-                entity.Property(e => e.HeartRate).HasColumnName("heart_rate");
-                entity.Property(e => e.Symptoms).HasColumnName("symptoms");
+                entity.Property(e => e.ClinicalSigns).HasColumnName("clinical_signs");
+                
                 entity.Property(e => e.Diagnosis).HasColumnName("diagnosis");
                 entity.Property(e => e.TreatmentPlan).HasColumnName("treatment_plan");
-                entity.Property(e => e.Note).HasColumnName("note");
+                entity.Property(e => e.DoctorNotes).HasColumnName("doctor_notes");
                 entity.Property(e => e.FollowUpDate).HasColumnName("follow_up_date");
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
 
                 entity.HasOne(d => d.Appointment).WithOne(p => p.MedicalRecord).HasForeignKey<MedicalRecord>(d => d.AppointmentId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Doctor).WithMany().HasForeignKey(d => d.DoctorId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(d => d.Pet).WithMany().HasForeignKey(d => d.PetId).OnDelete(DeleteBehavior.Restrict);
             });
 
             // medicines

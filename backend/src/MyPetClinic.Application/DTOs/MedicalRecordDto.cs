@@ -10,28 +10,32 @@ namespace MyPetClinic.Application.DTOs
         public long PetId { get; set; }
         public string PetName { get; set; } = string.Empty;
         public DateTime VisitDate { get; set; }
+        public string RecordType { get; set; } = "Consultation";
+        public string MedicalHistory { get; set; } = string.Empty;
+        public decimal Weight { get; set; }
+        public decimal Temperature { get; set; }
+        public string ClinicalSigns { get; set; } = string.Empty;
         public string Diagnosis { get; set; } = string.Empty;
-        public string Treatment { get; set; } = string.Empty;
+        public string TreatmentPlan { get; set; } = string.Empty;
+        public string DoctorNotes { get; set; } = string.Empty;
         public string DoctorName { get; set; } = string.Empty;
         public string DoctorId { get; set; } = string.Empty;
-        public decimal? Weight { get; set; }
-        public decimal? Temperature { get; set; }
-        public int? HeartRate { get; set; }
-        public string Symptoms { get; set; } = string.Empty;
-        public string Note { get; set; } = string.Empty;
+        public DateTime? FollowUpDate { get; set; }
         public List<string> PrescribedMedicines { get; set; } = new List<string>();
     }
 
     public class CreateMedicalRecordDto
     {
         public long AppointmentId { get; set; }
-        public decimal? Weight { get; set; }
-        public decimal? Temperature { get; set; }
-        public int? HeartRate { get; set; }
-        public string? Symptoms { get; set; }
-        public string? Diagnosis { get; set; }
-        public string? TreatmentPlan { get; set; }
-        public string? Note { get; set; }
+        public long PetId { get; set; }
+        public string RecordType { get; set; } = "Consultation";
+        public string? MedicalHistory { get; set; }
+        public decimal Weight { get; set; }
+        public decimal Temperature { get; set; }
+        public string ClinicalSigns { get; set; } = string.Empty;
+        public string Diagnosis { get; set; } = string.Empty;
+        public string TreatmentPlan { get; set; } = string.Empty;
+        public string? DoctorNotes { get; set; }
         public DateTime? FollowUpDate { get; set; }
         public List<PrescriptionLineDto> Prescriptions { get; set; } = new();
     }
@@ -44,5 +48,15 @@ namespace MyPetClinic.Application.DTOs
         public string? Frequency { get; set; }
         public int? DurationDays { get; set; }
         public string? Instruction { get; set; }
+    }
+    public class UpdateMedicalRecordDto
+    {
+        public decimal Weight { get; set; }
+        public decimal Temperature { get; set; }
+        public string ClinicalSigns { get; set; } = string.Empty;
+        public string Diagnosis { get; set; } = string.Empty;
+        public string TreatmentPlan { get; set; } = string.Empty;
+        public string? DoctorNotes { get; set; }
+        public DateTime? FollowUpDate { get; set; }
     }
 }

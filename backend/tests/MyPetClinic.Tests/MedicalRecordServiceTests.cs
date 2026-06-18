@@ -67,8 +67,7 @@ namespace MyPetClinic.Tests
                 AppointmentId = 1,
                 Weight = 4.5m,
                 Temperature = 38.5m,
-                HeartRate = 80,
-                Symptoms = "Sốt nhẹ",
+                ClinicalSigns = "Sốt nhẹ",
                 Diagnosis = "Cảm cúm",
                 TreatmentPlan = "Uống thuốc giải sốt",
                 Prescriptions = new List<PrescriptionLineDto>
@@ -143,7 +142,7 @@ namespace MyPetClinic.Tests
             var dto = new CreateMedicalRecordDto
             {
                 AppointmentId = 2,
-                Symptoms = "Ho khan",
+                ClinicalSigns = "Ho khan",
                 Diagnosis = "Viêm phế quản",
                 TreatmentPlan = "Kê đơn kết hợp",
                 Prescriptions = new List<PrescriptionLineDto>

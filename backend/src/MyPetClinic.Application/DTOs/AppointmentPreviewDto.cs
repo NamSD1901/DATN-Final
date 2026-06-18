@@ -14,6 +14,7 @@ namespace MyPetClinic.Application.DTOs
         public string? DoctorName { get; set; }
         public string? ServiceName { get; set; }
         public DateTime AppointmentDate { get; set; }
+        public TimeSpan StartTime { get; set; }
         public string Status { get; set; } = null!;
         public string? Notes { get; set; }
         public bool HasError { get; set; }

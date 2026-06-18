@@ -373,12 +373,9 @@
                             <small class="text-muted">{{ getSelectedServiceName() }}</small>
                           </div>
                           <div>
-                            <select v-model="selectedDoctorFilter" class="form-select form-select-sm border-0 bg-transparent text-primary fw-bold" style="width: auto; cursor: pointer; box-shadow: none;">
-                              <option value="auto">✨ Tự động phân công</option>
-                              <option v-for="doc in doctorAvailableSlots" :key="doc.doctorId" :value="doc.doctorId">
-                                👨‍⚕️ {{ doc.doctorName }}
-                              </option>
-                            </select>
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2" style="font-size: 0.85rem;">
+                              ✨ Tự động phân công
+                            </span>
                           </div>
                         </div>
 
@@ -979,20 +976,12 @@ const computedAvailableSlots = computed(() => {
   }
 });
 
-const isVaccinationService = computed(() => {
-  const service = services.value.find(s => s.id === bookForm.value.serviceId);
-  if (!service || !service.name) return false;
-  const nameLower = service.name.toLowerCase();
-  return nameLower.includes('tiêm phòng') || nameLower.includes('vaccine');
-});
+// Bỏ bước chọn Vaccine: luôn trả về false để wizard chỉ có 4 bước (không có bước Vaccine)
+const isVaccinationService = computed(() => false);
 
-const bookingSteps = computed(() => {
-  return isVaccinationService.value 
-    ? ['Thú cưng', 'Dịch vụ', 'Thời gian', 'Vaccine', 'Xác nhận'] 
-    : ['Thú cưng', 'Dịch vụ', 'Thời gian', 'Xác nhận'];
-});
+const bookingSteps = computed(() => ['Thú cưng', 'Dịch vụ', 'Thời gian', 'Xác nhận']);
 
-const maxSteps = computed(() => isVaccinationService.value ? 4 : 3);
+const maxSteps = computed(() => 3);
 
 const vaccines = ref<Vaccine[]>([]);
 const vaccineValidation = ref<ValidationResult | null>(null);
@@ -1123,8 +1112,8 @@ interface SlotDisplay {
   isTooSoon: boolean;
 }
 
-// Buffer: slots must be at least 60 minutes from now to be bookable
-const BOOKING_BUFFER_MS = 60 * 60 * 1000;
+// Buffer: slots must be at least 15 minutes from now to be bookable
+const BOOKING_BUFFER_MS = 15 * 60 * 1000;
 
 const buildSlots = (times: string[]): SlotDisplay[] => {
   if (!selectedBookingDate.value) return [];
@@ -1169,7 +1158,6 @@ const canProceed = computed(() => {
   }
   if (currentStep.value === 1) return bookForm.value.serviceId > 0;
   if (currentStep.value === 2) return bookForm.value.appointmentDate !== '';
-  if (isVaccinationService.value && currentStep.value === 3) return bookForm.value.vaccineId !== null && bookForm.value.vaccineId > 0;
   return true;
 });
 
@@ -1321,7 +1309,10 @@ const onBookingDateChange = async () => {
   slotFetchError.value = '';
   try {
     const res = await api.get('/my-appointments/available-slots', {
-      params: { date: selectedBookingDate.value }
+      params: { 
+        date: selectedBookingDate.value,
+        serviceId: bookForm.value.serviceId
+      }
     });
     doctorAvailableSlots.value = res.data;
   } catch (err: any) {

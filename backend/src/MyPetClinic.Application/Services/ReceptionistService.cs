@@ -153,6 +153,7 @@ namespace MyPetClinic.Application.Services
                 DoctorName = appointment.Doctor?.FullName,
                 ServiceName = appointment.Service?.Name,
                 AppointmentDate = appointment.AppointmentDate,
+                StartTime = appointment.StartTime,
                 Status = appointment.Status,
                 Notes = appointment.Note,
                 HasError = hasError,

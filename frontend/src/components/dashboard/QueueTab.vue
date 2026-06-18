@@ -168,10 +168,7 @@
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label class="form-label text-muted small fw-bold">Bác sĩ</label>
-                    <select v-model="intakeForm.doctorId" class="form-select">
-                      <option value="">-- Tự động --</option>
-                      <option v-for="doc in doctorList" :key="doc.id" :value="doc.id">Bs. {{ doc.fullName }}</option>
-                    </select>
+                    <input type="text" class="form-control bg-light text-muted" readonly value="-- Tự động phân công --" />
                   </div>
                   <div class="col-md-6">
                     <label class="form-label text-muted small fw-bold">Triệu chứng</label>
@@ -440,10 +437,7 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label text-muted small fw-bold">Bác sĩ phụ trách</label>
-                <select v-model="emergencyForm.doctorId" class="form-select border-primary">
-                  <option value="">-- Tự động phân công bác sĩ --</option>
-                  <option v-for="doc in doctorList" :key="doc.id" :value="doc.id">Bs. {{ doc.fullName }}</option>
-                </select>
+                <input type="text" class="form-control border-primary bg-light text-muted" readonly value="-- Tự động phân công --" />
               </div>
             </div>
           </div>
@@ -545,7 +539,7 @@
               <div class="card-body p-3">
                 <div class="d-flex justify-content-between mb-2">
                   <span class="text-muted small">Thời gian hẹn:</span>
-                  <span class="fw-bold text-dark">{{ formatTimeOnly(previewAppointment.appointmentDate) }} - {{ formatDate(previewAppointment.appointmentDate) }}</span>
+                  <span class="fw-bold text-dark">{{ previewAppointment.startTime ? previewAppointment.startTime.substring(0, 5) : formatTimeOnly(previewAppointment.appointmentDate) }} - {{ formatDate(previewAppointment.appointmentDate) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                   <span class="text-muted small">Khách hàng:</span>

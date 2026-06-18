@@ -99,9 +99,12 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
         *   Cải tiến Custom Calendar và giao diện Time Slots dạng viên thuốc (Pills) chia sáng/chiều mang lại trải nghiệm mượt mà không cần dùng input date native.
         *   Thay đổi cơ chế check trùng giờ khám của bác sĩ sang toán tử bất đẳng thức nghiêm ngặt (`>` và `<`), cho phép đặt lịch liên tiếp (back-to-back appointments) không bị kẹt biên.
         *   Bổ sung Unit Test xác thực tính toán slot rảnh chính xác.
+    *   **Thực thi luồng Nghiệp vụ Khách hàng (Customer Business Rules):**
+        *   Tách riêng logic `CustomerAppointmentService` để chặn: Cấp cứu, Quá sát giờ (< 2 tiếng), Ngoài giờ hoạt động (08:00 - 20:00), Spam booking (cùng 1 pet < 2 tiếng).
+        *   Khóa chặn đặt lịch online nếu User có >= 3 lần No-show.
+        *   Đưa vào danh sách chờ duyệt (`pending_approval`) nếu User có >= 3 lần Cancel trong 30 ngày qua.
+        *   **Cập nhật mới:** Gỡ bỏ tính năng tự chọn bác sĩ. Hệ thống **Bắt buộc Tự động phân công** (ẩn dropdown trên UI và đè `DoctorId = Guid.Empty` tại Backend) dựa theo Nhóm dịch vụ (Khám bệnh -> BS. Long/Tuấn; Tiêm phòng -> BS. Chung/Hà).
 
-
----
 
 ### 🎯 Sprint 8: Theo Dõi Cuộc Hẹn & Lịch Sử
 *   **Mục tiêu:** Theo dõi và xem lại lịch sử y tế qua Dashboard Khách hàng.

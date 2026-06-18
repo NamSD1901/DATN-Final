@@ -11,10 +11,12 @@ namespace MyPetClinic.Application.Services
     public class CustomerAppointmentService : ICustomerAppointmentService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAppointmentService _appointmentService;
 
-        public CustomerAppointmentService(IUnitOfWork unitOfWork)
+        public CustomerAppointmentService(IUnitOfWork unitOfWork, IAppointmentService appointmentService)
         {
             _unitOfWork = unitOfWork;
+            _appointmentService = appointmentService;
         }
 
         public async Task<object> GetAvailableVaccinesAsync()
@@ -46,6 +48,81 @@ namespace MyPetClinic.Application.Services
 
             var checker = new VaccinationScheduleChecker();
             return checker.ValidateInterval(lastRecord, vaccine, targetDate, pet);
+        }
+
+        public async Task<long> BookAppointmentAsync(MyPetClinic.Application.DTOs.CustomerBookingDto dto, Guid customerId)
+        {
+            if (dto.IsEmergency)
+            {
+                throw new InvalidOperationException("TRƯỜNG HỢP CẤP CỨU: Vui lòng KHÔNG đặt lịch online. Hãy đưa bé đến phòng khám ngay lập tức hoặc gọi Hotline khẩn cấp.");
+            }
+
+            var appointmentDate = dto.AppointmentDate ?? DateTime.UtcNow;
+            
+            // 2. Lead Time Check: Must book at least 2 hours in advance
+            if (appointmentDate < DateTime.UtcNow.AddHours(2))
+            {
+                throw new InvalidOperationException("Vui lòng đặt lịch trước ít nhất 2 tiếng để chúng tôi có sự chuẩn bị tốt nhất.");
+            }
+
+            // 3. Operating Hours Check (08:00 - 20:00)
+            var localTime = appointmentDate.ToLocalTime();
+            if (localTime.Hour < 8 || localTime.Hour >= 20)
+            {
+                throw new InvalidOperationException("Phòng khám đóng cửa vào thời gian này. Vui lòng chọn khung giờ trong giờ hành chính (08:00 - 20:00).");
+            }
+
+            // 4. No-show limit & Cancel limit
+            var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+            var recentAppointments = await _unitOfWork.Appointments.FindAsync(
+                a => a.CustomerId == customerId && a.AppointmentDate >= thirtyDaysAgo);
+            
+            var noShowCount = recentAppointments.Count(a => a.Status.ToLower() == "no_show");
+            var cancelCount = recentAppointments.Count(a => a.Status.ToLower() == "cancelled");
+
+            if (noShowCount >= 3)
+            {
+                throw new InvalidOperationException("Tài khoản của bạn tạm thời bị hạn chế đặt lịch online do lịch sử vắng mặt nhiều lần. Vui lòng gọi trực tiếp Hotline để được hỗ trợ.");
+            }
+
+            // 5. Spam booking check (same pet, within 2 hours)
+            var todayAppointments = await _unitOfWork.Appointments.FindAsync(
+                a => a.CustomerId == customerId && a.PetId == dto.PetId && a.AppointmentDate.Date == appointmentDate.Date && a.Status != "cancelled" && a.Status != "no_show");
+            
+            if (todayAppointments.Any(a => Math.Abs((a.AppointmentDate - appointmentDate).TotalHours) < 2))
+            {
+                throw new InvalidOperationException("Bé cưng đã có lịch hẹn quá sát với thời gian này. Bạn không thể đặt thêm lịch liên tiếp (chống spam).");
+            }
+
+            // 6. Call Core Service
+            var createDto = new MyPetClinic.Application.DTOs.AppointmentCreateDto
+            {
+                CustomerId = customerId,
+                PetId = dto.PetId,
+                DoctorId = Guid.Empty, // Bắt buộc hệ thống tự động phân công theo mảng dịch vụ
+                ServiceId = dto.ServiceId,
+                AppointmentDate = dto.AppointmentDate,
+                Symptom = dto.Symptom ?? string.Empty,
+                Note = dto.Note,
+                VaccineId = dto.VaccineId
+            };
+
+            var appointmentId = await _appointmentService.CreateAppointmentAsync(createDto, customerId);
+
+            // 7. Update to pending_approval if Cancel Count >= 3
+            if (cancelCount >= 3)
+            {
+                var createdAppointmentList = await _unitOfWork.Appointments.FindAsync(a => a.Id == appointmentId);
+                var createdAppointment = createdAppointmentList.FirstOrDefault();
+                if (createdAppointment != null)
+                {
+                    createdAppointment.Status = "pending_approval";
+                    _unitOfWork.Appointments.Update(createdAppointment);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+
+            return appointmentId;
         }
     }
 }

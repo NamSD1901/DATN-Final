@@ -153,7 +153,7 @@
                 <Calendar size="18" class="text-primary me-2" />
                 <div>
                   <h5 class="mb-0">{{ formattedSelectedDate }}</h5>
-                  <small class="text-muted">Dr. Nguyen ({{ selectedService?.name }})</small>
+                  <small class="text-muted">Hệ thống tự động phân công ({{ selectedService?.name }})</small>
                 </div>
               </div>
 
@@ -286,7 +286,7 @@
                   <img src="https://ui-avatars.com/api/?name=Nguyen+Thi+Mai&background=random" class="doctor-avatar" />
                   <div>
                     <small class="text-muted d-block">Bác sĩ phụ trách</small>
-                    <strong class="text-dark">Bs. Nguyễn Thị Mai</strong>
+                    <strong class="text-dark">Hệ thống tự phân công</strong>
                   </div>
                 </div>
 

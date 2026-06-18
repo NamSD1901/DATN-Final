@@ -32,18 +32,20 @@ namespace MyPetClinic.Application.Services
                     throw new KeyNotFoundException("Không tìm thấy cuộc hẹn.");
                 }
 
-                // 2. Tạo MedicalRecord
+                // 2. Tạo MedicalRecord chuẩn SOAP
                 var medicalRecord = new MedicalRecord
                 {
                     AppointmentId = dto.AppointmentId,
                     DoctorId = doctorId,
+                    PetId = dto.PetId == 0 ? appointment.PetId : dto.PetId, // Fallback to appointment's pet
+                    RecordType = string.IsNullOrWhiteSpace(dto.RecordType) ? "Consultation" : dto.RecordType,
+                    MedicalHistory = dto.MedicalHistory,
                     Weight = dto.Weight,
                     Temperature = dto.Temperature,
-                    HeartRate = dto.HeartRate,
-                    Symptoms = dto.Symptoms,
-                    Diagnosis = dto.Diagnosis ?? string.Empty,
-                    TreatmentPlan = dto.TreatmentPlan ?? string.Empty,
-                    Note = dto.Note,
+                    ClinicalSigns = dto.ClinicalSigns,
+                    Diagnosis = dto.Diagnosis,
+                    TreatmentPlan = dto.TreatmentPlan,
+                    DoctorNotes = dto.DoctorNotes,
                     FollowUpDate = dto.FollowUpDate,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -58,7 +60,7 @@ namespace MyPetClinic.Application.Services
                     {
                         MedicalRecordId = medicalRecord.Id,
                         DoctorId = doctorId,
-                        Note = dto.Note,
+                        Note = dto.DoctorNotes,
                         CreatedAt = DateTime.UtcNow
                     };
 
@@ -178,23 +180,100 @@ namespace MyPetClinic.Application.Services
                 {
                     RecordId = r.Id,
                     AppointmentId = r.AppointmentId,
-                    PetId = r.Appointment?.PetId ?? 0,
+                    PetId = r.PetId,
                     PetName = r.Appointment?.Pet?.Name ?? string.Empty,
                     VisitDate = r.CreatedAt,
+                    RecordType = r.RecordType,
+                    MedicalHistory = r.MedicalHistory ?? string.Empty,
                     Diagnosis = r.Diagnosis ?? string.Empty,
-                    Treatment = r.TreatmentPlan ?? string.Empty,
+                    TreatmentPlan = r.TreatmentPlan ?? string.Empty,
                     DoctorName = r.Doctor?.FullName ?? string.Empty,
                     DoctorId = r.DoctorId.ToString(),
                     Weight = r.Weight,
                     Temperature = r.Temperature,
-                    HeartRate = r.HeartRate,
-                    Symptoms = r.Symptoms ?? string.Empty,
-                    Note = r.Note ?? string.Empty,
+                    ClinicalSigns = r.ClinicalSigns ?? string.Empty,
+                    DoctorNotes = r.DoctorNotes ?? string.Empty,
+                    FollowUpDate = r.FollowUpDate,
                     PrescribedMedicines = prescribedMedicines
                 });
             }
 
             return result;
+        }
+
+        public async Task<MedicalRecordDto?> GetMedicalRecordByAppointmentAsync(long appointmentId)
+        {
+            var records = await _unitOfWork.MedicalRecords.FindWithIncludesAsync(
+                r => r.AppointmentId == appointmentId,
+                r => r.Appointment!,
+                r => r.Appointment!.Pet!,
+                r => r.Doctor!
+            );
+            
+            var record = records.FirstOrDefault();
+            if (record == null) return null;
+
+            var prescriptions = await _unitOfWork.Prescriptions.FindWithIncludesAsync(
+                p => p.MedicalRecordId == record.Id
+            );
+
+            var prescriptionIds = prescriptions.Select(p => p.Id).ToList();
+            var prescriptionItems = prescriptionIds.Any()
+                ? await _unitOfWork.PrescriptionItems.FindWithIncludesAsync(
+                    pi => prescriptionIds.Contains(pi.PrescriptionId),
+                    pi => pi.Medicine!
+                  )
+                : Enumerable.Empty<PrescriptionItem>();
+
+            var prescribedMedicines = new List<string>();
+            foreach (var pi in prescriptionItems)
+            {
+                var medName = pi.Medicine?.Name ?? "Thuốc";
+                var medUnit = pi.Medicine?.Unit ?? "đơn vị";
+                prescribedMedicines.Add($"{medName} ({pi.Quantity} {medUnit}) - {pi.Dosage} {pi.Frequency}");
+            }
+
+            return new MedicalRecordDto
+            {
+                RecordId = record.Id,
+                AppointmentId = record.AppointmentId,
+                PetId = record.PetId,
+                PetName = record.Appointment?.Pet?.Name ?? string.Empty,
+                VisitDate = record.CreatedAt,
+                RecordType = record.RecordType,
+                MedicalHistory = record.MedicalHistory ?? string.Empty,
+                Diagnosis = record.Diagnosis ?? string.Empty,
+                TreatmentPlan = record.TreatmentPlan ?? string.Empty,
+                DoctorName = record.Doctor?.FullName ?? string.Empty,
+                DoctorId = record.DoctorId.ToString(),
+                Weight = record.Weight,
+                Temperature = record.Temperature,
+                ClinicalSigns = record.ClinicalSigns ?? string.Empty,
+                DoctorNotes = record.DoctorNotes ?? string.Empty,
+                FollowUpDate = record.FollowUpDate,
+                PrescribedMedicines = prescribedMedicines
+            };
+        }
+
+        public async Task UpdateMedicalRecordAsync(long id, UpdateMedicalRecordDto dto, Guid doctorId)
+        {
+            var record = await _unitOfWork.MedicalRecords.GetByIdAsync(id);
+            if (record == null)
+                throw new KeyNotFoundException("Không tìm thấy hồ sơ bệnh án.");
+
+            if (record.DoctorId != doctorId)
+                throw new UnauthorizedAccessException("Bạn không có quyền sửa bệnh án này.");
+
+            record.Weight = dto.Weight;
+            record.Temperature = dto.Temperature;
+            record.ClinicalSigns = dto.ClinicalSigns;
+            record.Diagnosis = dto.Diagnosis;
+            record.TreatmentPlan = dto.TreatmentPlan;
+            record.DoctorNotes = dto.DoctorNotes;
+            record.FollowUpDate = dto.FollowUpDate;
+
+            _unitOfWork.MedicalRecords.Update(record);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

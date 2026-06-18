@@ -60,11 +60,11 @@ namespace MyPetClinic.Controllers
         /// Lấy danh sách các slot thời gian rảnh của các bác sĩ trong một ngày cụ thể.
         /// </summary>
         [HttpGet("available-slots")]
-        public async Task<IActionResult> GetAvailableSlots([FromQuery] DateTime date)
+        public async Task<IActionResult> GetAvailableSlots([FromQuery] DateTime date, [FromQuery] long? serviceId = null)
         {
             try
             {
-                var slots = await _appointmentService.GetAvailableSlotsAsync(date);
+                var slots = await _appointmentService.GetAvailableSlotsAsync(date, serviceId);
                 return Ok(slots);
             }
             catch (Exception ex)
@@ -112,24 +112,8 @@ namespace MyPetClinic.Controllers
             {
                 var customerId = GetCurrentUserId();
 
-                // Verify the pet belongs to this customer
-                var pet = await _petService.GetPetByIdAsync(dto.PetId, customerId);
-                if (pet == null)
-                    return BadRequest(new { message = "Thú cưng không hợp lệ hoặc không thuộc về bạn." });
-
-                var createDto = new AppointmentCreateDto
-                {
-                    CustomerId = customerId,
-                    PetId = dto.PetId,
-                    DoctorId = dto.DoctorId ?? Guid.Empty,
-                    ServiceId = dto.ServiceId,
-                    AppointmentDate = dto.AppointmentDate,
-                    Symptom = dto.Symptom ?? string.Empty,
-                    Note = dto.Note,
-                    VaccineId = dto.VaccineId
-                };
-
-                var appointmentId = await _appointmentService.CreateAppointmentAsync(createDto, customerId);
+                // Gọi CustomerAppointmentService để áp dụng các Business Rules
+                var appointmentId = await _customerAppointmentService.BookAppointmentAsync(dto, customerId);
                 return Ok(new { success = true, message = "Đặt lịch hẹn thành công! Chúng tôi sẽ xác nhận sớm.", id = appointmentId });
             }
             catch (Exception ex)
@@ -243,19 +227,7 @@ namespace MyPetClinic.Controllers
         }
     }
 
-    /// <summary>
-    /// DTO cho khách hàng tự đặt lịch hẹn.
-    /// </summary>
-    public class CustomerBookingDto
-    {
-        public long PetId { get; set; }
-        public Guid? DoctorId { get; set; }
-        public long ServiceId { get; set; }
-        public DateTime? AppointmentDate { get; set; }
-        public string? Symptom { get; set; }
-        public string? Note { get; set; }
-        public long? VaccineId { get; set; }
-    }
+    // CustomerBookingDto đã được di chuyển sang MyPetClinic.Application.DTOs
 
     /// <summary>
     /// DTO kiểm tra phác đồ vắc-xin.
