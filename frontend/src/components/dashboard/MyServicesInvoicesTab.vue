@@ -288,7 +288,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import api from '../../services/api';
 
 // --- Types ---
 interface InvoiceMock {
@@ -316,80 +317,70 @@ interface InvoiceMock {
 const showDetailModal = ref(false);
 const selectedInvoice = ref<InvoiceMock | null>(null);
 
-const totalSpent = ref(5240000);
-const invoiceCount = ref(12);
-const petCount = ref(1);
+const invoices = ref<InvoiceMock[]>([]);
+const totalSpent = computed(() => invoices.value.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.totalAmount, 0));
+const invoiceCount = computed(() => invoices.value.length);
+const petCount = computed(() => {
+  const pets = new Set(invoices.value.map(i => i.petName));
+  return pets.size;
+});
 
 const filterStatus = ref<'all' | 'paid' | 'cancelled'>('all');
 
-// --- Mock Data ---
-const invoices = ref<InvoiceMock[]>([
-  {
-    id: 'INV-2024-0892',
-    serviceName: 'Tiêm phòng dại & 5 bệnh',
-    iconClass: 'bi bi-capsule',
-    date: '2024-05-24T14:30:00',
-    petName: 'Lu',
-    petSpecies: 'Poodle',
-    petAge: '3 tuổi',
-    doctorName: 'BS. Trương Quang Minh',
-    doctorTitle: 'Bác sĩ Thú y Trưởng',
-    status: 'paid',
-    totalAmount: 350000,
-    serviceFee: 150000,
-    medicineFee: 200000,
-    paymentMethod: 'Thẻ ngân hàng',
-    transactionId: 'TXN_90123841',
-    clinicalNotes: 'Bé Lu rất ngoan và hợp tác trong buổi tiêm hôm nay. Sức khỏe hoàn toàn ổn định, nhịp tim và nhiệt độ bình thường.',
-    nextAppointment: 'Mũi tiêm nhắc lại tiếp theo dự kiến vào ngày 24/11/2024.',
-    items: [
-      { description: 'Vaccine dại (1 năm)', descNote: 'Quy trình miễn dịch tiêu chuẩn', icon: 'bi bi-capsule', qty: 1, price: 150000, total: 150000 },
-      { description: 'Vaccine 5 bệnh', descNote: 'Phòng ngừa tổng hợp', icon: 'bi bi-shield-plus', qty: 1, price: 200000, total: 200000 }
-    ]
-  },
-  {
-    id: 'INV-2024-0891',
-    serviceName: 'Spa & Cắt tỉa lông',
-    iconClass: 'bi bi-scissors',
-    date: '2024-05-15T16:00:00',
-    petName: 'Lu',
-    petSpecies: 'Poodle',
-    petAge: '3 tuổi',
-    doctorName: 'NV. Lê Thị Thắm',
-    doctorTitle: 'Chuyên viên Grooming',
-    status: 'paid',
-    totalAmount: 1200000,
-    serviceFee: 1200000,
-    paymentMethod: 'Tiền mặt',
-    transactionId: 'TXN_80931211',
-    clinicalNotes: 'Lông rối nhiều ở phần bụng, đã gỡ rối và cắt tỉa ngắn form gấu. Không phát hiện rận hay nấm da.',
-    items: [
-      { description: 'Gói Spa Toàn diện', descNote: 'Tắm, sấy, vắt tuyến hôi, vệ sinh tai', icon: 'bi bi-droplet', qty: 1, price: 500000, total: 500000 },
-      { description: 'Cắt tạo kiểu (Form gấu)', descNote: 'Cắt kéo 100% bằng thợ chuyên nghiệp', icon: 'bi bi-scissors', qty: 1, price: 700000, total: 700000 }
-    ]
-  },
-  {
-    id: 'INV-2024-0890',
-    serviceName: 'Khám tổng quát & Siêu âm',
-    iconClass: 'bi bi-heart-pulse',
-    date: '2024-05-10T09:15:00',
-    petName: 'Miu',
-    petSpecies: 'Mèo Anh Lông Ngắn',
-    petAge: '1.5 tuổi',
-    doctorName: 'BS. Trần Văn Nam',
-    doctorTitle: 'Bác sĩ Nội khoa',
-    status: 'paid',
-    totalAmount: 450000,
-    serviceFee: 450000,
-    paymentMethod: 'Chuyển khoản ngân hàng',
-    transactionId: 'TXN_11223344',
-    clinicalNotes: 'Bé Miu ăn uống kém 2 ngày nay. Siêu âm dạ dày có ít khí, ruột bình thường. Đã kê thuốc tiêu hóa.',
-    items: [
-      { description: 'Khám lâm sàng', descNote: 'Khám tổng quát nội khoa', icon: 'bi bi-stethoscope', qty: 1, price: 150000, total: 150000 },
-      { description: 'Siêu âm ổ bụng', descNote: 'Siêu âm tổng quát 2D', icon: 'bi bi-display', qty: 1, price: 300000, total: 300000 }
-    ]
+// --- API ---
+const fetchInvoices = async () => {
+  try {
+    const res = await api.get('/my-appointments/invoices');
+    invoices.value = res.data.map((inv: any) => {
+      const serviceItems = inv.items?.filter((i: any) => i.itemType === 'service') || [];
+      const medicineItems = inv.items?.filter((i: any) => i.itemType === 'medicine') || [];
+      
+      const serviceFee = serviceItems.reduce((sum: number, i: any) => sum + i.totalPrice, 0);
+      const medicineFee = medicineItems.reduce((sum: number, i: any) => sum + i.totalPrice, 0);
+      
+      const serviceName = serviceItems.length > 0 ? serviceItems[0].itemName : (medicineItems.length > 0 ? 'Mua thuốc' : 'Dịch vụ');
+      const iconClass = serviceItems.length > 0 ? 'bi bi-heart-pulse' : 'bi bi-capsule';
+
+      let status = 'pending';
+      if (inv.paymentStatus === 'paid') status = 'paid';
+      if (inv.paymentStatus === 'cancelled') status = 'cancelled';
+
+      return {
+        id: `INV-${inv.id}`,
+        serviceName,
+        iconClass,
+        date: inv.createdAt,
+        petName: inv.petName,
+        petSpecies: inv.petSpecies || 'Thú cưng',
+        doctorName: inv.doctorName || 'Bác sĩ',
+        doctorTitle: 'Bác sĩ Thú y',
+        status,
+        totalAmount: inv.totalAmount,
+        serviceFee,
+        medicineFee,
+        paymentMethod: inv.paymentMethod || (status === 'paid' ? 'Tiền mặt' : undefined),
+        transactionId: status === 'paid' ? `TXN_${inv.id}` : undefined,
+        items: inv.items?.map((i: any) => ({
+          description: i.itemName,
+          descNote: i.itemType === 'service' ? 'Dịch vụ y tế' : 'Thuốc/Vật tư',
+          icon: i.itemType === 'service' ? 'bi bi-stethoscope' : 'bi bi-capsule',
+          qty: i.quantity,
+          price: i.unitPrice,
+          total: i.totalPrice
+        }))
+      };
+    });
+  } catch (err) {
+    console.error('Failed to fetch invoices', err);
   }
-]);
+};
+
+onMounted(() => {
+  fetchInvoices();
+});
+
+// --- Mock Data ---
+
 
 // --- Methods ---
 const getPaymentIcon = (method: string | undefined): string => {

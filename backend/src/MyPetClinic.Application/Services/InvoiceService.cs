@@ -389,6 +389,23 @@ namespace MyPetClinic.Application.Services
             return list;
         }
 
+        public async Task<IEnumerable<InvoiceDto>> GetCustomerInvoicesAsync(System.Guid customerId)
+        {
+            var invoicesList = await _unitOfWork.Invoices.FindWithIncludesAsync(
+                i => i.Appointment != null && i.Appointment.CustomerId == customerId,
+                i => i.InvoiceItems,
+                i => i.Appointment!.Customer!,
+                i => i.Appointment!.Pet!,
+                i => i.Appointment!.Doctor!
+            );
+
+            var invoices = invoicesList
+                .OrderByDescending(i => i.CreatedAt)
+                .ToList();
+
+            return invoices.Select(MapToDto).ToList();
+        }
+
         private async Task<InvoiceDto> GetInvoiceWithDetailsAsync(long invoiceId)
         {
             var invoice = await _unitOfWork.Invoices.GetFirstOrDefaultWithIncludesAsync(

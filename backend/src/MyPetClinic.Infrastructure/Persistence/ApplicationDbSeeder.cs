@@ -41,6 +41,18 @@ namespace MyPetClinic.Infrastructure.Persistence
                 await context.SaveChangesAsync();
             }
 
+            // Seed Medicines
+            if (!await context.Medicines.AnyAsync())
+            {
+                context.Medicines.AddRange(
+                    new Medicine { Name = "Thuốc kháng sinh Amoxicillin", Unit = "Viên", StockQuantity = 100, ImportPrice = 5000, SellPrice = 10000, ExpiryDate = DateTime.UtcNow.AddYears(1), Description = "Dùng cho nhiễm khuẩn đường hô hấp, tiêu hóa" },
+                    new Medicine { Name = "Thuốc tẩy giun sán Drontal", Unit = "Viên", StockQuantity = 50, ImportPrice = 30000, SellPrice = 50000, ExpiryDate = DateTime.UtcNow.AddYears(2), Description = "Tẩy giun phổ rộng cho chó mèo" },
+                    new Medicine { Name = "Thuốc bôi da mỡ Kẽm Oxyde", Unit = "Tuýp", StockQuantity = 30, ImportPrice = 15000, SellPrice = 35000, ExpiryDate = DateTime.UtcNow.AddYears(1), Description = "Điều trị các vết thương ngoài da, viêm da" },
+                    new Medicine { Name = "Nước muối sinh lý Natri Clorid 0.9%", Unit = "Chai", StockQuantity = 200, ImportPrice = 5000, SellPrice = 15000, ExpiryDate = DateTime.UtcNow.AddYears(3), Description = "Rửa vết thương, rửa mắt, mũi" }
+                );
+                await context.SaveChangesAsync();
+            }
+
             // 1. Seed Roles
             var rolesToSeed = new[] { "admin", "doctor", "receptionist", "customer" };
             foreach (var roleName in rolesToSeed)

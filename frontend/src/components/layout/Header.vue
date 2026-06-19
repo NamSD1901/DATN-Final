@@ -97,6 +97,7 @@
           <!-- User Actions Panel -->
           <div class="user-actions">
             <template v-if="isLoggedIn">
+              <NotificationBell class="me-2 d-none d-sm-block" />
               <div class="profile-dropdown" @mouseenter="openDropdown('profile')" @mouseleave="closeDropdown('profile')">
                 <button class="btn-premium-outline dropdown-toggle d-flex align-items-center gap-2 shadow-sm py-2 px-3 border-2" @click="toggleDropdownMobile('profile')">
                   <UserCircle class="profile-icon text-warning" />
@@ -145,6 +146,7 @@ import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 import api from '../../services/api';
+import NotificationBell from './NotificationBell.vue';
 import { 
   HeartPulse, Menu, X, ChevronDown, 
   History as HistoryIcon, Users, Stethoscope, 

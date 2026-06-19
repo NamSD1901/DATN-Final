@@ -13,5 +13,6 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<InvoiceDto> UpdateInvoiceItemQtyAsync(long itemId, int quantity);
         Task<bool> ProcessPaymentAsync(long invoiceId, string paymentMethod, decimal discountAmount);
         Task<IEnumerable<InvoiceCatalogItemDto>> GetCatalogItemsAsync(string query);
+        Task<IEnumerable<InvoiceDto>> GetCustomerInvoicesAsync(System.Guid customerId);
     }
 }

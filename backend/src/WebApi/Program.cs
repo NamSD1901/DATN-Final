@@ -17,6 +17,10 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add SignalR and its Pusher
+builder.Services.AddSignalR();
+builder.Services.AddScoped<MyPetClinic.Application.Interfaces.Services.ISignalRPusher, WebApi.Services.SignalRPusher>();
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {

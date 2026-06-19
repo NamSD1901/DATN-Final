@@ -130,3 +130,13 @@ Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving 
 - Cáº­p nháº­t toÃ n bá»™ cÃ¡c bá»™ Ã¡nh xáº¡ DTO trong Service: Sá»­ dá»¥ng biá»ƒu thá»©c `a.AppointmentDate.Date.Add(a.StartTime).ToString(...)` Ä‘á»ƒ tÃ¡i táº¡o láº¡i cáº¥u trÃºc Datetime chuáº©n gá»­i cho Client.
 - Chá»‰nh sá»­a [SlotCalculationHelper.cs](file:///e:/DATN/MyPetClinic/backend/src/MyPetClinic.Application/Helpers/SlotCalculationHelper.cs) Ä‘á»ƒ tÃ­nh toÃ¡n chuáº©n xÃ¡c biáº¿n `apptTime` báº±ng cÃ¡ch cá»™ng gá»™p `AppointmentDate` vÃ  `StartTime`, tá»« Ä‘Ã³ kháº¯c phá»¥c triá»‡t Ä‘á»ƒ kháº£ nÄƒng bypass cÆ¡ cháº¿ kiá»ƒm tra chá»‘ng Ä‘áº·t lá»‹ch trÃ¹ng.
 
+
+### Bug: Không t?i du?c thông báo trên Frontend
+- **Nguyên nhân:** File 
+otification.store.js g?i sai port Backend (5288 thay vì 5285).
+- **Kh?c ph?c:** S?a l?i URL API và SignalR Hub thành port 5285 trong store Vue.
+
+### Bug: Thông báo không hi?n th? dù dã s?a dúng Port
+- **Nguyên nhân:** File 
+otification.store.js du?c vi?t theo chu?n dùng JWT Token (localStorage.getItem('token')), nhung h? th?ng Backend c?a MyPetClinic l?i dang dùng **Cookie Authentication**. Do không tìm th?y token trong localStorage, Axios request b? h?y l?ng l? (return s?m) nên không bao gi? g?i lên Backend.
+- **Kh?c ph?c:** Lo?i b? hoàn toàn logic ki?m tra JWT Token và thêm c?u hình withCredentials: true vào t?t c? các request Axios và k?t n?i SignalR d? trình duy?t t? d?ng dính kèm Cookie xác th?c h?p l?.

@@ -13,11 +13,13 @@ namespace MyPetClinic.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IVaccinationScheduleChecker _vaccinationScheduleChecker;
+        private readonly INotificationService _notificationService;
 
-        public AppointmentService(IUnitOfWork unitOfWork, IVaccinationScheduleChecker vaccinationScheduleChecker)
+        public AppointmentService(IUnitOfWork unitOfWork, IVaccinationScheduleChecker vaccinationScheduleChecker, INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _vaccinationScheduleChecker = vaccinationScheduleChecker;
+            _notificationService = notificationService;
         }
 
         private bool IsTransientConflict(Exception ex)
@@ -234,6 +236,15 @@ namespace MyPetClinic.Application.Services
 
                     await _unitOfWork.Appointments.AddAsync(appointment);
                     await _unitOfWork.SaveChangesAsync();
+
+                    // Gửi thông báo đặt lịch thành công cho khách hàng
+                    var statusMsg = appointment.Status == "pending_approval" ? "đang chờ được phê duyệt" : "đã được xác nhận";
+                    await _notificationService.CreateNotificationAsync(
+                        appointment.CustomerId,
+                        "Đặt lịch thành công",
+                        $"Lịch hẹn của bạn vào lúc {appointment.AppointmentDate:HH:mm dd/MM/yyyy} {statusMsg}.",
+                        "System"
+                    );
 
                     await _unitOfWork.CommitTransactionAsync();
                     return appointment.Id;
@@ -491,6 +502,23 @@ namespace MyPetClinic.Application.Services
 
             _unitOfWork.Appointments.Update(appointment);
             await _unitOfWork.SaveChangesAsync();
+
+            // Gửi thông báo cho khách hàng
+            var message = newStatus == "confirmed" ? $"Lịch hẹn của bạn vào ngày {appointment.AppointmentDate:dd/MM/yyyy} đã được phê duyệt."
+                        : newStatus == "cancelled" ? $"Lịch hẹn của bạn vào ngày {appointment.AppointmentDate:dd/MM/yyyy} đã bị hủy."
+                        : newStatus == "completed" ? $"Lịch hẹn của bạn vào ngày {appointment.AppointmentDate:dd/MM/yyyy} đã hoàn tất."
+                        : $"Trạng thái lịch hẹn của bạn đã thay đổi thành: {newStatus}.";
+
+            if (newStatus == "confirmed" || newStatus == "cancelled" || newStatus == "completed")
+            {
+                await _notificationService.CreateNotificationAsync(
+                    appointment.CustomerId,
+                    "Cập nhật lịch hẹn",
+                    message,
+                    "AppointmentUpdate"
+                );
+            }
+
             return true;
         }
 
@@ -969,10 +997,21 @@ namespace MyPetClinic.Application.Services
                     ClinicalSigns = mr.ClinicalSigns ?? string.Empty,
                     DoctorNotes = mr.DoctorNotes ?? string.Empty,
                     mr.FollowUpDate,
+                    InvoiceId = mr.Appointment != null && mr.Appointment.Invoice != null ? (long?)mr.Appointment.Invoice.Id : null,
+                    InvoiceStatus = mr.Appointment != null && mr.Appointment.Invoice != null ? mr.Appointment.Invoice.PaymentStatus : null,
+                    InvoiceTotalAmount = mr.Appointment != null && mr.Appointment.Invoice != null ? (decimal?)mr.Appointment.Invoice.TotalAmount : null,
                     PrescribedMedicines = mr.Prescriptions
                         .SelectMany(p => p.PrescriptionItems)
                         .Where(pi => pi.Medicine != null)
-                        .Select(pi => pi.Medicine!.Name)
+                        .Select(pi => new PrescribedMedicineDto
+                        {
+                            MedicineName = pi.Medicine!.Name,
+                            Dosage = pi.Dosage,
+                            Frequency = pi.Frequency,
+                            DurationDays = pi.DurationDays,
+                            Quantity = pi.Quantity,
+                            Instruction = pi.Instruction
+                        })
                         .ToList()
                 })
                 .ToList();
@@ -995,7 +1034,10 @@ namespace MyPetClinic.Application.Services
                 ClinicalSigns = mr.ClinicalSigns,
                 DoctorNotes = mr.DoctorNotes,
                 FollowUpDate = mr.FollowUpDate,
-                PrescribedMedicines = mr.PrescribedMedicines
+                PrescribedMedicines = mr.PrescribedMedicines,
+                InvoiceId = mr.InvoiceId,
+                InvoiceStatus = mr.InvoiceStatus,
+                InvoiceTotalAmount = mr.InvoiceTotalAmount
             });
 
             return await Task.FromResult(mapped);

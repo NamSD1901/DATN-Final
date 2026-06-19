@@ -130,19 +130,8 @@
 
         <div class="d-flex align-items-center gap-4">
           <!-- Notifications Dropdown -->
-          <div class="nav-icon dropdown">
-            <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" class="text-decoration-none text-muted">
-              <i class="bi bi-bell-fill fs-5"></i>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 p-0" style="min-width: 320px; border-radius: 12px; overflow: hidden;">
-              <li class="bg-light p-3 border-bottom text-center fw-bold text-dark">Thông báo mới</li>
-              <li>
-                <div class="py-4 text-center text-muted small">
-                  <i class="bi bi-bell-slash fs-3 d-block mb-2 text-black-50"></i>
-                  Bạn chưa có thông báo nào.
-                </div>
-              </li>
-            </ul>
+          <div class="nav-icon">
+            <NotificationBell />
           </div>
 
           <!-- User Profile Details -->
@@ -437,6 +426,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../services/api';
 import BookingModal from '../components/shared/BookingModal.vue';
+import NotificationBell from '../components/layout/NotificationBell.vue';
 import CustomerOverviewTab from '../components/dashboard/CustomerOverviewTab.vue';
 import QueueTab from '../components/dashboard/QueueTab.vue';
 import CustomersTab from '../components/dashboard/CustomersTab.vue';

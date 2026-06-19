@@ -159,7 +159,7 @@ namespace MyPetClinic.Application.Services
 
             foreach (var r in records)
             {
-                var prescribedMedicines = new List<string>();
+                var prescribedMedicines = new List<PrescribedMedicineDto>();
                 if (prescriptionsGrouped.TryGetValue(r.Id, out var recordPrescriptions))
                 {
                     foreach (var p in recordPrescriptions)
@@ -168,9 +168,15 @@ namespace MyPetClinic.Application.Services
                         {
                             foreach (var pi in items)
                             {
-                                var medName = pi.Medicine?.Name ?? "Thuốc";
-                                var medUnit = pi.Medicine?.Unit ?? "đơn vị";
-                                prescribedMedicines.Add($"{medName} ({pi.Quantity} {medUnit}) - {pi.Dosage} {pi.Frequency}");
+                                prescribedMedicines.Add(new PrescribedMedicineDto
+                                {
+                                    MedicineName = pi.Medicine?.Name ?? "Thuốc",
+                                    Dosage = pi.Dosage,
+                                    Frequency = pi.Frequency,
+                                    DurationDays = pi.DurationDays,
+                                    Quantity = pi.Quantity,
+                                    Instruction = pi.Instruction
+                                });
                             }
                         }
                     }
@@ -225,12 +231,18 @@ namespace MyPetClinic.Application.Services
                   )
                 : Enumerable.Empty<PrescriptionItem>();
 
-            var prescribedMedicines = new List<string>();
+            var prescribedMedicines = new List<PrescribedMedicineDto>();
             foreach (var pi in prescriptionItems)
             {
-                var medName = pi.Medicine?.Name ?? "Thuốc";
-                var medUnit = pi.Medicine?.Unit ?? "đơn vị";
-                prescribedMedicines.Add($"{medName} ({pi.Quantity} {medUnit}) - {pi.Dosage} {pi.Frequency}");
+                prescribedMedicines.Add(new PrescribedMedicineDto
+                {
+                    MedicineName = pi.Medicine?.Name ?? "Thuốc",
+                    Dosage = pi.Dosage,
+                    Frequency = pi.Frequency,
+                    DurationDays = pi.DurationDays,
+                    Quantity = pi.Quantity,
+                    Instruction = pi.Instruction
+                });
             }
 
             return new MedicalRecordDto

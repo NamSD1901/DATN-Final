@@ -44,6 +44,7 @@ namespace MyPetClinic.Infrastructure.Persistence
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Post> Posts { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder builder)
         {
@@ -366,6 +367,25 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
 
                 entity.HasOne(d => d.Author).WithMany().HasForeignKey(d => d.AuthorId).OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // notifications
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.ToTable("notifications");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.Title).HasColumnName("title").IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Content).HasColumnName("content").IsRequired();
+                entity.Property(e => e.IsRead).HasColumnName("is_read").HasDefaultValue(false);
+                entity.Property(e => e.Type).HasColumnName("type").IsRequired().HasMaxLength(50);
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+
+                entity.HasOne(d => d.User).WithMany().HasForeignKey(d => d.UserId).OnDelete(DeleteBehavior.Cascade);
+                
+                entity.HasIndex(e => new { e.UserId, e.IsRead }).HasFilter("\"is_read\" = false");
+                entity.HasIndex(e => e.CreatedAt).IsDescending();
             });
         }
     }

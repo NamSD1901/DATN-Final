@@ -9,7 +9,7 @@
             <i class="bi bi-journal-medical me-2" style="color: var(--primary-gold);"></i>
             Hồ sơ & Lịch sử bệnh án
           </h3>
-          <p class="text-muted mb-0 small">Chọn thú cưng bên dưới để theo dõi chi tiết dòng thời gian bệnh án và điều trị y khoa.</p>
+          <p class="text-muted mb-0 small">Báo cáo sức khỏe toàn diện, đơn thuốc chi tiết và xu hướng sinh hiệu của thú cưng.</p>
         </div>
       </div>
     </div>
@@ -36,7 +36,7 @@
     <!-- Loading state -->
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;"></div>
-      <p class="text-muted mt-3">Đang tải bệnh án...</p>
+      <p class="text-muted mt-3">Đang đồng bộ dữ liệu hồ sơ...</p>
     </div>
 
     <!-- Error state -->
@@ -58,82 +58,163 @@
       <p class="text-muted small mb-0">Thú cưng này chưa hoàn thành đợt điều trị hay khám bệnh nào có bệnh án được lưu lại.</p>
     </div>
 
-    <!-- Timeline records -->
-    <div v-else class="medical-history-timeline mt-4">
-      <div class="timeline-container">
-        <div v-for="record in records" :key="record.recordId" class="timeline-item">
-          <!-- Timeline dot -->
-          <div class="timeline-badge">
-            <div class="badge-inner">
-              <i class="bi bi-heartpulse-fill text-white"></i>
-            </div>
-          </div>
+    <div v-else>
+      <!-- Vitals Chart Section -->
+      <div class="chart-container mb-5" v-if="chartData.labels.length > 1">
+        <h5 class="fw-semibold mb-3"><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Biểu đồ Sinh hiệu</h5>
+        <div class="chart-wrapper p-3 bg-white rounded-4 shadow-sm border">
+          <Line :data="chartData" :options="chartOptions" style="max-height: 250px;" />
+        </div>
+      </div>
+
+      <!-- Timeline records (Accordion Style) -->
+      <h5 class="fw-semibold mb-4"><i class="bi bi-clock-history me-2 text-success"></i>Dòng thời gian y khoa</h5>
+      <div class="medical-history-timeline mt-2" id="medical-records-export-area">
+        <div class="timeline-container accordion" id="historyAccordion">
           
-          <!-- Timeline content card (Glassmorphism) -->
-          <div class="timeline-card">
-            <div class="card-header-main d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <div class="d-flex align-items-center gap-2">
-                <span class="visit-date fw-bold">
-                  <i class="bi bi-calendar-check me-1"></i>{{ formatDateFull(record.visitDate) }}
-                </span>
-              </div>
-              <div class="doctor-badge">
-                <i class="bi bi-person-badge me-1"></i>Bác sĩ: <span class="fw-semibold">{{ record.doctorName || 'Chưa rõ' }}</span>
+          <div v-for="(record, index) in records" :key="record.recordId" class="timeline-item">
+            <!-- Timeline dot -->
+            <div class="timeline-badge" :class="record.recordType === 'Vaccination' ? 'bg-success' : 'bg-primary'">
+              <div class="badge-inner">
+                <i v-if="record.recordType === 'Vaccination'" class="bi bi-shield-plus text-white"></i>
+                <i v-else class="bi bi-heartpulse-fill text-white"></i>
               </div>
             </div>
+            
+            <!-- Timeline content card (Glassmorphism + Accordion) -->
+            <div class="timeline-card accordion-item border-0 bg-transparent">
+              <h2 class="accordion-header card-header-main" :id="'heading' + record.recordId">
+                <button 
+                  class="accordion-button shadow-none bg-white rounded-top-4" 
+                  :class="{ 'collapsed': index !== 0 }"
+                  type="button" 
+                  data-bs-toggle="collapse" 
+                  :data-bs-target="'#collapse' + record.recordId" 
+                  :aria-expanded="index === 0 ? 'true' : 'false'" 
+                  :aria-controls="'collapse' + record.recordId"
+                >
+                  <div class="d-flex flex-column w-100 pe-3">
+                    <div class="d-flex justify-content-between align-items-center w-100 mb-1">
+                      <span class="visit-date fw-bold text-dark">
+                        {{ formatDateFull(record.visitDate) }}
+                      </span>
+                      <span class="badge rounded-pill" :class="record.recordType === 'Vaccination' ? 'bg-success' : 'bg-primary'">
+                        {{ record.recordType === 'Vaccination' ? 'Tiêm phòng' : 'Khám bệnh' }}
+                      </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                      <span class="doctor-badge mb-0 text-muted small">
+                        <i class="bi bi-person-badge me-1"></i>BS: <span class="fw-semibold text-dark">{{ record.doctorName || 'Chưa rõ' }}</span>
+                      </span>
+                      <span v-if="record.diagnosis" class="text-truncate text-muted small ms-2" style="max-width: 200px;">
+                        {{ record.diagnosis }}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              </h2>
 
-            <div class="card-body-main mt-3">
-              <!-- Vitals Row -->
-              <div class="vitals-grid mb-3">
-                <div class="vital-card">
-                  <span class="vital-icon">⚖️</span>
-                  <span class="vital-label">Cân nặng</span>
-                  <span class="vital-val">{{ record.weight ? `${record.weight} kg` : '—' }}</span>
-                </div>
-                <div class="vital-card">
-                  <span class="vital-icon">🌡️</span>
-                  <span class="vital-label">Nhiệt độ</span>
-                  <span class="vital-val">{{ record.temperature ? `${record.temperature} °C` : '—' }}</span>
-                </div>
-                <div class="vital-card">
-                  <span class="vital-icon">💓</span>
-                  <span class="vital-label">Nhịp tim</span>
-                  <span class="vital-val">{{ record.heartRate ? `${record.heartRate} bpm` : '—' }}</span>
-                </div>
-              </div>
+              <div 
+                :id="'collapse' + record.recordId" 
+                class="accordion-collapse collapse" 
+                :class="{ 'show': index === 0 }"
+                :aria-labelledby="'heading' + record.recordId" 
+                data-bs-parent="#historyAccordion"
+              >
+                <div class="accordion-body card-body-main bg-white border-top border-light rounded-bottom-4 shadow-sm" :id="'record-content-' + record.recordId">
+                  
+                  <!-- Action Bar -->
+                  <div class="d-flex justify-content-end mb-3 action-bar hide-on-print">
+                    <button @click="downloadPDF(record.recordId)" class="btn btn-sm btn-outline-danger me-2">
+                      <i class="bi bi-file-pdf me-1"></i>Xuất PDF
+                    </button>
+                    <div v-if="record.invoiceId" class="badge bg-light text-dark border d-flex align-items-center px-3">
+                      <i class="bi bi-receipt me-2 text-secondary"></i>
+                      <span class="me-2">Hóa đơn: <strong>#INV-{{ record.invoiceId }}</strong></span>
+                      <span v-if="record.invoiceStatus === 'paid'" class="badge bg-success">Đã thanh toán</span>
+                      <span v-else class="badge bg-warning text-dark">Chờ thanh toán</span>
+                    </div>
+                  </div>
 
-              <!-- Diagnosis & Symptoms -->
-              <div class="medical-details mb-3">
-                <div class="detail-block mb-2">
-                  <span class="detail-label"><i class="bi bi-chat-left-dots-fill text-warning me-1"></i>Triệu chứng lâm sàng:</span>
-                  <p class="detail-content">{{ record.symptoms || 'Không ghi nhận' }}</p>
-                </div>
-                
-                <div class="detail-block diagnosis-block mb-2">
-                  <span class="detail-label"><i class="bi bi-activity text-danger me-1"></i>Chẩn đoán y khoa:</span>
-                  <p class="detail-content fw-bold text-dark">{{ record.diagnosis || 'Chưa ghi nhận' }}</p>
-                </div>
+                  <!-- PDF Header (Only visible in PDF) -->
+                  <div class="pdf-header d-none mb-4 text-center">
+                    <h2 class="text-primary fw-bold mb-1">MYPET CLINIC</h2>
+                    <p class="mb-0">Hồ Sơ Bệnh Án Điện Tử</p>
+                    <hr>
+                  </div>
 
-                <div class="detail-block treatment-block mb-2">
-                  <span class="detail-label"><i class="bi bi-file-earmark-medical-fill text-success me-1"></i>Phác đồ & Kế hoạch điều trị:</span>
-                  <p class="detail-content text-dark">{{ record.treatment || 'Chưa ghi nhận' }}</p>
-                </div>
-              </div>
+                  <!-- Vitals Row -->
+                  <div class="vitals-grid mb-3">
+                    <div class="vital-card">
+                      <span class="vital-icon">⚖️</span>
+                      <span class="vital-label">Cân nặng</span>
+                      <span class="vital-val">{{ record.weight ? `${record.weight} kg` : '—' }}</span>
+                    </div>
+                    <div class="vital-card">
+                      <span class="vital-icon">🌡️</span>
+                      <span class="vital-label">Nhiệt độ</span>
+                      <span class="vital-val">{{ record.temperature ? `${record.temperature} °C` : '—' }}</span>
+                    </div>
+                  </div>
 
-              <!-- Prescribed Medicine -->
-              <div v-if="record.prescribedMedicines && record.prescribedMedicines.length > 0" class="medicine-section mb-3">
-                <span class="detail-label"><i class="bi bi-capsule text-primary me-1"></i>Đơn thuốc chỉ định:</span>
-                <div class="medicine-pills mt-2">
-                  <span v-for="med in record.prescribedMedicines" :key="med" class="medicine-badge">
-                    💊 {{ med }}
-                  </span>
-                </div>
-              </div>
+                  <!-- Diagnosis & Symptoms -->
+                  <div class="medical-details mb-4">
+                    <div class="detail-block mb-3">
+                      <span class="detail-label"><i class="bi bi-chat-left-dots-fill text-warning me-1"></i>Khám lâm sàng:</span>
+                      <p class="detail-content">{{ record.clinicalSigns || 'Không ghi nhận' }}</p>
+                    </div>
+                    
+                    <div class="detail-block diagnosis-block mb-3">
+                      <span class="detail-label"><i class="bi bi-activity text-danger me-1"></i>Chẩn đoán y khoa:</span>
+                      <p class="detail-content fw-bold text-dark">{{ record.diagnosis || 'Chưa ghi nhận' }}</p>
+                    </div>
 
-              <!-- Note -->
-              <div v-if="record.note" class="detail-block note-block">
-                <span class="detail-label text-muted"><i class="bi bi-journal-text me-1"></i>Ghi chú thêm:</span>
-                <p class="detail-content text-muted mb-0 small">{{ record.note }}</p>
+                    <div class="detail-block treatment-block mb-3">
+                      <span class="detail-label"><i class="bi bi-file-earmark-medical-fill text-success me-1"></i>Phác đồ & Kế hoạch điều trị:</span>
+                      <p class="detail-content text-dark">{{ record.treatmentPlan || 'Chưa ghi nhận' }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Prescribed Medicine Detailed -->
+                  <div v-if="record.prescribedMedicines && record.prescribedMedicines.length > 0" class="medicine-section mb-4">
+                    <span class="detail-label mb-2"><i class="bi bi-capsule text-primary me-1"></i>Đơn thuốc chỉ định:</span>
+                    <div class="table-responsive">
+                      <table class="table table-sm table-bordered medicine-table">
+                        <thead class="table-light">
+                          <tr>
+                            <th>Tên thuốc</th>
+                            <th>Số lượng</th>
+                            <th>Liều dùng</th>
+                            <th>Cách dùng</th>
+                            <th>Lời dặn</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(med, mIndex) in record.prescribedMedicines" :key="mIndex">
+                            <td class="fw-semibold text-primary">{{ med.medicineName }}</td>
+                            <td>{{ med.quantity || '-' }}</td>
+                            <td>{{ med.dosage || '-' }}</td>
+                            <td>{{ med.frequency || '-' }} ({{ med.durationDays ? med.durationDays + ' ngày' : '-' }})</td>
+                            <td class="text-muted small">{{ med.instruction || '-' }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- Note -->
+                  <div v-if="record.doctorNotes" class="detail-block note-block mb-3">
+                    <span class="detail-label text-muted"><i class="bi bi-journal-text me-1"></i>Ghi chú của bác sĩ:</span>
+                    <p class="detail-content text-muted mb-0 small">{{ record.doctorNotes }}</p>
+                  </div>
+
+                  <!-- Follow Up -->
+                  <div v-if="record.followUpDate" class="detail-block bg-warning bg-opacity-10 border-warning mt-3">
+                    <span class="detail-label text-dark-gold"><i class="bi bi-calendar-event me-1"></i>Ngày hẹn tái khám:</span>
+                    <p class="detail-content text-dark fw-bold mb-0 small">{{ formatDateFull(record.followUpDate) }}</p>
+                  </div>
+                  
+                </div>
               </div>
             </div>
           </div>
@@ -144,8 +225,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import api from '../../services/api';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
+
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js'
+import { Line } from 'vue-chartjs'
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
 // ===== Types =====
 interface Pet {
@@ -156,22 +253,35 @@ interface Pet {
   weight?: number;
 }
 
+interface PrescribedMedicine {
+  medicineName: string;
+  dosage?: string;
+  frequency?: string;
+  durationDays?: number;
+  quantity?: number;
+  instruction?: string;
+}
+
 interface MedicalRecord {
   recordId: number;
   appointmentId: number;
   petId: number;
   petName: string;
   visitDate: string;
+  recordType: string;
   diagnosis: string;
-  treatment: string;
+  treatmentPlan: string;
   doctorName: string;
   doctorId: string;
   weight?: number;
   temperature?: number;
-  heartRate?: number;
-  symptoms: string;
-  note: string;
-  prescribedMedicines: string[];
+  clinicalSigns: string;
+  doctorNotes: string;
+  followUpDate?: string;
+  prescribedMedicines: PrescribedMedicine[];
+  invoiceId?: number;
+  invoiceStatus?: string;
+  invoiceTotalAmount?: number;
 }
 
 // ===== State =====
@@ -217,6 +327,96 @@ const selectPet = async (petId: number) => {
   await fetchMedicalHistory(petId);
 };
 
+// ===== Chart Logic =====
+const chartData = computed(() => {
+  // Sort records chronologically for the chart
+  const sorted = [...records.value].reverse();
+  const labels = sorted.map(r => new Date(r.visitDate).toLocaleDateString('vi-VN'));
+  const weights = sorted.map(r => r.weight || null);
+  const temps = sorted.map(r => r.temperature || null);
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Cân nặng (kg)',
+        backgroundColor: '#3b82f6',
+        borderColor: '#3b82f6',
+        data: weights,
+        yAxisID: 'y'
+      },
+      {
+        label: 'Nhiệt độ (°C)',
+        backgroundColor: '#ef4444',
+        borderColor: '#ef4444',
+        data: temps,
+        yAxisID: 'y1'
+      }
+    ]
+  };
+});
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: {
+    mode: 'index' as const,
+    intersect: false,
+  },
+  plugins: {
+    legend: { position: 'top' as const }
+  },
+  scales: {
+    y: {
+      type: 'linear' as const,
+      display: true,
+      position: 'left' as const,
+      title: { display: true, text: 'Cân nặng (kg)' }
+    },
+    y1: {
+      type: 'linear' as const,
+      display: true,
+      position: 'right' as const,
+      grid: { drawOnChartArea: false },
+      title: { display: true, text: 'Nhiệt độ (°C)' }
+    }
+  }
+};
+
+// ===== PDF Export =====
+const downloadPDF = (recordId: number) => {
+  const element = document.getElementById(`record-content-${recordId}`);
+  if (!element) return;
+  
+  // Clone element to modify for print
+  const clone = element.cloneNode(true) as HTMLElement;
+  
+  // Show PDF headers, hide action bars
+  const pdfHeader = clone.querySelector('.pdf-header');
+  if (pdfHeader) pdfHeader.classList.remove('d-none');
+  
+  const actionBar = clone.querySelector('.hide-on-print');
+  if (actionBar) actionBar.remove();
+
+  // Create temporary container
+  const tempDiv = document.createElement('div');
+  tempDiv.appendChild(clone);
+  tempDiv.style.padding = '20px';
+  tempDiv.style.backgroundColor = 'white';
+  tempDiv.style.color = 'black';
+
+  const opt = {
+    margin:       0.5,
+    filename:     `BenhAn_MyPetClinic_${recordId}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2 },
+    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(tempDiv).save();
+};
+
+
 // ===== Helpers =====
 const getSpeciesEmoji = (species: string | null): string => {
   const map: Record<string, string> = {
@@ -228,7 +428,7 @@ const getSpeciesEmoji = (species: string | null): string => {
 const formatDateFull = (dateStr: string): string => {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleString('vi-VN', {
-    weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
+    day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
 };
@@ -324,27 +524,26 @@ onMounted(fetchPets);
   bottom: 0;
   left: -1.25rem;
   width: 3px;
-  background: linear-gradient(180deg, rgba(251, 191, 36, 0.6) 0%, rgba(16, 185, 129, 0.6) 100%);
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.4) 0%, rgba(16, 185, 129, 0.4) 100%);
   border-radius: 2px;
 }
 
 .timeline-item {
   position: relative;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .timeline-badge {
   position: absolute;
   left: -2.1rem;
-  top: 0.5rem;
+  top: 0.8rem;
   width: 28px;
   height: 28px;
-  background: linear-gradient(135deg, #10b981, #059669);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 4px white, 0 4px 10px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 0 4px #f3f4f6;
   z-index: 2;
 }
 
@@ -352,41 +551,7 @@ onMounted(fetchPets);
   font-size: 0.8rem;
 }
 
-.timeline-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
-}
-
-.timeline-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
-  border-color: rgba(251, 191, 36, 0.3);
-}
-
-.card-header-main {
-  border-bottom: 1px dashed rgba(229, 231, 235, 0.8);
-  padding-bottom: 0.75rem;
-}
-
-.visit-date {
-  font-size: 1.05rem;
-  color: #111827;
-}
-
-.doctor-badge {
-  background: rgba(16, 185, 129, 0.1);
-  color: #065f46;
-  padding: 0.35rem 0.85rem;
-  border-radius: 20px;
-  font-size: 0.82rem;
-}
-
-/* Vitals */
+/* ===== Vitals ===== */
 .vitals-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -422,12 +587,12 @@ onMounted(fetchPets);
   margin-top: 2px;
 }
 
-/* Detail blocks */
+/* ===== Detail blocks ===== */
 .detail-block {
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(249, 250, 251, 0.8);
   padding: 0.85rem 1rem;
   border-radius: 12px;
-  border: 1px solid rgba(229, 231, 235, 0.3);
+  border: 1px solid rgba(229, 231, 235, 0.5);
 }
 
 .detail-label {
@@ -462,16 +627,19 @@ onMounted(fetchPets);
   border-left: 3px solid #6b7280;
 }
 
-/* Medicine */
-.medicine-badge {
-  display: inline-block;
-  background: rgba(59, 130, 246, 0.1);
-  color: #1e40af;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.82rem;
+/* ===== Medicine Table ===== */
+.medicine-table {
+  font-size: 0.85rem;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.medicine-table th {
+  background-color: #f8fafc;
+  color: #475569;
   font-weight: 600;
-  margin-right: 6px;
-  margin-bottom: 6px;
+  border-bottom-width: 2px;
+}
+.medicine-table td {
+  vertical-align: middle;
 }
 </style>

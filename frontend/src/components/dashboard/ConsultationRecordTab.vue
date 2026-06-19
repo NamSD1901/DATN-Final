@@ -71,17 +71,8 @@
             </div>
           </div>
 
-          <!-- Alerts Area (Tiền sử dị ứng, Dịch vụ) -->
+            <!-- Alerts Area (Dịch vụ) -->
           <div class="row g-3 mb-4">
-            <div class="col-md-12">
-              <div class="alert bg-danger bg-opacity-10 text-danger border-0 rounded-4 d-flex align-items-start p-3 mb-0">
-                <i class="bi bi-exclamation-triangle-fill fs-4 me-3 mt-1"></i>
-                <div class="w-100">
-                  <h6 class="fw-bold mb-1 text-danger">TIỀN SỬ LÂM SÀNG / BỆNH LÝ</h6>
-                  <textarea v-model="form.medicalHistory" class="form-control bg-transparent border-0 p-0 text-danger w-100" rows="1" placeholder="Ghi chú tiền sử hoặc đặc điểm lưu ý (nếu có)..."></textarea>
-                </div>
-              </div>
-            </div>
             <div class="col-md-12">
               <div class="alert bg-primary bg-opacity-10 text-primary border-0 rounded-4 d-flex align-items-center p-3 mb-0">
                 <i class="bi bi-info-circle-fill fs-4 me-3"></i>
@@ -103,6 +94,10 @@
                   Chẩn đoán & Khám lâm sàng
                 </h6>
                 
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-secondary">Bệnh sử / Lý do khám (Subjective - S)</label>
+                  <textarea v-model="form.medicalHistory" class="form-control rounded-3 border shadow-sm" rows="2" placeholder="Tình trạng ở nhà, thời gian bắt đầu triệu chứng..."></textarea>
+                </div>
                 <div class="mb-3">
                   <label class="form-label small fw-bold text-secondary">Khám lâm sàng (Objective - O) <span class="text-danger">*</span></label>
                   <textarea v-model="form.clinicalSigns" class="form-control rounded-3 border shadow-sm" rows="2" placeholder="Nhịp tim, nhịp thở, tình trạng da lông, niêm mạc..." required></textarea>

@@ -29,7 +29,8 @@ namespace MyPetClinic.Tests
             _context = new ApplicationDbContext(options);
             _unitOfWork = new UnitOfWork(_context);
             var checker = new MyPetClinic.Application.Helpers.VaccinationScheduleChecker();
-            _service = new AppointmentService(_unitOfWork, checker);
+            var notificationServiceMock = new Mock<MyPetClinic.Application.Interfaces.Services.INotificationService>();
+            _service = new AppointmentService(_unitOfWork, checker, notificationServiceMock.Object);
         }
 
         [Fact]

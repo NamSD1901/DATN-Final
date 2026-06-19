@@ -19,15 +19,18 @@ namespace MyPetClinic.Controllers
         private readonly IAppointmentService _appointmentService;
         private readonly IPetService _petService;
         private readonly ICustomerAppointmentService _customerAppointmentService;
+        private readonly IInvoiceService _invoiceService;
 
         public CustomerAppointmentController(
             IAppointmentService appointmentService,
             IPetService petService,
-            ICustomerAppointmentService customerAppointmentService)
+            ICustomerAppointmentService customerAppointmentService,
+            IInvoiceService invoiceService)
         {
             _appointmentService = appointmentService;
             _petService = petService;
             _customerAppointmentService = customerAppointmentService;
+            _invoiceService = invoiceService;
         }
 
         private Guid GetCurrentUserId()
@@ -198,6 +201,24 @@ namespace MyPetClinic.Controllers
             catch (UnauthorizedAccessException)
             {
                 return Forbid();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách hóa đơn của khách hàng đang đăng nhập.
+        /// </summary>
+        [HttpGet("invoices")]
+        public async Task<IActionResult> GetMyInvoices()
+        {
+            try
+            {
+                var customerId = GetCurrentUserId();
+                var invoices = await _invoiceService.GetCustomerInvoicesAsync(customerId);
+                return Ok(invoices);
             }
             catch (Exception ex)
             {

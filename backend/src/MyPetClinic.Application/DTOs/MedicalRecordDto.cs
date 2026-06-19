@@ -21,7 +21,12 @@ namespace MyPetClinic.Application.DTOs
         public string DoctorName { get; set; } = string.Empty;
         public string DoctorId { get; set; } = string.Empty;
         public DateTime? FollowUpDate { get; set; }
-        public List<string> PrescribedMedicines { get; set; } = new List<string>();
+        public List<PrescribedMedicineDto> PrescribedMedicines { get; set; } = new List<PrescribedMedicineDto>();
+        
+        // Financial Visibility
+        public long? InvoiceId { get; set; }
+        public string? InvoiceStatus { get; set; }
+        public decimal? InvoiceTotalAmount { get; set; }
     }
 
     public class CreateMedicalRecordDto
