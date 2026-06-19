@@ -440,6 +440,7 @@ namespace MyPetClinic.Application.Services
                         phone = a.Customer?.Phone,
                         symptom = a.Symptom,
                         note = a.Note,
+                        doctorId = a.DoctorId,
                         doctorName = a.Doctor?.FullName,
                         serviceName = a.Service?.Name,
                         qrToken = a.QrToken
@@ -493,10 +494,11 @@ namespace MyPetClinic.Application.Services
             return true;
         }
 
-        public async Task<bool> RescheduleAppointmentAsync(long id, DateTime newStart, bool force = false)
+        public async Task<bool> RescheduleAppointmentAsync(long id, DateTime newDate, bool force = false)
         {
-            var newDate = DateTime.SpecifyKind(newStart, DateTimeKind.Utc);
-            if (!force && newDate < DateTime.UtcNow.AddMinutes(-5)) // Trừ hao 5 phút do lệch giờ
+            var targetDate = DateTime.SpecifyKind(newDate, DateTimeKind.Utc);
+
+            if (!force && targetDate < DateTime.UtcNow.AddMinutes(-5)) // Trừ hao 5 phút do lệch giờ
             {
                 throw new InvalidOperationException("Không thể dời lịch về quá khứ.");
             }
@@ -517,15 +519,17 @@ namespace MyPetClinic.Application.Services
                 .AnyAsync(a => a.DoctorId == appointment.DoctorId 
                             && a.Id != id // Không tính chính nó
                             && a.Status != "cancelled"
-                            && a.AppointmentDate > newDate.AddMinutes(-30) 
-                            && a.AppointmentDate < newDate.AddMinutes(30));
+                            && a.AppointmentDate > targetDate.AddMinutes(-30) 
+                            && a.AppointmentDate < targetDate.AddMinutes(30));
 
             if (isDoubleBooked)
             {
                 throw new InvalidOperationException("Bác sĩ đã có lịch hẹn trong khoảng thời gian này.");
             }
 
-            appointment.AppointmentDate = newDate;
+            appointment.AppointmentDate = targetDate.Date;
+            appointment.StartTime = targetDate.TimeOfDay;
+            
             _unitOfWork.Appointments.Update(appointment);
             await _unitOfWork.SaveChangesAsync();
             return true;

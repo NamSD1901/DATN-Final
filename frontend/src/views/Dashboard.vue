@@ -10,12 +10,12 @@
       </div>
 
       <ul class="list-unstyled components px-2 py-3">
-        <li :class="{ 'active': activeTab === 'overview' }">
+        <li v-if="role !== 'receptionist' && role !== 'doctor'" :class="{ 'active': activeTab === 'overview' }">
           <a href="#" @click.prevent="activeTab = 'overview'">
             <i class="bi bi-grid-1x2-fill text-warning"></i> Tổng quan
           </a>
         </li>
-        <li :class="{ 'active': activeTab === 'profile' }">
+        <li v-if="role !== 'receptionist' && role !== 'doctor'" :class="{ 'active': activeTab === 'profile' }">
           <a href="#" @click.prevent="activeTab = 'profile'">
             <i class="bi bi-person-lines-fill text-warning"></i> Hồ sơ của tôi
           </a>
@@ -35,13 +35,21 @@
           </li>
         </template>
 
-        <template v-if="role === 'doctor' || role === 'admin'">
-          <li v-if="role !== 'admin'" class="mt-4 mb-2 px-3 text-muted sidebar-section-title">Quản lý chuyên môn</li>
-          <li :class="{ 'active': activeTab === 'doctor-cases' }">
-            <a href="#" @click.prevent="activeTab = 'doctor-cases'"><i class="bi bi-heart-pulse-fill text-warning opacity-75"></i> Ca khám của tôi</a>
+        <template v-if="role === 'doctor'">
+          <li class="mt-4 mb-2 px-3 text-muted sidebar-section-title text-nowrap text-truncate">Quản lý chuyên môn</li>
+          <li :class="{ 'active': activeTab === 'doctor-cases' || activeTab === 'medical-records' }">
+            <a href="#" class="text-nowrap text-truncate" @click.prevent="activeTab = 'doctor-cases'" title="Ca khám & Bệnh án">
+              <i class="bi bi-person-lines-fill text-warning opacity-75"></i> Ca khám & Bệnh án
+            </a>
           </li>
-          <li :class="{ 'active': activeTab === 'medical-records' }">
-            <a href="#" @click.prevent="activeTab = 'medical-records'"><i class="bi bi-file-medical-fill text-warning opacity-75"></i> Quản lý Bệnh án</a>
+        </template>
+
+        <template v-if="role === 'admin'">
+          <li class="mt-4 mb-2 px-3 text-muted sidebar-section-title text-nowrap text-truncate">Quản lý lâm sàng</li>
+          <li :class="{ 'active': activeTab === 'doctor-cases' || activeTab === 'medical-records' }">
+            <a href="#" class="text-nowrap text-truncate" @click.prevent="activeTab = 'doctor-cases'" title="Ca khám & Bệnh án">
+              <i class="bi bi-heart-pulse-fill text-warning opacity-75"></i> Ca khám & Bệnh án
+            </a>
           </li>
         </template>
 
@@ -531,6 +539,12 @@ const fetchDashboardData = async () => {
     userName.value = res.data.userName || 'Người dùng';
     email.value = res.data.email || '';
     role.value = res.data.role || 'customer';
+    
+    if (role.value === 'receptionist' && activeTab.value === 'overview') {
+      activeTab.value = 'queue';
+    } else if (role.value === 'doctor' && activeTab.value === 'overview') {
+      activeTab.value = 'doctor-cases';
+    }
 
     // Fetch details to get avatar, phone, address
     const profileRes = await api.get('/profile');

@@ -107,11 +107,7 @@
           </span>
         </button>
       </li>
-      <li class="nav-item">
-        <button class="nav-link rounded-3 px-4 py-2.5 fw-bold border-0" :class="{ 'active': activeSubTab === 'flow' }" @click="activeSubTab = 'flow'">
-          <i class="bi bi-kanban me-2"></i>Clinical Flowboard
-        </button>
-      </li>
+
     </ul>
 
     <!-- Tabs Content -->
@@ -152,7 +148,7 @@
                 <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
                 Không có lịch hẹn nào ghi nhận trong ngày này.
               </div>
-              <div v-else class="table-responsive rounded-4 border overflow-hidden">
+              <div v-else class="table-responsive rounded-4 border" style="min-height: 350px; overflow-y: visible; padding-bottom: 150px;">
                 <table class="table table-hover align-middle mb-0">
                   <thead class="table-light">
                     <tr>
@@ -267,10 +263,10 @@
                 <td class="text-muted small text-truncate" style="max-width: 150px;">{{ item.symptom || '—' }}</td>
                 <td class="text-center">
                   <div class="d-flex gap-2 justify-content-center">
-                    <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold" @click="updateStatus(item.id, 'confirmed')">
+                    <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold" @click="openConfirmApprove(item)">
                       <i class="bi bi-check2"></i> Duyệt
                     </button>
-                    <button class="btn btn-sm btn-outline-danger rounded-pill px-3" @click="updateStatus(item.id, 'cancelled')">
+                    <button class="btn btn-sm btn-outline-danger rounded-pill px-3" @click="openConfirmReject(item)">
                       <i class="bi bi-x"></i> Từ chối
                     </button>
                     <button class="btn btn-sm btn-light border rounded-pill" @click="openDetailModal(item.id)">
@@ -284,81 +280,7 @@
         </div>
       </div>
 
-      <!-- Flowboard View -->
-      <div v-else-if="activeSubTab === 'flow'" class="animate-fade-in">
-        <div class="row g-4">
-          <!-- Waiting column -->
-          <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-light" style="min-height: 500px;">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold text-secondary mb-0 text-uppercase"><i class="bi bi-hourglass-split me-2"></i>Đang chờ khám</h6>
-                <span class="badge bg-secondary rounded-pill px-3">{{ flowWaiting.length }}</span>
-              </div>
-              <div class="flow-card-list">
-                <div v-for="item in flowWaiting" :key="item.appointmentId" class="card flow-patient-card border-start-primary p-3 mb-2 shadow-sm rounded-3 cursor-pointer bg-white" @click="openDetailModal(item.appointmentId)">
-                  <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h6 class="fw-bold text-dark mb-0">{{ getAnimalEmoji(item.species) }} {{ item.petName }}</h6>
-                    <span class="badge bg-light text-secondary border rounded-pill">#{{ item.queueNumber }}</span>
-                  </div>
-                  <p class="text-muted small mb-2"><i class="bi bi-person me-1"></i>{{ item.customerName || 'Khách vãng lai' }}</p>
-                  <p v-if="item.symptom" class="small text-muted mb-2 text-truncate"><strong>Lý do:</strong> {{ item.symptom }}</p>
-                  <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                    <span class="badge rounded-pill bg-light text-dark border">{{ getWaitingTimeText(item) }}</span>
-                    <span class="small fw-bold text-warning">Bs. {{ getLastWord(item.doctorName) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- In progress column -->
-          <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-light" style="min-height: 500px;">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold text-orange mb-0 text-uppercase" style="color: #fd7e14;"><i class="bi bi-activity me-2"></i>Đang khám</h6>
-                <span class="badge bg-orange text-white rounded-pill px-3" style="background-color: #fd7e14;">{{ flowInProgress.length }}</span>
-              </div>
-              <div class="flow-card-list">
-                <div v-for="item in flowInProgress" :key="item.appointmentId" class="card flow-patient-card border-start-warning p-3 mb-2 shadow-sm rounded-3 cursor-pointer bg-white" @click="openDetailModal(item.appointmentId)">
-                  <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h6 class="fw-bold text-dark mb-0">{{ getAnimalEmoji(item.species) }} {{ item.petName }}</h6>
-                    <span class="badge bg-light text-secondary border rounded-pill">#{{ item.queueNumber }}</span>
-                  </div>
-                  <p class="text-muted small mb-2"><i class="bi bi-person me-1"></i>{{ item.customerName || 'Khách vãng lai' }}</p>
-                  <p v-if="item.symptom" class="small text-muted mb-2 text-truncate"><strong>Lý do:</strong> {{ item.symptom }}</p>
-                  <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                    <span class="badge bg-warning text-dark rounded-pill">Đang khám</span>
-                    <span class="small fw-bold text-warning">Bs. {{ getLastWord(item.doctorName) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Completed column -->
-          <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-light" style="min-height: 500px;">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold text-success mb-0 text-uppercase"><i class="bi bi-cash-coin me-2"></i>Chờ thanh toán / Xong</h6>
-                <span class="badge bg-success rounded-pill px-3">{{ flowCompleted.length }}</span>
-              </div>
-              <div class="flow-card-list">
-                <div v-for="item in flowCompleted" :key="item.appointmentId" class="card flow-patient-card border-start-success p-3 mb-2 shadow-sm rounded-3 cursor-pointer bg-white" @click="openDetailModal(item.appointmentId)">
-                  <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h6 class="fw-bold text-dark mb-0">{{ getAnimalEmoji(item.species) }} {{ item.petName }}</h6>
-                    <span class="badge bg-light text-secondary border rounded-pill">#{{ item.queueNumber }}</span>
-                  </div>
-                  <p class="text-muted small mb-2"><i class="bi bi-person me-1"></i>{{ item.customerName || 'Khách vãng lai' }}</p>
-                  <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                    <span class="badge rounded-pill bg-success text-white">Chờ thanh toán</span>
-                    <span class="small text-muted">Bs. {{ getLastWord(item.doctorName) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Modal 1: Create Appointment Modal -->
@@ -788,27 +710,92 @@
             <div class="modal-body pt-3">
               <p class="text-muted mb-3">Đang dời lịch cho bé <strong>{{ rescheduleTarget?.petName }}</strong> - Khách hàng <strong>{{ rescheduleTarget?.customerName }}</strong></p>
               
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label class="form-label fw-bold small text-muted">Ngày khám mới</label>
-                  <input type="date" class="form-control" v-model="rescheduleDate" @change="fetchRescheduleSlots">
+              <div class="mb-4">
+                <label class="form-label fw-bold small text-muted">Ngày khám mới *</label>
+                <input type="date" class="form-control border-warning" v-model="rescheduleDate" @change="fetchRescheduleSlots">
+              </div>
+              
+              <div class="mb-4">
+                <label class="form-label fw-bold small text-muted">Khung giờ làm việc còn trống *</label>
+                <div v-if="loadingSlots" class="d-flex align-items-center gap-2 text-muted small mt-2">
+                  <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+                  Đang tải khung giờ trống...
                 </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-bold small text-muted">Giờ khám mới</label>
-                  <select class="form-select" v-model="rescheduleTime" :disabled="!rescheduleDate || loadingSlots">
-                    <option value="" disabled>-- Chọn giờ --</option>
-                    <option v-for="slot in availableSlots" :key="slot" :value="slot">{{ slot }}</option>
-                  </select>
+                <div v-else-if="rescheduleDate && availableSlots.length === 0" class="text-danger small fw-bold mt-2 d-flex align-items-center gap-1">
+                  <i class="bi bi-exclamation-circle"></i> Bác sĩ không có giờ rảnh trong ngày này.
+                </div>
+                <div v-else class="d-flex flex-column gap-3 mt-2">
+                  <!-- Morning Slots -->
+                  <div>
+                    <h6 class="text-muted fw-bold mb-2 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-high me-1"></i> BUỔI SÁNG</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                      <button
+                        v-for="slot in displayRescheduleMorningSlots"
+                        :key="slot.time"
+                        type="button"
+                        class="time-slot-btn"
+                        :class="{
+                          'slot-selected': rescheduleTime === slot.time,
+                          'slot-past': slot.isPast,
+                          'slot-too-soon': slot.isTooSoon,
+                          'slot-booked': slot.isBooked,
+                          'slot-available': slot.isAvailable
+                        }"
+                        :disabled="!slot.isAvailable"
+                        :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần dời trước ít nhất 15 phút' : (slot.isBooked ? 'Khung giờ này đã được đặt' : ''))"
+                        @click="slot.isAvailable && (rescheduleTime = slot.time)"
+                      >
+                        <span class="slot-time-text">{{ slot.time }}</span>
+                        <i v-if="rescheduleTime === slot.time" class="bi bi-check-circle-fill ms-1"></i>
+                        <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                        <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                        <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Afternoon Slots -->
+                  <div>
+                    <h6 class="text-muted fw-bold mb-2 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-low me-1"></i> BUỔI CHIỀU</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                      <button
+                        v-for="slot in displayRescheduleAfternoonSlots"
+                        :key="slot.time"
+                        type="button"
+                        class="time-slot-btn"
+                        :class="{
+                          'slot-selected': rescheduleTime === slot.time,
+                          'slot-past': slot.isPast,
+                          'slot-too-soon': slot.isTooSoon,
+                          'slot-booked': slot.isBooked,
+                          'slot-available': slot.isAvailable
+                        }"
+                        :disabled="!slot.isAvailable"
+                        :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần dời trước ít nhất 15 phút' : (slot.isBooked ? 'Khung giờ này đã được đặt' : ''))"
+                        @click="slot.isAvailable && (rescheduleTime = slot.time)"
+                      >
+                        <span class="slot-time-text">{{ slot.time }}</span>
+                        <i v-if="rescheduleTime === slot.time" class="bi bi-check-circle-fill ms-1"></i>
+                        <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                        <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                        <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="mt-2 pt-2 border-top">
+                    <p class="small text-muted mb-2 fw-semibold"><i class="bi bi-info-circle me-1"></i> Chú giải màu khung giờ:</p>
+                    <div class="d-flex flex-wrap gap-2">
+                      <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
+                      <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#f8f9fa;border:1.5px solid #e9ecef;display:inline-block"></span> <span class="text-muted">Đã qua</span></span>
+                      <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff8ec;border:1.5px solid #ffc107;display:inline-block"></span> <span class="text-muted">Quá gần</span></span>
+                      <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã đặt</span></span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div v-if="loadingSlots" class="mt-2 small text-muted text-center"><i class="spinner-border spinner-border-sm me-1"></i> Đang tải lịch trống...</div>
-              <div v-else-if="rescheduleDate && availableSlots.length === 0" class="mt-2 small text-danger text-center"><i class="bi bi-exclamation-circle me-1"></i> Bác sĩ không có giờ trống trong ngày này.</div>
 
-              <div class="form-check form-switch mt-4">
-                <input class="form-check-input" type="checkbox" role="switch" id="forceReschedule" v-model="forceReschedule">
-                <label class="form-check-label text-muted small" for="forceReschedule">Dời lùi lịch (Bypass chặn giờ quá khứ / sát giờ)</label>
-              </div>
             </div>
             <div class="modal-footer border-0 pt-0">
               <button type="button" class="btn btn-light rounded-pill px-4" @click="showRescheduleModal = false">Đóng</button>
@@ -906,6 +893,44 @@
       </div>
     </Teleport>
 
+    <!-- Approve Confirm Modal -->
+    <div v-if="showApproveModal" class="zalo-modal-overlay" @click.self="showApproveModal = false">
+      <div class="zalo-modal-card border-0 shadow-lg" style="max-width: 450px; width: 100%; margin: 0 auto; border-radius: 16px; overflow: hidden;">
+        <div class="zalo-modal-header bg-success text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-check-circle me-2"></i> Xác nhận duyệt lịch</h5>
+          <button class="modal-close text-white border-0 bg-transparent" @click="showApproveModal = false"><i class="bi bi-x-lg fs-5"></i></button>
+        </div>
+        <div class="zalo-modal-body">
+          <p class="mb-4">Bạn có chắc chắn muốn duyệt lịch hẹn này cho thú cưng <strong>{{ approveTarget?.petName }}</strong> không?</p>
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button class="btn btn-outline-secondary rounded-pill px-4" @click="showApproveModal = false">Hủy</button>
+            <button class="btn btn-success rounded-pill px-4" @click="confirmApproveAction">Duyệt lịch</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reject Confirm Modal -->
+    <div v-if="showRejectModal" class="zalo-modal-overlay" @click.self="showRejectModal = false">
+      <div class="zalo-modal-card border-0 shadow-lg" style="max-width: 450px; width: 100%; margin: 0 auto; border-radius: 16px; overflow: hidden;">
+        <div class="zalo-modal-header bg-danger text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-x-circle me-2"></i> Từ chối lịch hẹn</h5>
+          <button class="modal-close text-white border-0 bg-transparent" @click="showRejectModal = false"><i class="bi bi-x-lg fs-5"></i></button>
+        </div>
+        <div class="zalo-modal-body text-start">
+          <p class="mb-3">Vui lòng nhập lý do từ chối để khách hàng có thể biết:</p>
+          <div class="form-floating mb-4">
+            <textarea v-model="rejectReason" class="form-control" style="height: 100px" placeholder="Lý do..."></textarea>
+            <label class="text-muted">Lý do từ chối (có thể để trống)</label>
+          </div>
+          <div class="d-flex justify-content-end gap-2 mt-2">
+            <button class="btn btn-outline-secondary rounded-pill px-4" @click="showRejectModal = false">Hủy</button>
+            <button class="btn btn-danger rounded-pill px-4" @click="confirmRejectAction">Từ chối lịch</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -915,7 +940,7 @@ import api from '../../services/api';
 import { Html5Qrcode } from 'html5-qrcode';
 
 // Tab states
-const activeSubTab = ref<'calendar' | 'pending' | 'flow'>('calendar');
+const activeSubTab = ref<'calendar' | 'pending'>('calendar');
 const selectedDate = ref(new Date().toISOString().slice(0, 10));
 const selectedDoctor = ref('ALL');
 const selectedStatus = ref('ALL');
@@ -935,7 +960,7 @@ const filteredEventsList = computed(() => {
   return eventsList.value.filter((evt: any) => evt.status === selectedStatus.value);
 });
 const pendingList = ref<any[]>([]);
-const flowList = ref<any[]>([]);
+
 
 // Loading
 const loadingEvents = ref(false);
@@ -954,6 +979,40 @@ const showCancelModal = ref(false);
 const cancelTarget = ref<any>(null);
 const cancelReason = ref('');
 
+// Approve Modal
+const showApproveModal = ref(false);
+const approveTarget = ref<any>(null);
+
+const openConfirmApprove = (item: any) => {
+  approveTarget.value = item;
+  showApproveModal.value = true;
+};
+
+const confirmApproveAction = async () => {
+  if (!approveTarget.value) return;
+  await updateStatus(approveTarget.value.id, 'confirmed');
+  showApproveModal.value = false;
+  approveTarget.value = null;
+};
+
+// Reject Modal
+const showRejectModal = ref(false);
+const rejectTarget = ref<any>(null);
+const rejectReason = ref('');
+
+const openConfirmReject = (item: any) => {
+  rejectTarget.value = item;
+  rejectReason.value = '';
+  showRejectModal.value = true;
+};
+
+const confirmRejectAction = async () => {
+  if (!rejectTarget.value) return;
+  await updateStatus(rejectTarget.value.id, 'cancelled', rejectReason.value);
+  showRejectModal.value = false;
+  rejectTarget.value = null;
+};
+
 // Change Doctor Modal
 const showChangeDoctorModal = ref(false);
 const changeDoctorTarget = ref<any>(null);
@@ -968,6 +1027,40 @@ const rescheduleTime = ref('');
 const forceReschedule = ref(false);
 const availableSlots = ref<string[]>([]);
 const loadingSlots = ref(false);
+
+const buildRescheduleSlots = (times: string[]): SlotDisplay[] => {
+  if (!rescheduleDate.value) return [];
+  const now = Date.now();
+  const cutoff = now + BOOKING_BUFFER_MS;
+  const [year, month, day] = rescheduleDate.value.split('-');
+  return times.map(time => {
+    const slotStr = `${rescheduleDate.value}T${time}:00`;
+    const [hour, minute] = time.split(':');
+    const slotDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0);
+    const slotMs = slotDate.getTime();
+    const isPast = slotMs < now;
+    const isTooSoon = !isPast && slotMs < cutoff;
+    
+    const isAvailableFromApi = availableSlots.value.includes(time);
+    
+    if (forceReschedule.value) {
+      return { 
+        time, slotStr, 
+        isAvailable: isAvailableFromApi, 
+        isPast: false, 
+        isBooked: !isAvailableFromApi, 
+        isTooSoon: false 
+      };
+    }
+    
+    const isBooked = !isPast && !isTooSoon && !isAvailableFromApi;
+    const isAvailable = !isPast && !isTooSoon && isAvailableFromApi;
+    return { time, slotStr, isAvailable, isPast, isBooked, isTooSoon };
+  });
+};
+
+const displayRescheduleMorningSlots = computed<SlotDisplay[]>(() => buildRescheduleSlots(masterMorningTimes));
+const displayRescheduleAfternoonSlots = computed<SlotDisplay[]>(() => buildRescheduleSlots(masterAfternoonTimes));
 
 // Toast
 const toastInfo = ref({
@@ -1104,10 +1197,7 @@ const displayMorningSlots = computed<SlotDisplay[]>(() => buildSlots(masterMorni
 const displayAfternoonSlots = computed<SlotDisplay[]>(() => buildSlots(masterAfternoonTimes));
 
 
-// Flow board groupings
-const flowWaiting = ref<any[]>([]);
-const flowInProgress = ref<any[]>([]);
-const flowCompleted = ref<any[]>([]);
+
 
 // Fetch functions
 const loadStats = async () => {
@@ -1184,26 +1274,14 @@ const loadPending = async () => {
   }
 };
 
-const loadFlowBoard = async () => {
-  try {
-    const res = await api.get('/receptionist/queue');
-    flowList.value = res.data || [];
-    
-    // Group them
-    flowWaiting.value = flowList.value.filter(item => item.status === 'waiting');
-    flowInProgress.value = flowList.value.filter(item => item.status === 'in_progress');
-    flowCompleted.value = flowList.value.filter(item => item.status === 'ready_to_pay' || item.status === 'completed');
-  } catch (err) {
-    console.error(err);
-  }
-};
+
 
 const loadAllData = async () => {
   await Promise.all([
     loadStats(),
     loadEvents(),
     loadPending(),
-    loadFlowBoard()
+
   ]);
 };
 
@@ -1420,9 +1498,9 @@ const openDetailModal = async (apptId: number) => {
   }
 };
 
-const updateStatus = async (apptId: number, status: string) => {
+const updateStatus = async (apptId: number, status: string, reason: string = '') => {
   try {
-    const res = await api.put(`/appointment/${apptId}/status`, { status });
+    const res = await api.put(`/appointment/${apptId}/status`, { status, reason });
     if (res.data.success) {
       showToast('Cập nhật trạng thái thành công!', 'success');
       if (showDetailModal.value) {

@@ -160,7 +160,7 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
     *   **Cải tiến triển khai:**
         *   Tạo mới `MedicalRecordsController.cs` và `MedicinesController.cs` an toàn và phân quyền đầy đủ.
         *   Triển khai `MedicalRecordService.cs` tách biệt logic EF Core ra khỏi Application Layer, truy vấn lồng liên quan đến Prescription và Medicine qua in-memory mapping tối ưu.
-        *   Xây dựng `MedicalRecordsTab.vue` với giao diện kính mờ (Glassmorphism) cực kỳ sang trọng, form động kê đơn và tích hợp cảnh báo tồn kho thời gian thực (vàng khi <= 5, đỏ khi vượt quá và khóa lưu).
+        *   Cải tiến toàn diện `MedicalRecordsTab.vue`: Chuyển đổi từ giao diện S.O.A.P Accordion sang thiết kế 2 Sub-tabs (Phiếu Điều Trị & Hồ sơ Thú cưng). Giao diện phẳng phân cột tự động điều chỉnh theo Khám Bệnh/Tiêm Phòng với Form nhập liệu lớn, tiện dụng và mang đậm phong cách Pet Clinic. Tích hợp cảnh báo tồn kho thời gian thực.
         *   Bổ sung Unit Test bao phủ 100% các kịch bản thành công và rollback giao dịch khi hết thuốc.
 
 ---

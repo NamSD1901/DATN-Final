@@ -258,16 +258,9 @@
                 <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger w-100 rounded-pill py-1 fw-bold" @click="openLinkCustomerModal(card)">
                   <i class="bi bi-link-45deg"></i> Ghép Hồ Sơ
                 </button>
-                <div class="dropdown w-100">
-                  <button class="btn btn-sm btn-outline-warning w-100 rounded-pill py-1 dropdown-toggle fw-bold" type="button" @click.stop="toggleDropdown(card.appointmentId)">
-                    Thao tác
-                  </button>
-                  <ul class="dropdown-menu shadow border-0" :class="{ 'show': activeDropdownId === card.appointmentId }" style="width: 100%; top: 100%; left: 0;">
-                    <li><a class="dropdown-menu-item text-dark p-2 d-block text-decoration-none cursor-pointer" @click="updateStatus(card.appointmentId, 'in_progress')"><i class="bi bi-activity text-warning me-2"></i>Chuyển khám</a></li>
-                    <li><a class="dropdown-menu-item text-dark p-2 d-block text-decoration-none cursor-pointer" @click="updateStatus(card.appointmentId, 'ready_to_pay')"><i class="bi bi-cash text-success me-2"></i>Thanh toán</a></li>
-                    <li><a class="dropdown-menu-item text-dark p-2 d-block text-decoration-none cursor-pointer" @click="updateStatus(card.appointmentId, 'cancelled')"><i class="bi bi-trash text-danger me-2"></i>Hủy ca</a></li>
-                  </ul>
-                </div>
+                <button class="btn btn-sm btn-warning w-100 rounded-pill py-1 fw-bold text-dark shadow-sm" @click.stop="updateStatus(card.appointmentId, 'in_progress')">
+                  <i class="bi bi-megaphone-fill me-1"></i> Gọi vào phòng khám
+                </button>
               </div>
             </div>
           </div>

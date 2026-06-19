@@ -109,14 +109,14 @@
                   :disabled="actionLoading === item.appointmentId"
                 >
                   <span v-if="actionLoading === item.appointmentId" class="spinner-border spinner-border-sm me-1"></span>
-                  <i class="bi bi-play-fill me-1"></i> Bắt đầu khám
+                  <i class="bi bi-play-fill me-1"></i> Tiến hành khám
                 </button>
                 <button 
                   v-else-if="item.status === 'in_progress'" 
                   class="btn btn-warning text-dark btn-sm rounded-pill px-4 fw-bold shadow-sm" 
                   @click="continueTreatment(item)"
                 >
-                  <i class="bi bi-arrow-right-circle-fill me-1"></i> Tiếp tục khám
+                  <i class="bi bi-arrow-right-circle-fill me-1"></i> Tiến hành khám
                 </button>
                 <span v-else class="text-muted small fw-semibold">Chờ thu ngân</span>
               </td>

@@ -122,33 +122,12 @@ namespace MyPetClinic.Controllers
             }
         }
 
-        /// <summary>
-        /// Khách hàng huỷ lịch hẹn (chỉ khi trạng thái là pending).
-        /// </summary>
         [HttpPut("{id:long}/cancel")]
         public async Task<IActionResult> CancelAppointment(long id)
         {
-            try
-            {
-                var customerId = GetCurrentUserId();
-                var appt = await _appointmentService.GetAppointmentDetailAsync(id);
-
-                if (appt == null)
-                    return NotFound(new { message = "Không tìm thấy lịch hẹn." });
-
-                if (appt.CustomerId != customerId)
-                    return Forbid();
-
-                if (appt.Status != "pending" && appt.Status != "confirmed")
-                    return BadRequest(new { message = $"Không thể huỷ lịch hẹn ở trạng thái '{appt.Status}'." });
-
-                var success = await _appointmentService.UpdateAppointmentStatusAsync(id, "cancelled");
-                return Ok(new { success, message = "Đã huỷ lịch hẹn thành công." });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            // Chức năng tự huỷ lịch đã bị vô hiệu hoá theo PRD mới.
+            // Khách hàng phải liên hệ Lễ tân để huỷ lịch.
+            return BadRequest(new { message = "Chức năng tự huỷ lịch trên hệ thống đã được tắt. Vui lòng liên hệ trực tiếp với phòng khám để huỷ lịch hẹn của bạn." });
         }
 
         /// <summary>
