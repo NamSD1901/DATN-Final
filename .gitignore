@@ -480,3 +480,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Exclude legacy MVC project folders (should not be tracked)
+MyPetClinic/
+S-Clinic
