@@ -5,16 +5,36 @@ using System.Security.Claims;
 
 namespace MyPetClinic.Controllers
 {
-    [Authorize(Roles = "Doctor,Admin")]
+    [Authorize(Roles = "doctor,admin,receptionist,Doctor,Admin,Receptionist,SystemAdmin")]
     [ApiController]
     [Route("api/[controller]")]
     public class DoctorController : ControllerBase
     {
         private readonly IReceptionistService _receptionistService;
+        private readonly IAppointmentService _appointmentService;
 
-        public DoctorController(IReceptionistService receptionistService)
+        public DoctorController(IReceptionistService receptionistService, IAppointmentService appointmentService)
         {
             _receptionistService = receptionistService;
+            _appointmentService = appointmentService;
+        }
+
+        [HttpGet("weekly-schedule")]
+        public async Task<IActionResult> GetMyWeeklySchedule([FromQuery] DateTime start, [FromQuery] DateTime end, [FromQuery] Guid? targetDoctorId = null)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var currentDoctorId)) return Unauthorized();
+
+            var isAdmin = User.IsInRole("admin") || User.IsInRole("Admin") || User.IsInRole("receptionist") || User.IsInRole("Receptionist") || User.IsInRole("SystemAdmin") || User.IsInRole("doctor");
+            
+            // Nếu là admin/lễ tân và có chọn bác sĩ cụ thể, lọc theo bác sĩ đó. Nếu không chọn, mặc định null (xem tất cả).
+            // Nếu là bác sĩ, ép buộc chỉ xem của mình.
+            var isStrictAdmin = User.IsInRole("admin") || User.IsInRole("Admin") || User.IsInRole("receptionist") || User.IsInRole("Receptionist") || User.IsInRole("SystemAdmin");
+            Guid? filterDoctorId = isStrictAdmin ? targetDoctorId : currentDoctorId;
+
+            // Sử dụng trực tiếp start, end từ query giống hệt như AppointmentController
+            var events = await _appointmentService.GetCalendarEventsAsync(start, end, filterDoctorId);
+            return Ok(events);
         }
 
         [HttpGet("queue")]

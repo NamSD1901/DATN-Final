@@ -65,11 +65,15 @@ namespace MyPetClinic.Application.Services
                 throw new InvalidOperationException("Vui lòng đặt lịch trước ít nhất 2 tiếng để chúng tôi có sự chuẩn bị tốt nhất.");
             }
 
-            // 3. Operating Hours Check (08:00 - 20:00)
-            var localTime = appointmentDate.ToLocalTime();
-            if (localTime.Hour < 8 || localTime.Hour >= 20)
+            // 3. Operating Hours Check (08:00 - 20:00) & Giờ nghỉ trưa (12:00 - 13:30)
+            var hour = appointmentDate.Hour;
+            if (hour < 8 || hour >= 20)
             {
                 throw new InvalidOperationException("Phòng khám đóng cửa vào thời gian này. Vui lòng chọn khung giờ trong giờ hành chính (08:00 - 20:00).");
+            }
+            if (hour == 12 || (hour == 13 && appointmentDate.Minute < 30))
+            {
+                throw new InvalidOperationException("Phòng khám đang trong giờ nghỉ trưa (12:00 - 13:30). Vui lòng chọn khung giờ khác.");
             }
 
             // 4. No-show limit & Cancel limit
@@ -109,8 +113,10 @@ namespace MyPetClinic.Application.Services
 
             var appointmentId = await _appointmentService.CreateAppointmentAsync(createDto, customerId);
 
-            // 7. Update to pending_approval if Cancel Count >= 3
-            if (cancelCount >= 3)
+            // 7. Update to pending_approval if Cancel Count >= 5
+            // [DEMO MODE]: Tạm thời tắt chức năng phạt chờ duyệt đặc biệt để dễ test
+            /*
+            if (cancelCount >= 5)
             {
                 var createdAppointmentList = await _unitOfWork.Appointments.FindAsync(a => a.Id == appointmentId);
                 var createdAppointment = createdAppointmentList.FirstOrDefault();
@@ -121,6 +127,7 @@ namespace MyPetClinic.Application.Services
                     await _unitOfWork.SaveChangesAsync();
                 }
             }
+            */
 
             return appointmentId;
         }

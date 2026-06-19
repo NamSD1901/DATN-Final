@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MyPetClinic.Controllers
 {
-    [Authorize(Roles = "Doctor,Admin")]
+    [Authorize(Roles = "doctor,admin,receptionist,Doctor,Admin,Receptionist,SystemAdmin")]
     [ApiController]
     [Route("api/medical-records")]
     public class MedicalRecordsController : ControllerBase

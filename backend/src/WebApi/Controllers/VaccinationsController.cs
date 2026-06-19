@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MyPetClinic.Controllers
 {
-    [Authorize(Roles = "Doctor,Admin")]
+    [Authorize(Roles = "doctor,admin,Doctor,Admin")]
     [ApiController]
     [Route("api/vaccinations")]
     public class VaccinationsController : ControllerBase

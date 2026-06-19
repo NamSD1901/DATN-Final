@@ -1096,7 +1096,7 @@ const onCalendarDateSelect = (dateStr: string) => {
 };
 
 
-const masterMorningTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00'];
+const masterMorningTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
 const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];
 
 interface SlotDisplay {
@@ -1413,6 +1413,7 @@ const canCancel = (status: string | null): boolean => {
 const getStatusLabel = (status: string | null): string => {
   const map: Record<string, string> = {
     pending: 'Chờ xác nhận',
+    pending_approval: 'Chờ duyệt đặc biệt',
     confirmed: 'Đã xác nhận',
     waiting: 'Chờ khám',
     in_progress: 'Đang khám',
@@ -1425,6 +1426,7 @@ const getStatusLabel = (status: string | null): string => {
 const getStatusBadgeClass = (status: string): string => {
   const map: Record<string, string> = {
     pending: 'bg-warning text-dark',
+    pending_approval: 'bg-danger bg-opacity-75 text-white',
     confirmed: 'bg-info text-white',
     waiting: 'bg-primary text-white',
     in_progress: 'bg-warning text-dark',
@@ -1437,6 +1439,7 @@ const getStatusBadgeClass = (status: string): string => {
 const getStatusIcon = (status: string | null): string => {
   const map: Record<string, string> = {
     pending: 'bi bi-hourglass-split',
+    pending_approval: 'bi bi-exclamation-octagon-fill',
     confirmed: 'bi bi-check-circle-fill',
     waiting: 'bi bi-person-lines-fill',
     in_progress: 'bi bi-activity',

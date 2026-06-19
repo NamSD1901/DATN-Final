@@ -104,7 +104,7 @@
 
       <!-- Sidebar Footer Actions -->
       <div class="sidebar-footer p-3 border-top mt-auto">
-        <button class="btn btn-premium w-100 mb-3 py-2 fw-bold shadow-sm rounded-4" @click="handleSidebarBookNew">
+        <button v-if="role !== 'doctor'" class="btn btn-premium w-100 mb-3 py-2 fw-bold shadow-sm rounded-4" @click="handleSidebarBookNew">
           <i class="bi bi-plus-circle-fill me-1"></i> Đặt Lịch Mới
         </button>
         <router-link to="/" class="btn btn-outline-secondary w-100 mb-2 border-0 text-start ps-4 rounded-4 hover-text-warning py-2 fw-bold" style="font-size: 0.95em;">
