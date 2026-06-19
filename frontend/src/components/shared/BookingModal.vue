@@ -153,7 +153,7 @@
                 <Calendar size="18" class="text-primary me-2" />
                 <div>
                   <h5 class="mb-0">{{ formattedSelectedDate }}</h5>
-                  <small class="text-muted">Dr. Nguyen ({{ selectedService?.name }})</small>
+                  <small class="text-muted">{{ selectedService?.name }}</small>
                 </div>
               </div>
 
@@ -161,6 +161,9 @@
                 <div class="spinner-border text-primary" role="status"></div>
               </div>
               <div v-else class="slots-container">
+                <div v-if="holdError" class="alert alert-danger mb-3" style="font-size: 0.85rem;">
+                  {{ holdError }}
+                </div>
                 
                 <h6 class="slot-section-title"><Sun size="16" /> BUỔI SÁNG</h6>
                 <div class="slots-grid">
@@ -170,7 +173,7 @@
                     class="slot-btn"
                     :class="{ 'selected': selectedTime === slot.time, 'disabled': !slot.available }"
                     :disabled="!slot.available"
-                    @click="selectedTime = slot.time"
+                    @click="selectTime(slot.time)"
                   >
                     {{ slot.time }}
                     <CheckCircle2 v-if="selectedTime === slot.time" size="14" class="ms-1" />
@@ -185,7 +188,7 @@
                     class="slot-btn"
                     :class="{ 'selected': selectedTime === slot.time, 'disabled': !slot.available }"
                     :disabled="!slot.available"
-                    @click="selectedTime = slot.time"
+                    @click="selectTime(slot.time)"
                   >
                     {{ slot.time }}
                     <span v-if="slot.fast" class="badge-fast">Fast</span>
@@ -283,10 +286,12 @@
                 </div>
                 
                 <div class="receipt-doctor">
-                  <img src="https://ui-avatars.com/api/?name=Nguyen+Thi+Mai&background=random" class="doctor-avatar" />
+                  <div class="doctor-avatar" style="background: var(--bs-primary); display: flex; align-items: center; justify-content: center; color: white;">
+                    <Stethoscope size="20" />
+                  </div>
                   <div>
                     <small class="text-muted d-block">Bác sĩ phụ trách</small>
-                    <strong class="text-dark">Bs. Nguyễn Thị Mai</strong>
+                    <strong class="text-dark">Phòng khám phân công</strong>
                   </div>
                 </div>
 
@@ -483,40 +488,58 @@ const formattedSelectedDate = computed(() => {
   return `${days[d.getDay()]}, ${d.getDate()} Tháng ${d.getMonth() + 1}, ${d.getFullYear()}`;
 });
 
-// Mock slots generator
+// Fetch real slots
 const morningSlots = ref<any[]>([]);
 const afternoonSlots = ref<any[]>([]);
+const assignedDoctorId = ref<string | null>(null);
+const holdError = ref('');
 
 const fetchTimeSlots = async () => {
   if (!selectedDate.value) return;
   loadingSlots.value = true;
+  holdError.value = '';
   try {
-    // In real app: call API
-    // const res = await api.get(`/my-appointments/available-slots?date=${selectedDate.value}`);
-    await new Promise(resolve => setTimeout(resolve, 600)); // fake delay
+    const res = await api.get(`/my-appointments/available-slots?date=${selectedDate.value}`);
+    const allSlots = new Set<string>();
+    res.data.forEach((d: any) => {
+      if (d.availableSlots) {
+        d.availableSlots.forEach((slot: string) => allSlots.add(slot));
+      }
+    });
+
+    const sortedSlots = Array.from(allSlots).sort();
     
-    // Generate mock slots
-    morningSlots.value = [
-      { time: '08:00', available: true },
-      { time: '08:30', available: true },
-      { time: '09:00', available: true },
-      { time: '09:30', available: true },
-      { time: '10:00', available: true },
-      { time: '10:30', available: true },
-      { time: '11:00', available: false },
-    ];
-    afternoonSlots.value = [
-      { time: '13:30', available: true },
-      { time: '14:00', available: true },
-      { time: '14:30', available: false },
-      { time: '15:00', available: true },
-      { time: '15:30', available: true, fast: true },
-      { time: '16:00', available: true },
-    ];
+    morningSlots.value = sortedSlots
+        .filter(t => parseInt(t.split(':')[0]) < 12)
+        .map(t => ({ time: t, available: true }));
+        
+    afternoonSlots.value = sortedSlots
+        .filter(t => parseInt(t.split(':')[0]) >= 12)
+        .map(t => ({ time: t, available: true }));
+
   } catch (error) {
     console.error(error);
   } finally {
     loadingSlots.value = false;
+  }
+};
+
+const selectTime = async (time: string) => {
+  if (selectedTime.value === time) return;
+  
+  try {
+    holdError.value = '';
+    const payload = {
+      slotTime: `${selectedDate.value}T${time}:00`
+    };
+    const res = await api.post('/my-appointments/hold', payload);
+    if (res.data.success) {
+       selectedTime.value = time;
+       assignedDoctorId.value = res.data.doctorId;
+    }
+  } catch (err: any) {
+    holdError.value = err.response?.data?.message || 'Khung giờ này đã được chọn. Vui lòng chọn khung giờ khác.';
+    await fetchTimeSlots();
   }
 };
 
@@ -534,12 +557,28 @@ const nextStep = () => {
   }
 };
 
+const releaseSlot = async () => {
+  if (selectedTime.value && assignedDoctorId.value) {
+    try {
+      const payload = {
+        slotTime: `${selectedDate.value}T${selectedTime.value}:00`,
+        doctorId: assignedDoctorId.value
+      };
+      await api.post('/my-appointments/release', payload);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+};
+
 const closeModal = () => {
+  releaseSlot();
   emit('close');
   // Reset after transition
   setTimeout(() => {
     step.value = 1;
     selectedTime.value = '';
+    assignedDoctorId.value = null;
     notes.value = '';
   }, 300);
 };
@@ -550,16 +589,13 @@ const submitBooking = async () => {
   try {
     const payload = {
       petId: selectedPet.value.id,
-      petName: selectedPet.value.name,
-      species: selectedPet.value.species,
-      serviceName: selectedService.value.name,
+      serviceId: selectedService.value.id,
       appointmentDate: `${selectedDate.value}T${selectedTime.value}:00`,
-      symptom: notes.value
+      symptom: notes.value || 'Khám tổng quát',
+      doctorId: assignedDoctorId.value
     };
     
-    await api.post('/appointment/book', payload).catch(() => {
-      return new Promise(resolve => setTimeout(resolve, 1500));
-    });
+    await api.post('/my-appointments', payload);
 
     emit('success', `Đã đặt lịch thành công cho bé ${selectedPet.value.name}!`);
     closeModal();

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace MyPetClinic.Application.Services
 {
@@ -13,11 +14,14 @@ namespace MyPetClinic.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IVaccinationScheduleChecker _vaccinationScheduleChecker;
+        private readonly Microsoft.Extensions.Caching.Memory.IMemoryCache _cache;
+        private static readonly object _holdLock = new object();
 
-        public AppointmentService(IUnitOfWork unitOfWork, IVaccinationScheduleChecker vaccinationScheduleChecker)
+        public AppointmentService(IUnitOfWork unitOfWork, IVaccinationScheduleChecker vaccinationScheduleChecker, Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
         {
             _unitOfWork = unitOfWork;
             _vaccinationScheduleChecker = vaccinationScheduleChecker;
+            _cache = cache;
         }
 
         private bool IsTransientConflict(Exception ex)
@@ -42,7 +46,7 @@ namespace MyPetClinic.Application.Services
                     var targetDateStart = appointmentDate.Date;
                     var targetDateEnd = targetDateStart.AddDays(1);
 
-                    if (finalDoctorId == Guid.Empty)
+                    if (!finalDoctorId.HasValue || finalDoctorId.Value == Guid.Empty)
                     {
                         var appointmentTime = appointmentDate.TimeOfDay;
                         // 1. Lấy tất cả bác sĩ có lịch trực vào ngày hẹn mà thời gian hẹn nằm trong ca trực của họ
@@ -135,6 +139,43 @@ namespace MyPetClinic.Application.Services
                         throw new InvalidOperationException("Bác sĩ đã có lịch hẹn trong khoảng thời gian này.");
                     }
 
+                    // --- [BỔ SUNG EDGE CASES] ---
+                    
+                    // 1. Kiểm tra Giữ chỗ (Hold)
+                    var holdKey = $"SlotHold_{finalDoctorId}_{appointmentDate:yyyyMMddHHmm}";
+                    if (_cache.TryGetValue(holdKey, out Guid holdingCustomerId))
+                    {
+                        // Nếu đang bị người khác giữ và người tạo yêu cầu chính là Customer (không phải Lễ tân/Admin)
+                        if (holdingCustomerId != dto.CustomerId && createdBy == dto.CustomerId)
+                        {
+                            throw new InvalidOperationException("Khung giờ này đã bị người khác chọn. Vui lòng chọn khung giờ khác.");
+                        }
+                    }
+
+                    // 2. Kiểm tra Lead Time và Spam (Chỉ áp dụng cho Customer tự đặt trên web)
+                    if (createdBy == dto.CustomerId)
+                    {
+                        // Lead Time: Phải đặt trước ít nhất 1 tiếng
+                        if (appointmentDate > DateTime.UtcNow && appointmentDate < DateTime.UtcNow.AddHours(1))
+                        {
+                            throw new InvalidOperationException("Vui lòng đặt lịch khám trước ít nhất 1 tiếng để phòng khám kịp chuẩn bị.");
+                        }
+
+                        // Không đặt quá khứ
+                        if (appointmentDate < DateTime.UtcNow.AddMinutes(-5))
+                        {
+                            throw new InvalidOperationException("Không thể đặt lịch trong quá khứ.");
+                        }
+
+                        // Spam Check: Tối đa 3 lịch hẹn đang Pending/Confirmed
+                        var activeApptsCount = _unitOfWork.Appointments.Query()
+                            .Count(a => a.CustomerId == dto.CustomerId && (a.Status == "pending" || a.Status == "confirmed"));
+                        if (activeApptsCount >= 3)
+                        {
+                            throw new InvalidOperationException("Bạn đang có quá 3 lịch hẹn chưa khám. Vui lòng hoàn thành hoặc huỷ lịch cũ trước khi đặt thêm.");
+                        }
+                    }
+
                     // Sinh QR Token duy nhất
                     string qrToken = string.Empty;
                     bool isQrUnique = false;
@@ -153,7 +194,7 @@ namespace MyPetClinic.Application.Services
                         CustomerId = dto.CustomerId,
                         PetId = dto.PetId,
                         ServiceId = dto.ServiceId,
-                        DoctorId = finalDoctorId,
+                        DoctorId = finalDoctorId.Value,
                         Symptom = dto.Symptom?.Trim(),
                         Note = dto.Note?.Trim(),
                         Status = "waiting", // Khám ngay / Chờ khám
@@ -216,6 +257,12 @@ namespace MyPetClinic.Application.Services
                     await _unitOfWork.SaveChangesAsync();
 
                     await _unitOfWork.CommitTransactionAsync();
+                    
+                    // Xoá Hold sau khi đặt lịch thành công
+                    var holdKeyToRemove = $"SlotHold_{finalDoctorId}_{appointmentDate:yyyyMMddHHmm}";
+                    _cache.Remove(holdKeyToRemove);
+                    _cache.Remove($"ActiveHold_{dto.CustomerId}");
+
                     return appointment.Id;
                 }
                 catch (Exception ex) when (IsTransientConflict(ex) && i < retryCount - 1)
@@ -273,6 +320,15 @@ namespace MyPetClinic.Application.Services
                     if (isDoubleBooked)
                     {
                         throw new InvalidOperationException("Bác sĩ đã có lịch hẹn trong khoảng thời gian này.");
+                    }
+
+                    // Xử lý Lễ tân chèn ngang (Override Hold)
+                    var holdKey = $"SlotHold_{dto.DoctorId}_{appointmentDate:yyyyMMddHHmm}";
+                    if (_cache.TryGetValue(holdKey, out Guid holdingCustomerId))
+                    {
+                        // Xoá Hold của người dùng online để ưu tiên Lễ tân
+                        _cache.Remove(holdKey);
+                        _cache.Remove($"ActiveHold_{holdingCustomerId}");
                     }
 
                     // 1. Kiểm tra sđt đã tồn tại chưa
@@ -999,11 +1055,18 @@ namespace MyPetClinic.Application.Services
 
                     var availableTimes = MyPetClinic.Application.Helpers.SlotCalculationHelper.GetAvailableSlots(schedule, appointments, 30);
 
+                    // Lọc bỏ các slot đang bị hold bởi bất kỳ ai
+                    var freeTimes = availableTimes.Where(t => 
+                    {
+                        var key = $"SlotHold_{schedule.DoctorId}_{t:yyyyMMddHHmm}";
+                        return !_cache.TryGetValue(key, out Guid _);
+                    }).ToList();
+
                     result.Add(new DoctorAvailableSlotsDto
                     {
                         DoctorId = schedule.DoctorId,
                         DoctorName = schedule.Doctor?.FullName ?? "Bác sĩ thú y",
-                        AvailableSlots = availableTimes.Select(t => t.ToString("HH:mm")).ToList()
+                        AvailableSlots = freeTimes.Select(t => t.ToString("HH:mm")).ToList()
                     });
                 }
             }
@@ -1063,11 +1126,17 @@ namespace MyPetClinic.Application.Services
 
                         var availableTimes = MyPetClinic.Application.Helpers.SlotCalculationHelper.GetAvailableSlots(mockSchedule, appointments, durationMinutes);
 
+                        var freeTimes = availableTimes.Where(t => 
+                        {
+                            var key = $"SlotHold_{doctor.Id}_{t:yyyyMMddHHmm}";
+                            return !_cache.TryGetValue(key, out Guid _);
+                        }).ToList();
+
                         result.Add(new DoctorAvailableSlotsDto
                         {
                             DoctorId = doctor.Id,
                             DoctorName = doctor.FullName,
-                            AvailableSlots = availableTimes.Select(t => t.ToString("HH:mm")).ToList()
+                            AvailableSlots = freeTimes.Select(t => t.ToString("HH:mm")).ToList()
                         });
                     }
                 }
@@ -1112,6 +1181,133 @@ namespace MyPetClinic.Application.Services
             await _unitOfWork.SaveChangesAsync();
 
             return await GetAppointmentDetailAsync(appointment.Id);
+        }
+
+        public async Task<Guid?> HoldSlotAsync(DateTime slotTime, Guid? doctorId, Guid customerId)
+        {
+            Guid finalDoctorId;
+
+            if (doctorId.HasValue && doctorId.Value != Guid.Empty)
+            {
+                finalDoctorId = doctorId.Value;
+            }
+            else
+            {
+                var targetDateStart = slotTime.Date;
+                var targetDateEnd = slotTime.Date.AddDays(1);
+                var slotTimeEnd = slotTime.AddMinutes(30);
+
+                var schedules = _unitOfWork.DoctorSchedules.Query()
+                    .Where(s => s.WorkDate == targetDateStart && s.IsAvailable && s.Doctor != null && s.Doctor.IsActive == true)
+                    .ToList();
+
+                var doctorsWorking = schedules
+                    .Where(s => slotTime.TimeOfDay >= s.StartTime && slotTimeEnd.TimeOfDay <= s.EndTime)
+                    .Select(s => s.DoctorId)
+                    .ToList();
+
+                if (!doctorsWorking.Any())
+                {
+                    return null;
+                }
+
+                var busyDoctors = _unitOfWork.Appointments.Query()
+                    .Where(a => a.Status != "cancelled" && a.AppointmentDate > slotTime.AddMinutes(-30) && a.AppointmentDate < slotTime.AddMinutes(30) && doctorsWorking.Contains(a.DoctorId))
+                    .Select(a => a.DoctorId)
+                    .ToList();
+
+                var availableDoctors = doctorsWorking.Except(busyDoctors).ToList();
+
+                // Lock check for held slots
+                List<Guid> realAvailableDoctors = new List<Guid>();
+                lock (_holdLock)
+                {
+                    realAvailableDoctors = availableDoctors.Where(dId => 
+                    {
+                        var holdKey = $"SlotHold_{dId}_{slotTime:yyyyMMddHHmm}";
+                        return !_cache.TryGetValue(holdKey, out Guid _);
+                    }).ToList();
+                }
+
+                if (!realAvailableDoctors.Any())
+                {
+                    return null;
+                }
+
+                var doctorApptCounts = _unitOfWork.Appointments.Query()
+                    .Where(a => a.AppointmentDate >= targetDateStart && a.AppointmentDate < targetDateEnd && a.Status != "cancelled" && realAvailableDoctors.Contains(a.DoctorId))
+                    .GroupBy(a => a.DoctorId)
+                    .Select(g => new { DoctorId = g.Key, Count = g.Count() })
+                    .ToList();
+
+                finalDoctorId = realAvailableDoctors
+                    .Select(id => new { DoctorId = id, Count = doctorApptCounts.FirstOrDefault(c => c.DoctorId == id)?.Count ?? 0 })
+                    .OrderBy(x => x.Count)
+                    .First().DoctorId;
+            }
+
+            var key = $"SlotHold_{finalDoctorId}_{slotTime:yyyyMMddHHmm}";
+
+            lock (_holdLock)
+            {
+                if (_cache.TryGetValue(key, out Guid holdingCustomerId))
+                {
+                    if (holdingCustomerId != customerId)
+                    {
+                        return null; // Đã bị người khác giữ
+                    }
+                }
+
+                if (_cache.TryGetValue($"ActiveHold_{customerId}", out string oldSlotKey))
+                {
+                    if (oldSlotKey != key)
+                    {
+                        _cache.Remove(oldSlotKey); // Huỷ slot cũ
+                    }
+                }
+
+                var cacheOptions = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+                };
+
+                _cache.Set(key, customerId, cacheOptions);
+                _cache.Set($"ActiveHold_{customerId}", key, cacheOptions);
+                
+                return finalDoctorId;
+            }
+        }
+
+        public async Task<bool> ReleaseSlotAsync(DateTime slotTime, Guid? doctorId, Guid customerId)
+        {
+            lock (_holdLock)
+            {
+                if (_cache.TryGetValue($"ActiveHold_{customerId}", out string oldSlotKey))
+                {
+                    if (oldSlotKey.EndsWith($"_{slotTime:yyyyMMddHHmm}"))
+                    {
+                        _cache.Remove(oldSlotKey);
+                        _cache.Remove($"ActiveHold_{customerId}");
+                        return true;
+                    }
+                }
+
+                if (doctorId.HasValue && doctorId.Value != Guid.Empty)
+                {
+                    var key = $"SlotHold_{doctorId.Value}_{slotTime:yyyyMMddHHmm}";
+                    if (_cache.TryGetValue(key, out Guid holdingCustomerId))
+                    {
+                        if (holdingCustomerId == customerId)
+                        {
+                            _cache.Remove(key);
+                            _cache.Remove($"ActiveHold_{customerId}");
+                            return true;
+                        }
+                    }
+                }
+                
+                return false;
+            }
         }
     }
 }

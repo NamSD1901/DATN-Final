@@ -123,7 +123,7 @@ namespace MyPetClinic.Controllers
                 {
                     CustomerId = customerId,
                     PetId = dto.PetId,
-                    DoctorId = dto.DoctorId ?? Guid.Empty,
+                    DoctorId = dto.DoctorId,
                     ServiceId = dto.ServiceId,
                     AppointmentDate = dto.AppointmentDate,
                     Symptom = dto.Symptom ?? string.Empty,
@@ -252,6 +252,46 @@ namespace MyPetClinic.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Giữ chỗ một khung giờ trong 5 phút.
+        /// </summary>
+        [HttpPost("hold")]
+        public async Task<IActionResult> HoldSlot([FromBody] HoldSlotDto dto)
+        {
+            try
+            {
+                var customerId = GetCurrentUserId();
+                var assignedDoctorId = await _appointmentService.HoldSlotAsync(dto.SlotTime, dto.DoctorId, customerId);
+                
+                if (assignedDoctorId.HasValue)
+                    return Ok(new { success = true, doctorId = assignedDoctorId.Value, message = "Giữ chỗ thành công. Bạn có 5 phút để hoàn tất." });
+                else
+                    return BadRequest(new { success = false, message = "Khung giờ này đã kín lịch. Vui lòng chọn khung giờ khác." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Huỷ giữ chỗ một khung giờ.
+        /// </summary>
+        [HttpPost("release")]
+        public async Task<IActionResult> ReleaseSlot([FromBody] HoldSlotDto dto)
+        {
+            try
+            {
+                var customerId = GetCurrentUserId();
+                var success = await _appointmentService.ReleaseSlotAsync(dto.SlotTime, dto.DoctorId, customerId);
+                return Ok(new { success });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
     }
 
     /// <summary>
@@ -276,5 +316,14 @@ namespace MyPetClinic.Controllers
         public long PetId { get; set; }
         public long VaccineId { get; set; }
         public DateTime TargetDate { get; set; }
+    }
+
+    /// <summary>
+    /// DTO cho việc giữ chỗ (Hold Slot).
+    /// </summary>
+    public class HoldSlotDto
+    {
+        public DateTime SlotTime { get; set; }
+        public Guid? DoctorId { get; set; }
     }
 }

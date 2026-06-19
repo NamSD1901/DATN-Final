@@ -369,12 +369,9 @@
                             <small class="text-muted">{{ getSelectedServiceName() }}</small>
                           </div>
                           <div>
-                            <select v-model="selectedDoctorFilter" class="form-select form-select-sm border-0 bg-transparent text-primary fw-bold" style="width: auto; cursor: pointer; box-shadow: none;">
-                              <option value="auto">✨ Tự động phân công</option>
-                              <option v-for="doc in doctorAvailableSlots" :key="doc.doctorId" :value="doc.doctorId">
-                                👨‍⚕️ {{ doc.doctorName }}
-                              </option>
-                            </select>
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-25" style="font-size: 0.8rem;">
+                              <i class="bi bi-magic me-1"></i> Tự động phân công
+                            </span>
                           </div>
                         </div>
 
@@ -406,7 +403,7 @@
                                   }"
                                   :disabled="!slot.isAvailable"
                                   :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần đặt trước ít nhất 1 tiếng' : (slot.isBooked ? 'Khung giờ này đã được đặt' : ''))"
-                                  @click="slot.isAvailable && selectTimeSlot(selectedDoctorFilter === 'auto' ? null : selectedDoctorFilter, slot.slotStr)"
+                                  @click="slot.isAvailable && selectTimeSlot(null, slot.slotStr)"
                                 >
                                   <span class="slot-time-text">{{ slot.time }}</span>
                                   <i v-if="bookForm.appointmentDate === slot.slotStr" class="bi bi-check-circle-fill ms-1"></i>
@@ -435,7 +432,7 @@
                                   }"
                                   :disabled="!slot.isAvailable"
                                   :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần đặt trước ít nhất 1 tiếng' : (slot.isBooked ? 'Khung giờ này đã được đặt' : ''))"
-                                  @click="slot.isAvailable && selectTimeSlot(selectedDoctorFilter === 'auto' ? null : selectedDoctorFilter, slot.slotStr)"
+                                  @click="slot.isAvailable && selectTimeSlot(null, slot.slotStr)"
                                 >
                                   <span class="slot-time-text">{{ slot.time }}</span>
                                   <i v-if="bookForm.appointmentDate === slot.slotStr" class="bi bi-check-circle-fill ms-1"></i>
@@ -572,7 +569,7 @@
                               </div>
                               <div>
                                 <small class="text-muted d-block" style="font-size: 0.7rem;">Bác sĩ phụ trách</small>
-                                <strong class="text-dark small">{{ selectedDoctorFilter !== 'auto' && doctorAvailableSlots.find(d => d.doctorId === selectedDoctorFilter) ? doctorAvailableSlots.find(d => d.doctorId === selectedDoctorFilter)?.doctorName : 'Hệ thống tự phân công' }}</strong>
+                                <strong class="text-dark small">Phòng khám phân công</strong>
                               </div>
                             </div>
                           </div>
@@ -953,26 +950,20 @@ const bookForm = ref({
 });
 
 const selectedBookingDate = ref('');
-const selectedDoctorFilter = ref<string>('auto');
 const doctorAvailableSlots = ref<Array<{ doctorId: string; doctorName: string; availableSlots: string[] }>>([]);
 const fetchingSlots = ref(false);
 const slotFetchError = ref('');
 
 const computedAvailableSlots = computed(() => {
-  if (selectedDoctorFilter.value === 'auto') {
-    const allSlots: string[] = [];
-    doctorAvailableSlots.value.forEach(doc => {
-      doc.availableSlots.forEach(slot => {
-        if (!allSlots.includes(slot)) {
-          allSlots.push(slot);
-        }
-      });
+  const allSlots: string[] = [];
+  doctorAvailableSlots.value.forEach(doc => {
+    doc.availableSlots.forEach(slot => {
+      if (!allSlots.includes(slot)) {
+        allSlots.push(slot);
+      }
     });
-    return allSlots.sort((a, b) => a.localeCompare(b));
-  } else {
-    const doc = doctorAvailableSlots.value.find(d => d.doctorId === selectedDoctorFilter.value);
-    return doc ? doc.availableSlots : [];
-  }
+  });
+  return allSlots.sort((a, b) => a.localeCompare(b));
 });
 
 const isVaccinationService = computed(() => {
@@ -1307,7 +1298,6 @@ const submitBooking = async () => {
 const onBookingDateChange = async () => {
   bookForm.value.appointmentDate = '';
   bookForm.value.doctorId = null;
-  selectedDoctorFilter.value = 'auto';
   if (!selectedBookingDate.value) {
     doctorAvailableSlots.value = [];
     return;
@@ -1330,7 +1320,7 @@ const onBookingDateChange = async () => {
 
 const selectTimeSlot = (doctorId: string | null, slotStr: string) => {
   bookForm.value.appointmentDate = slotStr;
-  bookForm.value.doctorId = selectedDoctorFilter.value === 'auto' ? null : doctorId;
+  bookForm.value.doctorId = null;
 };
 
 const formatTimeOnly = (dateStr: string): string => {

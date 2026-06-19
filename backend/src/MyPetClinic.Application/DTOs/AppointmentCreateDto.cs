@@ -11,8 +11,7 @@ namespace MyPetClinic.Application.DTOs
         [Required(ErrorMessage = "Vui lòng chọn thú cưng")]
         public long PetId { get; set; }
 
-        [Required(ErrorMessage = "Vui lòng chọn bác sĩ phụ trách")]
-        public Guid DoctorId { get; set; }
+        public Guid? DoctorId { get; set; }
 
         [Required(ErrorMessage = "Vui lòng chọn dịch vụ")]
         public long ServiceId { get; set; }

@@ -11,6 +11,8 @@ using System;
 using System.Threading.Tasks;
 using Xunit;
 
+using Microsoft.Extensions.Caching.Memory;
+
 namespace MyPetClinic.Tests
 {
     public class AppointmentServiceTests : IDisposable
@@ -29,7 +31,8 @@ namespace MyPetClinic.Tests
             _context = new ApplicationDbContext(options);
             _unitOfWork = new UnitOfWork(_context);
             var checker = new MyPetClinic.Application.Helpers.VaccinationScheduleChecker();
-            _service = new AppointmentService(_unitOfWork, checker);
+            var cache = new MemoryCache(new MemoryCacheOptions());
+            _service = new AppointmentService(_unitOfWork, checker, cache);
         }
 
         [Fact]
@@ -218,7 +221,7 @@ namespace MyPetClinic.Tests
         {
             // Arrange
             var doctorId = Guid.NewGuid();
-            var targetDate = DateTime.Today.AddDays(2);
+            var targetDate = DateTime.UtcNow.Date.AddDays(2);
             var doctorUser = new User { Id = doctorId, FullName = "Bác Sĩ C", Phone = "0987654322", Email = "doctorC@test.com", RoleId = 2, IsActive = true };
             _context.Users.Add(doctorUser);
 
@@ -238,6 +241,7 @@ namespace MyPetClinic.Tests
                 Id = 200,
                 DoctorId = doctorId,
                 AppointmentDate = targetDate.AddHours(9.5), // 09:30
+                StartTime = new TimeSpan(9, 30, 0),
                 Status = "pending"
             });
 
@@ -256,10 +260,10 @@ namespace MyPetClinic.Tests
             // Possible slots: 09:00, 09:30, 10:00, 10:30
             // Since 09:30 is booked, available should be: 09:00, 10:00, 10:30
             Assert.Equal(3, doctorSlots.AvailableSlots.Count());
-            Assert.Contains(targetDate.AddHours(9), doctorSlots.AvailableSlots);
-            Assert.DoesNotContain(targetDate.AddHours(9.5), doctorSlots.AvailableSlots);
-            Assert.Contains(targetDate.AddHours(10), doctorSlots.AvailableSlots);
-            Assert.Contains(targetDate.AddHours(10.5), doctorSlots.AvailableSlots);
+            Assert.Contains("09:00", doctorSlots.AvailableSlots);
+            Assert.DoesNotContain("09:30", doctorSlots.AvailableSlots);
+            Assert.Contains("10:00", doctorSlots.AvailableSlots);
+            Assert.Contains("10:30", doctorSlots.AvailableSlots);
         }
 
         [Fact]
@@ -268,7 +272,7 @@ namespace MyPetClinic.Tests
             // Arrange
             var doctorIdA = Guid.NewGuid();
             var doctorIdB = Guid.NewGuid();
-            var targetDate = DateTime.Today.AddDays(3);
+            var targetDate = DateTime.UtcNow.Date.AddDays(3);
             var appointmentTime = targetDate.AddHours(10); // 10:00 AM
 
             var doctorUserA = new User { Id = doctorIdA, FullName = "Bác Sĩ A", Phone = "0987654323", Email = "doctorA@test.com", RoleId = 2, IsActive = true };
@@ -280,6 +284,7 @@ namespace MyPetClinic.Tests
             _context.DoctorSchedules.Add(new DoctorSchedule
             {
                 DoctorId = doctorIdA,
+                Doctor = doctorUserA,
                 WorkDate = targetDate,
                 StartTime = new TimeSpan(8, 0, 0),
                 EndTime = new TimeSpan(17, 0, 0),
@@ -288,6 +293,7 @@ namespace MyPetClinic.Tests
             _context.DoctorSchedules.Add(new DoctorSchedule
             {
                 DoctorId = doctorIdB,
+                Doctor = doctorUserB,
                 WorkDate = targetDate,
                 StartTime = new TimeSpan(8, 0, 0),
                 EndTime = new TimeSpan(17, 0, 0),

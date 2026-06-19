@@ -63,7 +63,7 @@ namespace MyPetClinic.Tests
 
             var appointments = new List<Appointment>
             {
-                new Appointment { AppointmentDate = workDate.AddHours(8).AddMinutes(30), Status = "confirmed" } // Busy at 8:30
+                new Appointment { AppointmentDate = workDate.AddHours(8).AddMinutes(30), StartTime = new TimeSpan(8, 30, 0), Status = "confirmed" } // Busy at 8:30
             };
 
             // Act
@@ -92,7 +92,7 @@ namespace MyPetClinic.Tests
 
             var appointments = new List<Appointment>
             {
-                new Appointment { AppointmentDate = workDate.AddHours(8).AddMinutes(30), Status = "cancelled" } // Cancelled
+                new Appointment { AppointmentDate = workDate.AddHours(8).AddMinutes(30), StartTime = new TimeSpan(8, 30, 0), Status = "cancelled" } // Cancelled
             };
 
             // Act
@@ -119,7 +119,7 @@ namespace MyPetClinic.Tests
             // Appointment is at 8:45, which is less than 30 minutes from 8:30 (diff = 15m) and 9:00 (diff = 15m)
             var appointments = new List<Appointment>
             {
-                new Appointment { AppointmentDate = workDate.AddHours(8).AddMinutes(45), Status = "pending" }
+                new Appointment { AppointmentDate = workDate.AddHours(8).AddMinutes(45), StartTime = new TimeSpan(8, 45, 0), Status = "pending" }
             };
 
             // Act
