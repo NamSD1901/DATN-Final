@@ -288,6 +288,9 @@ const startTreatment = async (evt: any) => {
       localStorage.setItem('active_treatment_pet_id', evt.extendedProps?.petId?.toString() || '0');
       localStorage.setItem('active_treatment_pet_name', evt.extendedProps?.petName || 'Bệnh nhi');
       localStorage.setItem('active_treatment_customer_name', evt.extendedProps?.customerName || 'Khách vãng lai');
+      const sName = (evt.extendedProps?.serviceName || evt.title || '').toLowerCase();
+      const sType = sName.includes('tiêm') || sName.includes('vaccin') ? 'Vaccination' : 'Consultation';
+      localStorage.setItem('active_treatment_service_type', sType);
       
       emit('switch-tab', 'medical-records');
     }
@@ -304,6 +307,9 @@ const continueTreatment = (evt: any) => {
   localStorage.setItem('active_treatment_pet_id', evt.extendedProps?.petId?.toString() || '0');
   localStorage.setItem('active_treatment_pet_name', evt.extendedProps?.petName || 'Bệnh nhi');
   localStorage.setItem('active_treatment_customer_name', evt.extendedProps?.customerName || 'Khách vãng lai');
+  const sName = (evt.extendedProps?.serviceName || evt.title || '').toLowerCase();
+  const sType = sName.includes('tiêm') || sName.includes('vaccin') ? 'Vaccination' : 'Consultation';
+  localStorage.setItem('active_treatment_service_type', sType);
   
   emit('switch-tab', 'medical-records');
 };
