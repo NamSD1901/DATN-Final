@@ -31,7 +31,8 @@ namespace MyPetClinic.Infrastructure.Repositories
         public IGenericRepository<Post> Posts { get; private set; }
         public IGenericRepository<Review> Reviews { get; private set; }
         public IGenericRepository<Notification> Notifications { get; private set; }
- 
+        public IGenericRepository<EmployeeProfile> EmployeeProfiles { get; private set; }
+        public IGenericRepository<Invitation> Invitations { get; private set; }
         public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
@@ -53,6 +54,8 @@ namespace MyPetClinic.Infrastructure.Repositories
             Posts = new GenericRepository<Post>(_context);
             Reviews = new GenericRepository<Review>(_context);
             Notifications = new GenericRepository<Notification>(_context);
+            EmployeeProfiles = new GenericRepository<EmployeeProfile>(_context);
+            Invitations = new GenericRepository<Invitation>(_context);
         }
 
         public async Task<int> SaveChangesAsync()

@@ -31,6 +31,17 @@ namespace MyPetClinic.Controllers
             return Ok(new { success = true, email = result.Email, message = "Đăng ký thành công. Vui lòng kiểm tra email để nhận mã OTP." });
         }
 
+        [HttpPost("activate")]
+        public async Task<IActionResult> ActivateAccount([FromBody] ActivateAccountRequest request)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var result = await _authService.ActivateAccountAsync(request);
+            if (!result.Success) return BadRequest(new { message = result.ErrorMessage });
+
+            return Ok(new { success = true, message = "Kích hoạt tài khoản thành công. Bạn có thể đăng nhập ngay bây giờ." });
+        }
+
         [HttpPost("resend-otp")]
         public async Task<IActionResult> ResendOtp([FromBody] ResendOtpRequest req)
         {

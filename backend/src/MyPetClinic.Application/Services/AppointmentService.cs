@@ -73,7 +73,7 @@ namespace MyPetClinic.Application.Services
                         // 1. Lấy tất cả bác sĩ có lịch trực vào ngày hẹn mà thời gian hẹn nằm trong ca trực của họ
                         var doctorsWithSchedules = _unitOfWork.DoctorSchedules.Query()
                             .Where(s => s.WorkDate == targetDateStart && s.IsAvailable && s.Doctor != null && s.Doctor.IsActive == true
-                                        && (!allowedDoctorEmails.Any() || allowedDoctorEmails.Contains(s.Doctor.Email)))
+                                        && (!allowedDoctorEmails.Any() || (s.Doctor.Email != null && allowedDoctorEmails.Contains(s.Doctor.Email))))
                             .ToList();
 
                         List<Guid> doctorsList;
@@ -90,7 +90,7 @@ namespace MyPetClinic.Application.Services
                             // Fallback nếu không có cấu hình lịch trực cho ngày đó
                             doctorsList = _unitOfWork.Users.Query()
                                 .Where(u => u.Role != null && u.Role.Name.ToLower() == "doctor" && u.IsActive == true
-                                            && (!allowedDoctorEmails.Any() || allowedDoctorEmails.Contains(u.Email)))
+                                        && (!allowedDoctorEmails.Any() || (u.Email != null && allowedDoctorEmails.Contains(u.Email))))
                                 .Select(u => u.Id)
                                 .ToList();
                         }
@@ -1073,7 +1073,7 @@ namespace MyPetClinic.Application.Services
             // 1. Lấy tất cả ca trực của bác sĩ còn hoạt động vào ngày chỉ định
             var schedules = await _unitOfWork.DoctorSchedules.FindWithIncludesAsync(
                 s => s.WorkDate == targetDate && s.IsAvailable && s.Doctor != null && s.Doctor.IsActive == true
-                     && (!allowedDoctorEmails.Any() || allowedDoctorEmails.Contains(s.Doctor.Email)),
+                     && (!allowedDoctorEmails.Any() || (s.Doctor.Email != null && allowedDoctorEmails.Contains(s.Doctor.Email))),
                 s => s.Doctor!
             );
 
@@ -1107,7 +1107,7 @@ namespace MyPetClinic.Application.Services
                 // ta tự động lấy toàn bộ các bác sĩ đang hoạt động và tạo ca trực in-memory dựa trên cấu hình slot_config.json
                 var doctors = await _unitOfWork.Users.FindAsync(
                     u => u.Role != null && u.Role.Name.ToLower() == "doctor" && u.IsActive == true
-                         && (!allowedDoctorEmails.Any() || allowedDoctorEmails.Contains(u.Email))
+                         && (!allowedDoctorEmails.Any() || (u.Email != null && allowedDoctorEmails.Contains(u.Email)))
                 );
 
                 if (doctors.Any())

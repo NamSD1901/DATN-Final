@@ -140,3 +140,17 @@ otification.store.js g?i sai port Backend (5288 thay vì 5285).
 - **Nguyên nhân:** File 
 otification.store.js du?c vi?t theo chu?n dùng JWT Token (localStorage.getItem('token')), nhung h? th?ng Backend c?a MyPetClinic l?i dang dùng **Cookie Authentication**. Do không tìm th?y token trong localStorage, Axios request b? h?y l?ng l? (return s?m) nên không bao gi? g?i lên Backend.
 - **Kh?c ph?c:** Lo?i b? hoàn toàn logic ki?m tra JWT Token và thêm c?u hình withCredentials: true vào t?t c? các request Axios và k?t n?i SignalR d? trình duy?t t? d?ng dính kèm Cookie xác th?c h?p l?.
+
+---
+
+## [BUG-TZ-001] Gio hien thi thanh toan sai lech 7 tieng
+
+- **Trang thai:** `FIXED`
+- **Thoi gian:** 21-06-2026
+
+### Nguyen nhan
+Npgsql Legacy Mode tra ve DateTime Kind=Unspecified, JSON serialize khong co chu Z, browser coi la Local Time thay vi UTC.
+
+### Giai phap
+Them UtcDateTimeConverter + UtcNullableDateTimeConverter vao Program.cs AddJsonOptions.
+

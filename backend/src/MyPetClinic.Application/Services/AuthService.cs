@@ -6,6 +6,7 @@ using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Repositories;
 using MyPetClinic.Application.Interfaces.Services;
 using MyPetClinic.Domain.Entities;
+using System.Linq;
 
 namespace MyPetClinic.Application.Services
 {
@@ -14,12 +15,14 @@ namespace MyPetClinic.Application.Services
         private readonly IUserRepository _userRepository;
         private readonly IEmailService _emailService;
         private readonly IOtpService _otpService;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public AuthService(IUserRepository userRepository, IEmailService emailService, IOtpService otpService)
+        public AuthService(IUserRepository userRepository, IEmailService emailService, IOtpService otpService, IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
             _emailService = emailService;
             _otpService = otpService;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<AuthResult> RegisterAsync(RegisterDto model)
@@ -192,6 +195,33 @@ namespace MyPetClinic.Application.Services
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
             await _userRepository.UpdateUserAsync(user);
             await _userRepository.SaveChangesAsync();
+
+            return new AuthResult { Success = true };
+        }
+
+        public async Task<AuthResult> ActivateAccountAsync(ActivateAccountRequest request)
+        {
+            var invitations = await _unitOfWork.Invitations.FindWithIncludesAsync(i => i.Token == request.Token, i => i.User!);
+            var invitation = invitations.FirstOrDefault();
+
+            if (invitation == null || invitation.IsUsed)
+                return new AuthResult { Success = false, ErrorMessage = "Token không hợp lệ hoặc đã được sử dụng." };
+
+            if (invitation.ExpireAt < DateTime.UtcNow)
+                return new AuthResult { Success = false, ErrorMessage = "Token đã hết hạn." };
+
+            var user = invitation.User;
+            if (user == null)
+                return new AuthResult { Success = false, ErrorMessage = "Không tìm thấy người dùng." };
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            user.IsActive = true;
+            
+            invitation.IsUsed = true;
+
+            _unitOfWork.Invitations.Update(invitation);
+            await _userRepository.UpdateUserAsync(user);
+            await _unitOfWork.SaveChangesAsync();
 
             return new AuthResult { Success = true };
         }

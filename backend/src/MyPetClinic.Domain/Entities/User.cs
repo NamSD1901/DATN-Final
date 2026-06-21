@@ -17,5 +17,7 @@ namespace MyPetClinic.Domain.Entities
         public DateTime? DeletedAt { get; set; }
 
         public Role? Role { get; set; }
+        public EmployeeProfile? EmployeeProfile { get; set; }
+        public ICollection<Invitation> Invitations { get; set; } = new List<Invitation>();
     }
 }

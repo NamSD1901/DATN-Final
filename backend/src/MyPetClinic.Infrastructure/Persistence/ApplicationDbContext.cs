@@ -29,6 +29,8 @@ namespace MyPetClinic.Infrastructure.Persistence
 
         public DbSet<Role> Roles { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<EmployeeProfile> EmployeeProfiles { get; set; }
+        public DbSet<Invitation> Invitations { get; set; }
         public DbSet<Pet> Pets { get; set; }
         public DbSet<ServiceCategory> ServiceCategories { get; set; }
         public DbSet<Service> Services { get; set; }
@@ -87,6 +89,38 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
 
                 entity.HasOne(d => d.Role).WithMany(p => p.Users).HasForeignKey(d => d.RoleId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // employee_profiles
+            modelBuilder.Entity<EmployeeProfile>(entity =>
+            {
+                entity.ToTable("employee_profiles");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.HasIndex(e => e.UserId).IsUnique(); // 1-to-1
+                entity.Property(e => e.IdentityCard).HasColumnName("identity_card").HasMaxLength(50);
+                entity.Property(e => e.Position).HasColumnName("position").HasMaxLength(100);
+                entity.Property(e => e.IsResigned).HasColumnName("is_resigned").HasDefaultValue(false);
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+                entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
+
+                entity.HasOne(d => d.User).WithOne(p => p.EmployeeProfile).HasForeignKey<EmployeeProfile>(d => d.UserId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // invitations
+            modelBuilder.Entity<Invitation>(entity =>
+            {
+                entity.ToTable("invitations");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.Token).HasColumnName("token").IsRequired().HasMaxLength(255);
+                entity.Property(e => e.ExpireAt).HasColumnName("expire_at");
+                entity.Property(e => e.IsUsed).HasColumnName("is_used").HasDefaultValue(false);
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+
+                entity.HasOne(d => d.User).WithMany(p => p.Invitations).HasForeignKey(d => d.UserId).OnDelete(DeleteBehavior.Cascade);
             });
 
             // pets

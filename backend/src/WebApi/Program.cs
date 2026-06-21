@@ -3,6 +3,8 @@ using MyPetClinic.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using MyPetClinic.Infrastructure;
 using Microsoft.AspNetCore.Authentication.Google;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -10,7 +12,11 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
-    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    // Fix: Ensure all DateTime values are serialized with UTC "Z" suffix
+    // so the frontend browser knows to convert from UTC to local time (UTC+7)
+    options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
+    options.JsonSerializerOptions.Converters.Add(new UtcNullableDateTimeConverter());
 });
 
 // Add Swagger
@@ -109,3 +115,50 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+/// <summary>
+/// Custom JSON converter that ensures DateTime values are always serialized
+/// with "Z" (UTC) suffix. This fixes the +7 hours timezone display bug
+/// caused by Npgsql legacy mode returning DateTime with Kind=Unspecified.
+/// </summary>
+public class UtcDateTimeConverter : JsonConverter<DateTime>
+{
+    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var str = reader.GetString();
+        if (DateTime.TryParse(str, System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+            out var dt))
+        {
+            return dt;
+        }
+        return reader.GetDateTime();
+    }
+
+    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+    {
+        // Treat Unspecified kind (from Npgsql legacy mode) as UTC and append "Z"
+        var utcValue = value.Kind == DateTimeKind.Local
+            ? value.ToUniversalTime()
+            : DateTime.SpecifyKind(value, DateTimeKind.Utc);
+        writer.WriteStringValue(utcValue.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
+    }
+}
+
+/// <summary>Nullable DateTime variant of UtcDateTimeConverter.</summary>
+public class UtcNullableDateTimeConverter : JsonConverter<DateTime?>
+{
+    private static readonly UtcDateTimeConverter _inner = new();
+
+    public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Null) return null;
+        return _inner.Read(ref reader, typeof(DateTime), options);
+    }
+
+    public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
+    {
+        if (!value.HasValue) { writer.WriteNullValue(); return; }
+        _inner.Write(writer, value.Value, options);
+    }
+}

@@ -54,7 +54,7 @@ namespace MyPetClinic.Infrastructure.Persistence
             }
 
             // 1. Seed Roles
-            var rolesToSeed = new[] { "admin", "doctor", "receptionist", "customer" };
+            var rolesToSeed = new[] { "admin", "clinical_doctor", "vaccination_doctor", "receptionist", "customer" };
             foreach (var roleName in rolesToSeed)
             {
                 if (!await context.Roles.AnyAsync(r => r.Name == roleName))

@@ -15,6 +15,12 @@ const routes: Array<RouteRecordRaw> = [
     meta: { guest: true }
   },
   {
+    path: '/activate',
+    name: 'Activate',
+    component: () => import('../views/Activate.vue'),
+    meta: { guest: true }
+  },
+  {
     path: '/profile',
     name: 'Profile',
     component: () => import('../views/Profile.vue'),
