@@ -86,12 +86,9 @@
               <h2 class="accordion-header card-header-main" :id="'heading' + record.recordId">
                 <button 
                   class="accordion-button shadow-none bg-white rounded-top-4" 
-                  :class="{ 'collapsed': index !== 0 }"
+                  :class="{ 'collapsed': !expandedRecords.includes(record.recordId) }"
                   type="button" 
-                  data-bs-toggle="collapse" 
-                  :data-bs-target="'#collapse' + record.recordId" 
-                  :aria-expanded="index === 0 ? 'true' : 'false'" 
-                  :aria-controls="'collapse' + record.recordId"
+                  @click="toggleRecord(record.recordId)"
                 >
                   <div class="d-flex flex-column w-100 pe-3">
                     <div class="d-flex justify-content-between align-items-center w-100 mb-1">
@@ -107,7 +104,7 @@
                         <i class="bi bi-person-badge me-1"></i>BS: <span class="fw-semibold text-dark">{{ record.doctorName || 'Chưa rõ' }}</span>
                       </span>
                       <span v-if="record.diagnosis" class="text-truncate text-muted small ms-2" style="max-width: 200px;">
-                        {{ record.diagnosis }}
+                        {{ getShortDiagnosis(record.diagnosis) }}
                       </span>
                     </div>
                   </div>
@@ -117,9 +114,7 @@
               <div 
                 :id="'collapse' + record.recordId" 
                 class="accordion-collapse collapse" 
-                :class="{ 'show': index === 0 }"
-                :aria-labelledby="'heading' + record.recordId" 
-                data-bs-parent="#historyAccordion"
+                :class="{ 'show': expandedRecords.includes(record.recordId) }"
               >
                 <div class="accordion-body card-body-main bg-white border-top border-light rounded-bottom-4 shadow-sm" :id="'record-content-' + record.recordId">
                   
@@ -157,21 +152,59 @@
                     </div>
                   </div>
 
-                  <!-- Diagnosis & Symptoms -->
+                  <!-- Medical History (Subjective) -->
                   <div class="medical-details mb-4">
-                    <div class="detail-block mb-3">
-                      <span class="detail-label"><i class="bi bi-chat-left-dots-fill text-warning me-1"></i>Khám lâm sàng:</span>
-                      <p class="detail-content">{{ record.clinicalSigns || 'Không ghi nhận' }}</p>
-                    </div>
-                    
-                    <div class="detail-block diagnosis-block mb-3">
-                      <span class="detail-label"><i class="bi bi-activity text-danger me-1"></i>Chẩn đoán y khoa:</span>
-                      <p class="detail-content fw-bold text-dark">{{ record.diagnosis || 'Chưa ghi nhận' }}</p>
+                    <div class="detail-block mb-3" v-if="record.medicalHistory">
+                      <span class="detail-label"><i class="bi bi-person-lines-fill text-info me-1"></i>Bệnh sử & Lý do khám (S):</span>
+                      <div v-if="safeParseJSON(record.medicalHistory)" class="mt-2 p-3 bg-info bg-opacity-10 rounded-3 small">
+                        <div class="row g-2">
+                          <div class="col-12" v-if="safeParseJSON(record.medicalHistory).chiefComplaint"><span class="text-muted fw-semibold">Lý do khám:</span> {{safeParseJSON(record.medicalHistory).chiefComplaint}}</div>
+                          <div class="col-6" v-if="safeParseJSON(record.medicalHistory).appetite"><span class="text-muted">Ăn uống:</span> {{safeParseJSON(record.medicalHistory).appetite}}</div>
+                          <div class="col-6" v-if="safeParseJSON(record.medicalHistory).urinationIssues"><span class="text-muted">Tiêu tiểu:</span> {{safeParseJSON(record.medicalHistory).urinationIssues}}</div>
+                          <div class="col-6" v-if="safeParseJSON(record.medicalHistory).activityLevel"><span class="text-muted">Hoạt động:</span> {{safeParseJSON(record.medicalHistory).activityLevel}}</div>
+                        </div>
+                      </div>
+                      <p v-else class="detail-content">{{ record.medicalHistory }}</p>
                     </div>
 
+                    <!-- Clinical Signs (Objective) -->
+                    <div class="detail-block mb-3">
+                      <span class="detail-label"><i class="bi bi-chat-left-dots-fill text-warning me-1"></i>Khám lâm sàng (O):</span>
+                      <div v-if="safeParseJSON(record.clinicalSigns)" class="mt-2 bg-warning bg-opacity-10 p-3 rounded-3 small">
+                        <div class="row g-2">
+                          <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).heartRate"><span class="text-muted">Nhịp tim:</span> {{safeParseJSON(record.clinicalSigns).heartRate}} bpm</div>
+                          <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).respiratoryRate"><span class="text-muted">Nhịp thở:</span> {{safeParseJSON(record.clinicalSigns).respiratoryRate}} l/p</div>
+                          <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).mentation"><span class="text-muted">Tinh thần:</span> {{safeParseJSON(record.clinicalSigns).mentation}}</div>
+                          <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).hydration"><span class="text-muted">Mất nước:</span> {{safeParseJSON(record.clinicalSigns).hydration}}</div>
+                          <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).bodyConditionScore"><span class="text-muted">BCS:</span> {{safeParseJSON(record.clinicalSigns).bodyConditionScore}}/9</div>
+                        </div>
+                      </div>
+                      <p v-else class="detail-content">{{ record.clinicalSigns || 'Không ghi nhận' }}</p>
+                    </div>
+                    
+                    <!-- Diagnosis (Assessment) -->
+                    <div class="detail-block diagnosis-block mb-3">
+                      <span class="detail-label"><i class="bi bi-activity text-danger me-1"></i>Chẩn đoán y khoa (A):</span>
+                      <div v-if="safeParseJSON(record.diagnosis)" class="mt-2 p-3 bg-danger bg-opacity-10 rounded-3 small">
+                        <div v-if="safeParseJSON(record.diagnosis).tentativeDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ sơ bộ:</span> {{safeParseJSON(record.diagnosis).tentativeDiagnosis}}</div>
+                        <div v-if="safeParseJSON(record.diagnosis).definitiveDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ xác định:</span> <span class="fw-bold text-danger">{{safeParseJSON(record.diagnosis).definitiveDiagnosis}}</span></div>
+                        <div v-if="safeParseJSON(record.diagnosis).differentialDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ phân biệt:</span> {{safeParseJSON(record.diagnosis).differentialDiagnosis}}</div>
+                        <div class="d-flex gap-3 mt-2">
+                          <span v-if="safeParseJSON(record.diagnosis).diseaseSeverity" class="badge bg-white text-dark border">Mức độ: {{safeParseJSON(record.diagnosis).diseaseSeverity}}</span>
+                          <span v-if="safeParseJSON(record.diagnosis).prognosis" class="badge bg-white text-dark border">Tiên lượng: {{safeParseJSON(record.diagnosis).prognosis}}</span>
+                        </div>
+                      </div>
+                      <p v-else class="detail-content fw-bold text-dark">{{ record.diagnosis || 'Chưa ghi nhận' }}</p>
+                    </div>
+
+                    <!-- Treatment Plan (Plan) -->
                     <div class="detail-block treatment-block mb-3">
-                      <span class="detail-label"><i class="bi bi-file-earmark-medical-fill text-success me-1"></i>Phác đồ & Kế hoạch điều trị:</span>
-                      <p class="detail-content text-dark">{{ record.treatmentPlan || 'Chưa ghi nhận' }}</p>
+                      <span class="detail-label"><i class="bi bi-file-earmark-medical-fill text-success me-1"></i>Phác đồ & Kế hoạch điều trị (P):</span>
+                      <ul v-if="Array.isArray(safeParseJSON(record.treatmentPlan)) && safeParseJSON(record.treatmentPlan).length > 0" class="mt-2 mb-0 ps-3 bg-success bg-opacity-10 p-3 rounded-3">
+                        <li v-for="(step, idx) in safeParseJSON(record.treatmentPlan)" :key="idx" class="text-dark small mb-1">{{ step }}</li>
+                      </ul>
+                      <p v-else-if="!safeParseJSON(record.treatmentPlan)" class="detail-content text-dark">{{ record.treatmentPlan || 'Chưa ghi nhận' }}</p>
+                      <p v-else class="detail-content text-dark">Chưa ghi nhận</p>
                     </div>
                   </div>
 
@@ -269,6 +302,7 @@ interface MedicalRecord {
   petName: string;
   visitDate: string;
   recordType: string;
+  medicalHistory?: string;
   diagnosis: string;
   treatmentPlan: string;
   doctorName: string;
@@ -290,6 +324,33 @@ const selectedPetId = ref<number | null>(null);
 const records = ref<MedicalRecord[]>([]);
 const loading = ref(false);
 const errorMsg = ref('');
+
+const expandedRecords = ref<number[]>([]);
+const toggleRecord = (recordId: number) => {
+  const index = expandedRecords.value.indexOf(recordId);
+  if (index > -1) {
+    expandedRecords.value.splice(index, 1);
+  } else {
+    expandedRecords.value.push(recordId);
+  }
+};
+
+const safeParseJSON = (jsonStr: string | undefined | null): any => {
+  if (!jsonStr) return null;
+  try {
+    return JSON.parse(jsonStr);
+  } catch (e) {
+    return null;
+  }
+};
+
+const getShortDiagnosis = (diagnosisStr: string): string => {
+  const parsed = safeParseJSON(diagnosisStr);
+  if (parsed) {
+    return parsed.definitiveDiagnosis || parsed.tentativeDiagnosis || 'Hoàn thành khám';
+  }
+  return diagnosisStr || '';
+};
 
 // ===== API =====
 const fetchPets = async () => {

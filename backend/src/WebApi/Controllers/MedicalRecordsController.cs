@@ -111,5 +111,52 @@ namespace MyPetClinic.Controllers
                 return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", detail = ex.Message });
             }
         }
+        [HttpPost("soap")]
+        public async Task<IActionResult> CreateSoapMedicalRecord([FromBody] MedicalRecordSoapRequestDto dto)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+
+            if (!Guid.TryParse(userIdStr, out var doctorId))
+            {
+                return BadRequest(new { message = "DoctorId không hợp lệ." });
+            }
+
+            try
+            {
+                var recordId = await _medicalRecordService.CreateSoapMedicalRecordAsync(dto, doctorId);
+                return Ok(new { success = true, recordId });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", detail = ex.Message });
+            }
+        }
+
+        [HttpGet("soap/appointment/{appointmentId}")]
+        public async Task<IActionResult> GetSoapMedicalRecordByAppointment(long appointmentId)
+        {
+            try
+            {
+                var record = await _medicalRecordService.GetSoapMedicalRecordByAppointmentAsync(appointmentId);
+                if (record == null)
+                {
+                    return NotFound(new { message = "Không tìm thấy hồ sơ SOAP bệnh án cho cuộc hẹn này." });
+                }
+                return Ok(record);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", detail = ex.Message });
+            }
+        }
     }
 }

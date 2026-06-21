@@ -303,9 +303,14 @@
                           </div>
                           <h5 class="fw-bold mb-2 pe-4">{{ svc.name }}</h5>
                           <p class="text-muted small mb-4">{{ (svc as any).description || 'Dịch vụ chăm sóc sức khoẻ tốt nhất cho thú cưng.' }}</p>
-                          <div class="d-flex justify-content-between align-items-center mt-auto">
-                            <span class="badge bg-light text-muted px-3 py-2 rounded-pill"><i class="bi bi-clock me-1"></i> {{ (svc as any).durationMinutes || 30 }} phút</span>
-                            <h5 class="fw-bold text-primary mb-0">{{ svc.price ? formatCurrency(svc.price) : 'Miễn phí' }}</h5>
+                          <div class="d-flex justify-content-between align-items-start mt-auto">
+                            <span class="badge bg-light text-muted px-3 py-2 rounded-pill mt-1"><i class="bi bi-clock me-1"></i> {{ (svc as any).durationMinutes || 30 }} phút</span>
+                            <div class="text-end">
+                              <h5 class="fw-bold text-primary mb-0">
+                                {{ svc.name.toLowerCase().includes('tiêm') ? 'Theo giá Vắc-xin' : (svc.price ? formatCurrency(svc.price) : 'Miễn phí') }}
+                              </h5>
+                              <div v-if="svc.name.toLowerCase().includes('tiêm')" style="font-size: 0.75rem; color: #198754;" class="mt-1 fw-medium"><i class="bi bi-gift me-1"></i>Miễn phí công tiêm</div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -528,8 +533,9 @@
                                 {{ bookForm.vaccineId ? getSelectedVaccineName() : ((services.find(s => s.id === bookForm.serviceId) as any)?.description || 'Gói khám dịch vụ') }}
                               </small>
                             </div>
-                            <div class="fw-bold text-dark ms-2" style="font-size: 0.95rem;">
-                              {{ getSelectedServicePrice() ? formatCurrency(getSelectedServicePrice()) : 'Liên hệ' }}
+                            <div class="fw-bold text-dark ms-2 text-end" style="font-size: 0.95rem;">
+                              {{ getSelectedServiceName().toLowerCase().includes('tiêm') ? 'Theo giá Vắc-xin' : (getSelectedServicePrice() ? formatCurrency(getSelectedServicePrice()) : 'Liên hệ') }}
+                              <div v-if="getSelectedServiceName().toLowerCase().includes('tiêm')" class="text-success fw-normal mt-1" style="font-size: 0.7rem;">(Miễn phí công tiêm)</div>
                             </div>
                           </div>
                         </div>
@@ -587,8 +593,12 @@
 
                             <h6 class="text-muted small fw-bold mb-1 tracking-wide" style="font-size: 0.75rem;">CHI TIẾT CHI PHÍ</h6>
                             <div class="d-flex justify-content-between mb-1">
-                              <span class="text-muted" style="font-size: 0.8rem;">Phí khám dịch vụ</span>
-                              <strong class="text-dark" style="font-size: 0.85rem;">{{ getSelectedServicePrice() ? formatCurrency(getSelectedServicePrice()) : '0 ₫' }}</strong>
+                              <span class="text-muted" style="font-size: 0.8rem;">{{ getSelectedServiceName().toLowerCase().includes('tiêm') ? 'Tiền công tiêm' : 'Phí khám dịch vụ' }}</span>
+                              <strong class="text-success" style="font-size: 0.85rem;">{{ getSelectedServiceName().toLowerCase().includes('tiêm') ? 'Miễn phí' : (getSelectedServicePrice() ? formatCurrency(getSelectedServicePrice()) : '0 ₫') }}</strong>
+                            </div>
+                            <div v-if="getSelectedServiceName().toLowerCase().includes('tiêm')" class="d-flex justify-content-between mb-1">
+                              <span class="text-muted" style="font-size: 0.8rem;">Giá Vắc-xin</span>
+                              <strong class="text-dark" style="font-size: 0.85rem;">Tính theo thực tế</strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2 border-bottom pb-2">
                               <span class="text-muted" style="font-size: 0.8rem;">Phí mở hồ sơ mới</span>
@@ -1097,7 +1107,7 @@ const onCalendarDateSelect = (dateStr: string) => {
 
 
 const masterMorningTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
-const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];
+const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
 
 interface SlotDisplay {
   time: string;

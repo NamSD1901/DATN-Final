@@ -1114,7 +1114,7 @@ namespace MyPetClinic.Application.Services
                 {
                     string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "slot_config.json");
                     string startTimeStr = "08:00:00";
-                    string endTimeStr = "17:00:00";
+                    string endTimeStr = "20:00:00";
                     int durationMinutes = 30;
 
                     if (File.Exists(configPath))

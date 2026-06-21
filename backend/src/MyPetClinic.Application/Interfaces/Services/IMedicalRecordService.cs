@@ -11,5 +11,9 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<IEnumerable<MedicalRecordDto>> GetPetMedicalHistoryAsync(long petId);
         Task<MedicalRecordDto?> GetMedicalRecordByAppointmentAsync(long appointmentId);
         Task UpdateMedicalRecordAsync(long id, UpdateMedicalRecordDto dto, Guid doctorId);
+        
+        // SOAP APIs
+        Task<long> CreateSoapMedicalRecordAsync(MedicalRecordSoapRequestDto dto, Guid doctorId);
+        Task<MedicalRecordSoapResponseDto?> GetSoapMedicalRecordByAppointmentAsync(long appointmentId);
     }
 }

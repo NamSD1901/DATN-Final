@@ -576,7 +576,12 @@
             </template>
 
             <!-- Confirmed: no actions in detail modal -->
-
+            <template v-if="selectedDetail.status === 'confirmed'">
+              <span class="badge bg-success fs-6 px-3 py-2.5 rounded-pill"><i class="bi bi-calendar-check"></i> Đã duyệt hẹn</span>
+              <button class="btn btn-danger text-white rounded-pill px-3 fw-bold shadow-sm" @click="updateStatus(selectedDetail.id, 'in_progress')">
+                <i class="bi bi-rocket-takeoff me-1"></i> Chuyển phòng khám (Bypass)
+              </button>
+            </template>
 
             <!-- Waiting actions -->
             <template v-if="selectedDetail.status === 'waiting'">
@@ -1089,7 +1094,7 @@ const formPayload = ref({
 
 const workingHours = [
   "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"
+  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30"
 ];
 
 const fetchingSlots = ref(false);
@@ -1156,7 +1161,7 @@ interface SlotDisplay {
 }
 
 const masterMorningTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
-const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];
+const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
 
 const BOOKING_BUFFER_MS = 15 * 60 * 1000; // 15 phút
 

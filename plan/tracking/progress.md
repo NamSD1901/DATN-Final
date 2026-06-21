@@ -161,6 +161,7 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
         *   Tạo mới `MedicalRecordsController.cs` và `MedicinesController.cs` an toàn và phân quyền đầy đủ.
         *   Triển khai `MedicalRecordService.cs` tách biệt logic EF Core ra khỏi Application Layer, truy vấn lồng liên quan đến Prescription và Medicine qua in-memory mapping tối ưu.
         *   Cải tiến toàn diện `MedicalRecordsTab.vue`: Chuyển đổi từ giao diện S.O.A.P Accordion sang thiết kế 2 Sub-tabs (Phiếu Điều Trị & Hồ sơ Thú cưng). Giao diện phẳng phân cột tự động điều chỉnh theo Khám Bệnh/Tiêm Phòng với Form nhập liệu lớn, tiện dụng và mang đậm phong cách Pet Clinic. Tích hợp cảnh báo tồn kho thời gian thực.
+        *   **[MỚI CẬP NHẬT]** Nâng cấp Bệnh án Khám bệnh theo tiêu chuẩn **S.O.A.P** (S-Chủ quan, O-Khách quan, A-Đánh giá, P-Kế hoạch) trên giao diện `ConsultationRecordTab.vue`, hỗ trợ hàng chục trường dữ liệu chi tiết và lưu trữ an toàn bằng JSON Serialize không làm phá vỡ DB schema cũ.
         *   Bổ sung Unit Test bao phủ 100% các kịch bản thành công và rollback giao dịch khi hết thuốc.
 
 ---

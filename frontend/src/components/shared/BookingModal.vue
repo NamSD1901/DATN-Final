@@ -512,6 +512,13 @@ const fetchTimeSlots = async () => {
       { time: '15:00', available: true },
       { time: '15:30', available: true, fast: true },
       { time: '16:00', available: true },
+      { time: '16:30', available: true },
+      { time: '17:00', available: true },
+      { time: '17:30', available: true },
+      { time: '18:00', available: true },
+      { time: '18:30', available: true },
+      { time: '19:00', available: true },
+      { time: '19:30', available: true },
     ];
   } catch (error) {
     console.error(error);
