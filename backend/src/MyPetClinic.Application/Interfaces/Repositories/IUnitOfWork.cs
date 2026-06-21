@@ -18,6 +18,7 @@ namespace MyPetClinic.Application.Interfaces.Repositories
         IGenericRepository<Prescription> Prescriptions { get; }
         IGenericRepository<PrescriptionItem> PrescriptionItems { get; }
         IGenericRepository<Vaccine> Vaccines { get; }
+        IGenericRepository<VaccineBatch> VaccineBatches { get; }
         IGenericRepository<VaccinationRecord> VaccinationRecords { get; }
         IGenericRepository<DoctorSchedule> DoctorSchedules { get; }
         IGenericRepository<Post> Posts { get; }

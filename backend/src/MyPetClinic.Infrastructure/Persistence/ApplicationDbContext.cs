@@ -40,6 +40,7 @@ namespace MyPetClinic.Infrastructure.Persistence
         public DbSet<PrescriptionItem> PrescriptionItems { get; set; }
         public DbSet<Vaccine> Vaccines { get; set; }
         public DbSet<VaccinationRecord> VaccinationRecords { get; set; }
+        public DbSet<VaccineBatch> VaccineBatches { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
         public DbSet<Review> Reviews { get; set; }
@@ -278,6 +279,23 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.IntervalDays).HasColumnName("interval_days");
             });
 
+            // vaccine_batches
+            modelBuilder.Entity<VaccineBatch>(entity =>
+            {
+                entity.ToTable("vaccine_batches");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.VaccineId).HasColumnName("vaccine_id");
+                entity.Property(e => e.BatchNumber).HasColumnName("batch_number").IsRequired().HasMaxLength(100);
+                entity.Property(e => e.ExpirationDate).HasColumnName("expiration_date");
+                entity.Property(e => e.ImportDate).HasColumnName("import_date");
+                entity.Property(e => e.StockQuantity).HasColumnName("stock_quantity").HasDefaultValue(0);
+                entity.Property(e => e.ImportPrice).HasColumnName("import_price");
+                entity.Property(e => e.SellingPrice).HasColumnName("selling_price");
+
+                entity.HasOne(d => d.Vaccine).WithMany(p => p.VaccineBatches).HasForeignKey(d => d.VaccineId).OnDelete(DeleteBehavior.Cascade);
+            });
+
             // vaccination_records
             modelBuilder.Entity<VaccinationRecord>(entity =>
             {
@@ -286,15 +304,57 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
                 entity.Property(e => e.PetId).HasColumnName("pet_id");
                 entity.Property(e => e.VaccineId).HasColumnName("vaccine_id");
+                entity.Property(e => e.VaccineBatchId).HasColumnName("vaccine_batch_id");
                 entity.Property(e => e.AppointmentId).HasColumnName("appointment_id");
+                entity.HasIndex(e => e.AppointmentId).IsUnique(); // One-to-one relationship
                 entity.Property(e => e.DoctorId).HasColumnName("doctor_id");
-                entity.Property(e => e.InjectionDate).HasColumnName("injection_date");
+
+                // S - Subjective
+                entity.Property(e => e.ReasonForVisit).HasColumnName("reason_for_visit").HasMaxLength(100);
+                entity.Property(e => e.PreviousVaccineHistory).HasColumnName("previous_vaccine_history").HasMaxLength(500);
+                entity.Property(e => e.IsAllergic).HasColumnName("is_allergic").HasDefaultValue(false);
+                entity.Property(e => e.AllergyDetails).HasColumnName("allergy_details").HasMaxLength(500);
+                entity.Property(e => e.HasPreviousReaction).HasColumnName("has_previous_reaction").HasDefaultValue(false);
+                entity.Property(e => e.PreviousReactionDetails).HasColumnName("previous_reaction_details").HasMaxLength(500);
+                entity.Property(e => e.IsUnderTreatment).HasColumnName("is_under_treatment").HasDefaultValue(false);
+                entity.Property(e => e.TreatmentDetails).HasColumnName("treatment_details").HasMaxLength(500);
+                entity.Property(e => e.EatingStatus).HasColumnName("eating_status").HasMaxLength(50);
+                entity.Property(e => e.HasVomitingOrDiarrhea).HasColumnName("has_vomiting_or_diarrhea").HasDefaultValue(false);
+                entity.Property(e => e.HasCoughOrSneeze).HasColumnName("has_cough_or_sneeze").HasDefaultValue(false);
+                entity.Property(e => e.OwnerNotes).HasColumnName("owner_notes").HasMaxLength(1000);
+
+                // O - Objective
+                entity.Property(e => e.Weight).HasColumnName("weight");
+                entity.Property(e => e.Temperature).HasColumnName("temperature");
+                entity.Property(e => e.HeartRate).HasColumnName("heart_rate");
+                entity.Property(e => e.RespiratoryRate).HasColumnName("respiratory_rate");
+                entity.Property(e => e.MentalStatus).HasColumnName("mental_status").HasMaxLength(50);
+                entity.Property(e => e.MucosaStatus).HasColumnName("mucosa_status").HasMaxLength(50);
+                entity.Property(e => e.EyeNoseEarStatus).HasColumnName("eye_nose_ear_status").HasMaxLength(200);
+                entity.Property(e => e.LymphNodeStatus).HasColumnName("lymph_node_status").HasMaxLength(50);
+                entity.Property(e => e.DehydrationPercent).HasColumnName("dehydration_percent");
+
+                // Vaccine specifics
+                entity.Property(e => e.Dose).HasColumnName("dose");
+                entity.Property(e => e.Route).HasColumnName("route").HasMaxLength(50);
+                entity.Property(e => e.InjectionSite).HasColumnName("injection_site").HasMaxLength(100);
+
+                // A - Assessment
+                entity.Property(e => e.ClinicalAssessment).HasColumnName("clinical_assessment").HasMaxLength(100);
+                entity.Property(e => e.DoctorRemarks).HasColumnName("doctor_remarks").HasMaxLength(1000);
+
+                // P - Plan
+                entity.Property(e => e.InjectionDate).HasColumnName("injection_date").HasDefaultValueSql("NOW()");
                 entity.Property(e => e.NextDueDate).HasColumnName("next_due_date");
-                entity.Property(e => e.ReactionNote).HasColumnName("reaction_note");
+                entity.Property(e => e.FollowUpInstructions).HasColumnName("follow_up_instructions").HasMaxLength(1000);
+                entity.Property(e => e.ReactionNote).HasColumnName("reaction_note").HasMaxLength(1000);
+                
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
 
                 entity.HasOne(d => d.Pet).WithMany(p => p.VaccinationRecords).HasForeignKey(d => d.PetId).OnDelete(DeleteBehavior.Cascade);
                 entity.HasOne(d => d.Vaccine).WithMany(p => p.VaccinationRecords).HasForeignKey(d => d.VaccineId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(d => d.Appointment).WithMany().HasForeignKey(d => d.AppointmentId).OnDelete(DeleteBehavior.SetNull);
+                entity.HasOne(d => d.VaccineBatch).WithMany(p => p.VaccinationRecords).HasForeignKey(d => d.VaccineBatchId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(d => d.Appointment).WithOne(p => p.VaccinationRecord).HasForeignKey<VaccinationRecord>(d => d.AppointmentId).OnDelete(DeleteBehavior.SetNull);
                 entity.HasOne(d => d.Doctor).WithMany().HasForeignKey(d => d.DoctorId).OnDelete(DeleteBehavior.Restrict);
             });
 

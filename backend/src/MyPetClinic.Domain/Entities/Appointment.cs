@@ -34,6 +34,7 @@ namespace MyPetClinic.Domain.Entities
         public User? Creator { get; set; }
 
         public MedicalRecord? MedicalRecord { get; set; }
+        public VaccinationRecord? VaccinationRecord { get; set; }
         public Invoice? Invoice { get; set; }
         public Review? Review { get; set; }
     }

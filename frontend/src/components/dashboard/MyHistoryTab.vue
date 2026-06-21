@@ -7,9 +7,9 @@
         <div>
           <h3 class="fw-bold text-dark mb-1">
             <i class="bi bi-journal-medical me-2" style="color: var(--primary-gold);"></i>
-            Hồ sơ & Lịch sử bệnh án
+            Lịch sử y tế
           </h3>
-          <p class="text-muted mb-0 small">Báo cáo sức khỏe toàn diện, đơn thuốc chi tiết và xu hướng sinh hiệu của thú cưng.</p>
+          <p class="text-muted mb-0 small">Báo cáo y tế toàn diện, đơn thuốc chi tiết và xu hướng sinh hiệu của thú cưng.</p>
         </div>
       </div>
     </div>

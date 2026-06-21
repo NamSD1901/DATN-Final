@@ -73,6 +73,9 @@
           <li :class="{ 'active': activeTab === 'medicines-admin' }">
             <a href="#" @click.prevent="activeTab = 'medicines-admin'"><i class="bi bi-capsule text-warning opacity-75"></i> Quản lý Kho thuốc</a>
           </li>
+          <li :class="{ 'active': activeTab === 'vaccines-admin' }">
+            <a href="#" @click.prevent="activeTab = 'vaccines-admin'"><i class="bi bi-droplet-half text-warning opacity-75"></i> Quản lý Vắc-xin</a>
+          </li>
           <li :class="{ 'active': activeTab === 'schedules-admin' }">
             <a href="#" @click.prevent="activeTab = 'schedules-admin'"><i class="bi bi-calendar-event-fill text-warning opacity-75"></i> Lịch trực Bác sĩ</a>
           </li>
@@ -94,7 +97,7 @@
             <a href="#" @click.prevent="activeTab = 'my-appointments'"><i class="bi bi-calendar-check-fill text-warning opacity-75"></i> Lịch hẹn của tôi</a>
           </li>
           <li :class="{ 'active': activeTab === 'my-history' }">
-            <a href="#" @click.prevent="activeTab = 'my-history'"><i class="bi bi-clock-history text-warning opacity-75"></i> Lịch sử khám bệnh</a>
+            <a href="#" @click.prevent="activeTab = 'my-history'"><i class="bi bi-clock-history text-warning opacity-75"></i> Lịch sử y tế</a>
           </li>
           <li :class="{ 'active': activeTab === 'my-services-invoices' }">
             <a href="#" @click.prevent="activeTab = 'my-services-invoices'"><i class="bi bi-receipt text-warning opacity-75"></i> Dịch vụ & Hóa đơn</a>
@@ -368,6 +371,11 @@
             <MedicinesAdminTab />
           </div>
 
+          <!-- tab: Vaccines Admin Tab -->
+          <div v-else-if="activeTab === 'vaccines-admin'" class="container-fluid p-0">
+            <VaccinesAdminTab />
+          </div>
+
           <!-- tab: Schedules Admin Tab -->
           <div v-else-if="activeTab === 'schedules-admin'" class="container-fluid p-0">
             <SchedulesAdminTab />
@@ -442,6 +450,7 @@ import StaffTab from '../components/dashboard/StaffTab.vue';
 import ServicesAdminTab from '../components/dashboard/ServicesAdminTab.vue';
 import SettingsAdminTab from '../components/dashboard/SettingsAdminTab.vue';
 import MedicinesAdminTab from '../components/dashboard/MedicinesAdminTab.vue';
+import VaccinesAdminTab from '../components/dashboard/VaccinesAdminTab.vue';
 import SchedulesAdminTab from '../components/dashboard/SchedulesAdminTab.vue';
 import ReportsAdminTab from '../components/dashboard/ReportsAdminTab.vue';
 import BlogAdminTab from '../components/dashboard/BlogAdminTab.vue';
@@ -500,7 +509,7 @@ const getTitle = computed(() => {
   if (activeTab.value === 'invoices') return 'Quản lý Hóa đơn & Thu ngân';
   if (activeTab.value === 'my-pets') return 'Thú cưng của tôi';
   if (activeTab.value === 'my-appointments') return 'Lịch hẹn của tôi';
-  if (activeTab.value === 'my-history') return 'Lịch sử khám bệnh';
+  if (activeTab.value === 'my-history') return 'Lịch sử y tế';
   if (activeTab.value === 'my-services-invoices') return 'Dịch vụ & Hóa đơn';
   if (activeTab.value === 'doctor-cases') return 'Hàng khám của tôi';
   if (activeTab.value === 'medical-records') return 'Hồ sơ bệnh án & Khám bệnh';
@@ -508,6 +517,7 @@ const getTitle = computed(() => {
   if (activeTab.value === 'services-admin') return 'Quản lý Dịch vụ & Giá cả';
   if (activeTab.value === 'settings-admin') return 'Cấu hình Khung giờ làm việc';
   if (activeTab.value === 'medicines-admin') return 'Quản lý Kho thuốc & Dược phẩm';
+  if (activeTab.value === 'vaccines-admin') return 'Quản lý Vắc-xin & Lô nhập';
   if (activeTab.value === 'schedules-admin') return 'Quản lý Ca trực Bác sĩ';
   if (activeTab.value === 'reports-admin') return 'Báo cáo Doanh thu & Hiệu suất';
   if (activeTab.value === 'blog-admin') return 'Quản trị Bài viết & Tin tức';

@@ -131,31 +131,31 @@
       <Transition name="modal-fade">
         <div v-if="showFormModal" class="pet-modal-overlay-glass" @click.self="closeModal">
           <div class="pet-modal-card-glass glass-panel" :class="{ 'shake-animation': formValidationError }">
-            <div class="pet-modal-header-glass border-bottom-glass p-3">
-              <h5 class="fw-bold mb-0 text-dark">
-                <i class="bi bi-heptagon-fill me-2 text-warning"></i>
+            <div class="pet-modal-header-glass border-bottom-glass p-3 d-flex justify-content-between align-items-center">
+              <h5 class="fw-bold mb-0 text-dark d-flex align-items-center">
+                <i class="bi bi-stars me-2 text-warning fs-4"></i>
                 {{ isEditing ? 'Chỉnh sửa hồ sơ thú cưng' : 'Thêm thú cưng mới' }}
               </h5>
-              <button class="modal-close-btn-glass" @click="closeModal">
+              <button class="modal-close-btn-glass" @click="closeModal" title="Đóng">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
 
-            <div class="pet-modal-body-glass p-4">
+            <div class="pet-modal-body-glass p-4 px-sm-5">
               <!-- Alert messages -->
-              <div v-if="formSuccess" class="alert alert-success-glass glass-panel py-2 px-3 mb-3">
-                <i class="bi bi-check-circle-fill me-2 text-emerald"></i>{{ formSuccess }}
+              <div v-if="formSuccess" class="alert alert-success-glass glass-panel py-2 px-3 mb-4 d-flex align-items-center">
+                <i class="bi bi-check-circle-fill me-2 text-emerald fs-5"></i><span class="ms-1">{{ formSuccess }}</span>
               </div>
-              <div v-if="formError" class="alert alert-danger-glass glass-panel py-2 px-3 mb-3">
-                <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>{{ formError }}
+              <div v-if="formError" class="alert alert-danger-glass glass-panel py-2 px-3 mb-4 d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill me-2 text-danger fs-5"></i><span class="ms-1">{{ formError }}</span>
               </div>
 
               <form @submit.prevent="submitForm" class="pet-form">
                 <!-- Pet Avatar Uploader -->
-                <div class="pet-upload-section mb-4 text-center">
-                  <div class="pet-upload-container mx-auto">
+                <div class="pet-upload-section mb-4 text-center p-4 rounded-4" style="background: rgba(245, 158, 11, 0.04); border: 1px dashed rgba(245, 158, 11, 0.3);">
+                  <div class="pet-upload-container mx-auto mb-3 shadow-sm" style="width: 110px; height: 110px;">
                     <img v-if="form.avatar" :src="getPetAvatarUrl(form.avatar)" alt="Pet Preview" class="pet-upload-preview" />
-                    <div v-else class="pet-upload-placeholder overflow-hidden" style="padding: 0;">
+                    <div v-else class="pet-upload-placeholder overflow-hidden" style="padding: 0; border-radius: 50%;">
                       <img :src="getSpeciesImageUrl(form.species)" class="w-100 h-100" style="object-fit: cover;" />
                     </div>
                     <label for="pet-avatar-upload" class="pet-upload-label" :class="{ uploading: avatarUploading }">
@@ -164,97 +164,110 @@
                       <input type="file" id="pet-avatar-upload" class="d-none" accept="image/*" @change="handlePetAvatarUpload" />
                     </label>
                   </div>
-                  <div class="text-secondary-muted small mt-2">Chọn ảnh đại diện của bé (Định dạng ảnh, Tối đa 2MB)</div>
+                  <h6 class="fw-semibold text-dark mb-1">Ảnh đại diện thú cưng</h6>
+                  <p class="text-secondary-muted small mb-0 opacity-75">Hỗ trợ JPG, PNG. Tối đa 2MB.</p>
                 </div>
 
-                <div class="row g-3">
+                <div class="row g-4">
                   <!-- Name -->
                   <div class="col-sm-6">
-                    <label class="form-label-glass">Tên thú cưng <span class="text-danger">*</span></label>
-                    <input v-model="form.name" type="text" class="form-control-glass" placeholder="VD: Mochi, Buddy..." required />
+                    <label class="form-label-glass text-secondary">Tên gọi của bé <span class="text-danger">*</span></label>
+                    <div class="input-group-custom">
+                      <span class="input-icon"><i class="bi bi-tag"></i></span>
+                      <input v-model="form.name" type="text" class="form-control-glass with-icon" placeholder="VD: Mochi, Buddy..." required />
+                    </div>
                   </div>
 
                   <!-- Species -->
                   <div class="col-sm-6">
-                    <label class="form-label-glass">Loài <span class="text-danger">*</span></label>
-                    <select v-model="form.species" class="form-control-glass" required>
-                      <option value="">-- Chọn loài --</option>
-                      <option value="Chó">🐕 Chó</option>
-                      <option value="Mèo">🐈 Mèo</option>
-                      <option value="Thỏ">🐇 Thỏ</option>
-                      <option value="Chim">🦜 Chim</option>
-                      <option value="Cá">🐟 Cá</option>
-                      <option value="Bò sát">🦎 Bò sát</option>
-                      <option value="Khác">🐾 Khác</option>
-                    </select>
+                    <label class="form-label-glass text-secondary">Giống loài <span class="text-danger">*</span></label>
+                    <div class="input-group-custom">
+                      <span class="input-icon"><i class="bi bi-emoji-smile"></i></span>
+                      <select v-model="form.species" class="form-control-glass with-icon" required>
+                        <option value="">-- Chọn loài --</option>
+                        <option value="Chó">🐕 Chó</option>
+                        <option value="Mèo">🐈 Mèo</option>
+                        <option value="Thỏ">🐇 Thỏ</option>
+                        <option value="Chim">🦜 Chim</option>
+                        <option value="Cá">🐟 Cá</option>
+                        <option value="Bò sát">🦎 Bò sát</option>
+                      </select>
+                    </div>
                   </div>
 
                   <!-- Breed -->
                   <div class="col-sm-6">
-                    <label class="form-label-glass">Giống</label>
-                    <input v-model="form.breed" type="text" class="form-control-glass" placeholder="VD: Golden Retriever..." />
+                    <label class="form-label-glass text-secondary">Giống / Dòng</label>
+                    <div class="input-group-custom">
+                      <span class="input-icon"><i class="bi bi-info-circle"></i></span>
+                      <input v-model="form.breed" type="text" class="form-control-glass with-icon" placeholder="VD: Poodle, British Shorthair..." />
+                    </div>
                   </div>
 
                   <!-- Gender -->
                   <div class="col-sm-6">
-                    <label class="form-label-glass">Giới tính</label>
-                    <select v-model="form.gender" class="form-control-glass">
-                      <option :value="null">-- Chưa xác định --</option>
-                      <option :value="1">♂ Đực</option>
-                      <option :value="2">♀ Cái</option>
-                    </select>
+                    <label class="form-label-glass text-secondary">Giới tính</label>
+                    <div class="input-group-custom">
+                      <span class="input-icon"><i class="bi bi-gender-ambiguous"></i></span>
+                      <select v-model="form.gender" class="form-control-glass with-icon">
+                        <option :value="null">-- Chưa xác định --</option>
+                        <option :value="1">♂ Đực (Male)</option>
+                        <option :value="2">♀ Cái (Female)</option>
+                      </select>
+                    </div>
                   </div>
 
                   <!-- Birth Date -->
                   <div class="col-sm-6">
-                    <label class="form-label-glass">Ngày sinh</label>
-                    <input v-model="form.birthDate" type="date" class="form-control-glass" :max="todayStr" />
+                    <label class="form-label-glass text-secondary">Ngày sinh (Dự kiến)</label>
+                    <div class="input-group-custom">
+                      <span class="input-icon"><i class="bi bi-calendar2-heart"></i></span>
+                      <input v-model="form.birthDate" type="date" class="form-control-glass with-icon" :max="todayStr" />
+                    </div>
                   </div>
 
                   <!-- Weight -->
                   <div class="col-sm-6">
-                    <label class="form-label-glass">Cân nặng (kg)</label>
-                    <input v-model="form.weight" type="number" step="0.1" min="0" max="999" class="form-control-glass" placeholder="VD: 5.5" />
+                    <label class="form-label-glass text-secondary">Cân nặng (kg)</label>
+                    <div class="input-group-custom">
+                      <span class="input-icon"><i class="bi bi-speedometer2"></i></span>
+                      <input v-model="form.weight" type="number" step="0.1" min="0" max="999" class="form-control-glass with-icon" placeholder="VD: 5.5" />
+                    </div>
                   </div>
 
                   <!-- Color -->
                   <div class="col-sm-6">
-                    <label class="form-label-glass">Màu lông</label>
-                    <input v-model="form.color" type="text" class="form-control-glass" placeholder="VD: Vàng kem, Đen trắng..." />
-                  </div>
-
-                  <!-- Blood Type -->
-                  <div class="col-sm-6">
-                    <label class="form-label-glass">Nhóm máu</label>
-                    <input v-model="form.bloodType" type="text" class="form-control-glass" placeholder="VD: DEA 1.1+..." />
-                  </div>
-
-                  <!-- Microchip -->
-                  <div class="col-sm-6">
-                    <label class="form-label-glass">Mã microchip</label>
-                    <input v-model="form.microchipCode" type="text" class="form-control-glass" placeholder="VD: 900006000000000..." />
-                  </div>
-
-                  <!-- Sterilized -->
-                  <div class="col-sm-6 d-flex align-items-center gap-3 pt-3">
-                    <div class="form-check form-switch-glass">
-                      <input v-model="form.sterilized" class="form-check-input" type="checkbox" id="sterilizedCheck" />
-                      <label class="form-check-label text-dark fw-semibold ms-2" for="sterilizedCheck">Đã triệt sản</label>
+                    <label class="form-label-glass text-secondary">Màu lông đặc trưng</label>
+                    <div class="input-group-custom">
+                      <span class="input-icon"><i class="bi bi-palette"></i></span>
+                      <input v-model="form.color" type="text" class="form-control-glass with-icon" placeholder="VD: Vàng kem, Đen trắng..." />
                     </div>
+                  </div>
+
+                  <!-- Microchip Code -->
+                  <div class="col-sm-6">
+                     <label class="form-label-glass text-secondary">Mã Microchip (nếu có)</label>
+                     <div class="input-group-custom">
+                       <span class="input-icon"><i class="bi bi-upc-scan"></i></span>
+                       <input v-model="form.microchipCode" type="text" class="form-control-glass with-icon" placeholder="Mã chip định danh..." />
+                     </div>
                   </div>
 
                   <!-- Allergy Note -->
                   <div class="col-12">
-                    <label class="form-label-glass">Ghi chú dị ứng / đặc biệt</label>
-                    <textarea v-model="form.allergyNote" class="form-control-glass" rows="3" placeholder="VD: Dị ứng với penicillin, không ăn được gà..."></textarea>
+                    <label class="form-label-glass text-secondary">Ghi chú sức khoẻ / Dị ứng</label>
+                    <div class="input-group-custom textarea-custom align-items-start">
+                      <span class="input-icon mt-2 pt-1"><i class="bi bi-heart-pulse"></i></span>
+                      <textarea v-model="form.allergyNote" class="form-control-glass with-icon" rows="3" placeholder="VD: Dị ứng với thuốc penicillin, hoặc không ăn được thịt gà..."></textarea>
+                    </div>
                   </div>
                 </div>
 
-                <div class="pet-modal-footer-glass border-top-glass mt-4 pt-3 d-flex justify-content-end gap-2">
-                  <button type="button" class="btn btn-outline-glass px-4" @click="closeModal" :disabled="formLoading">Huỷ</button>
-                  <button type="submit" class="btn btn-premium-neon px-4" :disabled="formLoading">
+                <div class="pet-modal-footer-glass border-top-glass mt-4 pt-4 d-flex justify-content-end gap-3">
+                  <button type="button" class="btn btn-outline-glass px-4 py-2 rounded-pill fw-semibold" @click="closeModal" :disabled="formLoading">Huỷ bỏ</button>
+                  <button type="submit" class="btn btn-premium-neon px-5 py-2 rounded-pill shadow-sm d-flex align-items-center" :disabled="formLoading">
                     <span v-if="formLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                    <i v-else class="bi bi-check2-circle me-2"></i>
+                    <i v-else class="bi bi-check2-circle me-2 fs-5"></i>
                     {{ isEditing ? 'Lưu thay đổi' : 'Thêm thú cưng' }}
                   </button>
                 </div>
@@ -1099,6 +1112,33 @@ onMounted(fetchPets);
 select.form-control-glass option {
   background: white;
   color: var(--text-dark);
+}
+
+/* Custom Input Groups */
+.input-group-custom {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+  opacity: 0.7;
+  z-index: 5;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.form-control-glass.with-icon {
+  padding-left: 40px !important;
+}
+
+.input-group-custom:focus-within .input-icon {
+  color: var(--primary-gold);
+  opacity: 1;
 }
 
 /* Switch Custom Glass */

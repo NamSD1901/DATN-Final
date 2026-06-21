@@ -176,6 +176,7 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
     *   **Cải tiến triển khai:**
         *   Sửa lỗi nạp danh sách thuốc kê đơn (`prescription.PrescriptionItems` bị null) trong `InvoiceService.cs` bằng cơ chế tìm kiếm repository phân cấp độc lập.
         *   Tạo mới `VaccinationRecordDto`, `IVaccinationService`, `VaccinationService` và `VaccinationsController` hoàn chỉnh logic tiêm chủng.
+        *   **[MỚI CẬP NHẬT]** Nâng cấp toàn diện kiến trúc Bệnh án tiêm chủng theo tiêu chuẩn **S.O.A.P** (S-Chủ quan, O-Khách quan, A-Đánh giá, P-Kế hoạch). Giao diện `VaccinationRecordTab.vue` được thiết kế mới dưới dạng Split-pane siêu trực quan, xử lý tự động Hoãn tiêm (chỉ sinh phí khám) và Trừ kho lô Vắc-xin an toàn.
         *   Bổ sung Unit Test bao phủ 100% logic tính toán ngày tái chủng tự động (`NextDueDate`) và kiểm kho vắc-xin.
 
 ---
@@ -186,9 +187,11 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 
 ---
 
-### 🎯 Sprint 15: Quản Trị Kho Thuốc & Ca Trực Bác Sĩ
-*   **Mục tiêu:** Quản trị kho dược phẩm và phân ca trực của bác sĩ.
-*   **Trạng thái chung:** `✅ CODE DONE` (T47, T48).
+### 🎯 Sprint 15: Quản Trị Kho Thuốc, Vắc-xin & Ca Trực Bác Sĩ
+*   **Mục tiêu:** Quản trị kho dược phẩm, kho vắc-xin và phân ca trực của bác sĩ.
+*   **Trạng thái chung:** `✅ CODE DONE` (T47, T48, T48b).
+*   **Chi tiết:**
+    *   T48b: Quản lý Vắc-xin & Lô nhập ở Admin (`✅ CODE DONE` - Backend DTO, AdminService logic tự động StockQuantity, API Endpoints, Frontend `VaccinesAdminTab.vue` UI chia 2 cấp).
 
 ---
 

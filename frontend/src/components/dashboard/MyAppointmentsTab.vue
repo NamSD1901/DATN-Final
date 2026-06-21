@@ -537,7 +537,7 @@
                         <!-- Notes -->
                         <div class="booking-confirm-card mt-3">
                           <div class="card-header-flex border-0 pb-0 mb-2">
-                            <h6 class="mb-0 fw-bold" style="color: #1e293b;"><i class="bi bi-justify-left text-muted me-2"></i> Ghi chú cho bác sĩ (Tùy chọn)</h6>
+                            <h6 class="mb-0 fw-bold" style="color: #1e293b;"><i class="bi bi-justify-left text-muted me-2"></i> Lý do khám bệnh</h6>
                           </div>
                           <div class="p-0">
                             <textarea 

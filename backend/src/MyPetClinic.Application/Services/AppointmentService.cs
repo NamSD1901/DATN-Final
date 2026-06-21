@@ -34,6 +34,11 @@ namespace MyPetClinic.Application.Services
                 ? DateTime.SpecifyKind(dto.AppointmentDate.Value, DateTimeKind.Utc) 
                 : DateTime.UtcNow;
 
+            if (appointmentDate.Year < 2000)
+            {
+                throw new InvalidOperationException("Năm của ngày hẹn không hợp lệ (phải từ năm 2000 trở lên). Vui lòng kiểm tra lại ngày.");
+            }
+
             int retryCount = 3;
             for (int i = 0; i < retryCount; i++)
             {

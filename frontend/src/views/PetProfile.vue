@@ -409,7 +409,7 @@
                       <!-- Left Side: Main Info -->
                       <div class="ticket-main p-4 p-md-5 position-relative flex-grow-1" style="background: linear-gradient(145deg, #ffffff, #f8fafc);">
                         <!-- Decor -->
-                        <div class="position-absolute top-0 end-0 p-3 opacity-25">
+                        <div class="position-absolute top-0 end-0 p-3 opacity-10">
                           <i class="bi bi-calendar-heart" style="font-size: 8rem; color: var(--primary-gold); margin-top: -30px; margin-right: -20px;"></i>
                         </div>
 
@@ -459,7 +459,7 @@
                       </div>
 
                       <!-- Right Side: Action & QR -->
-                      <div class="ticket-stub d-flex flex-column align-items-center justify-content-center p-4 position-relative" style="background: var(--primary-color); min-width: 260px; border-left: 2px dashed rgba(255,255,255,0.3);">
+                      <div class="ticket-stub d-flex flex-column align-items-center justify-content-center p-4 position-relative" style="background: var(--bs-primary, #0d6efd); min-width: 260px; border-left: 2px dashed rgba(255,255,255,0.3);">
                         <div class="ticket-cut top"></div>
                         <div class="ticket-cut bottom"></div>
 
@@ -475,7 +475,7 @@
 
                         <div class="d-flex flex-column gap-2 w-100 mt-auto">
                           <button class="btn btn-light fw-bold text-primary w-100 d-flex align-items-center justify-content-center gap-2">
-                            <i class="bi bi-telephone-fill"></i> Gọi Lễ Tân
+                            <i class="bi bi-download"></i> Tải mã QR
                           </button>
                           <button class="btn btn-outline-light fw-bold w-100" style="border: 1px solid rgba(255,255,255,0.3);">
                             Hủy lịch hẹn
@@ -590,26 +590,58 @@
                       <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                           <h5 class="fw-bold text-dark mb-1">{{ vac.vaccineName }}</h5>
-                          <div class="small text-muted mb-3">{{ vac.note || 'Mũi tiêm định kỳ' }}</div>
+                          <div class="small text-muted mb-3">{{ vac.reasonForVisit || vac.note || 'Mũi tiêm định kỳ' }}</div>
                         </div>
                         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-bold">
                           <i class="bi bi-check-circle-fill me-1"></i>Đã tiêm
                         </span>
                       </div>
                       
-                      <div class="p-3 bg-light rounded-3 d-flex gap-4">
-                        <div class="flex-1">
-                          <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Ngày tiêm</div>
-                          <div class="fw-medium text-dark">{{ formatDate(vac.administeredAt) }}</div>
-                        </div>
-                        <div class="flex-1">
-                          <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Bác sĩ phụ trách</div>
-                          <div class="fw-medium text-dark">{{ vac.doctorName || 'Bs. Thú y' }}</div>
+                      <!-- Lịch sử tiêm chủng - Thông tin chi tiết -->
+                      <div class="p-3 bg-light rounded-3">
+                        <div class="row g-3">
+                          <div class="col-sm-6 col-md-4">
+                            <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Ngày tiêm</div>
+                            <div class="fw-medium text-dark">{{ formatDate(vac.injectionDate || vac.administeredAt || vac.createdAt) }}</div>
+                          </div>
+                          <div class="col-sm-6 col-md-4">
+                            <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Bác sĩ phụ trách</div>
+                            <div class="fw-medium text-dark">{{ vac.doctorName || 'Bs. Thú y' }}</div>
+                          </div>
+                          <div class="col-sm-6 col-md-4" v-if="vac.batchNumber">
+                            <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Số lô</div>
+                            <div class="fw-medium text-dark">{{ vac.batchNumber }}</div>
+                          </div>
+                          <div class="col-sm-6 col-md-4" v-if="vac.route">
+                            <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Đường tiêm</div>
+                            <div class="fw-medium text-dark">{{ vac.route }}</div>
+                          </div>
+                          <div class="col-sm-6 col-md-4" v-if="vac.injectionSite">
+                            <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Vị trí tiêm</div>
+                            <div class="fw-medium text-dark">{{ vac.injectionSite }}</div>
+                          </div>
+                          <div class="col-sm-6 col-md-4" v-if="vac.nextDueDate">
+                            <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Hẹn tái chủng</div>
+                            <div class="fw-medium text-primary">{{ formatDate(vac.nextDueDate) }}</div>
+                          </div>
                         </div>
                       </div>
-                      <div class="mt-3" v-if="vac.notes">
-                         <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Ghi chú</div>
-                         <p class="small text-dark mb-0">{{ vac.notes }}</p>
+
+                      <div class="mt-3 p-3 rounded-3" style="background-color: #fffbeb;" v-if="vac.clinicalAssessment || vac.doctorRemarks || vac.notes || vac.reactionNote">
+                         <div class="row g-2">
+                           <div class="col-12" v-if="vac.clinicalAssessment">
+                             <span class="small fw-bold text-warning me-2">Kết luận lâm sàng:</span>
+                             <span class="small text-dark">{{ vac.clinicalAssessment }}</span>
+                           </div>
+                           <div class="col-12" v-if="vac.doctorRemarks || vac.notes">
+                             <span class="small fw-bold text-warning me-2">Ghi chú BS:</span>
+                             <span class="small text-dark">{{ vac.doctorRemarks || vac.notes }}</span>
+                           </div>
+                           <div class="col-12" v-if="vac.reactionNote">
+                             <span class="small fw-bold text-danger me-2">Lưu ý phản ứng:</span>
+                             <span class="small text-dark">{{ vac.reactionNote }}</span>
+                           </div>
+                         </div>
                       </div>
                     </div>
                   </div>
@@ -1033,8 +1065,17 @@ const calculateAge = (birthDate: string | null): string => {
 
 const getDaysUntil = (dateStr: string | null) => {
   if (!dateStr) return '';
-  const diffTime = Math.abs(new Date(dateStr).getTime() - new Date().getTime());
+  const apptDate = new Date(dateStr);
+  if (apptDate.getFullYear() < 2000) return 'Không xác định';
+
+  const now = new Date();
+  apptDate.setHours(0, 0, 0, 0);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const diffTime = apptDate.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return 'Đã qua';
   if (diffDays === 0) return 'Hôm nay';
   if (diffDays === 1) return 'Ngày mai';
   return `Còn ${diffDays} ngày nữa`;
@@ -1042,22 +1083,36 @@ const getDaysUntil = (dateStr: string | null) => {
 
 const formatDate = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const d = new Date(dateStr);
+  if (d.getFullYear() < 2000) return '—';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${day}/${month}/${d.getFullYear()}`;
 };
 
 const formatDateShort = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+  const d = new Date(dateStr);
+  if (d.getFullYear() < 2000) return '—';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${day}/${month}`;
 };
 
 const formatDateFull = (dateStr: string | null): string => {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const d = new Date(dateStr);
+  if (d.getFullYear() < 2000) return '—';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${day}/${month}/${d.getFullYear()}`;
 };
 
 const formatDateTime = (dateStr: string | null): string => {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('vi-VN', {
+  const d = new Date(dateStr);
+  if (d.getFullYear() < 2000) return '—';
+  return d.toLocaleString('vi-VN', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
@@ -1065,14 +1120,19 @@ const formatDateTime = (dateStr: string | null): string => {
 
 const formatDateTimeFull = (dateStr: string | null): string => {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('vi-VN', {
+  const d = new Date(dateStr);
+  if (d.getFullYear() < 2000) return '—';
+  return d.toLocaleString('vi-VN', {
     weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric'
   });
 };
 
 const formatTimeOnly = (dateStr: string | null): string => {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  const d = new Date(dateStr);
+  if (d.getFullYear() < 2000) return '—';
+  if (d.getHours() === 0 && d.getMinutes() === 0) return 'Chưa có giờ';
+  return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 };
 
 const getStatusLabel = (status: string): string => {

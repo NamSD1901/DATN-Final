@@ -171,10 +171,11 @@
       </div>
 
       <!-- Details Content -->
+      <!-- Layout: 3/4 and 1/4 -->
       <div v-else-if="detailData" class="row g-4">
-        <!-- Customer Left Card -->
+        <!-- Sidebar: Customer Info -->
         <div class="col-lg-4">
-          <div class="card border-0 shadow-sm bg-light rounded-4 p-4 text-center h-100">
+          <div class="card border-0 shadow-sm bg-light rounded-4 p-4 text-center position-sticky" style="top: 1.5rem;">
             <div class="avatar-circle-gold fs-2 mx-auto mb-3" style="width: 100px; height: 100px;">
               {{ getAvatarLetters(detailData.customer.fullName) }}
             </div>
@@ -269,7 +270,10 @@
               </div>
               <div v-for="pet in detailData.pets" :key="pet.id" class="col-md-6">
                 <div class="card border-0 rounded-4 shadow-sm p-3 bg-white h-100 position-relative">
-                  <div class="position-absolute top-0 end-0 p-3">
+                  <div class="position-absolute top-0 end-0 p-3 d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-info rounded-pill shadow-sm fw-bold" @click="openPetHistoryModal(pet)" title="Hồ sơ y tế toàn diện">
+                      <i class="bi bi-file-medical me-1"></i> Hồ sơ y tế
+                    </button>
                     <button class="btn btn-sm btn-light rounded-circle shadow-sm text-primary" @click="openEditPetModal(pet)" title="Sửa thông tin">
                       <i class="bi bi-pencil-fill"></i>
                     </button>
@@ -287,6 +291,9 @@
                     <span class="badge rounded-pill" :class="pet.sterilized ? 'bg-success' : 'bg-secondary'">
                       {{ pet.sterilized ? 'Đã triệt sản' : 'Chưa triệt sản' }}
                     </span>
+                  </div>
+                  <div v-if="pet.allergyNote" class="mt-2 p-2 bg-danger bg-opacity-10 text-danger rounded small fw-bold">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Dị ứng: {{ pet.allergyNote }}
                   </div>
                 </div>
               </div>
@@ -325,6 +332,138 @@
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Comprehensive Medical Profile -->
+    <div v-if="showPetHistoryModal" class="zalo-modal-overlay" @click.self="showPetHistoryModal = false">
+      <div class="zalo-modal-card modal-xl" style="max-width: 900px;">
+        <div class="zalo-modal-header bg-info text-dark">
+          <h5 class="modal-title fw-bold"><i class="bi bi-journal-medical me-2"></i> Hồ Sơ Y Tế Toàn Diện</h5>
+          <button class="modal-close text-dark border-0 bg-transparent" @click="showPetHistoryModal = false"><i class="bi bi-x-lg fs-5"></i></button>
+        </div>
+        <div class="zalo-modal-body p-0 text-start bg-light">
+          <!-- Summary Header -->
+          <div class="p-4 bg-white border-bottom shadow-sm">
+            <div class="row align-items-center">
+              <div class="col-md-6 d-flex align-items-center gap-3">
+                <span class="pet-avatar-large shadow-sm" style="font-size: 2.5rem; background-color: #e0f2fe; border-color: #0ea5e9;">{{ getAnimalEmoji(selectedPetHistory?.species || '') }}</span>
+                <div>
+                  <h4 class="fw-bold text-dark mb-0">{{ selectedPetHistory?.name }}</h4>
+                  <p class="text-muted small mb-0">{{ selectedPetHistory?.breed || selectedPetHistory?.species }} | Cân nặng: {{ selectedPetHistory?.weight ? selectedPetHistory.weight + ' kg' : '—' }}</p>
+                  <span class="badge bg-light text-dark border mt-2">Mã Microchip: {{ selectedPetHistory?.microchipCode || '—' }}</span>
+                </div>
+              </div>
+              <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                <div v-if="selectedPetHistory?.allergyNote" class="d-inline-block text-start p-2 bg-danger bg-opacity-10 text-danger rounded small fw-bold">
+                  <i class="bi bi-exclamation-triangle-fill me-1"></i> Dị ứng: {{ selectedPetHistory.allergyNote }}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Tabs Navigation -->
+          <div class="px-4 pt-3 bg-white border-bottom">
+            <ul class="nav nav-tabs border-0">
+              <li class="nav-item">
+                <a class="nav-link fw-bold border-0" :class="{ 'active text-info border-bottom border-info border-3': activeHistoryTab === 'consultation', 'text-muted': activeHistoryTab !== 'consultation' }" href="#" @click.prevent="activeHistoryTab = 'consultation'">
+                  <i class="bi bi-file-medical-fill me-1"></i> Lịch Sử Khám Bệnh
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link fw-bold border-0" :class="{ 'active text-info border-bottom border-info border-3': activeHistoryTab === 'vaccination', 'text-muted': activeHistoryTab !== 'vaccination' }" href="#" @click.prevent="activeHistoryTab = 'vaccination'">
+                  <i class="bi bi-shield-fill-check me-1"></i> Sổ Tiêm Phòng
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Tabs Content -->
+          <div class="p-4 overflow-auto" style="max-height: 60vh;">
+            <div v-if="loadingPetHistory" class="text-center py-5">
+              <div class="spinner-border text-info" role="status"></div>
+              <p class="text-muted mt-2">Đang tải hồ sơ y tế...</p>
+            </div>
+            
+            <template v-else>
+              <!-- Consultation History Tab -->
+              <div v-if="activeHistoryTab === 'consultation'">
+                <div v-if="consultationHistory.length === 0" class="text-center py-5 text-muted">
+                  <i class="bi bi-folder-x fs-1 d-block mb-3 opacity-25"></i>
+                  Chưa có bệnh án lưu trữ.
+                </div>
+                <div v-else class="medical-timeline pe-2">
+                  <div v-for="record in consultationHistory" :key="record.recordId" class="timeline-item position-relative ps-4 pb-4">
+                    <div class="timeline-line"></div>
+                    <div class="timeline-circle bg-info shadow-sm"></div>
+                    
+                    <div class="timeline-content p-4 bg-white rounded-4 shadow-sm border">
+                      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                        <span class="text-dark fw-bold fs-6"><i class="bi bi-calendar-check text-info me-2"></i> {{ formatDate(record.visitDate) }}</span>
+                        <span class="badge bg-light border text-dark shadow-sm px-3 py-1 rounded-pill"><i class="bi bi-person-badge text-muted me-1"></i> Bác sĩ: {{ record.doctorName }}</span>
+                      </div>
+                      
+                      <div class="row g-3 small">
+                        <div v-if="record.clinicalSigns" class="col-12 border-bottom pb-2">
+                          <div class="text-muted mb-1 fw-bold">Khám lâm sàng:</div>
+                          <div class="text-dark">{{ record.clinicalSigns }}</div>
+                        </div>
+                        <div class="col-md-6 border-end">
+                          <div class="text-muted mb-1 fw-bold text-danger">Chẩn đoán:</div>
+                          <div class="fw-bold text-dark">{{ record.diagnosis }}</div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="text-muted mb-1 fw-bold text-primary">Phương pháp điều trị:</div>
+                          <div class="text-dark">{{ record.treatmentPlan }}</div>
+                        </div>
+                        <div v-if="record.doctorNotes" class="col-12 mt-2">
+                          <div class="p-3 bg-light rounded-3 fst-italic text-muted border-start border-3 border-info">"{{ record.doctorNotes }}"</div>
+                        </div>
+                      </div>
+                      
+                      <div v-if="record.prescribedMedicines && record.prescribedMedicines.length > 0" class="mt-3 bg-light p-3 rounded-4 border shadow-sm">
+                        <span class="fw-bold text-success d-block small mb-2"><i class="bi bi-capsule-pill me-1"></i>Thuốc đã kê đơn:</span>
+                        <ul class="list-unstyled mb-0 ps-2">
+                          <li v-for="(medStr, mIdx) in record.prescribedMedicines" :key="mIdx" class="text-dark small mb-2 d-flex align-items-start">
+                            <i class="bi bi-check-circle-fill text-success me-2 mt-1" style="font-size: 0.7rem;"></i> {{ medStr.medicineName }} - Số lượng: {{ medStr.quantity }}
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Vaccination History Tab -->
+              <div v-if="activeHistoryTab === 'vaccination'">
+                <div v-if="vaccinationHistory.length === 0" class="text-center py-5 text-muted">
+                  <i class="bi bi-shield-x fs-1 d-block mb-3 opacity-25"></i>
+                  Chưa có lịch sử tiêm phòng.
+                </div>
+                <div v-else class="table-responsive bg-white rounded-4 shadow-sm border">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th class="ps-4 py-3">Ngày tiêm</th>
+                        <th class="py-3">Loại Vắc-xin</th>
+                        <th class="py-3">Bác sĩ thực hiện</th>
+                        <th class="py-3">Ghi chú</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="vac in vaccinationHistory" :key="vac.vaccinationId">
+                        <td class="ps-4 small text-muted">{{ formatDate(vac.dateAdministered) }}</td>
+                        <td><span class="badge bg-success bg-opacity-10 text-success rounded px-3 py-1.5 fw-bold"><i class="bi bi-shield-check me-1"></i> {{ vac.vaccineName }}</span></td>
+                        <td class="small">{{ vac.doctorName }}</td>
+                        <td class="small text-muted">{{ vac.notes || '—' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -553,6 +692,14 @@ const showCreateCustomerModal = ref(false);
 const showAddPetModal = ref(false);
 const showEditPetModal = ref(false);
 
+// Comprehensive Medical Profile Modal
+const showPetHistoryModal = ref(false);
+const activeHistoryTab = ref('consultation');
+const selectedPetHistory = ref<any>(null);
+const loadingPetHistory = ref(false);
+const consultationHistory = ref<any[]>([]);
+const vaccinationHistory = ref<any[]>([]);
+
 // Forms
 const createForm = ref({
   fullName: '',
@@ -650,6 +797,29 @@ const viewCustomerDetail = async (customerId: string) => {
     selectedCustomerDetail.value = null;
   } finally {
     loadingDetail.value = false;
+  }
+};
+
+// Comprehensive Medical Profile Actions
+const openPetHistoryModal = async (pet: any) => {
+  selectedPetHistory.value = pet;
+  activeHistoryTab.value = 'consultation';
+  showPetHistoryModal.value = true;
+  loadingPetHistory.value = true;
+  consultationHistory.value = [];
+  vaccinationHistory.value = [];
+  try {
+    const [consultRes, vaccineRes] = await Promise.all([
+      api.get(`/medical-records/pet/${pet.id}`),
+      api.get(`/vaccinations/pet/${pet.id}`)
+    ]);
+    consultationHistory.value = consultRes.data || [];
+    vaccinationHistory.value = vaccineRes.data || [];
+  } catch (err: any) {
+    console.error('Lỗi tải hồ sơ y tế toàn diện:', err);
+    alert('Không thể tải đầy đủ hồ sơ y tế. Vui lòng thử lại sau.');
+  } finally {
+    loadingPetHistory.value = false;
   }
 };
 
@@ -887,6 +1057,32 @@ export default {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Timeline */
+.timeline-item {
+  position: relative;
+}
+.timeline-line {
+  position: absolute;
+  top: 15px;
+  left: 9px;
+  bottom: 0;
+  width: 2px;
+  background-color: #e2e8f0;
+}
+.timeline-item:last-child .timeline-line {
+  display: none;
+}
+.timeline-circle {
+  position: absolute;
+  top: 12px;
+  left: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+  z-index: 1;
 }
 
 /* Modals overlays */

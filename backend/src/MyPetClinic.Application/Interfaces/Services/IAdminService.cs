@@ -26,6 +26,14 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<MedicineDto> UpdateMedicineAsync(long id, CreateMedicineDto dto, string currentUserId);
         Task DeleteMedicineAsync(long id, string currentUserId);
 
+        // Vaccines & Batches
+        Task<IEnumerable<VaccineAdminDto>> GetVaccinesAsync();
+        Task<VaccineAdminDto> CreateVaccineAsync(CreateVaccineDto dto, string currentUserId);
+        Task<VaccineAdminDto> UpdateVaccineAsync(long id, CreateVaccineDto dto, string currentUserId);
+        Task DeleteVaccineAsync(long id, string currentUserId);
+        Task<VaccineBatchAdminDto> CreateVaccineBatchAsync(long vaccineId, CreateVaccineBatchDto dto, string currentUserId);
+        Task DeleteVaccineBatchAsync(long batchId, string currentUserId);
+
         // Schedules
         Task<object> GetSchedulesAsync();
         Task<DoctorScheduleDto> CreateScheduleAsync(CreateScheduleDto dto, string currentUserId);

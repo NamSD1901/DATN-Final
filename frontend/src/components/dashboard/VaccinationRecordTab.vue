@@ -4,289 +4,321 @@
     <ul class="nav nav-pills custom-pills mb-4">
       <li class="nav-item">
         <a class="nav-link fw-bold" :class="{ 'active': internalTab === 'treatment' }" href="#" @click.prevent="internalTab = 'treatment'">
-          <i class="bi bi-clipboard2-pulse-fill me-1"></i> Phiếu Điều Trị
+          <i class="bi bi-shield-plus me-1"></i> Bệnh Án Tiêm Chủng
         </a>
       </li>
       <li class="nav-item">
         <a class="nav-link fw-bold" :class="{ 'active': internalTab === 'pet-history' }" href="#" @click.prevent="internalTab = 'pet-history'">
-          <i class="bi bi-folder2-open me-1"></i> Hồ Sơ & Bệnh Sử
+          <i class="bi bi-folder2-open me-1"></i> Lịch Sử Tiêm Phòng
         </a>
       </li>
     </ul>
 
-    <!-- Tab 1: Phiếu Điều Trị -->
-    <div v-if="internalTab === 'treatment'" class="flex-grow-1">
-      <!-- Breadcrumb Header like Image 2 -->
+    <!-- Tab 1: Phiếu Tiêm Chủng SOAP -->
+    <div v-if="internalTab === 'treatment'" class="flex-grow-1 overflow-auto pe-2 pb-5">
+      <!-- Header -->
       <div class="d-flex flex-column mb-3">
-        <h4 class="fw-bold text-dark mb-0">Phiếu Điều Trị</h4>
-        <span class="text-muted small">Hôm nay: {{ new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit' }) }}</span>
+        <h4 class="fw-bold text-dark mb-0">Bệnh Án Tiêm Chủng (S.O.A.P)</h4>
+        <span class="text-muted small">Hôm nay: {{ new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit' }) }}</span>
       </div>
 
-      <div class="card border-0 shadow-sm rounded-4 p-4 bg-glass bg-white mb-4 border-top border-4 border-primary">
-        <!-- Back Navigation & Name -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-glass bg-white border-top border-4 border-success">
         <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
           <div>
             <a href="#" class="text-muted text-decoration-none fw-bold" @click.prevent="cancelTreatment">
-              <i class="bi bi-arrow-left me-1"></i> Ca khám của tôi / <span class="text-dark">{{ activePatient.petName }}</span>
+              <i class="bi bi-arrow-left me-1"></i> Trở về hàng khám
             </a>
+            <span class="mx-2 text-muted">/</span>
+            <span class="fw-bold text-dark fs-5">{{ activePatient.petName }}</span>
           </div>
-          <div class="badge bg-success text-white rounded-pill px-4 py-2 fs-6 shadow-sm">
-            <i class="bi bi-shield-check me-1"></i> Tiêm Phòng Vắc-xin
+          <div class="badge bg-success bg-opacity-10 text-success rounded-pill px-4 py-2 fs-6 shadow-sm border border-success border-opacity-25">
+            <i class="bi bi-shield-check me-1"></i> S.O.A.P
           </div>
         </div>
 
-        <!-- Alert: Not selected patient -->
-        <div v-if="!activePatient.appointmentId" class="alert alert-info rounded-4 border-0 p-4 mb-0 text-center">
+        <div v-if="!activePatient.appointmentId" class="alert alert-info rounded-4 border-0 p-4 text-center">
           <i class="bi bi-exclamation-triangle-fill text-info fs-1 d-block mb-2"></i>
-          <h6 class="fw-bold text-dark mb-2">Chưa chọn ca khám hoạt động</h6>
-          <p class="text-muted small mb-3">Vui lòng quay lại tab "Ca khám của tôi" để chọn bệnh nhi bắt đầu khám.</p>
-          <button class="btn btn-warning text-dark fw-bold rounded-pill px-4" @click="$emit('switch-tab', 'doctor-cases')">
-            <i class="bi bi-arrow-left me-1"></i> Xem hàng khám
-          </button>
+          <h6 class="fw-bold text-dark">Chưa chọn ca khám hoạt động</h6>
         </div>
 
         <form v-else @submit.prevent="submitForm">
-          <!-- Patient Quick Info -->
+          <!-- Quick Info Row -->
           <div class="row mb-4 bg-light rounded-4 p-3 mx-0">
-            <div class="col-md-3 border-end">
-              <div class="d-flex align-items-center gap-3">
-                <div class="pet-avatar-large bg-white shadow-sm" style="width:50px;height:50px;font-size:1.8rem">🐾</div>
-                <div>
-                  <h6 class="fw-bold mb-0 text-dark">{{ activePatient.petName }}</h6>
-                  <span class="small text-muted">ID: {{ activePatient.petId }}</span>
-                </div>
-              </div>
-            </div>
             <div class="col-md-3 border-end">
               <div class="small text-muted mb-1">Chủ nuôi</div>
               <div class="fw-bold text-dark">{{ activePatient.customerName }}</div>
+            </div>
+            <div class="col-md-3 border-end">
+              <div class="small text-muted mb-1">Thú cưng</div>
+              <div class="fw-bold text-dark">{{ activePatient.petName }} <span class="small fw-normal text-muted">(ID: {{ activePatient.petId }})</span></div>
             </div>
             <div class="col-md-3 border-end">
               <div class="small text-muted mb-1">Cân nặng (kg) <span class="text-danger">*</span></div>
               <input type="number" step="0.1" v-model="form.weight" class="form-control form-control-sm border-warning rounded-3 bg-white" placeholder="VD: 5.2" required>
             </div>
             <div class="col-md-3">
-              <div class="small text-muted mb-1">Nhiệt độ (°C) <span class="text-danger">*</span></div>
-              <input type="number" step="0.1" v-model="form.temperature" class="form-control form-control-sm border-warning rounded-3 bg-white" placeholder="VD: 38.5" required>
+              <div class="small text-muted mb-1">Nhiệt độ (°C)</div>
+              <input type="number" step="0.1" v-model="form.temperature" class="form-control form-control-sm border-warning rounded-3 bg-white" placeholder="VD: 38.5">
             </div>
           </div>
 
-          <!-- Alerts Area (Tiền sử dị ứng, Dịch vụ) -->
-          <div class="row g-3 mb-4">
-            <div class="col-md-12">
-              <div class="alert bg-danger bg-opacity-10 text-danger border-0 rounded-4 d-flex align-items-start p-3 mb-0">
-                <i class="bi bi-exclamation-triangle-fill fs-4 me-3 mt-1"></i>
-                <div class="w-100">
-                  <h6 class="fw-bold mb-1 text-danger">TIỀN SỬ LÂM SÀNG / BỆNH LÝ</h6>
-                  <textarea v-model="form.medicalHistory" class="form-control bg-transparent border-0 p-0 text-danger w-100" rows="1" placeholder="Ghi chú tiền sử hoặc đặc điểm lưu ý (nếu có)..."></textarea>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-12">
-              <div class="alert bg-primary bg-opacity-10 text-primary border-0 rounded-4 d-flex align-items-center p-3 mb-0">
-                <i class="bi bi-info-circle-fill fs-4 me-3"></i>
-                <div>
-                  <h6 class="fw-bold mb-1 text-primary">DỊCH VỤ ĐẶT LỊCH</h6>
-                  <p class="mb-0 small text-primary fw-semibold">Tiêm Phòng Vắc-xin</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Main Two-Column Layout -->
-          <div class="row g-4 mb-4">
-            <!-- Left Column: Diagnostic/Vaccine Details -->
-            <div class="col-lg-6">
-              <div class="p-4 rounded-4 bg-light h-100 border shadow-sm">
-                <h6 class="fw-bold text-dark mb-4 border-bottom pb-3">
-                  <i class="bi bi-shield-check"></i> 
-                  Thông tin Tiêm chủng
-                </h6>
+          <!-- Split-pane Layout -->
+          <div class="row g-4">
+            
+            <!-- CỘT TRÁI: S (Subjective) & O (Objective) -->
+            <div class="col-lg-6 d-flex flex-column gap-4">
+              
+              <!-- S - Subjective -->
+              <div class="p-4 rounded-4 bg-light border shadow-sm position-relative">
+                <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-primary fs-5" style="width:35px;height:35px;line-height:22px">S</span>
+                <h6 class="fw-bold text-primary mb-3 ms-2 border-bottom pb-2">Thông tin chủ quan (Khách hàng)</h6>
                 
                 <div class="mb-3">
-                  <label class="form-label small fw-bold text-secondary">Tình trạng sức khỏe trước tiêm <span class="text-danger">*</span></label>
-                  <textarea v-model="form.clinicalSigns" class="form-control rounded-3 border shadow-sm" rows="2" placeholder="Khỏe mạnh, nhiệt độ bình thường..." required></textarea>
+                  <label class="form-label small fw-bold text-secondary">Lý do tiêm <span class="text-danger">*</span></label>
+                  <select v-model="form.reasonForVisit" class="form-select rounded-3 shadow-sm" required>
+                    <option value="" disabled>-- Chọn lý do --</option>
+                    <option value="Tiêm cơ bản">Tiêm cơ bản mũi mới</option>
+                    <option value="Tiêm nhắc lại">Tiêm nhắc lại theo lịch</option>
+                    <option value="Tư vấn tiêm chủng">Tư vấn tiêm chủng</option>
+                  </select>
                 </div>
-                <div class="mb-3">
-                  <label class="form-label small fw-bold text-secondary">Loại Vắc-xin & Lô SX <span class="text-danger">*</span></label>
-                  <input type="text" v-model="form.diagnosis" class="form-control rounded-3 border shadow-sm" placeholder="VD: Vắc-xin dại Rabisin (Lô: A123)" required>
+                
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">Tình trạng ăn uống <span class="text-danger">*</span></label>
+                    <select v-model="form.eatingStatus" class="form-select rounded-3 shadow-sm" required>
+                      <option value="Bình thường">Bình thường</option>
+                      <option value="Biếng ăn">Biếng ăn</option>
+                      <option value="Bỏ ăn">Bỏ ăn</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">Tiền sử vắc-xin</label>
+                    <input type="text" v-model="form.previousVaccineHistory" class="form-control rounded-3 shadow-sm" placeholder="VD: Đã tiêm dại cách đây 1 năm">
+                  </div>
                 </div>
-                <div class="mb-3">
-                  <label class="form-label small fw-bold text-secondary">Phản ứng phụ & Kế hoạch theo dõi <span class="text-danger">*</span></label>
-                  <textarea v-model="form.treatmentPlan" class="form-control rounded-3 border shadow-sm" rows="3" placeholder="Ghi chú phản ứng sau tiêm 30 phút, dặn dò kiêng tắm 1 tuần..." required></textarea>
+
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" v-model="form.hasVomitingOrDiarrhea" id="vomit">
+                      <label class="form-check-label small" for="vomit">Nôn mửa / Tiêu chảy</label>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" v-model="form.hasCoughOrSneeze" id="cough">
+                      <label class="form-check-label small" for="cough">Ho / Hắt hơi</label>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" v-model="form.isAllergic" id="allergy">
+                      <label class="form-check-label small text-danger fw-bold" for="allergy">Dị ứng</label>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" v-model="form.hasPreviousReaction" id="reaction">
+                      <label class="form-check-label small text-danger fw-bold" for="reaction">Sốc/Phản ứng tiêm cũ</label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Fields conditional on switches -->
+                <div v-if="form.isAllergic" class="mb-3">
+                  <input type="text" v-model="form.allergyDetails" class="form-control form-control-sm border-danger text-danger bg-danger bg-opacity-10" placeholder="Chi tiết tình trạng dị ứng..." required>
+                </div>
+                <div v-if="form.hasPreviousReaction" class="mb-3">
+                  <input type="text" v-model="form.previousReactionDetails" class="form-control form-control-sm border-danger text-danger bg-danger bg-opacity-10" placeholder="Triệu chứng phản vệ lần trước..." required>
                 </div>
               </div>
-            </div>
 
-            <!-- Right Column: Prescriptions -->
-            <div class="col-lg-6">
-              <div class="p-4 rounded-4 bg-light h-100 border shadow-sm d-flex flex-column">
-                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
-                  <h6 class="fw-bold text-dark mb-0">
-                    <i class="bi bi-capsule-pill text-success me-2"></i> Đơn thuốc / Vật tư y tế
-                  </h6>
-                  <button type="button" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm fw-bold" @click="addPrescriptionLine">
-                    <i class="bi bi-plus-lg me-1"></i> Kê đơn
-                  </button>
-                </div>
-
-                <div v-if="form.prescriptions.length === 0" class="flex-grow-1 d-flex flex-column justify-content-center align-items-center text-muted small py-4">
-                  <i class="bi bi-prescription fs-1 mb-2 text-black-50 opacity-25"></i>
-                  <span>Chưa có thuốc/vật tư được chỉ định</span>
-                </div>
-
-                <div v-else class="prescription-list flex-grow-1 overflow-auto pe-2" style="max-height: 400px;">
-                  <div v-for="(pres, idx) in form.prescriptions" :key="idx" class="bg-white p-3 rounded-4 mb-3 shadow-sm position-relative border border-warning border-opacity-25">
-                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2 bg-danger bg-opacity-25 rounded-circle" style="font-size: 0.6rem;" @click="removePrescriptionLine(idx)"></button>
-                    
-                    <div class="mb-2 pe-4">
-                      <select v-model="pres.medicineId" class="form-select form-select-sm rounded-3 fw-bold text-dark border-secondary" @change="onMedicineChange(idx, pres.medicineId)">
-                        <option :value="null" disabled>— Chọn thuốc / vật tư —</option>
-                        <option v-for="med in medicineOptions" :key="med.id" :value="med.id">
-                          {{ med.name }} ({{ med.unit }})
-                        </option>
-                      </select>
-                    </div>
-                    <div class="row g-2">
-                      <div class="col-4">
-                        <label class="small text-muted mb-1" style="font-size: 0.7rem;">Số lượng</label>
-                        <input type="number" min="1" v-model.number="pres.quantity" class="form-control form-control-sm rounded-3" placeholder="SL">
-                      </div>
-                      <div class="col-8">
-                        <label class="small text-muted mb-1" style="font-size: 0.7rem;">Liều lượng</label>
-                        <input type="text" v-model="pres.dosage" class="form-control form-control-sm rounded-3" placeholder="Liều: VD 1 viên">
-                      </div>
-                      <div class="col-12">
-                        <label class="small text-muted mb-1" style="font-size: 0.7rem;">Cách dùng</label>
-                        <input type="text" v-model="pres.frequency" class="form-control form-control-sm rounded-3 bg-light" placeholder="HDSD: 2 lần/ngày, sau ăn">
-                      </div>
-                    </div>
-                    <!-- Stock alert -->
-                    <div v-if="pres.medicineId" class="mt-2 text-end">
-                      <span v-if="pres.stockQuantity === 0" class="text-danger small fw-bold"><i class="bi bi-x-circle"></i> Hết hàng</span>
-                      <span v-else-if="pres.quantity > pres.stockQuantity" class="text-danger small fw-bold"><i class="bi bi-exclamation-triangle"></i> Kho không đủ ({{ pres.stockQuantity }})</span>
-                      <span v-else class="text-success small fw-semibold"><i class="bi bi-check2-circle"></i> Sẵn sàng (Kho: {{ pres.stockQuantity }} {{ pres.unit }})</span>
-                    </div>
+              <!-- O - Objective -->
+              <div class="p-4 rounded-4 bg-light border shadow-sm position-relative">
+                <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-info fs-5" style="width:35px;height:35px;line-height:22px">O</span>
+                <h6 class="fw-bold text-info mb-3 ms-2 border-bottom pb-2 text-dark">Khám lâm sàng (Bác sĩ)</h6>
+                
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">Tinh thần <span class="text-danger">*</span></label>
+                    <select v-model="form.mentalStatus" class="form-select rounded-3 shadow-sm" required>
+                      <option value="Linh hoạt">Linh hoạt</option>
+                      <option value="Lờ đờ">Lờ đờ</option>
+                      <option value="Hưng phấn">Hưng phấn</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">Niêm mạc <span class="text-danger">*</span></label>
+                    <select v-model="form.mucosaStatus" class="form-select rounded-3 shadow-sm" required>
+                      <option value="Hồng hào">Hồng hào</option>
+                      <option value="Nhợt nhạt">Nhợt nhạt</option>
+                      <option value="Vàng">Vàng</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary">Nhịp tim (lần/p)</label>
+                    <input type="number" v-model="form.heartRate" class="form-control rounded-3 shadow-sm">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary">Nhịp thở (lần/p)</label>
+                    <input type="number" v-model="form.respiratoryRate" class="form-control rounded-3 shadow-sm">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary">Mất nước (%)</label>
+                    <input type="number" v-model="form.dehydrationPercent" class="form-control rounded-3 shadow-sm" placeholder="< 5%">
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Bottom Row: Followup & Notes -->
-          <div class="row g-4 mb-4">
-            <div class="col-md-6">
-              <label class="form-label small fw-bold text-secondary"><i class="bi bi-calendar-event text-warning me-1"></i> Ngày hẹn tái khám / Tiêm nhắc lại</label>
-              <input type="date" v-model="form.followUpDate" class="form-control rounded-pill shadow-sm border px-3">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-bold text-secondary"><i class="bi bi-journal-text text-warning me-1"></i> Ghi chú nội bộ bác sĩ</label>
-              <input type="text" v-model="form.doctorNotes" class="form-control rounded-pill shadow-sm border px-3" placeholder="Lưu ý theo dõi riêng...">
+            <!-- CỘT PHẢI: A (Assessment) & P (Plan) -->
+            <div class="col-lg-6 d-flex flex-column gap-4">
+              
+              <!-- A - Assessment -->
+              <div class="p-4 rounded-4 bg-light border shadow-sm position-relative">
+                <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-success fs-5" style="width:35px;height:35px;line-height:22px">A</span>
+                <h6 class="fw-bold text-success mb-3 ms-2 border-bottom pb-2">Đánh giá & Vắc-xin</h6>
+
+                <div class="mb-4">
+                  <label class="form-label small fw-bold text-secondary">Kết luận lâm sàng <span class="text-danger">*</span></label>
+                  <div class="d-flex gap-3">
+                    <div class="form-check form-check-inline border p-2 rounded-3 bg-white" :class="{'border-success bg-success bg-opacity-10': form.clinicalAssessment === 'Đủ điều kiện'}">
+                      <input class="form-check-input" type="radio" v-model="form.clinicalAssessment" value="Đủ điều kiện" id="assess1" required>
+                      <label class="form-check-label fw-bold text-success" for="assess1">Đủ điều kiện tiêm</label>
+                    </div>
+                    <div class="form-check form-check-inline border p-2 rounded-3 bg-white" :class="{'border-danger bg-danger bg-opacity-10': form.clinicalAssessment === 'Hoãn tiêm'}">
+                      <input class="form-check-input" type="radio" v-model="form.clinicalAssessment" value="Hoãn tiêm" id="assess2" required>
+                      <label class="form-check-label fw-bold text-danger" for="assess2">Hoãn tiêm</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="form.clinicalAssessment === 'Hoãn tiêm'" class="mb-3">
+                  <label class="form-label small fw-bold text-danger">Lý do hoãn tiêm (Chỉ tạo Phí Khám) <span class="text-danger">*</span></label>
+                  <textarea v-model="form.doctorRemarks" class="form-control rounded-3 border-danger shadow-sm" rows="2" placeholder="Sốt cao, cần theo dõi thêm..." required></textarea>
+                </div>
+
+                <div v-if="form.clinicalAssessment === 'Đủ điều kiện'" class="vaccine-selector border border-success border-opacity-50 p-3 rounded-4 bg-white mb-3">
+                  <div class="mb-3">
+                    <label class="form-label small fw-bold text-secondary">Chọn Vắc-xin <span class="text-danger">*</span></label>
+                    <select v-model="form.vaccineId" @change="onVaccineChange" class="form-select border-success rounded-3 shadow-sm fw-bold" required>
+                      <option :value="null" disabled>-- Danh mục Vắc-xin --</option>
+                      <option v-for="v in availableVaccines" :key="v.id" :value="v.id">
+                        {{ v.name }} ({{ v.targetSpecies }})
+                      </option>
+                    </select>
+                  </div>
+
+                  <div v-if="form.vaccineId" class="mb-0">
+                    <label class="form-label small fw-bold text-secondary">Chọn Lô & Hạn sử dụng <span class="text-danger">*</span></label>
+                    <select v-model="form.vaccineBatchId" class="form-select rounded-3 shadow-sm" required>
+                      <option :value="null" disabled>-- Chọn Lô --</option>
+                      <option v-for="b in selectedVaccineBatches" :key="b.id" :value="b.id">
+                        Lô: {{ b.batchNumber }} - HSD: {{ formatDate(b.expirationDate) }} (Tồn: {{ b.stockQuantity }}) - Giá: {{ b.sellingPrice.toLocaleString() }}đ
+                      </option>
+                    </select>
+                    <div v-if="selectedVaccineBatches.length === 0" class="text-danger small mt-1">
+                      <i class="bi bi-x-circle"></i> Vắc-xin này hiện đang hết hàng / Hết hạn sử dụng lô.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row g-3" v-if="form.clinicalAssessment === 'Đủ điều kiện'">
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">Đường tiêm</label>
+                    <select v-model="form.route" class="form-select rounded-3 shadow-sm">
+                      <option value="Dưới da (SC)">Dưới da (SC)</option>
+                      <option value="Tiêm bắp (IM)">Tiêm bắp (IM)</option>
+                      <option value="Nhỏ mũi">Nhỏ mũi</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">Vị trí tiêm</label>
+                    <input type="text" v-model="form.injectionSite" class="form-control rounded-3 shadow-sm" placeholder="VD: Đùi phải">
+                  </div>
+                </div>
+              </div>
+
+              <!-- P - Plan -->
+              <div class="p-4 rounded-4 bg-light border shadow-sm position-relative">
+                <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-warning text-dark fs-5" style="width:35px;height:35px;line-height:22px">P</span>
+                <h6 class="fw-bold text-warning mb-3 ms-2 border-bottom pb-2">Kế hoạch & Dặn dò</h6>
+                
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-secondary"><i class="bi bi-calendar-event text-warning me-1"></i> Ngày nhắc lại dự kiến</label>
+                  <input type="date" v-model="form.nextDueDate" class="form-control rounded-pill shadow-sm border px-3">
+                </div>
+                
+                <div class="mb-0">
+                  <label class="form-label small fw-bold text-secondary">Lời dặn dò về nhà (In lên phiếu) <span class="text-danger">*</span></label>
+                  <textarea v-model="form.followUpInstructions" class="form-control rounded-3 shadow-sm" rows="2" placeholder="Kiêng tắm 7 ngày, theo dõi nếu sốt..." required></textarea>
+                </div>
+              </div>
+
             </div>
           </div>
 
           <!-- Error Banner -->
-          <div v-if="errorMessage" class="alert alert-danger rounded-4 p-3 small mb-4 shadow-sm border-0 d-flex align-items-center">
+          <div v-if="errorMessage" class="alert alert-danger rounded-4 p-3 small my-4 shadow-sm border-0 d-flex align-items-center">
             <i class="bi bi-exclamation-circle-fill fs-5 me-2"></i> {{ errorMessage }}
           </div>
 
           <!-- Actions -->
-          <div class="d-flex justify-content-end align-items-center border-top pt-4">
-            <button type="submit" class="btn btn-premium rounded-pill px-5 fw-bold text-white shadow-lg btn-save" :disabled="submitting || hasStockDeficit">
+          <div class="d-flex justify-content-end align-items-center border-top pt-4 mt-4">
+            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold text-dark me-3 shadow-sm border" @click="cancelTreatment">
+              Hủy bỏ
+            </button>
+            <button type="submit" class="btn btn-success rounded-pill px-5 fw-bold text-white shadow-lg btn-save" :disabled="submitting || isSubmitDisabled">
               <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>
-              <i class="bi bi-check2-all me-1"></i> Hoàn Thành & Lưu Bệnh Án
+              <i class="bi bi-check2-all me-1"></i> Lưu Bệnh Án SOAP
             </button>
           </div>
         </form>
       </div>
     </div>
 
-    <!-- Tab 2: Hồ Sơ Thú Cưng -->
-    <div v-if="internalTab === 'pet-history'" class="flex-grow-1">
-      <div class="row g-4">
-        <!-- Info Card -->
-        <div class="col-lg-4">
-          <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4 card-gradient-pet text-dark h-100 border">
-            <h6 class="fw-bold mb-4 border-bottom pb-3 text-dark"><i class="bi bi-info-circle-fill text-warning me-2"></i>Thông tin tổng quan</h6>
-            <div v-if="activePatient.petId" class="pet-info-grid">
-              <div class="d-flex align-items-center gap-3 mb-4">
-                <span class="pet-avatar-large shadow-sm">🐾</span>
-                <div>
-                  <h4 class="fw-bold text-dark mb-0">{{ activePatient.petName }}</h4>
-                  <span class="badge bg-white text-secondary border small mt-1 shadow-sm">Mã Hồ Sơ: {{ activePatient.petId }}</span>
-                </div>
-              </div>
-              <div class="bg-white rounded-4 p-3 shadow-sm border">
-                <ul class="list-unstyled mb-0 small line-height-lg">
-                  <li class="mb-2 d-flex justify-content-between border-bottom pb-2"><span class="text-muted">Chủ nuôi:</span> <strong class="text-dark">{{ activePatient.customerName }}</strong></li>
-                  <li class="mb-2 d-flex justify-content-between border-bottom pb-2"><span class="text-muted">ID Cuộc hẹn:</span> <strong class="text-dark">#{{ activePatient.appointmentId }}</strong></li>
-                  <li class="d-flex justify-content-between"><span class="text-muted">Trạng thái:</span> <span class="badge bg-warning text-dark">Đang tiến hành khám</span></li>
-                </ul>
-              </div>
-            </div>
-            <div v-else class="text-center py-5 text-muted small">
-              Chưa có thông tin thú cưng hoạt động.
-            </div>
-          </div>
+    <!-- Tab 2: Lịch Sử Tiêm Phòng -->
+    <div v-if="internalTab === 'pet-history'" class="flex-grow-1 overflow-auto">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100 border">
+        <h6 class="fw-bold mb-4 pb-3 text-dark border-bottom"><i class="bi bi-shield-check text-success me-2"></i>Lịch sử tiêm chủng của bé</h6>
+        
+        <div v-if="loadingHistory" class="text-center py-5">
+          <div class="spinner-border text-success" role="status"></div>
+          <p class="text-muted small mt-3">Đang tải lịch sử tiêm...</p>
         </div>
 
-        <!-- History Timeline -->
-        <div class="col-lg-8">
-          <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100 border">
-            <h6 class="fw-bold mb-4 pb-3 text-dark border-bottom"><i class="bi bi-clock-history text-warning me-2"></i>Lịch sử khám & Điều trị (Timeline)</h6>
-            
-            <div v-if="loadingHistory" class="text-center py-5">
-              <div class="spinner-border text-warning" role="status"></div>
-              <p class="text-muted small mt-3">Đang tải bệnh sử từ hệ thống...</p>
-            </div>
+        <div v-else-if="vaccinationHistory.length === 0" class="text-center py-5 text-muted small">
+          <i class="bi bi-shield-x fs-1 d-block mb-3 text-black-50 opacity-25"></i>
+          Bé chưa có lịch sử tiêm chủng nào trong hệ thống.
+        </div>
 
-            <div v-else-if="medicalHistory.length === 0" class="text-center py-5 text-muted small">
-              <i class="bi bi-folder-x fs-1 d-block mb-3 text-black-50 opacity-25"></i>
-              Bé chưa có bất kỳ bệnh án lưu trữ nào trong hệ thống.
-            </div>
-
-            <div v-else class="medical-timeline pe-2 overflow-auto" style="max-height: 550px;">
-              <div v-for="record in medicalHistory" :key="record.recordId" class="timeline-item position-relative ps-4 pb-4">
-                <div class="timeline-line"></div>
-                <div class="timeline-circle bg-warning shadow-sm"></div>
-                
-                <div class="timeline-content p-4 bg-light rounded-4 shadow-sm border border-white">
-                  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-                    <span class="text-dark fw-bold fs-6"><i class="bi bi-calendar-check text-warning me-2"></i>{{ formatDate(record.visitDate) }}</span>
-                    <span class="badge bg-white border text-dark shadow-sm px-3 py-1 rounded-pill"><i class="bi bi-person-badge text-muted me-1"></i> Bác sĩ: {{ record.doctorName }}</span>
-                  </div>
-                  
-                  <div class="row g-3 small">
-                    <div v-if="record.symptoms" class="col-12 border-bottom pb-2">
-                      <div class="text-muted mb-1 fw-bold">Triệu chứng lúc khám:</div>
-                      <div class="text-dark">{{ record.symptoms }}</div>
-                    </div>
-                    <div class="col-md-6 border-end">
-                      <div class="text-muted mb-1 fw-bold text-danger">Chẩn đoán:</div>
-                      <div class="fw-bold text-dark">{{ record.diagnosis }}</div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="text-muted mb-1 fw-bold text-primary">Phương pháp điều trị:</div>
-                      <div class="text-dark">{{ record.treatment }}</div>
-                    </div>
-                    <div v-if="record.note" class="col-12 mt-2">
-                      <div class="p-3 bg-white rounded-3 fst-italic text-muted border border-warning border-opacity-50 border-start-3">"{{ record.note }}"</div>
-                    </div>
-                  </div>
-                  
-                  <!-- Prescribed medicines list -->
-                  <div v-if="record.prescribedMedicines && record.prescribedMedicines.length > 0" class="mt-3 bg-white p-3 rounded-4 border shadow-sm">
-                    <span class="fw-bold text-success d-block small mb-2"><i class="bi bi-capsule-pill me-1"></i>Thuốc đã kê đơn:</span>
-                    <ul class="list-unstyled mb-0 ps-2">
-                      <li v-for="(medStr, mIdx) in record.prescribedMedicines" :key="mIdx" class="text-dark small mb-2 d-flex align-items-start">
-                        <i class="bi bi-check-circle-fill text-success me-2 mt-1" style="font-size: 0.7rem;"></i> {{ medStr }}
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div v-else class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="bg-light text-secondary small">
+              <tr>
+                <th>Ngày Tiêm</th>
+                <th>Vắc-xin & Lô</th>
+                <th>Bác sĩ</th>
+                <th>Đánh giá</th>
+                <th>Ngày Nhắc Lại</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="record in vaccinationHistory" :key="record.id">
+                <td class="fw-bold text-dark">{{ formatDate(record.injectionDate) }}</td>
+                <td>
+                  <span v-if="record.vaccineName" class="badge bg-primary rounded-pill px-3 py-1 mb-1">{{ record.vaccineName }}</span><br>
+                  <span v-if="record.batchNumber" class="small text-muted">Lô: {{ record.batchNumber }}</span>
+                </td>
+                <td>Bs. {{ record.doctorName }}</td>
+                <td>
+                  <span class="badge" :class="record.clinicalAssessment === 'Đủ điều kiện' ? 'bg-success' : 'bg-danger'">{{ record.clinicalAssessment }}</span>
+                </td>
+                <td class="fw-bold text-warning">{{ record.nextDueDate ? formatDate(record.nextDueDate) : '---' }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -301,10 +333,7 @@ const emit = defineEmits<{
   (e: 'switch-tab', tab: string): void;
 }>();
 
-// Internal Tabs navigation
-const internalTab = ref('treatment'); // 'treatment' or 'pet-history'
-
-// Active patient details loaded from LocalStorage
+const internalTab = ref('treatment');
 const activePatient = ref({
   appointmentId: '',
   petId: '',
@@ -312,177 +341,158 @@ const activePatient = ref({
   customerName: ''
 });
 
-// Form states
+// SOAP Form
 const form = ref({
   appointmentId: 0,
   petId: 0,
-  recordType: 'Vaccination',
-  medicalHistory: '',
   weight: null as number | null,
   temperature: null as number | null,
-  clinicalSigns: '',
-  diagnosis: '',
-  treatmentPlan: '',
-  doctorNotes: '',
-  followUpDate: '',
-  prescriptions: [] as Array<{
-    medicineId: number | null;
-    quantity: number;
-    dosage: string;
-    frequency: string;
-    durationDays: number;
-    instruction: string;
-    stockQuantity: number;
-    unit: string;
-  }>
+  reasonForVisit: '',
+  previousVaccineHistory: '',
+  isAllergic: false,
+  allergyDetails: '',
+  hasPreviousReaction: false,
+  previousReactionDetails: '',
+  isUnderTreatment: false,
+  treatmentDetails: '',
+  eatingStatus: 'Bình thường',
+  hasVomitingOrDiarrhea: false,
+  hasCoughOrSneeze: false,
+  ownerNotes: '',
+  heartRate: null as number | null,
+  respiratoryRate: null as number | null,
+  mentalStatus: 'Linh hoạt',
+  mucosaStatus: 'Hồng hào',
+  eyeNoseEarStatus: '',
+  lymphNodeStatus: '',
+  dehydrationPercent: null as number | null,
+  vaccineId: null as number | null,
+  vaccineBatchId: null as number | null,
+  dose: 1,
+  route: 'Dưới da (SC)',
+  injectionSite: '',
+  clinicalAssessment: 'Đủ điều kiện',
+  doctorRemarks: '',
+  nextDueDate: '',
+  followUpInstructions: '',
+  reactionNote: ''
 });
 
-const medicineOptions = ref<any[]>([]);
-const medicalHistory = ref<any[]>([]);
+const availableVaccines = ref<any[]>([]);
+const vaccinationHistory = ref<any[]>([]);
 
 const loadingHistory = ref(false);
 const submitting = ref(false);
 const errorMessage = ref('');
 
-// Computed: Check if any medicine does not have enough stock
-const hasStockDeficit = computed(() => {
-  return form.value.prescriptions.some(
-    p => p.medicineId !== null && (p.stockQuantity === 0 || p.quantity > p.stockQuantity)
-  );
+const selectedVaccineBatches = computed(() => {
+  if (!form.value.vaccineId) return [];
+  const vaccine = availableVaccines.value.find(v => v.id === form.value.vaccineId);
+  return vaccine ? vaccine.batches : [];
 });
 
-// Load patient context and medicines list
+const isSubmitDisabled = computed(() => {
+  if (form.value.clinicalAssessment === 'Đủ điều kiện') {
+    return !form.value.vaccineId || !form.value.vaccineBatchId;
+  }
+  return false;
+});
+
 onMounted(async () => {
   const appointmentId = localStorage.getItem('active_treatment_appointment_id');
   const petId = localStorage.getItem('active_treatment_pet_id');
-  const petName = localStorage.getItem('active_treatment_pet_name');
-  const customerName = localStorage.getItem('active_treatment_customer_name');
-
+  
   if (appointmentId && petId) {
     activePatient.value = {
       appointmentId,
       petId,
-      petName: petName || 'Bệnh nhi',
-      customerName: customerName || 'Khách vãng lai'
+      petName: localStorage.getItem('active_treatment_pet_name') || 'Bệnh nhi',
+      customerName: localStorage.getItem('active_treatment_customer_name') || 'Khách vãng lai'
     };
     form.value.appointmentId = parseInt(appointmentId, 10);
     form.value.petId = parseInt(petId, 10);
     
-    // Load Medical history of the pet
-    fetchPetHistory(parseInt(petId, 10));
+    fetchPetVaccinationHistory(parseInt(petId, 10));
   }
 
-  // Load list of medicines for prescription form
-  fetchMedicines();
+  fetchVaccines();
 });
 
-const fetchMedicines = async () => {
+const fetchVaccines = async () => {
   try {
-    const res = await api.get('/medicines');
-    medicineOptions.value = res.data || [];
+    const res = await api.get('/vaccinations/vaccines');
+    if (res.data.success) {
+      availableVaccines.value = res.data.data || [];
+    }
   } catch (err) {
-    console.error('Lỗi tải danh mục thuốc:', err);
+    console.error('Lỗi tải danh mục vắc-xin:', err);
   }
 };
 
-const fetchPetHistory = async (petId: number) => {
+const fetchPetVaccinationHistory = async (petId: number) => {
   loadingHistory.value = true;
   try {
-    const res = await api.get(`/medical-records/pet/${petId}`);
-    medicalHistory.value = res.data || [];
+    const res = await api.get(`/vaccinations/pet/${petId}`);
+    vaccinationHistory.value = res.data || res.data?.data || [];
   } catch (err) {
-    console.error('Lỗi tải bệnh sử:', err);
+    console.error('Lỗi tải lịch sử tiêm chủng:', err);
   } finally {
     loadingHistory.value = false;
   }
 };
 
-// Prescription List Actions
-const addPrescriptionLine = () => {
-  form.value.prescriptions.push({
-    medicineId: null,
-    quantity: 1,
-    dosage: '',
-    frequency: '',
-    durationDays: 5,
-    instruction: '',
-    stockQuantity: 9999,
-    unit: 'đơn vị'
-  });
-};
-
-const removePrescriptionLine = (index: number) => {
-  form.value.prescriptions.splice(index, 1);
-};
-
-const onMedicineChange = (idx: number, medicineId: number | null) => {
-  if (medicineId === null) return;
-  const match = medicineOptions.value.find(m => m.id === medicineId);
-  if (match) {
-    form.value.prescriptions[idx].stockQuantity = match.stockQuantity;
-    form.value.prescriptions[idx].unit = match.unit || 'đơn vị';
-    form.value.prescriptions[idx].dosage = '1 viên';
-    form.value.prescriptions[idx].frequency = '2 lần/ngày';
-    form.value.prescriptions[idx].instruction = 'Sau ăn';
+const onVaccineChange = () => {
+  form.value.vaccineBatchId = null; // reset batch when vaccine changes
+  
+  // Auto calculate nextDueDate based on vaccine intervalDays
+  const vaccine = availableVaccines.value.find(v => v.id === form.value.vaccineId);
+  if (vaccine && vaccine.intervalDays) {
+    const nextDate = new Date();
+    nextDate.setDate(nextDate.getDate() + vaccine.intervalDays);
+    form.value.nextDueDate = nextDate.toISOString().split('T')[0];
+  } else {
+    form.value.nextDueDate = '';
   }
 };
 
-// Form submission & cancellation
 const submitForm = async () => {
-  if (!form.value.appointmentId) {
-    errorMessage.value = 'Không tìm thấy ID cuộc hẹn hoạt động.';
-    return;
-  }
-  if (!form.value.weight || !form.value.temperature) {
-    errorMessage.value = 'Vui lòng điền cân nặng và nhiệt độ của bệnh nhi.';
-    return;
-  }
-  if (!form.value.diagnosis || !form.value.treatmentPlan || !form.value.clinicalSigns) {
-    errorMessage.value = 'Vui lòng điền đầy đủ Triệu chứng, Chẩn đoán bệnh và Phương pháp điều trị.';
-    return;
-  }
-
   submitting.value = true;
   errorMessage.value = '';
 
   try {
-    const payload = {
-      appointmentId: form.value.appointmentId,
-      petId: form.value.petId,
-      recordType: form.value.recordType,
-      medicalHistory: form.value.medicalHistory || undefined,
-      weight: form.value.weight,
-      temperature: form.value.temperature,
-      clinicalSigns: form.value.clinicalSigns,
-      diagnosis: form.value.diagnosis,
-      treatmentPlan: form.value.treatmentPlan,
-      doctorNotes: form.value.doctorNotes || undefined,
-      followUpDate: form.value.followUpDate ? new Date(form.value.followUpDate).toISOString() : undefined,
-      prescriptions: form.value.prescriptions
-        .filter(p => p.medicineId !== null)
-        .map(p => ({
-          medicineId: p.medicineId,
-          quantity: p.quantity,
-          dosage: p.dosage || '1 viên',
-          frequency: p.frequency || '1 lần/ngày',
-          durationDays: p.durationDays || 5,
-          instruction: p.instruction || ''
-        }))
-    };
+    // Xử lý logic VR03, VR04, VR06 trước khi gửi
+    const payload = { ...form.value };
+    
+    if (payload.clinicalAssessment === 'Hoãn tiêm') {
+      payload.vaccineId = null;
+      payload.vaccineBatchId = null;
+    }
 
-    const res = await api.post('/medical-records', payload);
+    if (payload.nextDueDate) {
+      payload.nextDueDate = new Date(payload.nextDueDate).toISOString();
+    } else {
+      payload.nextDueDate = undefined as any;
+    }
+
+    const res = await api.post(`/vaccinations/appointments/${payload.appointmentId}`, payload);
     if (res.data.success) {
-      // Clear active treatment context from LocalStorage
       localStorage.removeItem('active_treatment_appointment_id');
       localStorage.removeItem('active_treatment_pet_id');
       localStorage.removeItem('active_treatment_pet_name');
       localStorage.removeItem('active_treatment_customer_name');
+      localStorage.removeItem('active_treatment_service_type');
       
-      // Go back to cases queue
       emit('switch-tab', 'doctor-cases');
     }
   } catch (err: any) {
-    errorMessage.value = err.response?.data?.message || 'Không thể lưu bệnh án. Vui lòng kiểm tra lại.';
+    // Map backend FluentValidation/DataAnnotations errors if available
+    if (err.response?.data?.errors) {
+      const errors = err.response.data.errors;
+      const firstError = Object.values(errors)[0] as string[];
+      errorMessage.value = firstError[0];
+    } else {
+      errorMessage.value = err.response?.data?.message || 'Không thể lưu bệnh án. Vui lòng kiểm tra lại dữ liệu.';
+    }
   } finally {
     submitting.value = false;
   }
@@ -492,8 +502,7 @@ const cancelTreatment = () => {
   emit('switch-tab', 'doctor-cases');
 };
 
-// Format Helpers
-const formatDate = (dateStr: string): string => {
+const formatDate = (dateStr: string | null): string => {
   if (!dateStr) return '';
   return new Date(dateStr).toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' });
 };
@@ -523,70 +532,19 @@ const formatDate = (dateStr: string): string => {
 }
 
 .custom-pills .nav-link.active {
-  background: linear-gradient(135deg, #ffc107, #ff9800);
+  background: linear-gradient(135deg, #198754, #20c997);
   color: white;
-  box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3);
+  box-shadow: 0 4px 10px rgba(32, 201, 151, 0.3);
 }
 
-.pet-avatar-large {
-  font-size: 2.2rem;
-  background-color: #fff9e6;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 3px solid #ffc107;
-}
-
-.card-gradient-pet {
-  background: linear-gradient(135deg, #fffbeb 0%, #fff9e6 100%);
-  border-left: 5px solid #ffc107 !important;
-}
-
-.btn-premium {
-  background: linear-gradient(135deg, #ffc107, #ff9800);
-  border: none;
+.btn-save {
   transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
 }
-.btn-premium:hover {
+.btn-save:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(255, 152, 0, 0.4);
 }
-.btn-premium:disabled {
-  background: #cbd5e1;
-  box-shadow: none;
+.btn-save:disabled {
   cursor: not-allowed;
   transform: none;
-}
-
-.border-start-3 {
-  border-left-width: 3px !important;
-}
-
-/* Timeline */
-.timeline-item {
-  position: relative;
-}
-.timeline-line {
-  position: absolute;
-  top: 15px;
-  left: 9px;
-  bottom: 0;
-  width: 2px;
-  background-color: #e2e8f0;
-}
-.timeline-item:last-child .timeline-line {
-  display: none;
-}
-.timeline-circle {
-  position: absolute;
-  top: 12px;
-  left: 4px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid white;
-  z-index: 1;
 }
 </style>

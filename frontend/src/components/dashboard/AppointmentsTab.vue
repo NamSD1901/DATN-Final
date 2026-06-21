@@ -473,17 +473,10 @@
               </div>
             </div>
 
-            <!-- Part 4: Details note -->
             <div class="mb-4">
               <div class="form-floating">
                 <textarea v-model="formPayload.symptom" class="form-control" style="height: 80px" placeholder="Lý do khám..." required></textarea>
-                <label class="text-muted">Lý do khám / Triệu chứng bệnh nhi *</label>
-              </div>
-            </div>
-            <div class="mb-3">
-              <div class="form-floating">
-                <textarea v-model="formPayload.note" class="form-control" style="height: 60px" placeholder="Ghi chú thêm..."></textarea>
-                <label class="text-muted">Ghi chú thêm (Nội bộ phòng khám)</label>
+                <label class="text-muted">Lý do khám bệnh *</label>
               </div>
             </div>
 
@@ -561,16 +554,9 @@
                 </div>
 
                 <div class="mb-3">
-                  <small class="text-muted d-block">Triệu chứng lâm sàng</small>
+                  <small class="text-muted d-block">Lý do khám bệnh</small>
                   <div class="p-2.5 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded text-dark small" style="min-height: 50px;">
-                    {{ selectedDetail.symptom || 'Không có triệu chứng ghi nhận' }}
-                  </div>
-                </div>
-
-                <div class="mb-0">
-                  <small class="text-muted d-block">Ghi chú nội bộ</small>
-                  <div class="p-2 bg-light rounded text-dark small" style="min-height: 40px;">
-                    {{ selectedDetail.note || '—' }}
+                    {{ selectedDetail.symptom || 'Không có lý do khám bệnh ghi nhận' }}
                   </div>
                 </div>
               </div>

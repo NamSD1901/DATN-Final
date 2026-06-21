@@ -243,6 +243,163 @@ namespace MyPetClinic.Application.Services
             await _auditLogService.LogActionAsync(currentUserId, "DeleteMedicine", $"Xoá thuốc ID {id}");
         }
 
+        // ================= VACCINES MANAGEMENT =================
+        public async Task<IEnumerable<VaccineAdminDto>> GetVaccinesAsync()
+        {
+            var vaccines = await _unitOfWork.Vaccines.FindWithIncludesAsync(v => true, v => v.VaccineBatches!);
+            
+            return vaccines.Select(v => new VaccineAdminDto
+            {
+                Id = v.Id,
+                Name = v.Name,
+                Manufacturer = v.Manufacturer,
+                Description = v.Description,
+                StockQuantity = v.StockQuantity,
+                TargetSpecies = v.TargetSpecies,
+                MinAgeWeeks = v.MinAgeWeeks,
+                IntervalDays = v.IntervalDays,
+                Batches = v.VaccineBatches.Select(b => new VaccineBatchAdminDto
+                {
+                    Id = b.Id,
+                    VaccineId = b.VaccineId,
+                    BatchNumber = b.BatchNumber,
+                    ExpirationDate = b.ExpirationDate,
+                    ImportDate = b.ImportDate,
+                    StockQuantity = b.StockQuantity,
+                    ImportPrice = b.ImportPrice,
+                    SellingPrice = b.SellingPrice
+                }).OrderBy(b => b.ExpirationDate).ToList()
+            }).ToList();
+        }
+
+        public async Task<VaccineAdminDto> CreateVaccineAsync(CreateVaccineDto dto, string currentUserId)
+        {
+            var vaccine = new Vaccine
+            {
+                Name = dto.Name,
+                Manufacturer = dto.Manufacturer,
+                Description = dto.Description,
+                TargetSpecies = dto.TargetSpecies,
+                MinAgeWeeks = dto.MinAgeWeeks,
+                IntervalDays = dto.IntervalDays,
+                StockQuantity = 0 // Will be updated via batches
+            };
+
+            await _unitOfWork.Vaccines.AddAsync(vaccine);
+            await _unitOfWork.SaveChangesAsync();
+
+            await _auditLogService.LogActionAsync(currentUserId, "CreateVaccine", $"Thêm loại vắc-xin mới: {dto.Name}");
+            return new VaccineAdminDto
+            {
+                Id = vaccine.Id,
+                Name = vaccine.Name,
+                Manufacturer = vaccine.Manufacturer,
+                Description = vaccine.Description,
+                StockQuantity = vaccine.StockQuantity,
+                TargetSpecies = vaccine.TargetSpecies,
+                MinAgeWeeks = vaccine.MinAgeWeeks,
+                IntervalDays = vaccine.IntervalDays
+            };
+        }
+
+        public async Task<VaccineAdminDto> UpdateVaccineAsync(long id, CreateVaccineDto dto, string currentUserId)
+        {
+            var vaccine = await _unitOfWork.Vaccines.GetByIdAsync(id) ?? throw new KeyNotFoundException("Không tìm thấy vắc-xin.");
+
+            vaccine.Name = dto.Name;
+            vaccine.Manufacturer = dto.Manufacturer;
+            vaccine.Description = dto.Description;
+            vaccine.TargetSpecies = dto.TargetSpecies;
+            vaccine.MinAgeWeeks = dto.MinAgeWeeks;
+            vaccine.IntervalDays = dto.IntervalDays;
+
+            _unitOfWork.Vaccines.Update(vaccine);
+            await _unitOfWork.SaveChangesAsync();
+
+            await _auditLogService.LogActionAsync(currentUserId, "UpdateVaccine", $"Cập nhật loại vắc-xin ID {id}: {dto.Name}");
+            return new VaccineAdminDto
+            {
+                Id = vaccine.Id,
+                Name = vaccine.Name,
+                Manufacturer = vaccine.Manufacturer,
+                Description = vaccine.Description,
+                StockQuantity = vaccine.StockQuantity,
+                TargetSpecies = vaccine.TargetSpecies,
+                MinAgeWeeks = vaccine.MinAgeWeeks,
+                IntervalDays = vaccine.IntervalDays
+            };
+        }
+
+        public async Task DeleteVaccineAsync(long id, string currentUserId)
+        {
+            var vaccine = await _unitOfWork.Vaccines.GetByIdAsync(id) ?? throw new KeyNotFoundException("Không tìm thấy vắc-xin.");
+            
+            // Check if there are remaining batches with stock
+            var batches = await _unitOfWork.VaccineBatches.FindAsync(b => b.VaccineId == id);
+            if (batches.Any(b => b.StockQuantity > 0))
+            {
+                throw new InvalidOperationException("Không thể xoá vắc-xin vẫn còn tồn kho trong các lô.");
+            }
+
+            _unitOfWork.Vaccines.Remove(vaccine);
+            await _unitOfWork.SaveChangesAsync();
+
+            await _auditLogService.LogActionAsync(currentUserId, "DeleteVaccine", $"Xoá vắc-xin ID {id}");
+        }
+
+        public async Task<VaccineBatchAdminDto> CreateVaccineBatchAsync(long vaccineId, CreateVaccineBatchDto dto, string currentUserId)
+        {
+            var vaccine = await _unitOfWork.Vaccines.GetByIdAsync(vaccineId) ?? throw new KeyNotFoundException("Không tìm thấy vắc-xin.");
+
+            var batch = new VaccineBatch
+            {
+                VaccineId = vaccineId,
+                BatchNumber = dto.BatchNumber,
+                ExpirationDate = DateTime.SpecifyKind(dto.ExpirationDate, DateTimeKind.Utc),
+                ImportDate = dto.ImportDate.HasValue ? DateTime.SpecifyKind(dto.ImportDate.Value, DateTimeKind.Utc) : DateTime.UtcNow,
+                StockQuantity = dto.StockQuantity,
+                ImportPrice = dto.ImportPrice,
+                SellingPrice = dto.SellingPrice
+            };
+
+            await _unitOfWork.VaccineBatches.AddAsync(batch);
+            
+            // Update aggregate stock
+            vaccine.StockQuantity += batch.StockQuantity;
+            _unitOfWork.Vaccines.Update(vaccine);
+
+            await _unitOfWork.SaveChangesAsync();
+
+            await _auditLogService.LogActionAsync(currentUserId, "CreateVaccineBatch", $"Nhập lô vắc-xin mới {dto.BatchNumber} cho vắc-xin ID {vaccineId}");
+            
+            return new VaccineBatchAdminDto
+            {
+                Id = batch.Id,
+                VaccineId = batch.VaccineId,
+                BatchNumber = batch.BatchNumber,
+                ExpirationDate = batch.ExpirationDate,
+                ImportDate = batch.ImportDate,
+                StockQuantity = batch.StockQuantity,
+                ImportPrice = batch.ImportPrice,
+                SellingPrice = batch.SellingPrice
+            };
+        }
+
+        public async Task DeleteVaccineBatchAsync(long batchId, string currentUserId)
+        {
+            var batch = await _unitOfWork.VaccineBatches.GetByIdAsync(batchId) ?? throw new KeyNotFoundException("Không tìm thấy lô vắc-xin.");
+            
+            if (batch.StockQuantity > 0)
+            {
+                throw new InvalidOperationException("Không thể xoá lô vắc-xin vẫn còn tồn kho. Hãy dùng tính năng huỷ hàng hỏng/hết hạn nếu cần.");
+            }
+
+            _unitOfWork.VaccineBatches.Remove(batch);
+            await _unitOfWork.SaveChangesAsync();
+
+            await _auditLogService.LogActionAsync(currentUserId, "DeleteVaccineBatch", $"Xoá lô vắc-xin ID {batchId}");
+        }
+
         public async Task<object> GetSchedulesAsync()
         {
             var schedules = await _unitOfWork.DoctorSchedules.FindWithIncludesAsync(s => s.WorkDate >= DateTime.UtcNow.Date.AddDays(-7), s => s.Doctor!);

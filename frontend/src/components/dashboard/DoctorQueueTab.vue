@@ -50,12 +50,7 @@
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
       </div>
 
-      <div class="p-3 bg-light border-bottom text-danger fw-bold" v-if="events && events.length > 0">
-        DEBUG: Có {{ events.length }} ca khám. Ca đầu tiên: {{ events[0].title }} lúc {{ events[0].start }}
-      </div>
-      <div class="p-3 bg-light border-bottom text-danger fw-bold" v-else>
-        DEBUG: API trả về 0 ca khám trong tuần này!
-      </div>
+
 
       <table class="table table-bordered mb-0 calendar-table">
         <thead class="bg-light position-sticky top-0 z-2">

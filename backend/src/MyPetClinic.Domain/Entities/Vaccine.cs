@@ -8,11 +8,12 @@ namespace MyPetClinic.Domain.Entities
         public string Name { get; set; } = string.Empty;
         public string? Manufacturer { get; set; }
         public string? Description { get; set; }
-        public int StockQuantity { get; set; } = 10;
+        public int StockQuantity { get; set; } = 0; // Aggregated from batches
         public string? TargetSpecies { get; set; } // "Dog", "Cat", or "All"
         public int? MinAgeWeeks { get; set; }
         public int? IntervalDays { get; set; }
 
+        public ICollection<VaccineBatch> VaccineBatches { get; set; } = new List<VaccineBatch>();
         public ICollection<VaccinationRecord> VaccinationRecords { get; set; } = new List<VaccinationRecord>();
     }
 }

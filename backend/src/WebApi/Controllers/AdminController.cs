@@ -142,6 +142,72 @@ namespace MyPetClinic.Controllers
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
         }
 
+        // ================= VACCINES MANAGEMENT =================
+        [HttpGet("vaccines")]
+        public async Task<IActionResult> GetVaccines()
+        {
+            var vaccines = await _adminService.GetVaccinesAsync();
+            return Ok(vaccines);
+        }
+
+        [HttpPost("vaccines")]
+        public async Task<IActionResult> CreateVaccine([FromBody] CreateVaccineDto dto)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var vaccine = await _adminService.CreateVaccineAsync(dto, currentUserId!);
+            return Ok(new { success = true, vaccine });
+        }
+
+        [HttpPut("vaccines/{id}")]
+        public async Task<IActionResult> UpdateVaccine(long id, [FromBody] CreateVaccineDto dto)
+        {
+            try
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var vaccine = await _adminService.UpdateVaccineAsync(id, dto, currentUserId!);
+                return Ok(new { success = true, vaccine });
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        }
+
+        [HttpDelete("vaccines/{id}")]
+        public async Task<IActionResult> DeleteVaccine(long id)
+        {
+            try
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                await _adminService.DeleteVaccineAsync(id, currentUserId!);
+                return Ok(new { success = true });
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+        }
+
+        [HttpPost("vaccines/{id}/batches")]
+        public async Task<IActionResult> CreateVaccineBatch(long id, [FromBody] CreateVaccineBatchDto dto)
+        {
+            try
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var batch = await _adminService.CreateVaccineBatchAsync(id, dto, currentUserId!);
+                return Ok(new { success = true, batch });
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        }
+
+        [HttpDelete("vaccines/batches/{batchId}")]
+        public async Task<IActionResult> DeleteVaccineBatch(long batchId)
+        {
+            try
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                await _adminService.DeleteVaccineBatchAsync(batchId, currentUserId!);
+                return Ok(new { success = true });
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+        }
+
         // ================= SCHEDULES MANAGEMENT =================
         [HttpGet("schedules")]
         public async Task<IActionResult> GetSchedules()
