@@ -40,6 +40,9 @@ namespace MyPetClinic.Tests
             var doctorId = Guid.NewGuid();
             var appointmentTime = DateTime.UtcNow.Date.AddDays(1).AddHours(10);
             
+            var doctorUser = new User { Id = doctorId, FullName = "Bác Sĩ A", Email = "bacsi_test@gmail.com", RoleId = 2, IsActive = true };
+            _context.Users.Add(doctorUser);
+
             // Seed DoctorSchedule
             _context.DoctorSchedules.Add(new DoctorSchedule
             {
@@ -56,6 +59,7 @@ namespace MyPetClinic.Tests
                 Id = 1,
                 DoctorId = doctorId,
                 AppointmentDate = appointmentTime,
+                StartTime = appointmentTime.TimeOfDay,
                 Status = "pending"
             });
             await _context.SaveChangesAsync();
@@ -220,7 +224,9 @@ namespace MyPetClinic.Tests
             // Arrange
             var doctorId = Guid.NewGuid();
             var targetDate = DateTime.Today.AddDays(2);
-            var doctorUser = new User { Id = doctorId, FullName = "Bác Sĩ C", Phone = "0987654322", Email = "doctorC@test.com", RoleId = 2, IsActive = true };
+            var doctorRole = new Role { Id = 2, Name = "Doctor" };
+            _context.Roles.Add(doctorRole);
+            var doctorUser = new User { Id = doctorId, FullName = "Bác Sĩ C", Phone = "0987654322", Email = "bacsi_test@gmail.com", RoleId = 2, IsActive = true, Role = doctorRole };
             _context.Users.Add(doctorUser);
 
             // Seed doctor schedule
@@ -239,6 +245,7 @@ namespace MyPetClinic.Tests
                 Id = 200,
                 DoctorId = doctorId,
                 AppointmentDate = targetDate.AddHours(9.5), // 09:30
+                StartTime = new TimeSpan(9, 30, 0), // 09:30
                 Status = "pending"
             });
 
@@ -272,8 +279,15 @@ namespace MyPetClinic.Tests
             var targetDate = DateTime.Today.AddDays(3);
             var appointmentTime = targetDate.AddHours(10); // 10:00 AM
 
-            var doctorUserA = new User { Id = doctorIdA, FullName = "Bác Sĩ A", Phone = "0987654323", Email = "doctorA@test.com", RoleId = 2, IsActive = true };
-            var doctorUserB = new User { Id = doctorIdB, FullName = "Bác Sĩ B", Phone = "0987654324", Email = "doctorB@test.com", RoleId = 2, IsActive = true };
+            var doctorRole = new Role { Id = 2, Name = "Doctor" };
+            var serviceCat = new ServiceCategory { Id = 1, Name = "Khám bệnh" };
+            var service = new Service { Id = 1, CategoryId = 1, Category = serviceCat, Name = "Test" };
+            if (_context.Roles.Find(2L) == null) _context.Roles.Add(doctorRole);
+            _context.ServiceCategories.Add(serviceCat);
+            _context.Services.Add(service);
+
+            var doctorUserA = new User { Id = doctorIdA, FullName = "Bác Sĩ A", Phone = "0987654323", Email = "bacsi_test@gmail.com", RoleId = 2, IsActive = true, Role = doctorRole };
+            var doctorUserB = new User { Id = doctorIdB, FullName = "Bác Sĩ B", Phone = "0987654324", Email = "bacsituantran@gmail.com", RoleId = 2, IsActive = true, Role = doctorRole };
             _context.Users.Add(doctorUserA);
             _context.Users.Add(doctorUserB);
 
@@ -301,6 +315,7 @@ namespace MyPetClinic.Tests
                 Id = 301,
                 DoctorId = doctorIdA,
                 AppointmentDate = appointmentTime,
+                StartTime = appointmentTime.TimeOfDay,
                 Status = "pending"
             });
 

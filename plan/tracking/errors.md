@@ -154,3 +154,49 @@ Npgsql Legacy Mode tra ve DateTime Kind=Unspecified, JSON serialize khong co chu
 ### Giai phap
 Them UtcDateTimeConverter + UtcNullableDateTimeConverter vao Program.cs AddJsonOptions.
 
+
+## [BUG-PET-002] Hồ sơ & bệnh sử thú cưng không hiển thị
+
+- **Trạng thái:** FIXED
+- **Thời gian:** 22-06-2026
+
+### Nguyên nhân
+1. Backend MedicalRecordService.cs (GetPetMedicalHistoryAsync) đang truy vấn .Appointment.PetId == petId thay vì truy vấn trực tiếp vào .PetId == petId. Điều này có thể dẫn đến không trả về bản ghi nào nếu Appointment bị detach.
+2. Frontend Vue Component ConsultationRecordTab.vue đang tham chiếu các trường không tồn tại trên MedicalRecordDto (ví dụ: ecord.symptoms thay vì ecord.clinicalSigns, ecord.treatment thay vì ecord.treatmentPlan, ecord.note thay vì ecord.doctorNotes). DTO cũng trả về mảng object thuốc prescribedMedicines chứ không phải mảng chuỗi.
+
+### Giải pháp
+1. Sửa LINQ query trong backend thành .PetId == petId để lấy trực tiếp hồ sơ bệnh án theo PetId.
+2. Sửa lại các property bindings trong template Vue ConsultationRecordTab.vue để khớp chính xác với DTO trả về, bao gồm cả mảng object thuốc.
+
+## [BUG-PET-003] Root Cause Xác định: petId=0 trong localStorage
+
+- **Trạng thái:** FIXED
+- **Thời gian:** 22-06-2026
+
+### Nguyên nhân gốc rễ
+Backend AppointmentService.GetCalendarEventsAsync() xây dựng ExtendedProps cho mỗi sự kiện lịch nhưng **thiếu trường petId và customerId**. Frontend DoctorQueueTab.vue khi bác sĩ nhấn 'Tiến hành khám' đọc evt.extendedProps?.petId → trả về undefined → fallback || '0' → lưu chuỗi "0" vào localStorage. Khi ConsultationRecordTab mount lên, gọi API /medical-records/pet/0 → không có bản ghi nào.
+
+### Giải pháp
+1. **Backend AppointmentService.cs**: Thêm petId = a.PetId và customerId = a.CustomerId vào object ExtendedProps trong GetCalendarEventsAsync().
+2. **Backend DoctorController.cs**: Thêm endpoint GET /doctor/appointment/{appointmentId} cho phép bác sĩ lấy thông tin cuộc hẹn (để fallback resolve petId khi giá trị cũ trong localStorage bằng 0).
+3. **Frontend ConsultationRecordTab.vue**: Thêm logic kiểm tra petId > 0 trước khi gọi etchPetHistory(). Nếu petId = 0, tự động gọi fallback API /doctor/appointment/{id} để lấy petId thực và tự sửa localStorage.
+
+## [BUG-APPT-004] Lỗi khung giờ trống không đồng bộ với cấu hình Operating Hours
+
+- **Trạng thái:** FIXED
+- **Thời gian:** 22-06-2026
+
+### Nguyên nhân gốc rễ
+Endpoint lấy các khung giờ khả dụng (GET /api/appointments/available-slots) và logic tạo lịch hẹn (CreateAppointmentAsync) hoàn toàn bỏ qua thiết lập **Khung giờ hoạt động chung** (ClinicOperatingDays / ClinicOperatingShifts) và **Ngày nghỉ lễ** (ClinicHolidays). Cả 2 đang fallback về cấu hình lịch trực của bác sĩ (DoctorSchedule) hoặc sinh tự động giờ hành chính từ slot_config.json (từ 8h-20h), do đó bác sĩ có thể có khung giờ trống và khách hàng vẫn đặt lịch được vào các khoảng thời gian mà phòng khám đáng lẽ đã đóng cửa.
+
+### Giải pháp
+1. **Trong GetAvailableSlotsAsync (AppointmentService.cs)**:
+   - Truy vấn ClinicHolidays tương ứng với ngày hẹn. Nếu là ngày lễ, lập tức trả về mảng rỗng [] (không có bác sĩ nào nhận khám).
+   - Truy vấn ClinicOperatingDays. Nếu ngày đó cấu hình IsOpen = false, lập tức trả về [].
+   - Lọc các mốc thời gian khả dụng (do SlotCalculationHelper sinh ra) bằng cách đối chiếu với danh sách các ClinicOperatingShifts của ngày đó. Các khung giờ nào nằm ngoài hoặc tràn ra khỏi giờ hoạt động sẽ bị loại bỏ ngay từ phía Server.
+   
+2. **Trong CreateAppointmentAsync (AppointmentService.cs)**:
+   - Thêm bước xác thực đầu vào (Validation) trước khi lấy bác sĩ và phân lịch:
+     - Nếu ngày hẹn trùng ngày lễ IsActive, ném ra InvalidOperationException("Phòng khám đóng cửa vào ngày nghỉ lễ này...").
+     - Nếu cấu hình phòng khám trong ngày không hoạt động (!IsOpen), ném ra lỗi.
+     - Kiểm tra trực tiếp thời gian hẹn (AppointmentDate.TimeOfDay) với các ca trực của phòng khám. Nếu thời gian nằm ngoài mọi ca hoặc thời lượng khám tràn ra khỏi giờ nghỉ ca, chặn việc đặt lịch.

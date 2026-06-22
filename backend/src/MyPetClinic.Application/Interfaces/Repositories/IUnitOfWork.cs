@@ -26,6 +26,9 @@ namespace MyPetClinic.Application.Interfaces.Repositories
         IGenericRepository<Notification> Notifications { get; }
         IGenericRepository<EmployeeProfile> EmployeeProfiles { get; }
         IGenericRepository<Invitation> Invitations { get; }
+        IGenericRepository<ClinicOperatingDay> ClinicOperatingDays { get; }
+        IGenericRepository<ClinicOperatingShift> ClinicOperatingShifts { get; }
+        IGenericRepository<ClinicHoliday> ClinicHolidays { get; }
 
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();

@@ -14,6 +14,7 @@ namespace MyPetClinic.Tests
         private readonly Mock<IUserRepository> _userRepositoryMock;
         private readonly Mock<IEmailService> _emailServiceMock;
         private readonly Mock<IOtpService> _otpServiceMock;
+        private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly AuthService _authService;
 
         public AuthServiceTests()
@@ -21,10 +22,12 @@ namespace MyPetClinic.Tests
             _userRepositoryMock = new Mock<IUserRepository>();
             _emailServiceMock = new Mock<IEmailService>();
             _otpServiceMock = new Mock<IOtpService>();
+            _unitOfWorkMock = new Mock<IUnitOfWork>();
             _authService = new AuthService(
                 _userRepositoryMock.Object,
                 _emailServiceMock.Object,
-                _otpServiceMock.Object
+                _otpServiceMock.Object,
+                _unitOfWorkMock.Object
             );
         }
 

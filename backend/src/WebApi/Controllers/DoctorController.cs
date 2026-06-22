@@ -90,5 +90,14 @@ namespace MyPetClinic.Controllers
             var success = await _receptionistService.UpdateQueueStatusAsync(appointmentId, "ready_to_pay");
             return Ok(new { success });
         }
+
+        [HttpGet("appointment/{appointmentId}")]
+        public async Task<IActionResult> GetAppointmentDetail(long appointmentId)
+        {
+            var appt = await _appointmentService.GetAppointmentDetailAsync(appointmentId);
+            if (appt == null) return NotFound(new { message = "Không tìm thấy cuộc hẹn." });
+            return Ok(appt);
+        }
+
     }
 }

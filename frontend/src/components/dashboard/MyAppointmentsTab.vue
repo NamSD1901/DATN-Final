@@ -299,7 +299,7 @@
                             <div v-if="bookForm.serviceId === svc.id" style="width: 12px; height: 12px; border-radius: 50%; background: #0d6efd;"></div>
                           </div>
                           <div class="service-icon mb-3" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(13,110,253,0.1); color: #0d6efd; font-size: 1.5rem;">
-                            <i class="bi" :class="svc.name.toLowerCase().includes('vaccine') || svc.name.toLowerCase().includes('tiêm') ? 'bi-syringe' : (svc.name.toLowerCase().includes('spa') || svc.name.toLowerCase().includes('cắt tỉa') ? 'bi-scissors' : 'bi-heart-pulse')"></i>
+                            <i class="bi" :class="svc.name.toLowerCase().includes('vaccine') || svc.name.toLowerCase().includes('tiêm') ? 'bi-bandaid' : (svc.name.toLowerCase().includes('spa') || svc.name.toLowerCase().includes('cắt tỉa') ? 'bi-scissors' : 'bi-heart-pulse')"></i>
                           </div>
                           <h5 class="fw-bold mb-2 pe-4">{{ svc.name }}</h5>
                           <p class="text-muted small mb-4">{{ (svc as any).description || 'Dịch vụ chăm sóc sức khoẻ tốt nhất cho thú cưng.' }}</p>
@@ -1250,26 +1250,16 @@ const fetchPets = async () => {
 const fetchServices = async () => {
   try {
     const res = await api.get('/my-appointments/services');
-    const khamSvc = res.data.find((s: any) => s.name.toLowerCase().includes('khám'));
-    const tiemSvc = res.data.find((s: any) => s.name.toLowerCase().includes('tiêm'));
-    
-    const mappedServices = [];
-    if (khamSvc) {
-      mappedServices.push({
-        ...khamSvc,
-        name: 'Khám bệnh',
-        description: 'Kiểm tra sức khỏe tổng quát, chẩn đoán và tư vấn điều trị cho thú cưng của bạn.'
-      });
-    }
-    if (tiemSvc) {
-      mappedServices.push({
-        ...tiemSvc,
-        name: 'Tiêm phòng',
-        description: 'Tiêm các loại vaccine cần thiết định kỳ để phòng ngừa bệnh truyền nhiễm cho thú cưng.'
-      });
-    }
-    
-    services.value = mappedServices.length > 0 ? mappedServices : res.data;
+    services.value = res.data.map((s: any) => {
+      // Add default descriptions for specific services if they lack one
+      if (s.name.toLowerCase().includes('khám') && !s.description) {
+        return { ...s, description: 'Kiểm tra sức khỏe tổng quát, chẩn đoán và tư vấn điều trị cho thú cưng của bạn.' };
+      }
+      if (s.name.toLowerCase().includes('tiêm') && !s.description) {
+        return { ...s, description: 'Tiêm các loại vaccine cần thiết định kỳ để phòng ngừa bệnh truyền nhiễm cho thú cưng.' };
+      }
+      return s;
+    });
   } catch { /* silent */ }
 };
 

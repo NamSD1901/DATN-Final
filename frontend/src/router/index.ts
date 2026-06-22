@@ -91,6 +91,7 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/Home.vue')
   },
 
+
   // Catch-all route to redirect back to login
   {
     path: '/:pathMatch(.*)*',

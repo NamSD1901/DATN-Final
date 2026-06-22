@@ -213,15 +213,7 @@ namespace MyPetClinic.Infrastructure.Persistence
 
                 // Dịch vụ Khám bệnh
                 context.Services.AddRange(
-                    new Service { CategoryId = categoryKhamBenh.Id, Name = "Khám lâm sàng tổng quát", Price = 100000, DurationMinutes = 30, Description = "Khám tổng quát, nghe tim phổi, kiểm tra nhiệt độ." },
-                    new Service { CategoryId = categoryKhamBenh.Id, Name = "Khám chuyên sâu", Price = 200000, DurationMinutes = 45, Description = "Khám chuyên sâu về da liễu, mắt, tai mũi họng." }
-                );
-
-                // Dịch vụ Tiêm phòng
-                context.Services.AddRange(
-                    new Service { CategoryId = categoryTiemPhong.Id, Name = "Tiêm dại", Price = 50000, DurationMinutes = 15, Description = "Tiêm phòng bệnh dại định kỳ hàng năm." },
-                    new Service { CategoryId = categoryTiemPhong.Id, Name = "Tiêm vaccine tổng hợp (Chó)", Price = 250000, DurationMinutes = 15, Description = "Vaccine 5 bệnh hoặc 7 bệnh cho chó." },
-                    new Service { CategoryId = categoryTiemPhong.Id, Name = "Tiêm vaccine tổng hợp (Mèo)", Price = 300000, DurationMinutes = 15, Description = "Vaccine 4 bệnh cho mèo." }
+                    new Service { CategoryId = categoryKhamBenh.Id, Name = "Khám bệnh", Price = 450000, DurationMinutes = 30, Description = "Kiểm tra sức khỏe tổng quát, chẩn đoán và tư vấn điều trị cho thú cưng của bạn." }
                 );
 
                 // Xét nghiệm
@@ -231,6 +223,26 @@ namespace MyPetClinic.Infrastructure.Persistence
                 );
 
                 await context.SaveChangesAsync();
+            }
+
+            // Force reset services if there are more than 2
+            var existingServices = await context.Services.ToListAsync();
+            if (existingServices.Count > 2)
+            {
+                context.Services.RemoveRange(existingServices);
+                await context.SaveChangesAsync();
+
+                var categoryKhamBenh = await context.ServiceCategories.FirstOrDefaultAsync(c => c.Name == "Khám bệnh");
+                var categoryTiemPhong = await context.ServiceCategories.FirstOrDefaultAsync(c => c.Name == "Tiêm phòng");
+
+                if (categoryKhamBenh != null && categoryTiemPhong != null)
+                {
+                    context.Services.AddRange(
+                        new Service { CategoryId = categoryKhamBenh.Id, Name = "Khám bệnh", Price = 450000, DurationMinutes = 30, Description = "Kiểm tra sức khỏe tổng quát, chẩn đoán và tư vấn điều trị cho thú cưng của bạn." },
+                        new Service { CategoryId = categoryTiemPhong.Id, Name = "Tiêm phòng", Price = 300000, DurationMinutes = 15, Description = "Tiêm các loại vaccine cần thiết định kỳ để phòng ngừa bệnh truyền nhiễm cho thú cưng." }
+                    );
+                    await context.SaveChangesAsync();
+                }
             }
         }
     }

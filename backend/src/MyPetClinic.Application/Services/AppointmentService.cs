@@ -49,6 +49,35 @@ namespace MyPetClinic.Application.Services
                     var targetDateStart = appointmentDate.Date;
                     var targetDateEnd = targetDateStart.AddDays(1);
 
+                    // 0. Kiểm tra ngày nghỉ lễ và khung giờ hoạt động chung của phòng khám
+                    var isHoliday = _unitOfWork.ClinicHolidays.Query()
+                        .Any(h => h.IsActive && h.StartDate <= targetDateStart && h.EndDate >= targetDateStart);
+                    if (isHoliday)
+                    {
+                        throw new InvalidOperationException("Phòng khám đóng cửa vào ngày nghỉ lễ này. Vui lòng chọn ngày khác.");
+                    }
+
+                    var clinicDay = _unitOfWork.ClinicOperatingDays.Query().FirstOrDefault(d => d.DayOfWeek == targetDateStart.DayOfWeek);
+                    if (clinicDay != null && !clinicDay.IsOpen)
+                    {
+                        throw new InvalidOperationException($"Phòng khám không hoạt động vào {targetDateStart.DayOfWeek}.");
+                    }
+
+                    if (clinicDay != null && clinicDay.IsOpen)
+                    {
+                        var appointmentTimeCheck = appointmentDate.TimeOfDay;
+                        var shifts = _unitOfWork.ClinicOperatingShifts.Query().Where(s => s.ClinicOperatingDayId == clinicDay.Id).ToList();
+                        if (shifts.Any())
+                        {
+                            var isInShift = shifts.Any(s => s.StartTime <= appointmentTimeCheck && s.EndTime >= appointmentTimeCheck.Add(TimeSpan.FromMinutes(30)));
+                            if (!isInShift)
+                            {
+                                throw new InvalidOperationException("Thời gian hẹn không nằm trong khung giờ hoạt động của phòng khám.");
+                            }
+                        }
+                    }
+
+
                     if (finalDoctorId == Guid.Empty)
                     {
                         var appointmentTime = appointmentDate.TimeOfDay;
@@ -447,11 +476,13 @@ namespace MyPetClinic.Application.Services
                     ExtendedProps = new
                     {
                         status = a.Status,
+                        petId = a.PetId,
                         petName = a.Pet?.Name,
                         species = a.Pet?.Species,
                         breed = a.Pet?.Breed,
                         weight = a.Pet?.Weight,
                         isAggressive = a.Pet?.IsAggressive ?? false,
+                        customerId = a.CustomerId,
                         customerName = a.Customer?.FullName,
                         phone = a.Customer?.Phone,
                         symptom = a.Symptom,
@@ -1052,6 +1083,27 @@ namespace MyPetClinic.Application.Services
         {
             var targetDate = DateTime.SpecifyKind(date.Date, DateTimeKind.Utc);
             
+            // 0. Kiểm tra ngày nghỉ lễ và khung giờ hoạt động chung
+            var isHoliday = await _unitOfWork.ClinicHolidays.AnyAsync(h => h.IsActive && h.StartDate <= targetDate && h.EndDate >= targetDate);
+            if (isHoliday)
+            {
+                return new List<DoctorAvailableSlotsDto>(); // Trả về rỗng nếu là ngày lễ
+            }
+
+            var clinicDay = await _unitOfWork.ClinicOperatingDays.FindAsync(d => d.DayOfWeek == targetDate.DayOfWeek);
+            var clinicDayObj = clinicDay.FirstOrDefault();
+            if (clinicDayObj != null && !clinicDayObj.IsOpen)
+            {
+                return new List<DoctorAvailableSlotsDto>(); // Trả về rỗng nếu đóng cửa
+            }
+
+            var clinicShifts = new List<ClinicOperatingShift>();
+            if (clinicDayObj != null)
+            {
+                var shifts = await _unitOfWork.ClinicOperatingShifts.FindAsync(s => s.ClinicOperatingDayId == clinicDayObj.Id);
+                clinicShifts = shifts.ToList();
+            }
+
             var allowedDoctorEmails = new List<string>();
             if (serviceId.HasValue)
             {
@@ -1092,6 +1144,14 @@ namespace MyPetClinic.Application.Services
                     );
 
                     var availableTimes = MyPetClinic.Application.Helpers.SlotCalculationHelper.GetAvailableSlots(schedule, appointments, 30);
+
+                    // Filter by ClinicOperatingShifts if available
+                    if (clinicShifts.Any())
+                    {
+                        availableTimes = availableTimes.Where(t => 
+                            clinicShifts.Any(s => s.StartTime <= t.TimeOfDay && s.EndTime >= t.TimeOfDay.Add(TimeSpan.FromMinutes(30)))
+                        ).ToList();
+                    }
 
                     result.Add(new DoctorAvailableSlotsDto
                     {
@@ -1157,6 +1217,14 @@ namespace MyPetClinic.Application.Services
                         );
 
                         var availableTimes = MyPetClinic.Application.Helpers.SlotCalculationHelper.GetAvailableSlots(mockSchedule, appointments, durationMinutes);
+
+                        // Filter by ClinicOperatingShifts if available
+                        if (clinicShifts.Any())
+                        {
+                            availableTimes = availableTimes.Where(t => 
+                                clinicShifts.Any(s => s.StartTime <= t.TimeOfDay && s.EndTime >= t.TimeOfDay.Add(TimeSpan.FromMinutes(durationMinutes)))
+                            ).ToList();
+                        }
 
                         result.Add(new DoctorAvailableSlotsDto
                         {

@@ -104,7 +104,7 @@
               <p class="service-desc">{{ service.description }}</p>
               <div class="service-meta">
                 <span class="service-duration"><Clock size="14" /> {{ service.duration }} min</span>
-                <span class="service-price">${{ service.price }}</span>
+                <span class="service-price">{{ formatCurrency(service.price) }}</span>
               </div>
             </div>
           </div>
@@ -249,7 +249,7 @@
                     <h6 class="fw-bold mb-0">{{ selectedService?.name }}</h6>
                     <small class="text-muted">Gói khám định kỳ cho chó trưởng thành</small>
                   </div>
-                  <div class="fw-bold fs-5">{{ selectedService?.price * 10000 }} ₫</div>
+                  <div class="fw-bold fs-5">{{ formatCurrency(selectedService?.price) }}</div>
                 </div>
               </div>
 
@@ -294,7 +294,7 @@
                   <h6 class="text-muted small fw-bold mb-3 tracking-wide">CHI TIẾT CHI PHÍ (DỰ KIẾN)</h6>
                   <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Phí khám dịch vụ</span>
-                    <strong class="text-dark">{{ selectedService?.price * 10000 }} ₫</strong>
+                    <strong class="text-dark">{{ formatCurrency(selectedService?.price) }}</strong>
                   </div>
                   <div class="d-flex justify-content-between mb-3 border-bottom pb-3">
                     <span class="text-muted">Phí mở hồ sơ mới</span>
@@ -302,7 +302,7 @@
                   </div>
                   <div class="d-flex justify-content-between align-items-center mb-4">
                     <span class="fw-bold text-dark fs-5">Tổng cộng</span>
-                    <strong class="text-primary fs-4">{{ selectedService?.price * 10000 }} ₫</strong>
+                    <strong class="text-primary fs-4">{{ formatCurrency(selectedService?.price) }}</strong>
                   </div>
                   <p class="text-center text-muted small mb-0">Thanh toán tại phòng khám</p>
                 </div>
@@ -381,11 +381,37 @@ const isSubmitting = ref(false);
 
 const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5150';
 
-// Mock Services based on UI
-const predefinedServices = [
-  { id: 1, name: 'Khám bệnh', description: 'Kiểm tra sức khỏe tổng quát, chẩn đoán và tư vấn điều trị cho thú cưng của bạn.', duration: 30, price: 45, icon: Stethoscope, colorClass: 'text-primary bg-primary bg-opacity-10' },
-  { id: 2, name: 'Tiêm phòng', description: 'Tiêm các loại vaccine cần thiết định kỳ để phòng ngừa bệnh truyền nhiễm cho thú cưng.', duration: 15, price: 30, icon: Syringe, colorClass: 'text-success bg-success bg-opacity-10' }
-];
+// Fetch Services from API
+const predefinedServices = ref<any[]>([]);
+
+const fetchServices = async () => {
+  try {
+    const res = await api.get('/my-appointments/services');
+    const icons = [Stethoscope, Syringe, Bath, FlaskConical];
+    const colors = [
+      'text-primary bg-primary bg-opacity-10', 
+      'text-success bg-success bg-opacity-10', 
+      'text-warning bg-warning bg-opacity-10', 
+      'text-info bg-info bg-opacity-10'
+    ];
+    
+    predefinedServices.value = res.data.map((s: any, index: number) => ({
+      id: s.id,
+      name: s.name,
+      description: s.description || 'Chăm sóc sức khỏe cho thú cưng',
+      duration: s.durationMinutes || 30,
+      price: s.price,
+      icon: icons[index % icons.length],
+      colorClass: colors[index % colors.length]
+    }));
+    
+    if (predefinedServices.value.length > 0) {
+      selectedService.value = predefinedServices.value[0];
+    }
+  } catch (error) {
+    console.error("Failed to fetch services", error);
+  }
+};
 
 // --- STEP 1 LOGIC ---
 const fetchPets = async () => {
@@ -428,6 +454,11 @@ const getSpeciesImageUrl = (species: string | null): string => {
     'Bò sát': 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=300&h=300&fit=crop',
   };
   return map[species ?? ''] || 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=300&h=300&fit=crop';
+};
+
+const formatCurrency = (val: number | undefined | null) => {
+  if (!val) return '0 ₫';
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 };
 
 // --- STEP 3 LOGIC (CALENDAR & SLOTS) ---
@@ -580,7 +611,7 @@ const submitBooking = async () => {
 // Lifecycle
 onMounted(() => {
   fetchPets();
-  selectedService.value = predefinedServices[0];
+  fetchServices();
   
   // Set default date to today
   const today = new Date();

@@ -105,9 +105,11 @@
             <div class="mb-3">
               <label class="form-label text-muted small fw-bold">Nhóm danh mục *</label>
               <select v-model="form.categoryId" class="form-select border-warning" required>
-                <option :value="1">Khám chữa bệnh</option>
-                <option :value="2">Tiêm vắc xin</option>
-                <option :value="3">Spa & Làm đẹp</option>
+                <option :value="1">Khám bệnh</option>
+                <option :value="2">Tiêm phòng</option>
+                <option :value="3">Xét nghiệm & Siêu âm</option>
+                <option :value="4">Phẫu thuật</option>
+                <option :value="5">Grooming & Spa</option>
               </select>
             </div>
             <div class="mb-3">

@@ -583,7 +583,7 @@
                   <div v-for="vac in historyVaccines" :key="'hist-' + vac.id" class="vaccine-card history-card p-4 rounded-4 bg-white border d-flex gap-4">
                     <div class="vac-icon-wrap">
                       <div class="vac-icon bg-success-subtle text-success d-flex align-items-center justify-content-center rounded-circle" style="width: 48px; height: 48px;">
-                        <i class="bi bi-syringe fs-4"></i>
+                        <i class="bi bi-bandaid fs-4"></i>
                       </div>
                     </div>
                     <div class="flex-grow-1">
@@ -831,7 +831,7 @@ const tabs = computed(() => [
   { key: 'overview', label: 'Tổng quan', icon: 'bi bi-grid-1x2-fill' },
   { key: 'history', label: 'Lịch sử khám', icon: 'bi bi-file-medical-fill' },
   { key: 'appointments', label: 'Lịch hẹn', icon: 'bi bi-calendar-check-fill' },
-  { key: 'vaccines', label: 'Vaccine', icon: 'bi bi-syringe' },
+  { key: 'vaccines', label: 'Vaccine', icon: 'bi bi-bandaid' },
   { key: 'prescriptions', label: 'Đơn thuốc', icon: 'bi bi-capsule' }
 ]);
 

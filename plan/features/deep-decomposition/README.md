@@ -41,8 +41,9 @@ Tài liệu này đóng vai trò hạt nhân điều phối toàn bộ các phâ
 
 ---
 
-### 🟡 PHASE 3: TRÍ TUỆ NHÂN TẠO, TỰ ĐỘNG HÓA & QUẢN TRỊ NÂNG CAO (SPRINT 6)
+### 🟡 PHASE 3: TRÍ TUỆ NHÂN TẠO, TỰ ĐỘNG HÓA & QUẢN TRỊ NÂNG CAO (SPRINT 6 - TÁI CẤU TRÚC)
 
+- **[20. Cấu Hình Giờ Hoạt Động Cốt Lõi](./phase3-20-operating-hours)** `✅ CODE DONE` — Core cấu hình Ngày nghỉ/lễ và Khung giờ linh hoạt theo thứ trong tuần, thay thế hoàn toàn file config cũ. Chặn đặt lịch và conflict.
 - **[21. Gemini AI Advisor Chatbot](./phase3-ai-chatbot)** `✅ CODE DONE` — Trợ lý AI chatbot tư vấn nhanh kiến thức y tế thú y và sơ cứu khẩn cấp cơ bản.
 - **[22. Automatic Vaccine Reminders](./phase3-notifications)** `✅ CODE DONE` — Background job quét database và tự động gửi email nhắc lịch tiêm phòng trước 3-5 ngày.
 - **[23. Admin Personnel & Role Authorization](./phase3-23-admin-users)** `✅ CODE DONE` — Admin quản lý tài khoản nhân sự phòng khám, phân quyền vai trò nhân viên.

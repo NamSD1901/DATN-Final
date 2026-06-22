@@ -131,21 +131,64 @@ namespace MyPetClinic.Application.Services
                     if (obj == null) return jsonStr;
                     var parts = new List<string>();
                     if (!string.IsNullOrEmpty(obj.ChiefComplaint)) parts.Add($"Lý do khám: {obj.ChiefComplaint}");
-                    if (obj.HasVomiting) parts.Add("Nôn ói");
-                    if (obj.HasDiarrhea) parts.Add("Tiêu chảy");
-                    return parts.Any() ? string.Join(", ", parts) : "Khám tổng quát";
+                    if (!string.IsNullOrEmpty(obj.OnsetDuration)) parts.Add($"Thời gian phát bệnh: {obj.OnsetDuration}");
+                    
+                    // Tình trạng chung
+                    var generalState = new List<string>();
+                    if (!string.IsNullOrEmpty(obj.Appetite) && obj.Appetite != "Bình thường") generalState.Add($"Ăn uống: {obj.Appetite}");
+                    if (!string.IsNullOrEmpty(obj.Thirst) && obj.Thirst != "Bình thường") generalState.Add($"Uống nước: {obj.Thirst}");
+                    if (!string.IsNullOrEmpty(obj.ActivityLevel) && obj.ActivityLevel != "Bình thường") generalState.Add($"Hoạt động: {obj.ActivityLevel}");
+                    if (!string.IsNullOrEmpty(obj.UrinationIssues) && obj.UrinationIssues != "Bình thường") generalState.Add($"Tiểu tiện: {obj.UrinationIssues}");
+                    if (generalState.Any()) parts.Add(string.Join(", ", generalState));
+
+                    // Triệu chứng đặc biệt
+                    var symptoms = new List<string>();
+                    if (obj.HasVomiting) symptoms.Add("Nôn ói" + (!string.IsNullOrEmpty(obj.VomitingDetails) ? $" ({obj.VomitingDetails})" : ""));
+                    if (obj.HasDiarrhea) symptoms.Add("Tiêu chảy" + (!string.IsNullOrEmpty(obj.DiarrheaDetails) ? $" ({obj.DiarrheaDetails})" : ""));
+                    if (obj.HasCoughing) symptoms.Add("Ho");
+                    if (obj.HasSneezing) symptoms.Add("Hắt hơi");
+                    if (obj.HasBreathingDifficulty) symptoms.Add("Khó thở");
+                    if (obj.HasItching) symptoms.Add("Ngứa ngáy");
+                    if (obj.HasHairLoss) symptoms.Add("Rụng lông");
+                    if (symptoms.Any()) parts.Add("Triệu chứng: " + string.Join(", ", symptoms));
+
+                    if (!string.IsNullOrEmpty(obj.CurrentMedications) && obj.CurrentMedications != "Không có") parts.Add($"Thuốc đang dùng: {obj.CurrentMedications}");
+                    if (!string.IsNullOrEmpty(obj.PetOwnerNotes)) parts.Add($"Ghi chú chủ nuôi: {obj.PetOwnerNotes}");
+
+                    return parts.Any() ? string.Join(" | ", parts) : "Khám tổng quát";
                 }
                 else if (fieldType == "O")
                 {
                     var obj = JsonSerializer.Deserialize<ObjectiveDto>(jsonStr, options);
                     if (obj == null) return jsonStr;
-                    return $"Tri giác: {obj.Mentation}, BCS: {obj.BodyConditionScore}/9";
+                    var parts = new List<string>();
+                    if (!string.IsNullOrEmpty(obj.Mentation)) parts.Add($"Tri giác: {obj.Mentation}");
+                    if (obj.BodyConditionScore > 0) parts.Add($"BCS: {obj.BodyConditionScore}/9");
+                    if (!string.IsNullOrEmpty(obj.Hydration) && !obj.Hydration.Contains("Bình thường")) parts.Add($"Mất nước: {obj.Hydration}");
+                    if (obj.HeartRate.HasValue) parts.Add($"Nhịp tim: {obj.HeartRate} bpm");
+                    if (obj.RespiratoryRate.HasValue) parts.Add($"Nhịp thở: {obj.RespiratoryRate} lần/phút");
+
+                    // Các cơ quan bất thường
+                    var abnormal = new List<string>();
+                    if (obj.Eyes != null && !obj.Eyes.IsNormal) abnormal.Add("Mắt" + (!string.IsNullOrEmpty(obj.Eyes.Note) ? $": {obj.Eyes.Note}" : ""));
+                    if (obj.Ears != null && !obj.Ears.IsNormal) abnormal.Add("Tai" + (!string.IsNullOrEmpty(obj.Ears.Note) ? $": {obj.Ears.Note}" : ""));
+                    if (obj.Nose != null && !obj.Nose.IsNormal) abnormal.Add("Mũi" + (!string.IsNullOrEmpty(obj.Nose.Note) ? $": {obj.Nose.Note}" : ""));
+                    if (obj.Mouth != null && !obj.Mouth.IsNormal) abnormal.Add("Miệng" + (!string.IsNullOrEmpty(obj.Mouth.Note) ? $": {obj.Mouth.Note}" : ""));
+                    if (obj.SkinCoat != null && !obj.SkinCoat.IsNormal) abnormal.Add("Da lông" + (!string.IsNullOrEmpty(obj.SkinCoat.Note) ? $": {obj.SkinCoat.Note}" : ""));
+                    if (obj.Gastrointestinal != null && !obj.Gastrointestinal.IsNormal) abnormal.Add("Tiêu hóa" + (!string.IsNullOrEmpty(obj.Gastrointestinal.Note) ? $": {obj.Gastrointestinal.Note}" : ""));
+                    if (obj.Respiratory != null && !obj.Respiratory.IsNormal) abnormal.Add("Hô hấp" + (!string.IsNullOrEmpty(obj.Respiratory.Note) ? $": {obj.Respiratory.Note}" : ""));
+                    if (abnormal.Any()) parts.Add("Bất thường: " + string.Join(", ", abnormal));
+
+                    return parts.Any() ? string.Join(", ", parts) : string.Empty;
                 }
                 else if (fieldType == "A")
                 {
                     var obj = JsonSerializer.Deserialize<AssessmentDto>(jsonStr, options);
                     if (obj == null) return jsonStr;
-                    return !string.IsNullOrEmpty(obj.DefinitiveDiagnosis) ? obj.DefinitiveDiagnosis : obj.TentativeDiagnosis;
+                    var diagnosis = !string.IsNullOrEmpty(obj.DefinitiveDiagnosis) ? obj.DefinitiveDiagnosis : obj.TentativeDiagnosis;
+                    if (!string.IsNullOrEmpty(obj.DiseaseSeverity) && obj.DiseaseSeverity != "Nhẹ")
+                        diagnosis += $" (Mức độ: {obj.DiseaseSeverity})";
+                    return diagnosis ?? string.Empty;
                 }
                 else if (fieldType == "P")
                 {
@@ -160,11 +203,12 @@ namespace MyPetClinic.Application.Services
             return jsonStr;
         }
 
+
         public async Task<IEnumerable<MedicalRecordDto>> GetPetMedicalHistoryAsync(long petId)
         {
             // 1. Lấy tất cả bệnh án của thú cưng
             var records = await _unitOfWork.MedicalRecords.FindWithIncludesAsync(
-                r => r.Appointment != null && r.Appointment.PetId == petId,
+                r => r.PetId == petId,
                 r => r.Appointment!,
                 r => r.Doctor!
             );

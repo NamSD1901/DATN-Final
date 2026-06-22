@@ -48,6 +48,9 @@ namespace MyPetClinic.Infrastructure.Persistence
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Post> Posts { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<ClinicOperatingDay> ClinicOperatingDays { get; set; }
+        public DbSet<ClinicOperatingShift> ClinicOperatingShifts { get; set; }
+        public DbSet<ClinicHoliday> ClinicHolidays { get; set; }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder builder)
         {
@@ -480,6 +483,46 @@ namespace MyPetClinic.Infrastructure.Persistence
                 
                 entity.HasIndex(e => new { e.UserId, e.IsRead }).HasFilter("\"is_read\" = false");
                 entity.HasIndex(e => e.CreatedAt).IsDescending();
+            });
+
+            // clinic_operating_days
+            modelBuilder.Entity<ClinicOperatingDay>(entity =>
+            {
+                entity.ToTable("clinic_operating_days");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.DayOfWeek).HasColumnName("day_of_week");
+                entity.Property(e => e.IsOpen).HasColumnName("is_open").HasDefaultValue(true);
+            });
+
+            // clinic_operating_shifts
+            modelBuilder.Entity<ClinicOperatingShift>(entity =>
+            {
+                entity.ToTable("clinic_operating_shifts");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.ClinicOperatingDayId).HasColumnName("clinic_operating_day_id");
+                entity.Property(e => e.StartTime).HasColumnName("start_time");
+                entity.Property(e => e.EndTime).HasColumnName("end_time");
+
+                entity.HasOne(d => d.ClinicOperatingDay)
+                    .WithMany(p => p.Shifts)
+                    .HasForeignKey(d => d.ClinicOperatingDayId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // clinic_holidays
+            modelBuilder.Entity<ClinicHoliday>(entity =>
+            {
+                entity.ToTable("clinic_holidays");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.Name).HasColumnName("name").IsRequired().HasMaxLength(100);
+                entity.Property(e => e.StartDate).HasColumnName("start_date");
+                entity.Property(e => e.EndDate).HasColumnName("end_date");
+                entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+                entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             });
         }
     }
