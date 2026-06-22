@@ -223,9 +223,8 @@ namespace MyPetClinic.Tests
         {
             // Arrange
             var doctorId = Guid.NewGuid();
-            var targetDate = DateTime.Today.AddDays(2);
+            var targetDate = DateTime.UtcNow.Date.AddDays(2);
             var doctorRole = new Role { Id = 2, Name = "Doctor" };
-            _context.Roles.Add(doctorRole);
             var doctorUser = new User { Id = doctorId, FullName = "Bác Sĩ C", Phone = "0987654322", Email = "bacsi_test@gmail.com", RoleId = 2, IsActive = true, Role = doctorRole };
             _context.Users.Add(doctorUser);
 

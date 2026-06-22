@@ -39,6 +39,10 @@ namespace MyPetClinic.Infrastructure.Repositories
         public IGenericRepository<ClinicOperatingDay> ClinicOperatingDays { get; private set; }
         public IGenericRepository<ClinicOperatingShift> ClinicOperatingShifts { get; private set; }
         public IGenericRepository<ClinicHoliday> ClinicHolidays { get; private set; }
+        public IGenericRepository<PostCategory> PostCategories { get; private set; }
+        public IGenericRepository<Tag> Tags { get; private set; }
+        public IGenericRepository<PostTag> PostTags { get; private set; }
+        public IGenericRepository<Banner> Banners { get; private set; }
         public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
@@ -68,6 +72,10 @@ namespace MyPetClinic.Infrastructure.Repositories
             ClinicOperatingDays = new GenericRepository<ClinicOperatingDay>(_context);
             ClinicOperatingShifts = new GenericRepository<ClinicOperatingShift>(_context);
             ClinicHolidays = new GenericRepository<ClinicHoliday>(_context);
+            PostCategories = new GenericRepository<PostCategory>(_context);
+            Tags = new GenericRepository<Tag>(_context);
+            PostTags = new GenericRepository<PostTag>(_context);
+            Banners = new GenericRepository<Banner>(_context);
         }
 
         public async Task<int> SaveChangesAsync()

@@ -82,8 +82,14 @@
           <li :class="{ 'active': activeTab === 'reports-admin' }">
             <a href="#" @click.prevent="activeTab = 'reports-admin'"><i class="bi bi-graph-up-arrow text-warning opacity-75"></i> Báo cáo doanh thu</a>
           </li>
+          <li :class="{ 'active': activeTab === 'categories-admin' }">
+            <a href="#" @click.prevent="activeTab = 'categories-admin'"><i class="bi bi-tags-fill text-warning opacity-75"></i> Quản lý Danh mục</a>
+          </li>
           <li :class="{ 'active': activeTab === 'blog-admin' }">
             <a href="#" @click.prevent="activeTab = 'blog-admin'"><i class="bi bi-journal-text text-warning opacity-75"></i> Quản lý bài viết</a>
+          </li>
+          <li :class="{ 'active': activeTab === 'banners-admin' }">
+            <a href="#" @click.prevent="activeTab = 'banners-admin'"><i class="bi bi-image text-warning opacity-75"></i> Quản lý Banners</a>
           </li>
         </template>
 
@@ -390,6 +396,16 @@
           <div v-else-if="activeTab === 'blog-admin'" class="container-fluid p-0">
             <BlogAdminTab />
           </div>
+
+          <!-- tab: Categories Admin Tab -->
+          <div v-else-if="activeTab === 'categories-admin'" class="container-fluid p-0">
+            <CategoriesAdminTab />
+          </div>
+
+          <!-- tab: Banners Admin Tab -->
+          <div v-else-if="activeTab === 'banners-admin'" class="container-fluid p-0">
+            <BannersAdminTab />
+          </div>
         </Transition>
       </div>
 
@@ -454,6 +470,8 @@ import VaccinesAdminTab from '../components/dashboard/VaccinesAdminTab.vue';
 import SchedulesAdminTab from '../components/dashboard/SchedulesAdminTab.vue';
 import ReportsAdminTab from '../components/dashboard/ReportsAdminTab.vue';
 import BlogAdminTab from '../components/dashboard/BlogAdminTab.vue';
+import CategoriesAdminTab from '../components/dashboard/CategoriesAdminTab.vue';
+import BannersAdminTab from '../components/dashboard/BannersAdminTab.vue';
 
 const router = useRouter();
 

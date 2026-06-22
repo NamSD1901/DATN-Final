@@ -93,8 +93,8 @@ namespace MyPetClinic.Tests
                 
                 var txs = await verifyCtx1.InventoryTransactions.ToListAsync();
                 Assert.Single(txs);
-                Assert.Equal("Import", txs[0].TransactionType);
-                Assert.Equal(100, txs[0].QuantityChanged);
+                Assert.Equal(InventoryTransactionType.GoodsReceipt, txs[0].Type);
+                Assert.Equal(100, txs[0].QuantityChange);
             }
 
             // 3. Action 2: Bác sĩ kê đơn (Prescribe -> Export via FEFO)
@@ -133,8 +133,8 @@ namespace MyPetClinic.Tests
 
                 var txs = await verifyCtx2.InventoryTransactions.OrderBy(t => t.TransactionDate).ToListAsync();
                 Assert.Equal(2, txs.Count);
-                Assert.Equal("Export", txs[1].TransactionType);
-                Assert.Equal(-10, txs[1].QuantityChanged);
+                Assert.Equal(InventoryTransactionType.PrescriptionDispense, txs[1].Type);
+                Assert.Equal(-10, txs[1].QuantityChange);
             }
 
             // 4. Action 3: Xem báo cáo cảnh báo (GetExpiringMedicinesAsync)
@@ -157,6 +157,7 @@ namespace MyPetClinic.Tests
             // 5. Action 4: Kiểm kê kho (Audit) - Chênh lệch
             var auditDto = new AuditMedicineDto
             {
+                MedicineId = 1,
                 BatchId = expiringReport.First().BatchId,
                 ActualQuantity = 45, // Thất thoát 5 viên
                 Notes = "Kiểm kê định kỳ thấy mất 5 viên"
@@ -170,8 +171,8 @@ namespace MyPetClinic.Tests
 
                 var txs = await verifyCtx3.InventoryTransactions.OrderByDescending(t => t.TransactionDate).FirstOrDefaultAsync();
                 Assert.NotNull(txs);
-                Assert.Equal("Audit", txs.TransactionType);
-                Assert.Equal(-5, txs.QuantityChanged);
+                Assert.Equal(InventoryTransactionType.Adjustment, txs.Type);
+                Assert.Equal(-5, txs.QuantityChange);
             }
         }
 

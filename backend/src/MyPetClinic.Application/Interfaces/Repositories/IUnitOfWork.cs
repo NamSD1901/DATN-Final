@@ -32,6 +32,10 @@ namespace MyPetClinic.Application.Interfaces.Repositories
         IGenericRepository<ClinicOperatingDay> ClinicOperatingDays { get; }
         IGenericRepository<ClinicOperatingShift> ClinicOperatingShifts { get; }
         IGenericRepository<ClinicHoliday> ClinicHolidays { get; }
+        IGenericRepository<PostCategory> PostCategories { get; }
+        IGenericRepository<Tag> Tags { get; }
+        IGenericRepository<PostTag> PostTags { get; }
+        IGenericRepository<Banner> Banners { get; }
 
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();
