@@ -20,6 +20,9 @@ namespace MyPetClinic.Infrastructure
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IPetRepository, PetRepository>();
             services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+            services.AddScoped<IMedicineRepository, MedicineRepository>();
+            services.AddScoped<IMedicineBatchRepository, MedicineBatchRepository>();
+            services.AddScoped<IInventoryTransactionRepository, InventoryTransactionRepository>();
 
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();

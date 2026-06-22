@@ -14,10 +14,12 @@ namespace MyPetClinic.Application.Services
     public class MedicalRecordService : IMedicalRecordService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMedicineService _medicineService;
 
-        public MedicalRecordService(IUnitOfWork unitOfWork)
+        public MedicalRecordService(IUnitOfWork unitOfWork, IMedicineService medicineService)
         {
             _unitOfWork = unitOfWork;
+            _medicineService = medicineService;
         }
 
         public async Task<long> CreateMedicalRecordAsync(CreateMedicalRecordDto dto, Guid doctorId)
@@ -81,9 +83,14 @@ namespace MyPetClinic.Application.Services
                             throw new InvalidOperationException($"Thuốc '{medicine.Name}' không đủ tồn kho. Yêu cầu: {item.Quantity}, Hiện có: {medicine.StockQuantity}");
                         }
 
-                        // Trừ tồn kho
-                        medicine.StockQuantity -= item.Quantity;
-                        _unitOfWork.Medicines.Update(medicine);
+                        // Xuất kho tự động áp dụng FEFO qua MedicineService
+                        await _medicineService.ExportMedicineAsync(new ExportMedicineDto
+                        {
+                            MedicineId = item.MedicineId,
+                            Quantity = item.Quantity,
+                            ReferenceCode = $"MR-{medicalRecord.Id}",
+                            Notes = $"Kê đơn từ hồ sơ khám bệnh #{medicalRecord.Id}"
+                        }, doctorId);
 
                         var prescriptionItem = new PrescriptionItem
                         {
@@ -424,8 +431,14 @@ namespace MyPetClinic.Application.Services
                         if (medicine == null) throw new KeyNotFoundException($"Không tìm thấy thuốc với ID {item.MedicineId}");
                         if (medicine.StockQuantity < item.Quantity) throw new InvalidOperationException($"Thuốc '{medicine.Name}' không đủ tồn kho.");
 
-                        medicine.StockQuantity -= item.Quantity;
-                        _unitOfWork.Medicines.Update(medicine);
+                        // Xuất kho tự động áp dụng FEFO
+                        await _medicineService.ExportMedicineAsync(new ExportMedicineDto
+                        {
+                            MedicineId = item.MedicineId,
+                            Quantity = item.Quantity,
+                            ReferenceCode = $"MR-{medicalRecord.Id}",
+                            Notes = $"Kê đơn SOAP #{medicalRecord.Id}"
+                        }, doctorId);
 
                         await _unitOfWork.PrescriptionItems.AddAsync(new PrescriptionItem
                         {

@@ -131,6 +131,12 @@ Dưới đây là nhật ký ghi nhận các tính năng đã được kiểm th
   - `DeleteMedicine_ExistingMedicine_RemovesSuccessfully`: Xóa thuốc ra khỏi kho dữ liệu.
 - **Trạng thái:** `✅ PASSED`
 
+### 1.5. InventoryIntegrationTests (Kiểm thử luồng Tồn kho tổng thể)
+- **Tệp kiểm thử:** [InventoryIntegrationTests.cs](file:///e:/DATN/MyPetClinic/backend/tests/MyPetClinic.Tests/InventoryIntegrationTests.cs)
+- **Kịch bản kiểm thử:**
+  - `InventoryFlow_Import_Prescribe_Export_Audit_ShouldWorkCorrectly`: Chạy luồng E2E từ lúc Admin nhập kho một lô thuốc mới, Bác sĩ kê đơn thuốc (tự động xuất kho theo FEFO), hệ thống cảnh báo thuốc sắp hết hạn, và kiểm kê xử lý chênh lệch thất thoát.
+- **Trạng thái:** `✅ PASSED`
+
 ### 2. ScheduleAdminTests (Ca trực Bác sĩ)
 - **Tệp kiểm thử:** [ScheduleAdminTests.cs](file:///e:/DATN/MyPetClinic/backend/tests/MyPetClinic.Tests/ScheduleAdminTests.cs)
 - **Kịch bản kiểm thử:**

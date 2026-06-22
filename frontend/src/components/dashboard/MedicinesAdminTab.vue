@@ -6,9 +6,14 @@
         <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-box-seam-fill text-warning me-2"></i>Quản lý Kho thuốc & Dược phẩm</h4>
         <p class="text-muted small mb-0">Theo dõi tồn kho, hạn sử dụng và cấu hình đơn giá thuốc trong phòng khám</p>
       </div>
-      <button class="btn btn-premium px-4 py-2.5 rounded-pill shadow-sm" @click="openCreateModal">
-        <i class="bi bi-plus-circle-fill me-2"></i> Nhập Thuốc Mới
-      </button>
+      <div class="d-flex gap-2">
+        <button class="btn btn-premium-outline px-4 py-2.5 rounded-pill shadow-sm" @click="openCreateModal">
+          <i class="bi bi-plus-circle-fill me-2"></i> Thêm Dược Phẩm
+        </button>
+        <button class="btn btn-premium px-4 py-2.5 rounded-pill shadow-sm" @click="showImportModal = true">
+          <i class="bi bi-box-arrow-in-down me-2"></i> Nhập Kho
+        </button>
+      </div>
     </div>
 
     <!-- Warnings Dashboard Cards -->
@@ -141,7 +146,7 @@
       <div class="zalo-modal-card max-w-500">
         <div class="zalo-modal-header bg-warning text-dark">
           <h5 class="modal-title fw-bold">
-            <i class="bi bi-box-seam-fill me-2"></i> {{ isEdit ? 'Cập Nhật Dược Phẩm' : 'Nhập Kho Dược Phẩm Mới' }}
+            <i class="bi bi-box-seam-fill me-2"></i> {{ isEdit ? 'Cập Nhật Dược Phẩm' : 'Thêm Danh Mục Thuốc Mới' }}
           </h5>
           <button class="modal-close text-dark border-0 bg-transparent" @click="showModal = false"><i class="bi bi-x-lg fs-5"></i></button>
         </div>
@@ -152,28 +157,20 @@
               <input type="text" v-model="form.name" class="form-control input-premium" required placeholder="Nhập tên thuốc..." />
             </div>
             <div class="row g-2 mb-3">
-              <div class="col-6">
+              <div class="col-12">
                 <label class="form-label text-muted small fw-bold">Đơn vị tính *</label>
                 <input type="text" v-model="form.unit" class="form-control" required placeholder="VD: Viên, Lọ, Chai..." />
-              </div>
-              <div class="col-6">
-                <label class="form-label text-muted small fw-bold">Số lượng nhập kho *</label>
-                <input type="number" v-model="form.stockQuantity" class="form-control" required min="0" />
               </div>
             </div>
             <div class="row g-2 mb-3">
               <div class="col-6">
-                <label class="form-label text-muted small fw-bold">Giá nhập (VND)</label>
+                <label class="form-label text-muted small fw-bold">Giá nhập trung bình (VND)</label>
                 <input type="number" v-model="form.importPrice" class="form-control" min="0" />
               </div>
               <div class="col-6">
                 <label class="form-label text-muted small fw-bold">Giá bán lẻ (VND) *</label>
                 <input type="number" v-model="form.sellPrice" class="form-control" required min="0" />
               </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label text-muted small fw-bold">Hạn sử dụng (HSD)</label>
-              <input type="date" v-model="form.expiryDate" class="form-control" />
             </div>
             <div class="mb-3">
               <label class="form-label text-muted small fw-bold">Mô tả chi tiết</label>
@@ -188,12 +185,19 @@
         </div>
       </div>
     </div>
+    <!-- Import Master-Detail Modal -->
+    <ImportMedicineModal 
+      :show="showImportModal" 
+      @close="showImportModal = false" 
+      @success="handleImportSuccess" 
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import api from '../../services/api';
+import ImportMedicineModal from './ImportMedicineModal.vue';
 
 const loading = ref(false);
 const loadingWarnings = ref(false);
@@ -207,13 +211,13 @@ const showModal = ref(false);
 const isEdit = ref(false);
 const currentMedicineId = ref<number | null>(null);
 
+const showImportModal = ref(false);
+
 const form = ref({
   name: '',
   unit: '',
-  stockQuantity: 0,
   importPrice: 0 as number | null,
   sellPrice: 0,
-  expiryDate: '',
   description: ''
 });
 
@@ -239,11 +243,12 @@ const loadMedicines = async () => {
 const loadWarnings = async () => {
   loadingWarnings.value = true;
   try {
-    const res = await api.get('/admin/medicines/warnings');
-    if (res.data) {
-      lowStockList.value = res.data.lowStock || [];
-      expiringList.value = res.data.expiring || [];
-    }
+    const [lowStockRes, expiringRes] = await Promise.all([
+      api.get('/medicines/low-stock'),
+      api.get('/medicines/expiring')
+    ]);
+    lowStockList.value = lowStockRes.data || [];
+    expiringList.value = expiringRes.data || [];
   } catch (err) {
     console.error('Lỗi tải cảnh báo kho thuốc:', err);
   } finally {
@@ -257,10 +262,8 @@ const openCreateModal = () => {
   form.value = {
     name: '',
     unit: 'Viên',
-    stockQuantity: 100,
     importPrice: 0,
     sellPrice: 0,
-    expiryDate: '',
     description: ''
   };
   showModal.value = true;
@@ -272,10 +275,8 @@ const openEditModal = (med: any) => {
   form.value = {
     name: med.name,
     unit: med.unit || '',
-    stockQuantity: med.stockQuantity || 0,
     importPrice: med.importPrice || 0,
     sellPrice: med.sellPrice || 0,
-    expiryDate: med.expiryDate ? med.expiryDate.split('T')[0] : '',
     description: med.description || ''
   };
   showModal.value = true;
@@ -283,17 +284,14 @@ const openEditModal = (med: any) => {
 
 const submitForm = async () => {
   try {
-    const payload = {
-      ...form.value,
-      expiryDate: form.value.expiryDate ? form.value.expiryDate : null
-    };
+    const payload = { ...form.value };
 
     if (isEdit.value && currentMedicineId.value) {
       await api.put(`/admin/medicines/${currentMedicineId.value}`, payload);
       alert('Cập nhật dược phẩm thành công!');
     } else {
       await api.post('/admin/medicines', payload);
-      alert('Nhập kho dược phẩm thành công!');
+      alert('Thêm mới danh mục dược phẩm thành công!');
     }
     showModal.value = false;
     await loadMedicines();
@@ -301,6 +299,12 @@ const submitForm = async () => {
   } catch (err: any) {
     alert(err.response?.data?.message || 'Có lỗi xảy ra khi lưu thông tin thuốc.');
   }
+};
+
+const handleImportSuccess = async (msg: string) => {
+  alert(msg);
+  await loadMedicines();
+  await loadWarnings();
 };
 
 const handleDelete = async (id: number) => {

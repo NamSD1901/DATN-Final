@@ -26,6 +26,9 @@ namespace MyPetClinic.Infrastructure.Repositories
         public IGenericRepository<PrescriptionItem> PrescriptionItems { get; private set; }
         public IGenericRepository<Vaccine> Vaccines { get; private set; }
         public IGenericRepository<VaccineBatch> VaccineBatches { get; private set; }
+        public IGenericRepository<MedicineCategory> MedicineCategories { get; private set; }
+        public IGenericRepository<MedicineBatch> MedicineBatches { get; private set; }
+        public IGenericRepository<InventoryTransaction> InventoryTransactions { get; private set; }
         public IGenericRepository<VaccinationRecord> VaccinationRecords { get; private set; }
         public IGenericRepository<DoctorSchedule> DoctorSchedules { get; private set; }
         public IGenericRepository<Post> Posts { get; private set; }
@@ -52,6 +55,9 @@ namespace MyPetClinic.Infrastructure.Repositories
             PrescriptionItems = new GenericRepository<PrescriptionItem>(_context);
             Vaccines = new GenericRepository<Vaccine>(_context);
             VaccineBatches = new GenericRepository<VaccineBatch>(_context);
+            MedicineCategories = new GenericRepository<MedicineCategory>(_context);
+            MedicineBatches = new GenericRepository<MedicineBatch>(_context);
+            InventoryTransactions = new GenericRepository<InventoryTransaction>(_context);
             VaccinationRecords = new GenericRepository<VaccinationRecord>(_context);
             DoctorSchedules = new GenericRepository<DoctorSchedule>(_context);
             Posts = new GenericRepository<Post>(_context);

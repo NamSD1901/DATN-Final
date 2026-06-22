@@ -260,10 +260,25 @@
                           <div v-for="(pres, idx) in form.plan.prescriptions" :key="idx" class="col-md-6">
                             <div class="bg-light p-3 rounded-4 border position-relative h-100">
                               <button type="button" class="btn-close position-absolute top-0 end-0 m-2" @click="removePrescriptionLine(idx)"></button>
-                              <select v-model="pres.medicineId" class="form-select form-select-sm fw-bold mb-2 w-75" @change="onMedicineChange(idx, pres.medicineId)">
-                                <option :value="null" disabled>— Chọn thuốc —</option>
-                                <option v-for="med in medicineOptions" :key="med.id" :value="med.id">{{ med.name }} ({{ med.unit }})</option>
-                              </select>
+                              <div class="position-relative mb-2 w-100">
+                                <div class="input-group input-group-sm">
+                                  <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                                  <input type="text" class="form-control fw-bold" placeholder="Tìm kiếm thuốc (chỉ hiển thị còn hàng)..." v-model="pres.searchQuery" @focus="pres.showDropdown = true" @blur="hideDropdown(pres)" @input="handleSearchInput(pres)" />
+                                </div>
+                                <div v-if="pres.showDropdown && filteredMedicines(pres.searchQuery).length > 0" class="position-absolute w-100 bg-white border rounded shadow-lg mt-1" style="max-height: 250px; overflow-y: auto; z-index: 1050;">
+                                  <div v-for="med in filteredMedicines(pres.searchQuery)" :key="med.id" class="px-3 py-2 border-bottom autocomplete-item cursor-pointer" @mousedown.prevent="selectMedicine(idx, med)">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                      <div class="fw-bold text-dark">{{ med.name }}</div>
+                                      <span class="badge bg-success rounded-pill">Tồn: {{ med.stockQuantity }}</span>
+                                    </div>
+                                    <div class="small text-muted mt-1">{{ med.unit }} - {{ med.sellPrice ? med.sellPrice.toLocaleString() : 0 }}đ</div>
+                                  </div>
+                                </div>
+                                <div v-if="pres.showDropdown && pres.searchQuery && filteredMedicines(pres.searchQuery).length === 0" class="position-absolute w-100 bg-white border rounded shadow-lg mt-1 px-3 py-3 small text-center text-muted" style="z-index: 1050;">
+                                  <i class="bi bi-x-circle d-block fs-4 text-danger mb-2"></i>
+                                  Không tìm thấy thuốc hoặc đã hết hàng.
+                                </div>
+                              </div>
                               <div class="row g-2">
                                 <div class="col-4"><label class="small text-muted" style="font-size:0.7rem">Số lượng</label><input type="number" min="1" v-model.number="pres.quantity" class="form-control form-control-sm"></div>
                                 <div class="col-8"><label class="small text-muted" style="font-size:0.7rem">Liều lượng</label><input type="text" v-model="pres.dosage" class="form-control form-control-sm"></div>
@@ -559,6 +574,8 @@ const form = ref({
     followUpDate: '',
     prescriptions: [] as Array<{
       medicineId: number | null;
+      searchQuery: string;
+      showDropdown: boolean;
       quantity: number;
       dosage: string;
       frequency: string;
@@ -634,10 +651,37 @@ onMounted(async () => {
 const fetchMedicines = async () => {
   try {
     const res = await api.get('/medicines');
-    medicineOptions.value = res.data || [];
+    // Bác sĩ kê đơn: Chỉ lấy những thuốc còn hàng (Tồn > 0)
+    medicineOptions.value = (res.data || []).filter((m: any) => m.stockQuantity > 0);
   } catch (err) {
     console.error('Lỗi tải danh mục thuốc:', err);
   }
+};
+
+const filteredMedicines = (query: string) => {
+  if (!query) return medicineOptions.value;
+  const lower = query.toLowerCase();
+  return medicineOptions.value.filter(m => m.name.toLowerCase().includes(lower));
+};
+
+const handleSearchInput = (pres: any) => {
+  pres.medicineId = null;
+  pres.showDropdown = true;
+};
+
+const hideDropdown = (pres: any) => {
+  // Delay slightly to allow mousedown on item to fire first
+  setTimeout(() => {
+    pres.showDropdown = false;
+  }, 200);
+};
+
+const selectMedicine = (idx: number, med: any) => {
+  const pres = form.value.plan.prescriptions[idx];
+  pres.medicineId = med.id;
+  pres.searchQuery = med.name;
+  pres.showDropdown = false;
+  onMedicineChange(idx, med.id);
 };
 
 const fetchPetHistory = async (petId: number) => {
@@ -656,6 +700,8 @@ const fetchPetHistory = async (petId: number) => {
 const addPrescriptionLine = () => {
   form.value.plan.prescriptions.push({
     medicineId: null,
+    searchQuery: '',
+    showDropdown: false,
     quantity: 1,
     dosage: '',
     frequency: '',
@@ -790,6 +836,14 @@ const formatDate = (dateStr: string): string => {
   align-items: center;
   justify-content: center;
   border: 3px solid #ffc107;
+}
+
+.autocomplete-item:hover {
+  background-color: #f8f9fa;
+  cursor: pointer;
+}
+.cursor-pointer {
+  cursor: pointer;
 }
 
 .card-gradient-pet {

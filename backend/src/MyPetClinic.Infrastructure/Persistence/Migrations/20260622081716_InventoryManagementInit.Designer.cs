@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyPetClinic.Infrastructure.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyPetClinic.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260622081716_InventoryManagementInit")]
+    partial class InventoryManagementInit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -340,8 +343,8 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("batch_id");
 
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uuid")
+                    b.Property<long>("CreatedByUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("created_by_user_id");
 
                     b.Property<long>("MedicineId")

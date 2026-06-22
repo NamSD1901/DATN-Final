@@ -37,7 +37,10 @@ namespace MyPetClinic.Infrastructure.Persistence
         public DbSet<DoctorSchedule> DoctorSchedules { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<MedicalRecord> MedicalRecords { get; set; }
+        public DbSet<MedicineCategory> MedicineCategories { get; set; }
         public DbSet<Medicine> Medicines { get; set; }
+        public DbSet<MedicineBatch> MedicineBatches { get; set; }
+        public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
         public DbSet<Prescription> Prescriptions { get; set; }
         public DbSet<PrescriptionItem> PrescriptionItems { get; set; }
         public DbSet<Vaccine> Vaccines { get; set; }
@@ -253,19 +256,69 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.HasOne(d => d.Pet).WithMany().HasForeignKey(d => d.PetId).OnDelete(DeleteBehavior.Restrict);
             });
 
+            // medicine_categories
+            modelBuilder.Entity<MedicineCategory>(entity =>
+            {
+                entity.ToTable("medicine_categories");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.Name).HasColumnName("name").IsRequired().HasMaxLength(255);
+                entity.Property(e => e.Description).HasColumnName("description");
+            });
+
             // medicines
             modelBuilder.Entity<Medicine>(entity =>
             {
                 entity.ToTable("medicines");
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.MedicineCode).HasColumnName("medicine_code").IsRequired().HasMaxLength(50);
+                entity.HasIndex(e => e.MedicineCode).IsUnique();
                 entity.Property(e => e.Name).HasColumnName("name").IsRequired().HasMaxLength(255);
-                entity.Property(e => e.Unit).HasColumnName("unit").HasMaxLength(50);
-                entity.Property(e => e.StockQuantity).HasColumnName("stock_quantity").HasDefaultValue(0);
-                entity.Property(e => e.ImportPrice).HasColumnName("import_price");
-                entity.Property(e => e.SellPrice).HasColumnName("sell_price");
-                entity.Property(e => e.ExpiryDate).HasColumnName("expiry_date");
+                entity.Property(e => e.CategoryId).HasColumnName("category_id");
+                entity.Property(e => e.Unit).HasColumnName("unit").IsRequired().HasMaxLength(50);
+                entity.Property(e => e.ImportPrice).HasColumnName("import_price").HasDefaultValue(0);
+                entity.Property(e => e.SellPrice).HasColumnName("sell_price").HasDefaultValue(0);
+                entity.Property(e => e.MinStockLevel).HasColumnName("min_stock_level").HasDefaultValue(0);
+                entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
                 entity.Property(e => e.Description).HasColumnName("description");
+
+                entity.HasOne(d => d.Category).WithMany(p => p.Medicines).HasForeignKey(d => d.CategoryId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // medicine_batches
+            modelBuilder.Entity<MedicineBatch>(entity =>
+            {
+                entity.ToTable("medicine_batches");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.BatchNumber).HasColumnName("batch_number").IsRequired().HasMaxLength(100);
+                entity.Property(e => e.MedicineId).HasColumnName("medicine_id");
+                entity.Property(e => e.ManufactureDate).HasColumnName("manufacture_date");
+                entity.Property(e => e.ExpiryDate).HasColumnName("expiry_date");
+                entity.Property(e => e.InitialQuantity).HasColumnName("initial_quantity").HasDefaultValue(0);
+                entity.Property(e => e.CurrentQuantity).HasColumnName("current_quantity").HasDefaultValue(0);
+
+                entity.HasOne(d => d.Medicine).WithMany(p => p.Batches).HasForeignKey(d => d.MedicineId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // inventory_transactions
+            modelBuilder.Entity<InventoryTransaction>(entity =>
+            {
+                entity.ToTable("inventory_transactions");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.TransactionDate).HasColumnName("transaction_date").HasDefaultValueSql("NOW()");
+                entity.Property(e => e.Type).HasColumnName("type");
+                entity.Property(e => e.MedicineId).HasColumnName("medicine_id");
+                entity.Property(e => e.BatchId).HasColumnName("batch_id");
+                entity.Property(e => e.QuantityChange).HasColumnName("quantity_change");
+                entity.Property(e => e.CreatedByUserId).HasColumnName("created_by_user_id");
+                entity.Property(e => e.ReferenceCode).HasColumnName("reference_code").HasMaxLength(100);
+                entity.Property(e => e.Notes).HasColumnName("notes");
+
+                entity.HasOne(d => d.Medicine).WithMany(p => p.InventoryTransactions).HasForeignKey(d => d.MedicineId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(d => d.Batch).WithMany().HasForeignKey(d => d.BatchId).OnDelete(DeleteBehavior.Restrict);
             });
 
             // prescriptions

@@ -64,7 +64,7 @@ const updateRange = () => {
   box-shadow: 0 4px 6px rgba(245, 158, 11, 0.1) !important;
 }
 .time-input {
-  width: 105px;
+  width: 125px;
   cursor: pointer;
 }
 .time-input:focus {

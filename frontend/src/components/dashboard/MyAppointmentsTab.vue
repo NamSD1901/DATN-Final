@@ -342,7 +342,7 @@
                           </div>
                           <div class="d-grid gap-1" style="grid-template-columns: repeat(7, 1fr); text-align: center;">
                             <div v-for="(day, idx) in calendarDays" :key="idx" 
-                                 class="calendar-day rounded-circle d-flex align-items-center justify-content-center mx-auto"
+                                 class="calendar-day rounded-circle d-flex align-items-center justify-content-center mx-auto position-relative"
                                  :class="{
                                    'text-muted opacity-50': !day.isCurrentMonth || day.isPast,
                                    'fw-bold': day.isCurrentMonth && !day.isPast,
@@ -357,7 +357,7 @@
                           </div>
                         </div>
                         
-                        <div class="mt-3 pt-2 border-top">
+                        <div class="mt-3 pt-2 pb-4 mb-2 border-top">
                           <p class="small text-muted mb-2 fw-semibold"><i class="bi bi-info-circle me-1"></i> Chú giải màu khung giờ:</p>
                           <div class="d-flex flex-wrap gap-2">
                             <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
@@ -394,8 +394,16 @@
                         <!-- The no-slots fallback has been removed because we always render the greyed out slots -->
                         <div v-else class="d-flex flex-column flex-grow-1 overflow-hidden">
                           <div class="slots-scroll-area flex-grow-1 overflow-auto" style="padding-right: 10px; margin-right: -10px;">
-                            <!-- Morning Slots -->
-                            <div class="mb-4">
+                            
+                            <div v-if="displayMorningSlots.length === 0 && displayAfternoonSlots.length === 0" class="empty-state-appt p-4 mt-3 text-center rounded-3 bg-light border border-warning border-opacity-25 mx-2">
+                              <i class="bi bi-calendar-x text-warning fs-1 mb-2"></i>
+                              <h6 class="fw-bold text-dark mt-3">Phòng khám nghỉ lễ / đóng cửa</h6>
+                              <p class="small text-muted mb-0 mt-2">Không có khung giờ làm việc nào trong ngày này. Vui lòng chọn một ngày khác.</p>
+                            </div>
+
+                            <div v-else>
+                              <!-- Morning Slots -->
+                              <div v-if="displayMorningSlots.length > 0" class="mb-4">
                               <h6 class="text-muted fw-bold mb-3 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-high me-1"></i> BUỔI SÁNG</h6>
                               <div class="d-flex flex-wrap gap-2">
                                 <button
@@ -424,7 +432,7 @@
                             </div>
 
                             <!-- Afternoon Slots -->
-                            <div class="mb-4">
+                            <div v-if="displayAfternoonSlots.length > 0" class="mb-4">
                               <h6 class="text-muted fw-bold mb-3 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-low me-1"></i> BUỔI CHIỀU</h6>
                               <div class="d-flex flex-wrap gap-2">
                                 <button
@@ -450,6 +458,8 @@
                                   <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
                                 </button>
                               </div>
+                            </div>
+                            <!-- End of empty-state v-else wrapper -->
                             </div>
                           </div>
                           
@@ -1116,28 +1126,57 @@ interface SlotDisplay {
   isPast: boolean;
   isBooked: boolean;
   isTooSoon: boolean;
+  isClosed?: boolean;
 }
 
 // Buffer: slots must be at least 15 minutes from now to be bookable
 const BOOKING_BUFFER_MS = 15 * 60 * 1000;
+
+import { useClinicConfigStore } from '../../stores/clinicConfig.store';
+const clinicStore = useClinicConfigStore();
 
 const buildSlots = (times: string[]): SlotDisplay[] => {
   if (!selectedBookingDate.value) return [];
   const now = Date.now();
   const cutoff = now + BOOKING_BUFFER_MS;
   const [year, month, day] = selectedBookingDate.value.split('-');
+  
+  const slotDateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  const dayOfWeek = slotDateObj.getDay();
+  const operatingDay = clinicStore.weeklyHours.find((d: any) => d.dayOfWeek === dayOfWeek);
+  
+  const isHoliday = clinicStore.holidays.some((h: any) => {
+    if (!h.isActive) return false;
+    const start = new Date(h.startDate);
+    const end = new Date(h.endDate);
+    start.setHours(0,0,0,0);
+    end.setHours(23,59,59,999);
+    return slotDateObj >= start && slotDateObj <= end;
+  });
+
   return times.map(time => {
     const slotStr = `${selectedBookingDate.value}T${time}:00`;
     const [hour, minute] = time.split(':');
     const slotDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0);
     const slotMs = slotDate.getTime();
+    
+    let isClosed = isHoliday || !operatingDay || !operatingDay.isOpen;
+    if (!isClosed && operatingDay) {
+      const inShift = operatingDay.shifts.some((shift: any) => {
+        const sTime = shift.startTime.substring(0, 5);
+        const eTime = shift.endTime.substring(0, 5);
+        return time >= sTime && time < eTime;
+      });
+      if (!inShift) isClosed = true;
+    }
+
     const isPast = slotMs < now;
     const isTooSoon = !isPast && slotMs < cutoff;
     const isAvailableFromApi = computedAvailableSlots.value.includes(time);
-    const isBooked = !isPast && !isTooSoon && !isAvailableFromApi;
-    const isAvailable = !isPast && !isTooSoon && isAvailableFromApi;
-    return { time, slotStr, isAvailable, isPast, isBooked, isTooSoon };
-  });
+    const isBooked = !isPast && !isTooSoon && !isAvailableFromApi && !isClosed;
+    const isAvailable = !isPast && !isTooSoon && isAvailableFromApi && !isClosed;
+    return { time, slotStr, isAvailable, isPast, isBooked, isTooSoon, isClosed };
+  }).filter(s => !s.isClosed);
 };
 
 const displayMorningSlots = computed<SlotDisplay[]>(() => buildSlots(masterMorningTimes));
@@ -1609,7 +1648,11 @@ const formatCurrency = (amount: number | null | undefined): string => {
 };
 
 // ===== Lifecycle =====
-onMounted(fetchAppointments);
+onMounted(async () => {
+  await clinicStore.fetchWeeklyHours();
+  await clinicStore.fetchHolidays();
+  fetchAppointments();
+});
 
 defineExpose({
   openBookModal

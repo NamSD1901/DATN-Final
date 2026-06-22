@@ -132,8 +132,8 @@ namespace MyPetClinic.Application.Services
                                 ItemId = pi.MedicineId,
                                 ItemName = pi.Medicine.Name,
                                 Quantity = pi.Quantity ?? 1,
-                                UnitPrice = pi.Medicine.SellPrice ?? 0,
-                                TotalPrice = (pi.Quantity ?? 1) * (pi.Medicine.SellPrice ?? 0)
+                                UnitPrice = pi.Medicine.SellPrice,
+                                TotalPrice = (pi.Quantity ?? 1) * pi.Medicine.SellPrice
                             });
                         }
                     }
@@ -190,7 +190,7 @@ namespace MyPetClinic.Application.Services
                 var medicine = await _unitOfWork.Medicines.GetByIdAsync(itemId);
                 if (medicine == null) throw new InvalidOperationException("Không tìm thấy thuốc.");
                 itemName = medicine.Name;
-                unitPrice = medicine.SellPrice ?? 0;
+                unitPrice = medicine.SellPrice;
             }
             else
             {
@@ -381,7 +381,7 @@ namespace MyPetClinic.Application.Services
                 Type = "medicine",
                 Id = m.Id,
                 Name = m.Name,
-                Price = m.SellPrice ?? 0,
+                Price = m.SellPrice,
                 Unit = m.Unit,
                 StockQuantity = m.StockQuantity
             }));

@@ -162,9 +162,9 @@ namespace MyPetClinic.Application.Services
             {
                 Id = m.Id,
                 Name = m.Name,
-                Unit = m.Unit ?? "",
+                Unit = m.Unit,
                 StockQuantity = m.StockQuantity,
-                SellPrice = m.SellPrice ?? 0
+                SellPrice = m.SellPrice
             });
         }
 
@@ -201,9 +201,9 @@ namespace MyPetClinic.Application.Services
             {
                 Id = medicine.Id,
                 Name = medicine.Name,
-                Unit = medicine.Unit ?? "",
+                Unit = medicine.Unit,
                 StockQuantity = medicine.StockQuantity,
-                SellPrice = medicine.SellPrice ?? 0
+                SellPrice = medicine.SellPrice
             };
         }
 
@@ -227,9 +227,9 @@ namespace MyPetClinic.Application.Services
             {
                 Id = medicine.Id,
                 Name = medicine.Name,
-                Unit = medicine.Unit ?? "",
+                Unit = medicine.Unit,
                 StockQuantity = medicine.StockQuantity,
-                SellPrice = medicine.SellPrice ?? 0
+                SellPrice = medicine.SellPrice
             };
         }
 

@@ -1158,6 +1158,7 @@ interface SlotDisplay {
   isPast: boolean;
   isBooked: boolean;
   isTooSoon: boolean;
+  isClosed?: boolean;
 }
 
 const masterMorningTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
@@ -1165,23 +1166,56 @@ const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:0
 
 const BOOKING_BUFFER_MS = 15 * 60 * 1000; // 15 phút
 
+import { useClinicConfigStore } from '../../stores/clinicConfig.store';
+const clinicStore = useClinicConfigStore();
+
 const buildSlots = (times: string[]): SlotDisplay[] => {
   if (!formPayload.value.dateOnly) return [];
   const now = Date.now();
   const cutoff = now + BOOKING_BUFFER_MS;
   const [year, month, day] = formPayload.value.dateOnly.split('-');
+  
+  // Find operating hours for this day
+  const slotDateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  const dayOfWeek = slotDateObj.getDay();
+  const operatingDay = clinicStore.weeklyHours.find((d: any) => d.dayOfWeek === dayOfWeek);
+  
+  // Check holidays
+  const isHoliday = clinicStore.holidays.some((h: any) => {
+    if (!h.isActive) return false;
+    const start = new Date(h.startDate);
+    const end = new Date(h.endDate);
+    start.setHours(0,0,0,0);
+    end.setHours(23,59,59,999);
+    return slotDateObj >= start && slotDateObj <= end;
+  });
+
   return times.map(time => {
     const slotStr = `${formPayload.value.dateOnly}T${time}:00`;
     const [hour, minute] = time.split(':');
     const slotDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0);
     const slotMs = slotDate.getTime();
+    
+    let isClosed = isHoliday || !operatingDay || !operatingDay.isOpen;
+    if (!isClosed && operatingDay) {
+      // Check if time is within any shift
+      // Shift time format from backend is usually "HH:MM:SS" or "HH:MM"
+      const inShift = operatingDay.shifts.some((shift: any) => {
+        const sTime = shift.startTime.substring(0, 5);
+        const eTime = shift.endTime.substring(0, 5);
+        return time >= sTime && time < eTime;
+      });
+      if (!inShift) isClosed = true;
+    }
+
     const isPast = slotMs < now;
     const isTooSoon = !isPast && slotMs < cutoff;
     const isAvailableFromApi = availableTimeSlots.value.includes(time);
-    const isBooked = !isPast && !isTooSoon && !isAvailableFromApi;
-    const isAvailable = !isPast && !isTooSoon && isAvailableFromApi;
-    return { time, slotStr, isAvailable, isPast, isBooked, isTooSoon };
-  });
+    const isBooked = !isPast && !isTooSoon && !isAvailableFromApi && !isClosed;
+    const isAvailable = !isPast && !isTooSoon && isAvailableFromApi && !isClosed;
+    
+    return { time, slotStr, isAvailable, isPast, isBooked, isTooSoon, isClosed };
+  }).filter(s => !s.isClosed);
 };
 
 const displayMorningSlots = computed<SlotDisplay[]>(() => buildSlots(masterMorningTimes));
@@ -1707,7 +1741,10 @@ const confirmChangeDoctor = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await clinicStore.fetchWeeklyHours();
+  await clinicStore.fetchHolidays();
+
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
     if (!target.closest('.dropdown')) {

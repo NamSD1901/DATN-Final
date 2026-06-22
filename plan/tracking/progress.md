@@ -192,7 +192,9 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 *   **Mục tiêu:** Quản trị kho dược phẩm, kho vắc-xin và phân ca trực của bác sĩ.
 *   **Trạng thái chung:** `✅ CODE DONE` (T47, T48, T48b).
 *   **Chi tiết:**
+    *   T47: Quản trị kho dược phẩm, Cảnh báo Hết hạn/Hết hàng & Nhập kho Master-Detail (`✅ CODE DONE` - Backend DTO, AdminService & MedicineService logic tự động Audit, Frontend `MedicinesAdminTab.vue` và `ImportMedicineModal.vue`).
     *   T48b: Quản lý Vắc-xin & Lô nhập ở Admin (`✅ CODE DONE` - Backend DTO, AdminService logic tự động StockQuantity, API Endpoints, Frontend `VaccinesAdminTab.vue` UI chia 2 cấp).
+    *   Tích hợp kê đơn trừ kho tự động FEFO với `ConsultationRecordTab.vue` bằng Auto-complete có validate `StockQuantity > 0`.
 
 ---
 
