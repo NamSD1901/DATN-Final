@@ -67,18 +67,18 @@
                 <Star class="widget-icon text-warning" /> Đọc Nhiều Nhất
               </h6>
               <div class="popular-list">
-                <a href="#" class="popular-item" @click.prevent>
+                <router-link to="/article/1" class="popular-item">
                   <span class="popular-date">25/05/2026</span>
                   <strong>Nấm da ở chó mèo có lây sang người không?</strong>
-                </a>
-                <a href="#" class="popular-item" @click.prevent>
+                </router-link>
+                <router-link to="/article/2" class="popular-item">
                   <span class="popular-date">24/05/2026</span>
                   <strong>Tại sao chó bị rụng lông & điều trị thế nào?</strong>
-                </a>
-                <a href="#" class="popular-item" @click.prevent>
+                </router-link>
+                <router-link to="/article/3" class="popular-item">
                   <span class="popular-date">20/05/2026</span>
                   <strong>Chó bị táo bón: Cách chữa trị tại nhà</strong>
-                </a>
+                </router-link>
               </div>
             </div>
           </aside>
@@ -87,16 +87,21 @@
           <main class="main-content">
             <div class="articles-grid">
               <!-- Article Card -->
-              <div v-for="article in filteredArticles" :key="article.id" class="article-card glass-card">
+              <router-link 
+                v-for="art in filteredArticles" 
+                :key="art.id" 
+                :to="'/article/' + art.id" 
+                class="article-card glass-card text-decoration-none"
+              >
                 <div class="article-img-wrapper">
-                  <img :src="article.image" class="article-img" :alt="article.title" />
+                  <img :src="art.image" class="article-img" :alt="art.title" />
                 </div>
                 <div class="article-body">
-                  <span class="badge" :class="article.badgeClass">{{ article.category }}</span>
-                  <h5 class="article-title">{{ article.title }}</h5>
-                  <p class="article-desc">{{ article.excerpt }}</p>
+                  <span class="badge" :class="art.badgeClass">{{ art.category }}</span>
+                  <h5 class="article-title">{{ art.title }}</h5>
+                  <p class="article-desc">{{ art.excerpt }}</p>
                 </div>
-              </div>
+              </router-link>
             </div>
             
             <div v-if="filteredArticles.length === 0" class="text-center py-5 no-results">
@@ -123,7 +128,7 @@ import { ref, computed } from 'vue';
 import Header from '../../components/layout/Header.vue';
 import Footer from '../../components/layout/Footer.vue';
 import BookingModal from '../../components/shared/BookingModal.vue';
-import { BookOpen, Search, Tag, Star, ChevronRight } from '@lucide/vue';
+import { BookOpen, Search, Tag, Star, ChevronRight } from 'lucide-vue-next';
 
 const showBookingModal = ref(false);
 const searchQuery = ref('');
@@ -322,6 +327,11 @@ const filteredArticles = computed(() => {
   display: flex;
   flex-direction: column;
   background-color: white !important;
+  transition: box-shadow var(--transition-speed);
+}
+
+.article-card:hover {
+  box-shadow: var(--shadow-md) !important;
 }
 
 .article-img-wrapper {
@@ -362,6 +372,11 @@ const filteredArticles = computed(() => {
   line-height: 1.4;
   margin-bottom: 8px;
   color: var(--text-dark);
+  transition: color 0.3s ease;
+}
+
+.article-card:hover .article-title {
+  color: var(--primary-gold);
 }
 
 .article-desc {

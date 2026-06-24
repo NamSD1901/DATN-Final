@@ -60,6 +60,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/TinTuc.vue')
   },
   {
+    path: '/article/:id',
+    name: 'ArticleDetail',
+    component: () => import('../views/ArticleDetail.vue')
+  },
+  {
     path: '/services/kham-dieu-tri',
     name: 'KhamDieuTri',
     component: () => import('../views/services/KhamDieuTri.vue')

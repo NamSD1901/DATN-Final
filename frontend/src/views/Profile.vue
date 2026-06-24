@@ -397,14 +397,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&subset=vietnamese&display=swap');
 
 .profile-wrapper {
   position: relative;
   min-height: 100vh;
-  background: #f8fafc;
-  font-family: 'Outfit', sans-serif;
-  color: #334155;
+  background: radial-gradient(circle at top right, #1e293b, #0f172a, #0b0f19);
+  font-family: 'Be Vietnam Pro', sans-serif;
+
+  color: #f8fafc;
   overflow: hidden;
   padding: 2.5rem 1.5rem;
 }

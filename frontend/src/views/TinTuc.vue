@@ -23,11 +23,17 @@
         <div class="card border-0 glass-card p-4 mb-5 highlight-event-card">
           <div class="row-highlight">
             <div class="highlight-image-wrapper">
-              <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=600&auto=format&fit=crop" class="img-fluid rounded-4 shadow-sm highlight-banner" alt="Main Event Banner" />
+              <router-link to="/article/5">
+                <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=600&auto=format&fit=crop" class="img-fluid rounded-4 shadow-sm highlight-banner hover-zoom" alt="Main Event Banner" />
+              </router-link>
             </div>
             <div class="highlight-content">
               <span class="badge bg-danger mb-2">HOT EVENT</span>
-              <h3 class="fw-bold mb-3 text-dark">Chiến Dịch Tiêm Vaccine Phòng Dại Miễn Phí Vì Cộng Đồng</h3>
+              <h3 class="fw-bold mb-3 text-dark">
+                <router-link to="/article/5" class="text-decoration-none text-dark hover-text-warning header-link">
+                  Chiến Dịch Tiêm Vaccine Phòng Dại Miễn Phí Vì Cộng Đồng
+                </router-link>
+              </h3>
               <p class="text-muted mb-4">
                 Nhằm chung tay bảo vệ sức khỏe cộng đồng và đẩy lùi bệnh dại tại TP. Hồ Chí Minh, MyPetClinic tổ chức chiến dịch tiêm phòng vaccine dại hoàn toàn miễn phí cho 1000 chú chó mèo tại cả 3 cơ sở chính. 
               </p>
@@ -35,7 +41,9 @@
                 <span class="meta-item"><CalendarDays class="meta-icon" /> Thời gian: 01/06 - 15/06/2026</span>
                 <span class="meta-item"><MapPin class="meta-icon" /> Toàn hệ thống</span>
               </div>
-              <button class="btn-premium btn-sm" @click="showBookingModal = true">Đăng Ký Tham Gia Ngay</button>
+              <router-link to="/article/5" class="btn-premium btn-sm text-decoration-none d-inline-block text-center">
+                Xem Chi Tiết Chương Trình
+              </router-link>
             </div>
           </div>
         </div>
@@ -49,12 +57,18 @@
         </div>
 
         <div v-else class="news-cards-grid">
-          <!-- Dynamic Articles -->
-          <div v-for="post in posts" :key="post.id" class="news-card-col" @click="selectPost(post)" style="cursor: pointer;">
+          <router-link 
+            v-for="post in postsList" 
+            :key="post.id" 
+            :to="'/article/' + post.id" 
+            class="news-card-col text-decoration-none"
+          >
             <div class="card border-0 glass-card h-100 overflow-hidden shadow-sm article-card">
               <div class="position-relative img-wrapper">
                 <img :src="post.thumbnail || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=400&auto=format&fit=crop'" class="card-img-top article-img" :alt="post.title" />
-                <span class="position-absolute badge-category bg-warning text-dark text-uppercase">Cẩm Nang</span>
+                <span class="position-absolute badge-category text-uppercase" :class="post.badgeClass || 'bg-warning text-dark'">
+                  {{ post.category || 'Cẩm Nang' }}
+                </span>
               </div>
               <div class="card-body p-4 article-body">
                 <div class="d-flex align-items-center gap-2 mb-2 text-muted small meta-date">
@@ -62,39 +76,14 @@
                 </div>
                 <h5 class="card-title fw-bold mb-2 text-dark">{{ post.title }}</h5>
                 <p class="card-text small text-muted line-clamp">
-                  {{ truncateText(post.content || '', 100) }}
+                  {{ post.excerpt || truncateText(post.content || '', 100) }}
                 </p>
               </div>
             </div>
-          </div>
-
-          <!-- Fallback when no posts -->
-          <div v-if="posts.length === 0" class="col-12 text-center py-5 text-muted">
-            <i class="bi bi-journal-x fs-1 d-block mb-2 text-warning opacity-50"></i>
-            Hiện tại chưa có bài viết mới. Vui lòng quay lại sau!
-          </div>
+          </router-link>
         </div>
       </div>
     </section>
-
-    <!-- Detail Article Modal -->
-    <div v-if="selectedPost" class="zalo-modal-overlay" @click.self="selectedPost = null">
-      <div class="zalo-modal-card" style="max-width: 650px;">
-        <div class="zalo-modal-header bg-warning text-dark">
-          <h5 class="modal-title fw-bold">{{ selectedPost.title }}</h5>
-          <button class="modal-close text-dark border-0 bg-transparent" @click="selectedPost = null"><i class="bi bi-x-lg fs-5"></i></button>
-        </div>
-        <div class="zalo-modal-body text-start" style="max-height: 70vh; overflow-y: auto;">
-          <img :src="selectedPost.thumbnail || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=400&auto=format&fit=crop'" class="img-fluid rounded-4 w-100 mb-4 object-fit-cover" style="max-height: 250px;" />
-          <div class="d-flex align-items-center gap-2 mb-3 text-muted small">
-            <CalendarDays class="meta-icon" /> Đăng ngày: {{ formatDate(selectedPost.createdAt) }} | Tác giả: {{ selectedPost.authorName }}
-          </div>
-          <div class="text-dark" style="white-space: pre-line; line-height: 1.8;">
-            {{ selectedPost.content }}
-          </div>
-        </div>
-      </div>
-    </div>
 
     <Footer />
 
@@ -108,17 +97,50 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Header from '../components/layout/Header.vue';
 import Footer from '../components/layout/Footer.vue';
 import BookingModal from '../components/shared/BookingModal.vue';
-import { Newspaper, CalendarDays, MapPin } from '@lucide/vue';
+import { Newspaper, CalendarDays, MapPin } from 'lucide-vue-next';
 import api from '../services/api';
 
 const showBookingModal = ref(false);
 const posts = ref<any[]>([]);
 const loading = ref(false);
-const selectedPost = ref<any>(null);
+
+const staticPosts = [
+  {
+    id: 6,
+    title: 'Chào Hè Rực Rỡ - Ưu Đãi 20% Dịch Vụ Cắt Tỉa Lông (Grooming)',
+    category: 'Khuyến Mãi',
+    badgeClass: 'bg-warning text-dark',
+    thumbnail: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=400&auto=format&fit=crop',
+    excerpt: 'Giúp bé cưng giải nhiệt mùa hè với bộ lông gọn gàng mát mẻ. MyPetClinic giảm ngay 20% cho tất cả khách hàng đặt lịch dịch vụ Grooming...',
+    createdAt: '2026-05-26T00:00:00Z'
+  },
+  {
+    id: 7,
+    title: 'MyPetClinic Đón Nhận Chứng Chỉ Y Khoa Quốc Tế ISO 9001:2015',
+    category: 'Nội Bộ',
+    badgeClass: 'bg-info text-white',
+    thumbnail: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=400&auto=format&fit=crop',
+    excerpt: 'Đánh dấu mốc quan trọng trong việc chuẩn hóa toàn bộ quy trình chăm sóc nội trú, phẫu thuật ngoại khoa và quy trình khử trùng...',
+    createdAt: '2026-05-18T00:00:00Z'
+  },
+  {
+    id: 8,
+    title: 'Ngày Hội Nhận Nuôi Thú Cưng Mồ Côi - Tìm Mái Ấm Yêu Thương',
+    category: 'Cộng Đồng',
+    badgeClass: 'bg-success text-white',
+    thumbnail: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?q=80&w=400&auto=format&fit=crop',
+    excerpt: 'Phối hợp với Trạm Cứu Hộ Động Vật, MyPetClinic hỗ trợ kiểm tra sức khỏe, tiêm phòng dại miễn phí cho các bé cưng được nhận nuôi...',
+    createdAt: '2026-05-10T00:00:00Z'
+  }
+];
+
+const postsList = computed(() => {
+  return [...posts.value, ...staticPosts];
+});
 
 const fetchPosts = async () => {
   loading.value = true;
@@ -140,11 +162,8 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-const selectPost = (post: any) => {
-  selectedPost.value = post;
-};
-
 const truncateText = (text: string, length: number) => {
+  if (!text) return '';
   if (text.length <= length) return text;
   return text.substring(0, length) + '...';
 };
@@ -211,19 +230,33 @@ onMounted(() => {
 
 .highlight-image-wrapper {
   width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-md);
 }
 
 .highlight-banner {
   width: 100%;
   max-height: 350px;
   object-fit: cover;
-  border-radius: var(--radius-md);
+  transition: transform var(--transition-speed);
+}
+
+.highlight-banner:hover {
+  transform: scale(1.03);
 }
 
 .highlight-content {
   display: flex;
   flex-direction: column;
   align-items: start;
+}
+
+.header-link {
+  transition: color var(--transition-speed);
+}
+
+.header-link:hover {
+  color: var(--primary-gold) !important;
 }
 
 .badge {
@@ -277,6 +310,11 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   background-color: white !important;
+  transition: box-shadow var(--transition-speed);
+}
+
+.article-card:hover {
+  box-shadow: var(--shadow-md) !important;
 }
 
 .img-wrapper {
@@ -326,6 +364,14 @@ onMounted(() => {
   line-height: 1.4;
   margin-top: 4px;
   margin-bottom: 8px;
+}
+
+.card-title a {
+  transition: color var(--transition-speed);
+}
+
+.card-title a:hover {
+  color: var(--primary-gold) !important;
 }
 
 .card-text {

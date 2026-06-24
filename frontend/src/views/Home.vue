@@ -406,7 +406,7 @@ const articles = ref([
 ]);
 
 const openArticleModal = (article: any) => {
-  activeArticleModal.value = article;
+  router.push('/article/' + article.id);
 };
 
 onMounted(() => {

@@ -93,7 +93,7 @@
     </div>
 
     <!-- Internal Navigation Tabs -->
-    <ul class="nav nav-tabs border-bottom-0 mb-4 bg-white p-2 rounded-4 shadow-sm" style="font-family: 'Outfit', sans-serif;">
+    <ul class="nav nav-tabs border-bottom-0 mb-4 bg-white p-2 rounded-4 shadow-sm" style="font-family: 'Be Vietnam Pro', sans-serif;">
       <li class="nav-item">
         <button class="nav-link rounded-3 px-4 py-2.5 fw-bold border-0" :class="{ 'active': activeSubTab === 'calendar' }" @click="activeSubTab = 'calendar'">
           <i class="bi bi-calendar3 me-2"></i>Lịch Trình Chi Tiết

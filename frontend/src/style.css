@@ -1,5 +1,5 @@
 /* Premium Gold Design System & Global Styles */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&subset=vietnamese&display=swap');
 
 :root {
   /* Warm Gold Color Palette */
@@ -42,10 +42,10 @@ html, body {
   padding: 0;
   background-color: var(--bg-light);
   color: var(--text-dark);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
   line-height: 1.6;
   min-height: 100vh;
-  overflow-x: clip;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -90,7 +90,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   color: var(--text-dark);
   letter-spacing: -0.02em;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Be Vietnam Pro', sans-serif;
 }
 
 p {
