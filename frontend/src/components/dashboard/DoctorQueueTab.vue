@@ -1,5 +1,5 @@
 <template>
-  <div class="doctor-queue-tab h-100 d-flex flex-column bg-white rounded-4 shadow-sm p-4">
+  <div class="doctor-queue-tab h-100 d-flex flex-column glass-panel rounded-4 p-4">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
       <div>
@@ -9,33 +9,33 @@
         <p class="text-muted mb-0 small">Hôm nay: {{ todayFormatted }}</p>
       </div>
       <div>
-        <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 border border-danger border-opacity-25 me-3">
-          <i class="bi bi-circle-fill small me-1"></i> Bác sĩ điều trị
+        <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 border border-danger border-opacity-25 shadow-sm">
+          <i class="bi bi-circle-fill small me-1 pulse-icon"></i> Bác sĩ điều trị
         </span>
       </div>
     </div>
 
     <!-- Controls -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <div class="d-flex align-items-center bg-light rounded-pill p-1 shadow-sm border">
-        <button class="btn btn-sm btn-white rounded-circle" @click="prevWeek">
-          <i class="bi bi-chevron-left"></i>
+      <div class="d-flex align-items-center bg-white bg-opacity-50 backdrop-blur rounded-pill p-1 shadow-sm border-glass">
+        <button class="btn btn-sm btn-white rounded-circle hover-lift" @click="prevWeek">
+          <i class="bi bi-chevron-left text-dark"></i>
         </button>
-        <div class="fw-bold text-dark px-4">
+        <div class="fw-bold text-dark px-4 font-monospace">
           Tuần: {{ weekStartStr }} – {{ weekEndStr }}
         </div>
-        <button class="btn btn-sm btn-white rounded-circle" @click="nextWeek">
-          <i class="bi bi-chevron-right"></i>
+        <button class="btn btn-sm btn-white rounded-circle hover-lift" @click="nextWeek">
+          <i class="bi bi-chevron-right text-dark"></i>
         </button>
       </div>
 
       <div class="d-flex gap-2">
-        <select v-if="isAdmin" v-model="selectedDoctor" @change="fetchWeeklySchedule" class="form-select border-warning rounded-pill px-3 py-1 shadow-sm" style="width: 180px;">
+        <select v-if="isAdmin" v-model="selectedDoctor" @change="fetchWeeklySchedule" class="form-select border-glass bg-white bg-opacity-75 rounded-pill px-3 py-1 shadow-sm fw-medium" style="width: 180px;">
           <option value="ALL">Tất cả bác sĩ</option>
           <option v-for="doc in doctors" :key="doc.id" :value="doc.id">Bs. {{ doc.fullName }}</option>
         </select>
-        <button class="btn btn-outline-secondary rounded-pill px-4 fw-bold bg-white" @click="goToToday">Hôm nay</button>
-        <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" @click="fetchWeeklySchedule" :disabled="loading">
+        <button class="btn btn-outline-glass rounded-pill px-4 fw-bold" @click="goToToday">Hôm nay</button>
+        <button class="btn btn-premium-neon rounded-pill px-4 fw-bold shadow-sm" @click="fetchWeeklySchedule" :disabled="loading">
           <span v-if="loading" class="spinner-border spinner-border-sm me-1"></span>
           <i v-else class="bi bi-arrow-clockwise me-1"></i> Làm mới
         </button>
@@ -46,22 +46,20 @@
     <div class="calendar-grid-container flex-grow-1 overflow-auto border rounded-3 position-relative">
       
       <!-- Loading Overlay -->
-      <div v-if="loading" class="position-absolute top-0 start-0 w-100 h-100 bg-white bg-opacity-75 d-flex justify-content-center align-items-center z-3">
+      <div v-if="loading" class="position-absolute top-0 start-0 w-100 h-100 bg-white bg-opacity-50 backdrop-blur d-flex justify-content-center align-items-center z-3 rounded-3">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
       </div>
 
-
-
-      <table class="table table-bordered mb-0 calendar-table">
-        <thead class="bg-light position-sticky top-0 z-2">
+      <table class="table mb-0 calendar-table">
+        <thead class="position-sticky top-0 z-2 glass-header">
           <tr>
-            <th class="text-center text-muted small fw-bold py-3 align-middle bg-light" style="width: 80px; min-width: 80px;">GIỜ</th>
+            <th class="text-center text-secondary-muted small fw-bold py-3 align-middle border-bottom-glass" style="width: 80px; min-width: 80px;">GIỜ</th>
             <th v-for="(day, index) in weekDays" :key="index" 
-                class="text-center py-3 bg-light"
+                class="text-center py-3 border-bottom-glass border-start-glass"
                 :class="{ 'current-day-col': isToday(day.date) }">
               <div class="d-flex flex-column align-items-center">
-                <span class="text-muted small fw-bold mb-1">{{ day.name }}</span>
-                <div class="day-circle shadow-sm" :class="isToday(day.date) ? 'bg-primary text-white' : 'bg-white text-dark border'">
+                <span class="text-secondary-muted small fw-bold mb-2">{{ day.name }}</span>
+                <div class="day-circle shadow-sm" :class="isToday(day.date) ? 'today-circle pulse-gold' : 'bg-white text-dark border-glass'">
                   {{ day.date.getDate() }}
                 </div>
               </div>
@@ -70,36 +68,36 @@
         </thead>
         <tbody>
           <tr v-for="time in timeSlots" :key="time">
-            <td class="text-center text-muted small fw-bold align-middle bg-light border-end">{{ time }}</td>
-            <td v-for="(day, index) in weekDays" :key="index" class="p-1 position-relative" :class="{ 'current-day-cell': isToday(day.date) }">
+            <td class="text-center text-secondary-muted small fw-bold align-middle border-end-glass border-bottom-glass">{{ time }}</td>
+            <td v-for="(day, index) in weekDays" :key="index" class="p-2 position-relative border-bottom-glass border-start-glass" :class="{ 'current-day-cell': isToday(day.date) }">
               <!-- Render Events for this cell -->
-              <div class="d-flex flex-column gap-1">
+              <div class="d-flex flex-column gap-2">
                 <template v-for="evt in getEventsForCell(day.date, time)" :key="evt.id">
                   
                   <!-- Appointment Card -->
-                  <div class="appointment-card p-2 rounded-3 border shadow-sm bg-white"
+                  <div class="appointment-card p-2"
                        :class="[getBorderClass(evt.extendedProps?.status), { 'emergency-pulse': evt.extendedProps?.isEmergency }]">
                     
                     <div class="d-flex justify-content-between align-items-start mb-1">
-                      <strong class="text-dark small d-block text-truncate">{{ evt.extendedProps?.petName || 'Thú cưng' }}</strong>
-                      <span v-if="evt.extendedProps?.isEmergency" class="badge bg-danger p-1" style="font-size: 0.5rem;">CẤP CỨU</span>
+                      <strong class="text-dark small d-block text-truncate fw-bold">{{ evt.extendedProps?.petName || 'Thú cưng' }}</strong>
+                      <span v-if="evt.extendedProps?.isEmergency" class="badge bg-danger shadow-sm rounded-pill px-2 py-1 ms-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">CẤP CỨU</span>
                     </div>
                     
                     <div class="text-muted text-truncate" style="font-size: 0.7rem;">
                       {{ evt.extendedProps?.serviceName || evt.title }}
                     </div>
 
-                    <!-- Action Button (Only show if status is waiting or in_progress, and date is today) -->
+                    <!-- Action Button -->
                     <div class="mt-2" v-if="isToday(day.date) && isWaitingOrInProgress(evt.extendedProps?.status)">
                       <button v-if="evt.extendedProps?.status === 'waiting'" 
-                              class="btn btn-sm btn-primary w-100 rounded-pill py-1 d-flex justify-content-center align-items-center" 
-                              style="font-size: 0.7rem;"
+                              class="btn btn-sm btn-premium-neon w-100 rounded-pill py-1 d-flex justify-content-center align-items-center fw-bold" 
+                              style="font-size: 0.75rem;"
                               @click.stop="startTreatment(evt)">
-                        <i class="bi bi-play-fill me-1"></i> Tiến hành khám
+                        <i class="bi bi-play-fill me-1 fs-6"></i> Khám ngay
                       </button>
                       <button v-if="evt.extendedProps?.status === 'in_progress'" 
-                              class="btn btn-sm btn-outline-primary w-100 rounded-pill py-1 d-flex justify-content-center align-items-center" 
-                              style="font-size: 0.7rem;"
+                              class="btn btn-sm btn-outline-glass w-100 rounded-pill py-1 d-flex justify-content-center align-items-center fw-bold" 
+                              style="font-size: 0.75rem;"
                               @click.stop="continueTreatment(evt)">
                         <i class="bi bi-pencil-square me-1"></i> Khám tiếp
                       </button>
@@ -189,12 +187,12 @@ const isWaitingOrInProgress = (status: string) => {
 
 const getBorderClass = (status: string) => {
   switch (status) {
-    case 'waiting': return 'border-warning border-start border-4';
-    case 'in_progress': return 'border-primary border-start border-4';
-    case 'ready_to_pay': return 'border-success border-start border-4 opacity-75';
-    case 'completed': return 'border-secondary border-start border-4 opacity-50';
-    case 'cancelled': return 'border-danger border-start border-4 opacity-50 text-decoration-line-through';
-    default: return 'border-info border-start border-4';
+    case 'waiting': return 'status-waiting border-warning';
+    case 'in_progress': return 'status-in-progress border-primary';
+    case 'ready_to_pay': return 'status-ready border-success opacity-75';
+    case 'completed': return 'status-completed border-secondary opacity-50';
+    case 'cancelled': return 'status-cancelled border-danger opacity-50 text-decoration-line-through';
+    default: return 'status-default border-info';
   }
 };
 
@@ -326,52 +324,162 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Glassmorphism Classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(245, 158, 11, 0.12);
+  box-shadow: 0 8px 32px 0 rgba(217, 119, 6, 0.04);
+}
+
+.backdrop-blur {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.border-glass { border: 1px solid rgba(245, 158, 11, 0.15) !important; }
+.border-bottom-glass { border-bottom: 1px solid rgba(245, 158, 11, 0.1) !important; }
+.border-start-glass { border-left: 1px solid rgba(245, 158, 11, 0.1) !important; }
+
+.text-secondary-muted { color: #64748b; }
+
+/* Premium Buttons */
+.btn-premium-neon {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+.btn-premium-neon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+  color: white;
+}
+
+.btn-outline-glass {
+  background: rgba(255, 255, 255, 0.6);
+  color: #1e293b;
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  transition: all 0.3s ease;
+}
+.btn-outline-glass:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #f59e0b;
+  color: #d97706;
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, background-color 0.2s;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  background-color: #f1f5f9 !important;
+}
+
+/* Day Circle */
 .day-circle {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
+  transition: all 0.3s;
 }
 
+.today-circle {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4) !important;
+}
+
+/* Calendar Grid */
 .calendar-grid-container {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: rgba(245, 158, 11, 0.3) transparent;
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .calendar-table {
   table-layout: fixed;
   min-width: 900px;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
-.calendar-table th, .calendar-table td {
-  border-color: #e9ecef;
+.glass-header th {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(12px);
 }
 
 .calendar-table td {
-  height: 90px;
+  height: 95px;
   vertical-align: top;
+  transition: background-color 0.2s;
+}
+.calendar-table td:hover {
+  background-color: rgba(245, 158, 11, 0.02);
 }
 
 .current-day-col {
-  background-color: #f8faff !important;
+  background: linear-gradient(to bottom, rgba(245, 158, 11, 0.04), transparent) !important;
 }
 
 .current-day-cell {
-  background-color: #f8faff !important;
+  background-color: rgba(245, 158, 11, 0.02) !important;
 }
 
+/* Appointment Cards */
 .appointment-card {
-  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(4px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-left-width: 4px !important;
+  border-left-style: solid !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
+
+.appointment-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.4), transparent);
+  pointer-events: none;
+}
+
 .appointment-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(245, 158, 11, 0.12) !important;
   z-index: 10;
+}
+
+/* Custom Status Border Colors */
+.status-waiting { border-left-color: #f59e0b !important; }
+.status-in-progress { border-left-color: #3b82f6 !important; }
+.status-ready { border-left-color: #10b981 !important; }
+.status-completed { border-left-color: #64748b !important; }
+.status-cancelled { border-left-color: #ef4444 !important; }
+.status-default { border-left-color: #0ea5e9 !important; }
+
+/* Animations */
+.pulse-icon {
+  animation: pulseOpacity 2s infinite;
+}
+
+@keyframes pulseOpacity {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
 }
 
 .emergency-pulse {
@@ -380,7 +488,7 @@ onMounted(() => {
 
 @keyframes borderPulse {
   0% { border-color: #dc3545; box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
-  70% { border-color: #dc3545; box-shadow: 0 0 0 6px rgba(220, 53, 69, 0); }
+  70% { border-color: #dc3545; box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); }
   100% { border-color: #dc3545; box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
 }
 </style>

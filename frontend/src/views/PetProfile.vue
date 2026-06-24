@@ -279,7 +279,7 @@
                         </div>
 
                         <!-- SOAP NOTES -->
-                        <div class="row g-3 mb-4">
+                        <div v-show="expandedRecordIds.has(rec.id)" class="row g-3 mb-4 mt-2">
                           <!-- Subjective & Objective -->
                           <div class="col-md-6">
                             <div class="p-3 rounded-3 h-100" style="background-color: rgba(255,255,255,0.5); border: 1px solid var(--border-color);">
@@ -315,8 +315,9 @@
                           <button v-if="rec.followUpDate" class="btn-premium px-4 py-2 hover-arrow" style="font-size: 0.85rem;">
                             Đặt lịch tái khám <i class="bi bi-arrow-right"></i>
                           </button>
-                          <button class="btn-premium-outline px-4 py-2" style="font-size: 0.85rem; padding: 0.5rem 1.5rem !important;">
-                            <i class="bi bi-eye"></i> Xem chi tiết
+                          <button class="btn-premium-outline px-4 py-2" style="font-size: 0.85rem; padding: 0.5rem 1.5rem !important;" @click="toggleRecordExpand(rec.id)">
+                            <i class="bi" :class="expandedRecordIds.has(rec.id) ? 'bi-eye-slash' : 'bi-eye'"></i> 
+                            {{ expandedRecordIds.has(rec.id) ? 'Thu gọn' : 'Xem chi tiết' }}
                           </button>
                         </div>
                       </div>
@@ -686,7 +687,7 @@
                     <div class="p-4 border-bottom">
                       <div class="d-flex justify-content-between align-items-start mb-2">
                         <div class="d-flex align-items-center flex-wrap gap-2">
-                          <h5 class="fw-bold text-dark mb-0">{{ rx.diagnosis }}</h5>
+                          <h5 class="fw-bold text-dark mb-0">{{ formatDiagnosis(rx.diagnosis) }}</h5>
                           <span class="badge rounded-pill px-3 py-1 fw-bold" :class="rx.status === 'active' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">
                             {{ rx.status === 'active' ? 'Đang dùng' : 'Đã hoàn thành' }}
                           </span>
@@ -761,7 +762,11 @@ import api from '../services/api';
 
 const route = useRoute();
 const router = useRouter();
-const petId = computed(() => route.params.id as string);
+
+const props = defineProps<{ petId?: string | number }>();
+const emit = defineEmits(['go-back']);
+
+const petId = computed(() => props.petId || (route.params.id as string));
 
 const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5150';
 
@@ -774,6 +779,18 @@ const ownerProfile = ref<any>(null);
 const medicalRecords = ref<any[]>([]);
 const vaccinations = ref<any[]>([]);
 const appointments = ref<any[]>([]);
+
+const expandedRecordIds = ref<Set<number>>(new Set());
+
+const toggleRecordExpand = (id: number) => {
+  const newSet = new Set(expandedRecordIds.value);
+  if (newSet.has(id)) {
+    newSet.delete(id);
+  } else {
+    newSet.add(id);
+  }
+  expandedRecordIds.value = newSet;
+};
 
 const prescriptions = ref<any[]>([]);
 
@@ -918,6 +935,11 @@ const fetchMedicalRecords = async () => {
   try {
     const res = await api.get(`/mypets/${petId.value}/medical-records`);
     medicalRecords.value = Array.isArray(res.data) ? res.data : (res.data.items || []);
+    
+    // Auto-expand the first record by default
+    if (medicalRecords.value.length > 0) {
+      expandedRecordIds.value = new Set([medicalRecords.value[0].id]);
+    }
   } catch {
     medicalRecords.value = [];
   }
@@ -1033,14 +1055,36 @@ watch(() => activeTab.value, (newTab) => {
 
 // ===== Helpers =====
 const goBack = () => {
-  if (window.history.length > 1) router.back();
-  else router.push('/dashboard');
+  if (props.petId) {
+    emit('go-back');
+  } else {
+    if (window.history.length > 1) router.back();
+    else router.push('/dashboard');
+  }
 };
 
 const getAvatarUrl = (path: string) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
   return `${backendUrl}${path}`;
+};
+
+const formatDiagnosis = (diagnosisStr: string | null) => {
+  if (!diagnosisStr) return 'Chẩn đoán chưa rõ';
+  try {
+    const parsed = JSON.parse(diagnosisStr);
+    const mainDiag = parsed.definitiveDiagnosis || parsed.tentativeDiagnosis || '';
+    if (mainDiag) {
+      let result = mainDiag;
+      if (parsed.diseaseSeverity) {
+        result += ` (Mức độ: ${parsed.diseaseSeverity})`;
+      }
+      return result;
+    }
+  } catch (e) {
+    // Not JSON, return as is
+  }
+  return diagnosisStr;
 };
 
 const getSpeciesEmoji = (species: string): string => {
@@ -1173,7 +1217,15 @@ const isVaccineDueSoon = (): boolean => {
 };
 
 // ===== Lifecycle =====
-onMounted(fetchAll);
+onMounted(() => {
+  fetchAll();
+});
+
+watch(petId, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    fetchAll();
+  }
+});
 </script>
 
 <style scoped>

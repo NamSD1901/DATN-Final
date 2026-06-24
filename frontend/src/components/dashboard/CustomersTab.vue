@@ -44,7 +44,7 @@
               <div>
                 <h6 class="fw-bold text-dark mb-1">{{ quickSearchResult.fullName }}</h6>
                 <div class="text-muted small">
-                  <i class="bi bi-phone me-1"></i>{{ quickSearchResult.phone }} | 
+                  <i class="bi bi-phone me-1"></i>{{ quickSearchResult.phone || 'Chưa cung cấp' }} | 
                   <i class="bi bi-envelope me-1"></i>{{ quickSearchResult.email || 'Không có email' }}
                 </div>
               </div>
@@ -138,10 +138,10 @@
               </td>
               <td>
                 <span class="badge bg-warning bg-opacity-10 text-dark-gold border border-warning border-opacity-20 px-3 py-1.5 rounded-pill">
-                  <i class="bi bi-phone me-1"></i>{{ cust.phone }}
+                  <i class="bi bi-phone me-1"></i>{{ cust.phone || 'Chưa cung cấp' }}
                 </span>
               </td>
-              <td class="text-muted small text-truncate" style="max-width: 250px;">{{ cust.address || '—' }}</td>
+              <td class="text-muted small text-truncate" style="max-width: 250px;">{{ cust.address || 'Chưa cung cấp' }}</td>
               <td class="text-muted small">{{ formatDate(cust.createdAt) }}</td>
               <td class="text-center">
                 <button class="btn btn-sm btn-outline-warning rounded-pill px-4 fw-bold shadow-sm" @click="viewCustomerDetail(cust.id)">
@@ -187,7 +187,7 @@
             <div class="text-start mt-3 border-top pt-3">
               <div class="mb-3">
                 <label class="text-muted small d-block mb-1">Số điện thoại</label>
-                <strong class="text-dark"><i class="bi bi-telephone text-warning me-1"></i>{{ detailData.customer.phone }}</strong>
+                <strong class="text-dark"><i class="bi bi-telephone text-warning me-1"></i>{{ detailData.customer.phone || 'Chưa cung cấp' }}</strong>
               </div>
               <div class="mb-3">
                 <label class="text-muted small d-block mb-1">Địa chỉ Email</label>
@@ -209,7 +209,7 @@
         <div class="col-lg-8">
           <!-- KPI Widgets Grid -->
           <div class="row g-3 mb-4">
-            <div class="col-sm-6 col-md-3">
+            <div class="col-sm-6 col-md-6">
               <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary bg-opacity-10 text-primary h-100">
                 <div class="d-flex justify-content-between align-items-center">
                   <div>
@@ -220,7 +220,7 @@
                 </div>
               </div>
             </div>
-            <div class="col-sm-6 col-md-3">
+            <div class="col-sm-6 col-md-6">
               <div class="card border-0 shadow-sm rounded-4 p-3 bg-success bg-opacity-10 text-success h-100">
                 <div class="d-flex justify-content-between align-items-center">
                   <div>
@@ -228,28 +228,6 @@
                     <h4 class="fw-extrabold mb-0">{{ formatCurrency(detailData.totalSpent) }}</h4>
                   </div>
                   <i class="bi bi-wallet2 fs-2 opacity-50"></i>
-                </div>
-              </div>
-            </div>
-            <div class="col-sm-6 col-md-3">
-              <div class="card border-0 shadow-sm rounded-4 p-3 bg-danger bg-opacity-10 text-danger h-100">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="text-uppercase small fw-bold mb-1 opacity-75">Bỏ hẹn/Hủy</h6>
-                    <h4 class="fw-extrabold mb-0">{{ detailData.noShowCount }}</h4>
-                  </div>
-                  <i class="bi bi-calendar-x fs-2 opacity-50"></i>
-                </div>
-              </div>
-            </div>
-            <div class="col-sm-6 col-md-3">
-              <div class="card border-0 shadow-sm rounded-4 p-3 bg-warning bg-opacity-10 text-dark-gold h-100">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h6 class="text-uppercase small fw-bold mb-1 opacity-75">Còn nợ</h6>
-                    <h4 class="fw-extrabold mb-0">{{ formatCurrency(detailData.unpaidBalance) }}</h4>
-                  </div>
-                  <i class="bi bi-cash-stack fs-2 opacity-50"></i>
                 </div>
               </div>
             </div>
@@ -319,7 +297,7 @@
                     <td colspan="5" class="py-4">Chưa có lịch sử khám bệnh nào ghi nhận.</td>
                   </tr>
                   <tr v-for="appt in detailData.appointments" :key="appt.id">
-                    <td class="small text-muted">{{ formatDateFull(appt.appointmentTime) }}</td>
+                    <td class="small text-muted">{{ formatDateFull(appt.appointmentDate) }}</td>
                     <td class="fw-bold text-dark">{{ appt.petName }}</td>
                     <td><span class="badge bg-success bg-opacity-10 text-success rounded px-2.5 py-1 fw-bold">{{ appt.serviceName }}</span></td>
                     <td class="small">{{ appt.doctorName }}</td>
