@@ -73,7 +73,7 @@ namespace MyPetClinic.Application.Services
                     // Validate all stock first
                     foreach (var item in dto.Prescriptions)
                     {
-                        var medicine = await _unitOfWork.Medicines.GetByIdAsync(item.MedicineId);
+                        var medicine = await _medicineService.GetMedicineStockAsync(item.MedicineId);
                         if (medicine == null)
                         {
                             throw new KeyNotFoundException($"Không tìm thấy thuốc với ID {item.MedicineId}");
@@ -434,7 +434,7 @@ namespace MyPetClinic.Application.Services
                     // Validate all stock first
                     foreach (var item in dto.Plan.Prescriptions)
                     {
-                        var medicine = await _unitOfWork.Medicines.GetByIdAsync(item.MedicineId);
+                        var medicine = await _medicineService.GetMedicineStockAsync(item.MedicineId);
                         if (medicine == null) throw new KeyNotFoundException($"Không tìm thấy thuốc với ID {item.MedicineId}");
                         if (medicine.StockQuantity < item.Quantity) throw new InvalidOperationException($"Thuốc '{medicine.Name}' không đủ tồn kho.");
                     }

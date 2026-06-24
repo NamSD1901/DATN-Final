@@ -12,5 +12,9 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<AuthResult> ForgotPasswordAsync(string email);
         Task<AuthResult> ResetPasswordAsync(string email, string otpCode, string newPassword, string confirmPassword);
         Task<AuthResult> ActivateAccountAsync(ActivateAccountRequest request);
+        
+        // 2FA Profile Claiming
+        Task<AuthResult> ClaimProfileAsync(ClaimProfileDto request);
+        Task<AuthResult> SkipClaimingAsync(SkipClaimDto request);
     }
 }

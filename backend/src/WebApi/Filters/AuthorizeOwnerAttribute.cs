@@ -16,10 +16,12 @@ namespace MyPetClinic.WebApi.Filters
         private class AuthorizeOwnerFilter : IAsyncActionFilter
         {
             private readonly IPetRepository _petRepository;
+            private readonly IUserRepository _userRepository;
 
-            public AuthorizeOwnerFilter(IPetRepository petRepository)
+            public AuthorizeOwnerFilter(IPetRepository petRepository, IUserRepository userRepository)
             {
                 _petRepository = petRepository;
+                _userRepository = userRepository;
             }
 
             public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -32,7 +34,16 @@ namespace MyPetClinic.WebApi.Filters
                     return;
                 }
 
-                // 2. Locate the resource ID from route parameters (typically 'id')
+                // 2. Fetch User to get CustomerId
+                var user = await _userRepository.GetUserByIdAsync(userId);
+                if (user == null || !user.CustomerId.HasValue)
+                {
+                    context.Result = new UnauthorizedObjectResult(new { message = "Không tìm thấy thông tin khách hàng." });
+                    return;
+                }
+                var customerId = user.CustomerId.Value;
+
+                // 3. Locate the resource ID from route parameters (typically 'id')
                 if (context.RouteData.Values.TryGetValue("id", out var idVal) && idVal != null)
                 {
                     if (long.TryParse(idVal.ToString(), out long petId))
@@ -44,8 +55,8 @@ namespace MyPetClinic.WebApi.Filters
                             return;
                         }
 
-                        // 3. Prevent IDOR: Check if current user owns the pet
-                        if (pet.OwnerId != userId)
+                        // 4. Prevent IDOR: Check if current user owns the pet
+                        if (pet.CustomerId != customerId)
                         {
                             context.Result = new ObjectResult(new { message = "Bạn không có quyền truy cập hồ sơ thú cưng này." })
                             {

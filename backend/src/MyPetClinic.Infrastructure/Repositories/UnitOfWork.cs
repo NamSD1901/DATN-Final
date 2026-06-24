@@ -15,6 +15,7 @@ namespace MyPetClinic.Infrastructure.Repositories
 
         public IGenericRepository<Appointment> Appointments { get; private set; }
         public IGenericRepository<User> Users { get; private set; }
+        public IGenericRepository<Customer> Customers { get; private set; }
         public IGenericRepository<Role> Roles { get; private set; }
         public IGenericRepository<Pet> Pets { get; private set; }
         public IGenericRepository<Service> Services { get; private set; }
@@ -48,6 +49,7 @@ namespace MyPetClinic.Infrastructure.Repositories
             _context = context;
             Appointments = new GenericRepository<Appointment>(_context);
             Users = new GenericRepository<User>(_context);
+            Customers = new GenericRepository<Customer>(_context);
             Roles = new GenericRepository<Role>(_context);
             Pets = new GenericRepository<Pet>(_context);
             Services = new GenericRepository<Service>(_context);

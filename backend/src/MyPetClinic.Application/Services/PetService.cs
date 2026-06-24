@@ -11,34 +11,36 @@ namespace MyPetClinic.Application.Services
 {
     public class PetService : IPetService
     {
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IPetRepository _petRepository;
 
-        public PetService(IPetRepository petRepository)
+        public PetService(IUnitOfWork unitOfWork, IPetRepository petRepository)
         {
+            _unitOfWork = unitOfWork;
             _petRepository = petRepository;
         }
 
-        public async Task<IEnumerable<PetDto>> GetMyPetsAsync(Guid ownerId)
+        public async Task<IEnumerable<PetDto>> GetMyPetsAsync(Guid CustomerId)
         {
-            var pets = await _petRepository.GetPetsByOwnerIdAsync(ownerId);
+            var pets = await _petRepository.GetPetsByOwnerIdAsync(CustomerId);
             return pets.Select(MapToDto);
         }
 
-        public async Task<PetDto?> GetPetByIdAsync(long id, Guid ownerId)
+        public async Task<PetDto?> GetPetByIdAsync(long id, Guid CustomerId)
         {
             var pet = await _petRepository.GetPetByIdAsync(id);
-            if (pet == null || pet.OwnerId != ownerId)
+            if (pet == null || pet.CustomerId != CustomerId)
             {
                 return null;
             }
             return MapToDto(pet);
         }
 
-        public async Task<PetDto> AddPetAsync(CreatePetDto dto, Guid ownerId)
+        public async Task<PetDto> AddPetAsync(CreatePetDto dto, Guid CustomerId)
         {
             var pet = new Pet
             {
-                OwnerId = ownerId,
+                CustomerId = CustomerId,
                 Name = dto.Name,
                 Species = dto.Species,
                 Breed = dto.Breed,
@@ -59,10 +61,10 @@ namespace MyPetClinic.Application.Services
             return MapToDto(pet);
         }
 
-        public async Task UpdatePetAsync(UpdatePetDto dto, Guid ownerId)
+        public async Task UpdatePetAsync(UpdatePetDto dto, Guid CustomerId)
         {
             var pet = await _petRepository.GetPetByIdAsync(dto.Id);
-            if (pet == null || pet.OwnerId != ownerId)
+            if (pet == null || pet.CustomerId != CustomerId)
             {
                 throw new UnauthorizedAccessException("Không tìm thấy thú cưng hoặc bạn không có quyền sửa.");
             }
@@ -84,10 +86,36 @@ namespace MyPetClinic.Application.Services
             await _petRepository.SaveChangesAsync();
         }
 
-        public async Task DeletePetAsync(long id, Guid ownerId)
+        public async Task UpdatePetStatusAsync(long petId, bool isDeceased, bool isAggressive)
+        {
+            var pet = await _petRepository.GetPetByIdAsync(petId);
+            if (pet == null)
+            {
+                throw new KeyNotFoundException("Không tìm thấy thú cưng.");
+            }
+
+            pet.IsDeceased = isDeceased;
+            pet.IsAggressive = isAggressive;
+
+            if (isDeceased)
+            {
+                // Hủy mọi lịch hẹn trong tương lai (Status = 'pending' hoặc 'confirmed')
+                var pendingAppointments = await _unitOfWork.Appointments.FindAsync(a => a.PetId == petId && (a.Status == "pending" || a.Status == "confirmed") && a.AppointmentDate >= DateTime.UtcNow.Date);
+                foreach (var appt in pendingAppointments)
+                {
+                    appt.Status = "cancelled";
+                    _unitOfWork.Appointments.Update(appt);
+                }
+            }
+
+            await _petRepository.UpdatePetAsync(pet);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task DeletePetAsync(long id, Guid CustomerId)
         {
             var pet = await _petRepository.GetPetByIdAsync(id);
-            if (pet == null || pet.OwnerId != ownerId)
+            if (pet == null || pet.CustomerId != CustomerId)
             {
                 throw new UnauthorizedAccessException("Không tìm thấy thú cưng hoặc bạn không có quyền xóa.");
             }
@@ -101,7 +129,7 @@ namespace MyPetClinic.Application.Services
             return new PetDto
             {
                 Id = pet.Id,
-                OwnerId = pet.OwnerId,
+                CustomerId = pet.CustomerId,
                 Name = pet.Name,
                 Species = pet.Species,
                 Breed = pet.Breed,

@@ -13,6 +13,8 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    // Allow reading numbers from strings (e.g., "70" to int) to prevent 400 Bad Request validation errors
+    options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.AllowReadingFromString;
     // Fix: Ensure all DateTime values are serialized with UTC "Z" suffix
     // so the frontend browser knows to convert from UTC to local time (UTC+7)
     options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
@@ -55,12 +57,14 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Events.OnRedirectToLogin = context =>
         {
             context.Response.StatusCode = 401;
-            return Task.CompletedTask;
+            context.Response.ContentType = "application/json";
+            return context.Response.WriteAsync("{\"message\": \"Bạn chưa đăng nhập hoặc phiên làm việc đã hết hạn.\"}");
         };
         options.Events.OnRedirectToAccessDenied = context =>
         {
             context.Response.StatusCode = 403;
-            return Task.CompletedTask;
+            context.Response.ContentType = "application/json";
+            return context.Response.WriteAsync("{\"message\": \"Bạn không có quyền truy cập vào chức năng này.\"}");
         };
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;

@@ -47,7 +47,7 @@ namespace MyPetClinic.Tests
             var doctorId = Guid.NewGuid();
             var adminId = Guid.NewGuid();
 
-            var pet = new Pet { Id = 1, OwnerId = Guid.NewGuid(), Name = "Luna" };
+            var pet = new Pet { Id = 1, CustomerId = Guid.NewGuid(), Name = "Luna" };
             var appointment = new Appointment
             {
                 Id = 1,

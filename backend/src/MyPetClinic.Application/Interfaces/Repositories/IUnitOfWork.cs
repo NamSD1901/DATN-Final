@@ -8,6 +8,7 @@ namespace MyPetClinic.Application.Interfaces.Repositories
     {
         IGenericRepository<Appointment> Appointments { get; }
         IGenericRepository<User> Users { get; }
+        IGenericRepository<Customer> Customers { get; }
         IGenericRepository<Role> Roles { get; }
         IGenericRepository<Pet> Pets { get; }
         IGenericRepository<Service> Services { get; }

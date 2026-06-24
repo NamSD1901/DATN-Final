@@ -122,8 +122,78 @@ namespace MyPetClinic.Application.Services
                 return new AuthResult { Success = false, ErrorMessage = "Không tìm thấy người dùng." };
 
             user.IsActive = true;
+
+            // PHẦN 10: AUTO-LINK ZALO/SĐT
+            // Kiểm tra xem có Customer nào có cùng SĐT không, nếu có thì liên kết
+            if (!string.IsNullOrWhiteSpace(user.Phone))
+            {
+                string phone = user.Phone.Trim();
+                var customers = await _unitOfWork.Customers.FindAsync(c => c.Phone == phone);
+                var existingCustomer = customers.FirstOrDefault();
+
+                if (existingCustomer != null && !existingCustomer.HasAccount)
+                {
+                    // 2FA CLAIMING: Stop Auto-Link! Require user to claim the profile.
+                    await _userRepository.UpdateUserAsync(user);
+                    await _userRepository.SaveChangesAsync();
+
+                    var pets = await _unitOfWork.Pets.FindAsync(p => p.CustomerId == existingCustomer.Id);
+                    bool hasPets = pets.Any();
+
+                    return new AuthResult 
+                    { 
+                        Success = true, 
+                        RequiresClaiming = true, 
+                        HasPets = hasPets, 
+                        TempToken = "CLAIM_TOKEN"
+                    };
+                }
+                else if (existingCustomer == null || existingCustomer.HasAccount)
+                {
+                    // Tự động sinh hồ sơ Customer mới cho khách hàng đăng ký Online
+                    // (kể cả khi customer đã có tài khoản khác hoặc không có customer nào trùng SĐT)
+                    if (user.CustomerId == null)
+                    {
+                        var newCustomer = new MyPetClinic.Domain.Entities.Customer
+                        {
+                            Id = Guid.NewGuid(),
+                            CustomerCode = "CUS" + DateTime.UtcNow.ToString("yyMMddHHmmss"),
+                            FullName = user.FullName ?? user.Email,
+                            Phone = phone,
+                            Email = user.Email,
+                            Address = user.Address,
+                            HasAccount = true,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        await _unitOfWork.Customers.AddAsync(newCustomer);
+                        user.CustomerId = newCustomer.Id;
+                    }
+                }
+            }
+            else
+            {
+                // Không có SĐT: vẫn tạo Customer mới để đảm bảo CustomerId không null
+                if (user.CustomerId == null)
+                {
+                    var newCustomer = new MyPetClinic.Domain.Entities.Customer
+                    {
+                        Id = Guid.NewGuid(),
+                        CustomerCode = "CUS" + DateTime.UtcNow.ToString("yyMMddHHmmss"),
+                        FullName = user.FullName ?? user.Email,
+                        Phone = null,
+                        Email = user.Email,
+                        Address = user.Address,
+                        HasAccount = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _unitOfWork.Customers.AddAsync(newCustomer);
+                    user.CustomerId = newCustomer.Id;
+                }
+            }
+
             await _userRepository.UpdateUserAsync(user);
             await _userRepository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return new AuthResult { Success = true };
         }
@@ -253,6 +323,89 @@ namespace MyPetClinic.Application.Services
     </div>
 </body>
 </html>";
+        }
+        // 2FA CLAIMING METHODS
+        public async Task<AuthResult> ClaimProfileAsync(ClaimProfileDto request)
+        {
+            var user = await _userRepository.GetUserByEmailAsync(request.Email.ToLower());
+            if (user == null || !user.IsActive.GetValueOrDefault())
+                return new AuthResult { Success = false, ErrorMessage = "Tài khoản không hợp lệ hoặc chưa được xác thực." };
+
+            if (user.CustomerId != null)
+                return new AuthResult { Success = false, ErrorMessage = "Tài khoản này đã có hồ sơ." };
+
+            string phone = user.Phone?.Trim() ?? "";
+            if (string.IsNullOrEmpty(phone))
+                return new AuthResult { Success = false, ErrorMessage = "Không thể xác định số điện thoại." };
+
+            var customers = await _unitOfWork.Customers.FindAsync(c => c.Phone == phone);
+            var existingCustomer = customers.FirstOrDefault();
+
+            if (existingCustomer == null)
+                return new AuthResult { Success = false, ErrorMessage = "Không tìm thấy hồ sơ vãng lai khớp với SĐT này." };
+
+            // 2FA Validation 1: Customer Code (Must be exactly matched)
+            if (string.IsNullOrEmpty(request.CustomerCode) || !existingCustomer.CustomerCode.Equals(request.CustomerCode, StringComparison.OrdinalIgnoreCase))
+                return new AuthResult { Success = false, ErrorMessage = "Mã Khách Hàng không chính xác." };
+
+            var pets = await _unitOfWork.Pets.FindAsync(p => p.CustomerId == existingCustomer.Id && !p.IsDeceased);
+            
+            // 2FA Validation 2: Pet Name (If customer has pets)
+            if (pets.Any())
+            {
+                if (string.IsNullOrWhiteSpace(request.PetName))
+                    return new AuthResult { Success = false, ErrorMessage = "Vui lòng nhập tên một bé thú cưng." };
+
+                string inputPetName = request.PetName.Trim().ToLower();
+                bool hasMatchedPet = pets.Any(p => p.Name != null && p.Name.Trim().ToLower() == inputPetName);
+                
+                if (!hasMatchedPet)
+                    return new AuthResult { Success = false, ErrorMessage = "Tên thú cưng không chính xác." };
+            }
+
+            // Both checks passed! Link the profile.
+            user.CustomerId = existingCustomer.Id;
+            existingCustomer.HasAccount = true;
+            
+            _unitOfWork.Customers.Update(existingCustomer);
+            await _userRepository.UpdateUserAsync(user);
+            
+            await _unitOfWork.SaveChangesAsync();
+            await _userRepository.SaveChangesAsync();
+
+            return new AuthResult { Success = true };
+        }
+
+        public async Task<AuthResult> SkipClaimingAsync(SkipClaimDto request)
+        {
+            var user = await _userRepository.GetUserByEmailAsync(request.Email.ToLower());
+            if (user == null || !user.IsActive.GetValueOrDefault())
+                return new AuthResult { Success = false, ErrorMessage = "Tài khoản không hợp lệ hoặc chưa được xác thực." };
+
+            if (user.CustomerId != null)
+                return new AuthResult { Success = false, ErrorMessage = "Tài khoản này đã có hồ sơ." };
+
+            // Sinh hồ sơ Customer mới trống trơn
+            var newCustomer = new MyPetClinic.Domain.Entities.Customer
+            {
+                Id = Guid.NewGuid(),
+                CustomerCode = "CUS" + DateTime.UtcNow.ToString("yyMMddHHmmss"),
+                FullName = user.FullName ?? user.Email,
+                Phone = user.Phone,
+                Email = user.Email,
+                Address = user.Address,
+                HasAccount = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            
+            await _unitOfWork.Customers.AddAsync(newCustomer);
+            user.CustomerId = newCustomer.Id;
+            
+            await _unitOfWork.SaveChangesAsync();
+            await _userRepository.UpdateUserAsync(user);
+            await _userRepository.SaveChangesAsync();
+
+            return new AuthResult { Success = true };
         }
     }
 }

@@ -37,6 +37,7 @@ namespace MyPetClinic.Application.Services
                 Name = m.Name,
                 Unit = m.Unit,
                 StockQuantity = m.StockQuantity,
+                ImportPrice = m.ImportPrice,
                 SellPrice = m.SellPrice
             });
         }
@@ -83,6 +84,7 @@ namespace MyPetClinic.Application.Services
                 Id = medicine.Id,
                 Name = medicine.Name,
                 StockQuantity = medicine.StockQuantity,
+                ImportPrice = medicine.ImportPrice,
                 Unit = medicine.Unit,
                 SellPrice = medicine.SellPrice
             };
@@ -97,6 +99,7 @@ namespace MyPetClinic.Application.Services
                 Name = m.Name,
                 Unit = m.Unit,
                 StockQuantity = m.StockQuantity,
+                ImportPrice = m.ImportPrice,
                 SellPrice = m.SellPrice
             });
         }

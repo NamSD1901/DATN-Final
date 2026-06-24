@@ -34,7 +34,7 @@ namespace MyPetClinic.Tests
             var pet = new Pet
             {
                 Id = 10,
-                OwnerId = Guid.NewGuid(),
+                CustomerId = Guid.NewGuid(),
                 Name = "Buddy",
                 Species = "Chó"
             };
@@ -55,7 +55,7 @@ namespace MyPetClinic.Tests
             var pet = new Pet
             {
                 Id = 11,
-                OwnerId = Guid.NewGuid(),
+                CustomerId = Guid.NewGuid(),
                 Name = "Buddy",
                 Species = "Chó"
             };
@@ -81,7 +81,7 @@ namespace MyPetClinic.Tests
             var pet = new Pet
             {
                 Id = 12,
-                OwnerId = Guid.NewGuid(),
+                CustomerId = Guid.NewGuid(),
                 Name = "Buddy",
                 Species = "Chó"
             };
@@ -98,7 +98,7 @@ namespace MyPetClinic.Tests
         public async Task AddPet_ShouldCreateSuccessfully_WithValidData()
         {
             // Arrange
-            var ownerId = Guid.NewGuid();
+            var CustomerId = Guid.NewGuid();
             var dto = new CreatePetDto
             {
                 Name = "Milo",
@@ -109,12 +109,12 @@ namespace MyPetClinic.Tests
             };
 
             // Act
-            var result = await _service.AddPetAsync(dto, ownerId);
+            var result = await _service.AddPetAsync(dto, CustomerId);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal("Milo", result.Name);
-            Assert.Equal(ownerId, result.OwnerId);
+            Assert.Equal(CustomerId, result.CustomerId);
         }
 
         public void Dispose()

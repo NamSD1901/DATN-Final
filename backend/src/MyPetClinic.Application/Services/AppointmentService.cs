@@ -364,7 +364,7 @@ namespace MyPetClinic.Application.Services
                     // 2. Tạo Pet mới
                     var pet = new Pet
                     {
-                        OwnerId = customer.Id,
+                        CustomerId = customer.Id,
                         Name = dto.PetName,
                         Species = dto.Species,
                         Weight = (decimal?)dto.PetWeight,
@@ -1004,9 +1004,9 @@ namespace MyPetClinic.Application.Services
             return await Task.FromResult(result);
         }
 
-        public async Task<IEnumerable<MedicalRecordDto>> GetPetMedicalHistoryAsync(long petId, Guid ownerId)
+        public async Task<IEnumerable<MedicalRecordDto>> GetPetMedicalHistoryAsync(long petId, Guid CustomerId)
         {
-            var pet = _unitOfWork.Pets.Query().FirstOrDefault(p => p.Id == petId && p.OwnerId == ownerId);
+            var pet = _unitOfWork.Pets.Query().FirstOrDefault(p => p.Id == petId && p.CustomerId == CustomerId);
             if (pet == null)
             {
                 throw new UnauthorizedAccessException("Bạn không có quyền truy cập thông tin bệnh án của thú cưng này.");

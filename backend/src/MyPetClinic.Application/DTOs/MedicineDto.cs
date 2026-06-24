@@ -8,6 +8,7 @@ namespace MyPetClinic.Application.DTOs
         public string Name { get; set; } = string.Empty;
         public string Unit { get; set; } = string.Empty;
         public int StockQuantity { get; set; }
+        public decimal ImportPrice { get; set; }
         public decimal SellPrice { get; set; }
     }
 }

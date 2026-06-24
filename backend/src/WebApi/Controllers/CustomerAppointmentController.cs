@@ -20,25 +20,34 @@ namespace MyPetClinic.Controllers
         private readonly IPetService _petService;
         private readonly ICustomerAppointmentService _customerAppointmentService;
         private readonly IInvoiceService _invoiceService;
+        private readonly MyPetClinic.Application.Interfaces.Repositories.IUserRepository _userRepository;
 
         public CustomerAppointmentController(
             IAppointmentService appointmentService,
             IPetService petService,
             ICustomerAppointmentService customerAppointmentService,
-            IInvoiceService invoiceService)
+            IInvoiceService invoiceService,
+            MyPetClinic.Application.Interfaces.Repositories.IUserRepository userRepository)
         {
             _appointmentService = appointmentService;
             _petService = petService;
             _customerAppointmentService = customerAppointmentService;
             _invoiceService = invoiceService;
+            _userRepository = userRepository;
         }
 
-        private Guid GetCurrentUserId()
+        private async Task<Guid> GetCurrentCustomerIdAsync()
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (Guid.TryParse(userIdStr, out var userId))
-                return userId;
-            throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng.");
+            {
+                var user = await _userRepository.GetUserByIdAsync(userId);
+                if (user != null && user.CustomerId.HasValue)
+                {
+                    return user.CustomerId.Value;
+                }
+            }
+            throw new UnauthorizedAccessException("Không tìm thấy thông tin khách hàng. Vui lòng xác thực hồ sơ trước.");
         }
 
         /// <summary>
@@ -49,7 +58,7 @@ namespace MyPetClinic.Controllers
         {
             try
             {
-                var customerId = GetCurrentUserId();
+                var customerId = await GetCurrentCustomerIdAsync();
                 var appointments = await _appointmentService.GetCustomerAppointmentsPaginatedAsync(customerId, status, page, pageSize);
                 return Ok(appointments);
             }
@@ -84,7 +93,7 @@ namespace MyPetClinic.Controllers
         {
             try
             {
-                var customerId = GetCurrentUserId();
+                var customerId = await GetCurrentCustomerIdAsync();
                 var appt = await _appointmentService.GetAppointmentDetailAsync(id);
 
                 if (appt == null)
@@ -113,7 +122,7 @@ namespace MyPetClinic.Controllers
 
             try
             {
-                var customerId = GetCurrentUserId();
+                var customerId = await GetCurrentCustomerIdAsync();
 
                 // Gọi CustomerAppointmentService để áp dụng các Business Rules
                 var appointmentId = await _customerAppointmentService.BookAppointmentAsync(dto, customerId);
@@ -168,7 +177,7 @@ namespace MyPetClinic.Controllers
         {
             try
             {
-                var customerId = GetCurrentUserId();
+                var customerId = await GetCurrentCustomerIdAsync();
                 var validation = await _customerAppointmentService.ValidateVaccineAsync(customerId, dto.PetId, dto.VaccineId, dto.TargetDate);
                 return Ok(validation);
             }
@@ -194,7 +203,7 @@ namespace MyPetClinic.Controllers
         {
             try
             {
-                var customerId = GetCurrentUserId();
+                var customerId = await GetCurrentCustomerIdAsync();
                 var history = await _appointmentService.GetPetMedicalHistoryAsync(petId, customerId);
                 return Ok(history);
             }
@@ -216,7 +225,7 @@ namespace MyPetClinic.Controllers
         {
             try
             {
-                var customerId = GetCurrentUserId();
+                var customerId = await GetCurrentCustomerIdAsync();
                 var invoices = await _invoiceService.GetCustomerInvoicesAsync(customerId);
                 return Ok(invoices);
             }

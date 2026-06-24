@@ -29,6 +29,7 @@ namespace MyPetClinic.Infrastructure.Persistence
 
         public DbSet<Role> Roles { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Customer> Customers { get; set; }
         public DbSet<EmployeeProfile> EmployeeProfiles { get; set; }
         public DbSet<Invitation> Invitations { get; set; }
         public DbSet<Pet> Pets { get; set; }
@@ -101,6 +102,30 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.HasOne(d => d.Role).WithMany(p => p.Users).HasForeignKey(d => d.RoleId).OnDelete(DeleteBehavior.Restrict);
             });
 
+                        // customers
+            modelBuilder.Entity<Customer>(entity =>
+            {
+                entity.ToTable("customers");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+                entity.Property(e => e.CustomerCode).HasColumnName("customer_code").HasMaxLength(50);
+                entity.Property(e => e.FullName).HasColumnName("full_name").HasMaxLength(255);
+                entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(255);
+                entity.HasIndex(e => e.Email).IsUnique();
+                entity.Property(e => e.Phone).HasColumnName("phone").HasMaxLength(20);
+                entity.Property(e => e.Avatar).HasColumnName("avatar");
+                entity.Property(e => e.Gender).HasColumnName("gender");
+                entity.Property(e => e.DateOfBirth).HasColumnName("date_of_birth");
+                entity.Property(e => e.Address).HasColumnName("address");
+                entity.Property(e => e.HasAccount).HasColumnName("has_account").HasDefaultValue(false);
+                entity.Property(e => e.Status).HasColumnName("status").HasDefaultValue("Active").HasMaxLength(50);
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+                entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
+
+                entity.HasOne(d => d.Account).WithOne().HasForeignKey<Customer>("AccountId").OnDelete(DeleteBehavior.SetNull);
+            });
+
             // employee_profiles
             modelBuilder.Entity<EmployeeProfile>(entity =>
             {
@@ -139,7 +164,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.ToTable("pets");
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
-                entity.Property(e => e.OwnerId).HasColumnName("owner_id");
+                entity.Property(e => e.CustomerId).HasColumnName("owner_id");
                 entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255);
                 entity.Property(e => e.Species).HasColumnName("species").HasMaxLength(100);
                 entity.Property(e => e.Breed).HasColumnName("breed").HasMaxLength(100);
@@ -153,7 +178,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.AllergyNote).HasColumnName("allergy_note");
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
 
-                entity.HasOne(d => d.Owner).WithMany().HasForeignKey(d => d.OwnerId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(d => d.Customer).WithMany(p => p.Pets).HasForeignKey(d => d.CustomerId).OnDelete(DeleteBehavior.Cascade);
             });
 
             // service_categories
@@ -225,7 +250,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.QrToken).HasColumnName("qr_token");
 
                 entity.HasOne(d => d.Pet).WithMany(p => p.Appointments).HasForeignKey(d => d.PetId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(d => d.Customer).WithMany().HasForeignKey(d => d.CustomerId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(d => d.Customer).WithMany(p => p.Appointments).HasForeignKey(d => d.CustomerId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Doctor).WithMany().HasForeignKey(d => d.DoctorId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Service).WithMany(p => p.Appointments).HasForeignKey(d => d.ServiceId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Vaccine).WithMany().HasForeignKey(d => d.VaccineId).OnDelete(DeleteBehavior.Restrict);

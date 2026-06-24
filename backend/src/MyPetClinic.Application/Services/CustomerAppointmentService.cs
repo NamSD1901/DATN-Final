@@ -33,7 +33,7 @@ namespace MyPetClinic.Application.Services
 
         public async Task<object> ValidateVaccineAsync(Guid customerId, long petId, long vaccineId, DateTime targetDate)
         {
-            var pets = await _unitOfWork.Pets.FindAsync(p => p.Id == petId && p.OwnerId == customerId);
+            var pets = await _unitOfWork.Pets.FindAsync(p => p.Id == petId && p.CustomerId == customerId);
             var pet = pets.FirstOrDefault();
             if (pet == null)
                 throw new InvalidOperationException("Thú cưng không hợp lệ hoặc không thuộc về bạn.");

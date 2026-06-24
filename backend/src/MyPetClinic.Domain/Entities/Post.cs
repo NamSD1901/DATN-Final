@@ -34,6 +34,6 @@ namespace MyPetClinic.Domain.Entities
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
-        public byte[] RowVersion { get; set; } = null!;
+        public byte[] RowVersion { get; set; } = new byte[8];
     }
 }

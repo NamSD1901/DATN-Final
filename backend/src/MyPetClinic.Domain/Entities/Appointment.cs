@@ -27,7 +27,7 @@ namespace MyPetClinic.Domain.Entities
         public string? QrToken { get; set; }
 
         public Pet? Pet { get; set; }
-        public User? Customer { get; set; }
+        public Customer? Customer { get; set; }
         public User? Doctor { get; set; }
         public Service? Service { get; set; }
         public Vaccine? Vaccine { get; set; }

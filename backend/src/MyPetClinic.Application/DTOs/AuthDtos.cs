@@ -31,4 +31,18 @@ namespace MyPetClinic.Application.DTOs
         [System.ComponentModel.DataAnnotations.Compare("Password", ErrorMessage = "Mật khẩu xác nhận không khớp")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
+
+    public class ClaimProfileDto
+    {
+        public string Email { get; set; } = string.Empty;
+        public string TempToken { get; set; } = string.Empty;
+        public string CustomerCode { get; set; } = string.Empty;
+        public string? PetName { get; set; }
+    }
+
+    public class SkipClaimDto
+    {
+        public string Email { get; set; } = string.Empty;
+        public string TempToken { get; set; } = string.Empty;
+    }
 }

@@ -56,7 +56,7 @@ namespace MyPetClinic.Infrastructure.Workers
 
             var upcomingVaccinations = await unitOfWork.VaccinationRecords.Query()
                 .Include(v => v.Pet)
-                    .ThenInclude(p => p!.Owner)
+                    .ThenInclude(p => p!.Customer)
                 .Include(v => v.Vaccine)
                 .Where(v => v.NextDueDate.HasValue && v.NextDueDate.Value.Date == targetDate)
                 .ToListAsync(stoppingToken);
@@ -65,15 +65,15 @@ namespace MyPetClinic.Infrastructure.Workers
 
             foreach (var record in upcomingVaccinations)
             {
-                if (record.Pet?.Owner != null && record.Vaccine != null)
+                if (record.Pet?.Customer != null && record.Vaccine != null)
                 {
-                    var email = record.Pet.Owner.Email ?? string.Empty;
+                    var email = record.Pet.Customer.Email ?? string.Empty;
                     if (!string.IsNullOrEmpty(email))
                     {
                         var subject = $"🔔 Nhắc lịch tiêm chủng vắc-xin cho bé {record.Pet.Name}";
                         var body = $"<div style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" +
                                    $"<h2>Nhắc Lịch Tiêm Chủng Định Kỳ</h2>" +
-                                   $"Chào bạn <b>{record.Pet.Owner.FullName}</b>,<br/><br/>" +
+                                   $"Chào bạn <b>{record.Pet.Customer.FullName}</b>,<br/><br/>" +
                                    $"Thú cưng <b>{record.Pet.Name}</b> của bạn có lịch tiêm nhắc lại mũi vắc-xin <b>{record.Vaccine.Name}</b> vào ngày <b>{record.NextDueDate!.Value:dd/MM/yyyy}</b>.<br/>" +
                                    $"Việc tiêm phòng đúng hạn giúp bé cưng duy trì hệ miễn dịch khỏe mạnh chống lại các bệnh truyền nhiễm.<br/><br/>" +
                                    $"Vui lòng truy cập cổng đặt lịch trực tuyến của <b>MyPetClinic</b> để đăng ký lịch hẹn tiêm phòng cho bé cưng sớm.<br/>" +
