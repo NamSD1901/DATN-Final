@@ -139,7 +139,7 @@ namespace MyPetClinic.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { success = false, message = "Đặt lịch thất bại: " + ex.Message });
+                return BadRequest(new { success = false, message = "Đặt lịch thất bại: " + ex.Message + (ex.InnerException != null ? " Lỗi chi tiết: " + ex.InnerException.Message : "") });
             }
         }
 

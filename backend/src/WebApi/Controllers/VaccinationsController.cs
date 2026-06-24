@@ -33,7 +33,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPost("appointments/{appointmentId}")]
-        [Authorize(Roles = "doctor,admin,Doctor,Admin,SystemAdmin")]
+        [Authorize(Roles = "doctor,admin,Doctor,Admin,SystemAdmin,clinical_doctor,vaccination_doctor")]
         public async Task<IActionResult> SubmitSoapRecord(long appointmentId, [FromBody] VaccinationSoapRequestDto request)
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -78,7 +78,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpGet("vaccines")]
-        [Authorize(Roles = "doctor,admin,receptionist,Doctor,Admin,Receptionist,SystemAdmin")]
+        [Authorize(Roles = "doctor,admin,receptionist,Doctor,Admin,Receptionist,SystemAdmin,clinical_doctor,vaccination_doctor")]
         public async Task<IActionResult> GetAvailableVaccines()
         {
             try

@@ -5,7 +5,7 @@ using System.Security.Claims;
 
 namespace MyPetClinic.Controllers
 {
-    [Authorize(Roles = "doctor,admin,receptionist,Doctor,Admin,Receptionist,SystemAdmin")]
+    [Authorize(Roles = "doctor,admin,receptionist,Doctor,Admin,Receptionist,SystemAdmin,clinical_doctor,vaccination_doctor")]
     [ApiController]
     [Route("api/[controller]")]
     public class DoctorController : ControllerBase
@@ -25,7 +25,7 @@ namespace MyPetClinic.Controllers
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdStr, out var currentDoctorId)) return Unauthorized();
 
-            var isAdmin = User.IsInRole("admin") || User.IsInRole("Admin") || User.IsInRole("receptionist") || User.IsInRole("Receptionist") || User.IsInRole("SystemAdmin") || User.IsInRole("doctor");
+            var isAdmin = User.IsInRole("admin") || User.IsInRole("Admin") || User.IsInRole("receptionist") || User.IsInRole("Receptionist") || User.IsInRole("SystemAdmin") || User.IsInRole("doctor") || User.IsInRole("clinical_doctor") || User.IsInRole("vaccination_doctor");
             
             // Nếu là admin/lễ tân và có chọn bác sĩ cụ thể, lọc theo bác sĩ đó. Nếu không chọn, mặc định null (xem tất cả).
             // Nếu là bác sĩ, ép buộc chỉ xem của mình.

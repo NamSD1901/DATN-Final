@@ -14,6 +14,8 @@ namespace MyPetClinic.Application.DTOs
         public string? PaymentMethod { get; set; }
         public DateTime? PaidAt { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? AppointmentDate { get; set; }
+        public TimeSpan? StartTime { get; set; }
 
         // Client & Patient details
         public string CustomerName { get; set; } = null!;

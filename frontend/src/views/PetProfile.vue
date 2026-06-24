@@ -278,38 +278,34 @@
                           <div class="d-flex align-items-center" v-if="rec.doctorName"><i class="bi bi-person-badge me-1"></i> Bác sĩ: {{ rec.doctorName }}</div>
                         </div>
 
-                        <!-- SUMMARY (Simplified) -->
-                        <div class="row g-3 mb-4">
-                          <div class="col-12">
-                            <div class="p-3 rounded-3" style="background-color: rgba(255,255,255,0.5); border: 1px solid var(--border-color);">
-                              <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-clipboard2-pulse me-2 text-warning fs-5"></i>
-                                <h6 class="fw-bold text-dark mb-0">Chẩn đoán sơ bộ</h6>
-                              </div>
-                              <p class="small text-dark fw-bold mb-2">{{ rec.diagnosis || 'Chưa có chẩn đoán' }}</p>
-                              
-                              <div class="d-flex align-items-center gap-3 mt-3 pt-2 border-top border-black border-opacity-10">
-                                <span class="small text-muted" v-if="rec.prescribedMedicines && rec.prescribedMedicines.length > 0">
-                                  <i class="bi bi-capsule-pill text-success me-1"></i> Có kê {{ rec.prescribedMedicines.length }} loại thuốc
-                                </span>
-                                <span class="small text-muted" v-else>
-                                  <i class="bi bi-capsule-pill text-secondary me-1"></i> Không kê thuốc
-                                </span>
-                                
-                                <span class="small text-muted" v-if="rec.clinicalSigns">
-                                  <i class="bi bi-activity text-info me-1"></i> Có ghi nhận dấu hiệu lâm sàng
-                                </span>
-                              </div>
-                            </div>
+                        <!-- SUMMARY (Compact) -->
+                        <div class="d-flex flex-column gap-2 mb-3">
+                          <div class="d-flex align-items-center text-dark small">
+                            <i class="bi bi-clipboard2-pulse text-warning me-2 fs-6"></i>
+                            <span class="fw-bold me-1">Chẩn đoán:</span> 
+                            <span class="text-truncate" style="max-width: 250px;" :title="rec.diagnosis">{{ rec.diagnosis || 'Chưa có' }}</span>
+                          </div>
+                          
+                          <div class="d-flex align-items-center gap-3 small text-muted">
+                            <span v-if="rec.prescribedMedicines && rec.prescribedMedicines.length > 0">
+                              <i class="bi bi-capsule-pill text-success me-1"></i> Kê {{ rec.prescribedMedicines.length }} loại thuốc
+                            </span>
+                            <span v-else>
+                              <i class="bi bi-capsule-pill text-secondary me-1"></i> Không thuốc
+                            </span>
+                            
+                            <span v-if="rec.clinicalSigns">
+                              <i class="bi bi-activity text-info me-1"></i> Dấu hiệu lâm sàng
+                            </span>
                           </div>
                         </div>
 
-                        <div class="d-flex gap-2 flex-wrap">
-                          <button v-if="rec.followUpDate" class="btn-premium px-4 py-2 hover-arrow" style="font-size: 0.85rem;">
-                            Đặt lịch tái khám <i class="bi bi-arrow-right"></i>
+                        <div class="d-flex gap-2 flex-wrap mt-2">
+                          <button v-if="rec.followUpDate" class="btn-premium px-3 py-1 hover-arrow" style="font-size: 0.8rem;">
+                            Tái khám <i class="bi bi-arrow-right"></i>
                           </button>
-                          <button @click="openMedicalRecordModal(rec)" class="btn-premium-outline px-4 py-2" style="font-size: 0.85rem; padding: 0.5rem 1.5rem !important;">
-                            <i class="bi bi-eye"></i> Xem chi tiết
+                          <button @click="openMedicalRecordModal(rec)" class="btn btn-sm btn-outline-secondary px-3 py-1 rounded-pill fw-bold" style="font-size: 0.8rem;">
+                            <i class="bi bi-eye"></i> Chi tiết
                           </button>
                         </div>
                       </div>
@@ -857,9 +853,20 @@ import { useRoute, useRouter } from 'vue-router';
 import Chart from 'chart.js/auto';
 import api from '../services/api';
 
+const props = defineProps<{ petId?: string | number }>();
+const emit = defineEmits(['go-back']);
+
 const route = useRoute();
 const router = useRouter();
-const petId = computed(() => route.params.id as string);
+const petId = computed(() => props.petId?.toString() || route.params.id as string);
+
+const goBack = () => {
+  if (props.petId) {
+    emit('go-back');
+  } else {
+    router.push('/dashboard');
+  }
+};
 
 const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5150';
 
@@ -1143,10 +1150,6 @@ const closeMedicalRecordModal = () => {
   // Giữ lại selectedMedicalRecord để animation đóng modal mượt hơn, hoặc xoá null.
 };
 
-const goBack = () => {
-  if (window.history.length > 1) router.back();
-  else router.push('/dashboard');
-};
 
 const getAvatarUrl = (path: string) => {
   if (!path) return '';
@@ -1284,7 +1287,17 @@ const isVaccineDueSoon = (): boolean => {
 };
 
 // ===== Lifecycle =====
-onMounted(fetchAll);
+watch(() => petId.value, (newId) => {
+  if (newId) {
+    fetchAll();
+  }
+});
+
+onMounted(() => {
+  if (petId.value) {
+    fetchAll();
+  }
+});
 </script>
 
 <style scoped>

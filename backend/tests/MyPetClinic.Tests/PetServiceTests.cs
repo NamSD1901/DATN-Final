@@ -23,8 +23,9 @@ namespace MyPetClinic.Tests
                 .Options;
 
             _context = new ApplicationDbContext(options);
+            var unitOfWork = new UnitOfWork(_context);
             _petRepository = new PetRepository(_context);
-            _service = new PetService(_petRepository);
+            _service = new PetService(unitOfWork, _petRepository);
         }
 
         [Fact]

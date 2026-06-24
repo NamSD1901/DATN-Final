@@ -8,7 +8,7 @@ using MyPetClinic.Application.Interfaces.Services;
 
 namespace MyPetClinic.Controllers
 {
-    [Authorize(Roles = "admin,Admin,doctor,Doctor,receptionist,Receptionist")]
+    [Authorize(Roles = "admin,Admin,doctor,Doctor,receptionist,Receptionist,clinical_doctor,vaccination_doctor")]
     [ApiController]
     [Route("api/medicines")]
     public class MedicinesController : ControllerBase
@@ -111,7 +111,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPost("export")]
-        [Authorize(Roles = "admin,Admin,receptionist,Receptionist,doctor,Doctor")]
+        [Authorize(Roles = "admin,Admin,receptionist,Receptionist,doctor,Doctor,clinical_doctor,vaccination_doctor")]
         public async Task<IActionResult> ExportMedicine([FromBody] ExportMedicineDto dto)
         {
             if (!ModelState.IsValid)

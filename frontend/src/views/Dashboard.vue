@@ -647,6 +647,7 @@ onMounted(() => {
   position: sticky;
   top: 0;
   height: 100vh;
+  align-self: flex-start;
   overflow-y: auto;
   z-index: 1000;
 }

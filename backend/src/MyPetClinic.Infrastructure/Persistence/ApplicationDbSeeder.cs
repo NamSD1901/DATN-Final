@@ -66,7 +66,8 @@ namespace MyPetClinic.Infrastructure.Persistence
 
             // 2. Seed Default Users
             var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "admin");
-            var doctorRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "doctor");
+            var clinicalDoctorRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "clinical_doctor");
+            var vaccinationDoctorRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "vaccination_doctor");
             var receptionistRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "receptionist");
             var customerRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "customer");
 
@@ -141,15 +142,23 @@ namespace MyPetClinic.Infrastructure.Persistence
 
             var newDoctorEmails = new[] { "bacsilong@gmail.com", "bacsituantran@gmail.com", "bacsichung@gmail.com", "bacsiha@gmail.com" };
 
-            if (doctorRole != null)
+            if (clinicalDoctorRole != null && vaccinationDoctorRole != null)
             {
-                // Soft delete old doctors to keep data safe (Use Raw SQL for guaranteed execution on Postgres)
-                var sql = "UPDATE users SET is_active = false, deleted_at = CURRENT_TIMESTAMP WHERE role_id = {0} AND email NOT IN ('bacsi_test@gmail.com', 'bacsituantran@gmail.com', 'bacsichung@gmail.com', 'bacsiha@gmail.com')";
-                await context.Database.ExecuteSqlRawAsync(sql, doctorRole.Id);
+                // Soft delete old generic 'doctor' users to keep data safe
+                var doctorRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "doctor");
+                if (doctorRole != null)
+                {
+                    var sqlOld = "UPDATE users SET is_active = false, deleted_at = CURRENT_TIMESTAMP WHERE role_id = {0} AND email NOT IN ('bacsi_test@gmail.com', 'bacsituantran@gmail.com', 'bacsichung@gmail.com', 'bacsiha@gmail.com')";
+                    await context.Database.ExecuteSqlRawAsync(sqlOld, doctorRole.Id);
+                }
 
-                // Restore bacsi_test@gmail.com and update its display name & role to doctor
+                // Assign roles to existing users using Raw SQL to enforce the specific roles
+                await context.Database.ExecuteSqlRawAsync("UPDATE users SET role_id = {0} WHERE email IN ('bacsi_test@gmail.com', 'bacsilong@gmail.com', 'bacsituantran@gmail.com')", clinicalDoctorRole.Id);
+                await context.Database.ExecuteSqlRawAsync("UPDATE users SET role_id = {0} WHERE email IN ('bacsichung@gmail.com', 'bacsiha@gmail.com')", vaccinationDoctorRole.Id);
+
+                // Restore bacsi_test@gmail.com and update its display name & role
                 var sqlRestore = "UPDATE users SET is_active = true, deleted_at = NULL, full_name = 'BS. Tr\u1ea7n Th\u0103ng Long', role_id = {0} WHERE email = 'bacsi_test@gmail.com'";
-                await context.Database.ExecuteSqlRawAsync(sqlRestore, doctorRole.Id);
+                await context.Database.ExecuteSqlRawAsync(sqlRestore, clinicalDoctorRole.Id);
 
                 // bacsi_test@gmail.com được dùng thay cho bacsilong, đã restore bằng Raw SQL bên trên
                 // Chỉ tạo mới nếu không có cả 2 email này trong DB
@@ -158,7 +167,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                     context.Users.Add(new User
                     {
                         Id = Guid.NewGuid(),
-                        RoleId = doctorRole.Id,
+                        RoleId = clinicalDoctorRole.Id,
                         FullName = "BS. Trần Thăng Long",
                         Email = "bacsi_test@gmail.com",
                         Phone = "0911111111",
@@ -174,7 +183,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                     context.Users.Add(new User
                     {
                         Id = Guid.NewGuid(),
-                        RoleId = doctorRole.Id,
+                        RoleId = clinicalDoctorRole.Id,
                         FullName = "BS. Trần Văn Tuấn",
                         Email = "bacsituantran@gmail.com",
                         Phone = "0922222222",
@@ -190,7 +199,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                     context.Users.Add(new User
                     {
                         Id = Guid.NewGuid(),
-                        RoleId = doctorRole.Id,
+                        RoleId = vaccinationDoctorRole.Id,
                         FullName = "BS. Lương Thị Chung",
                         Email = "bacsichung@gmail.com",
                         Phone = "0933333333",
@@ -206,7 +215,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                     context.Users.Add(new User
                     {
                         Id = Guid.NewGuid(),
-                        RoleId = doctorRole.Id,
+                        RoleId = vaccinationDoctorRole.Id,
                         FullName = "BS. Hoàng Văn Hà",
                         Email = "bacsiha@gmail.com",
                         Phone = "0944444444",

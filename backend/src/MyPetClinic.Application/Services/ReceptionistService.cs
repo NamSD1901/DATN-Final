@@ -327,7 +327,7 @@ namespace MyPetClinic.Application.Services
                     if (finalDoctorId == Guid.Empty)
                     {
                         var doctors = await _unitOfWork.Users.FindWithIncludesAsync(
-                            u => u.Role != null && u.Role.Name.ToLower() == "doctor" && u.IsActive == true,
+                            u => u.Role != null && u.Role.Name.ToLower().Contains("doctor") && u.IsActive == true,
                             u => u.Role!
                         );
                         var doctor = doctors.FirstOrDefault();
@@ -453,7 +453,7 @@ namespace MyPetClinic.Application.Services
         public async Task<List<DoctorDto>> GetActiveDoctorsAsync()
         {
             var doctors = await _unitOfWork.Users.FindWithIncludesAsync(
-                u => u.IsActive == true && u.Role != null && u.Role.Name.ToLower() == "doctor" && u.DeletedAt == null,
+                u => u.IsActive == true && u.Role != null && u.Role.Name.ToLower().Contains("doctor") && u.DeletedAt == null,
                 u => u.Role!
             );
 

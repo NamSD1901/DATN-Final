@@ -200,3 +200,15 @@ Endpoint lấy các khung giờ khả dụng (GET /api/appointments/available-sl
      - Nếu ngày hẹn trùng ngày lễ IsActive, ném ra InvalidOperationException("Phòng khám đóng cửa vào ngày nghỉ lễ này...").
      - Nếu cấu hình phòng khám trong ngày không hoạt động (!IsOpen), ném ra lỗi.
      - Kiểm tra trực tiếp thời gian hẹn (AppointmentDate.TimeOfDay) với các ca trực của phòng khám. Nếu thời gian nằm ngoài mọi ca hoặc thời lượng khám tràn ra khỏi giờ nghỉ ca, chặn việc đặt lịch.
+
+## [BUG-APPT-005] Ngày hẹn hiển thị sai lệch khi đặt qua giao diện khách hàng
+
+- **Trạng thái:** FIXED
+- **Thời gian:** 24-06-2026
+
+### Nguyên nhân gốc rễ
+Frontend gửi AppointmentDate dạng yyyy-MM-ddTHH:mm:00 (VD: 25/06/2026 10:30), được Backend deserialize với Kind=Unspecified. Khi EF Core lưu vào PostgreSQL, DateTimeUtcConverter gọi .ToUniversalTime() chuyển giờ Local (Vietnam +07:00) thành giờ UTC (VD: 24/06/2026 17:30 UTC). Khi Backend truy vấn và map vào AppointmentDetailDto, việc gọi .Date trên giá trị UTC này trả về ngày 24 thay vì 25, dẫn đến lỗi lệch ngày hiển thị trên giao diện người dùng.
+
+### Giải pháp
+1. **Trong AppointmentService.cs**: Cập nhật tất cả các biểu thức mapping DTO từ .AppointmentDate.Date.Add(a.StartTime) thành .AppointmentDate.ToLocalTime().Date.Add(a.StartTime). Việc chuyển đổi về LocalTime trước khi lấy Date giúp lấy lại đúng múi giờ trước khi nối chuỗi ngày tháng gửi về Frontend.
+2. **Trong SlotCalculationHelper.cs**: Cập nhật biểu thức tính pptTime tương tự để logic kiểm tra trùng lịch không bị sai lệch ngày.

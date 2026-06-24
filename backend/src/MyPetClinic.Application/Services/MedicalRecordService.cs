@@ -163,6 +163,7 @@ namespace MyPetClinic.Application.Services
                     if (obj.HasBreathingDifficulty) symptoms.Add("Khó thở");
                     if (obj.HasItching) symptoms.Add("Ngứa ngáy");
                     if (obj.HasHairLoss) symptoms.Add("Rụng lông");
+                    if (obj.HasConstipation) symptoms.Add("Táo bón");
                     if (symptoms.Any()) parts.Add("Triệu chứng: " + string.Join(", ", symptoms));
 
                     if (!string.IsNullOrEmpty(obj.CurrentMedications) && obj.CurrentMedications != "Không có") parts.Add($"Thuốc đang dùng: {obj.CurrentMedications}");
@@ -198,10 +199,17 @@ namespace MyPetClinic.Application.Services
                 {
                     var obj = JsonSerializer.Deserialize<AssessmentDto>(jsonStr, options);
                     if (obj == null) return jsonStr;
+                    
+                    var parts = new List<string>();
+                    
                     var diagnosis = !string.IsNullOrEmpty(obj.DefinitiveDiagnosis) ? obj.DefinitiveDiagnosis : obj.TentativeDiagnosis;
-                    if (!string.IsNullOrEmpty(obj.DiseaseSeverity) && obj.DiseaseSeverity != "Nhẹ")
-                        diagnosis += $" (Mức độ: {obj.DiseaseSeverity})";
-                    return diagnosis ?? string.Empty;
+                    if (!string.IsNullOrEmpty(diagnosis)) parts.Add(diagnosis);
+                    
+                    if (!string.IsNullOrEmpty(obj.DifferentialDiagnosis)) parts.Add($"Phân biệt: {obj.DifferentialDiagnosis}");
+                    if (!string.IsNullOrEmpty(obj.DiseaseSeverity) && obj.DiseaseSeverity != "Nhẹ") parts.Add($"Mức độ: {obj.DiseaseSeverity}");
+                    if (!string.IsNullOrEmpty(obj.Prognosis) && obj.Prognosis != "Tốt") parts.Add($"Tiên lượng: {obj.Prognosis}");
+                    
+                    return parts.Any() ? string.Join(" | ", parts) : string.Empty;
                 }
                 else if (fieldType == "P")
                 {

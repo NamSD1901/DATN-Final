@@ -19,7 +19,7 @@ namespace MyPetClinic.Application.Services
         public async Task<IEnumerable<DoctorDto>> GetDoctorsAsync()
         {
             var doctors = await _unitOfWork.Users.FindWithIncludesAsync(
-                u => u.Role != null && u.Role.Name.ToLower() == "doctor" && u.IsActive == true,
+                u => u.Role != null && (u.Role.Name.ToLower() == "clinical_doctor" || u.Role.Name.ToLower() == "vaccination_doctor") && u.IsActive == true,
                 u => u.Role!
             );
 

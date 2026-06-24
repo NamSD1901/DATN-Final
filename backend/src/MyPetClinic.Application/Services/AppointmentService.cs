@@ -129,7 +129,7 @@ namespace MyPetClinic.Application.Services
                         {
                             // Fallback nếu không có cấu hình lịch trực cho ngày đó
                             doctorsList = _unitOfWork.Users.Query()
-                                .Where(u => u.Role != null && u.Role.Name.ToLower() == "doctor" && u.IsActive == true
+                                .Where(u => u.Role != null && (u.Role.Name.ToLower() == "clinical_doctor" || u.Role.Name.ToLower() == "vaccination_doctor") && u.IsActive == true
                                         && (!allowedDoctorEmails.Any() || (u.Email != null && allowedDoctorEmails.Contains(u.Email))))
                                 .Select(u => u.Id)
                                 .ToList();
@@ -241,7 +241,7 @@ namespace MyPetClinic.Application.Services
                         Status = "waiting", // Khám ngay / Chờ khám
                         CreatedBy = createdBy,
                         CreatedAt = DateTime.UtcNow,
-                        AppointmentDate = appointmentDate.Date,
+                        AppointmentDate = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc),
                         StartTime = appointmentDate.TimeOfDay,
                         QrToken = qrToken
                     };
@@ -299,12 +299,16 @@ namespace MyPetClinic.Application.Services
 
                     // Gửi thông báo đặt lịch thành công cho khách hàng
                     var statusMsg = appointment.Status == "pending_approval" ? "đang chờ được phê duyệt" : "đã được xác nhận";
-                    await _notificationService.CreateNotificationAsync(
-                        appointment.CustomerId,
-                        "Đặt lịch thành công",
-                        $"Lịch hẹn của bạn vào lúc {appointment.AppointmentDate:HH:mm dd/MM/yyyy} {statusMsg}.",
-                        "System"
-                    );
+                    var customerUser = _unitOfWork.Users.Query().FirstOrDefault(u => u.CustomerId == appointment.CustomerId && u.IsActive == true);
+                    if (customerUser != null)
+                    {
+                        await _notificationService.CreateNotificationAsync(
+                            customerUser.Id,
+                            "Đặt lịch thành công",
+                            $"Lịch hẹn của bạn vào lúc {appointment.AppointmentDate:HH:mm dd/MM/yyyy} {statusMsg}.",
+                            "System"
+                        );
+                    }
 
                     await _unitOfWork.CommitTransactionAsync();
                     return appointment.Id;
@@ -431,7 +435,7 @@ namespace MyPetClinic.Application.Services
                         Status = "waiting", // Khám ngay / Chờ khám
                         CreatedBy = createdBy,
                         CreatedAt = DateTime.UtcNow,
-                        AppointmentDate = appointmentDate.Date,   // Chỉ lưu ngày
+                        AppointmentDate = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc),   // Chỉ lưu ngày (với Utc kind)
                         StartTime = appointmentDate.TimeOfDay,    // Lưu giờ riêng
                         QrToken = qrToken
                     };
@@ -581,12 +585,16 @@ namespace MyPetClinic.Application.Services
 
             if (newStatus == "confirmed" || newStatus == "cancelled" || newStatus == "completed")
             {
-                await _notificationService.CreateNotificationAsync(
-                    appointment.CustomerId,
-                    "Cập nhật lịch hẹn",
-                    message,
-                    "AppointmentUpdate"
-                );
+                var customerUser = _unitOfWork.Users.Query().FirstOrDefault(u => u.CustomerId == appointment.CustomerId && u.IsActive == true);
+                if (customerUser != null)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        customerUser.Id,
+                        "Cập nhật lịch hẹn",
+                        message,
+                        "AppointmentUpdate"
+                    );
+                }
             }
 
             return true;
@@ -747,7 +755,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
+                AppointmentDate = a.AppointmentDate.ToLocalTime().Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 QrToken = a.QrToken,
@@ -809,7 +817,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
+                AppointmentDate = a.AppointmentDate.ToLocalTime().Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 Status = a.Status,
@@ -874,7 +882,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
+                AppointmentDate = a.AppointmentDate.ToLocalTime().Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 Status = a.Status,
@@ -942,7 +950,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
+                AppointmentDate = a.AppointmentDate.ToLocalTime().Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 Status = a.Status,
@@ -1022,7 +1030,7 @@ namespace MyPetClinic.Application.Services
                 ServicePrice = a.ServicePrice,
                 DoctorId = a.DoctorId,
                 DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
+                AppointmentDate = a.AppointmentDate.ToLocalTime().Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
                 Symptom = a.Symptom,
                 Note = a.Note,
                 Status = a.Status,
@@ -1200,7 +1208,7 @@ namespace MyPetClinic.Application.Services
                 // Fallback: Nếu hoàn toàn chưa được cấu hình ca trực trong DB cho ngày này, 
                 // ta tự động lấy toàn bộ các bác sĩ đang hoạt động và tạo ca trực in-memory dựa trên cấu hình slot_config.json
                 var doctors = await _unitOfWork.Users.FindAsync(
-                    u => u.Role != null && u.Role.Name.ToLower() == "doctor" && u.IsActive == true
+                    u => u.Role != null && u.Role.Name.ToLower().Contains("doctor") && u.IsActive == true
                          && (!allowedDoctorEmails.Any() || (u.Email != null && allowedDoctorEmails.Contains(u.Email)))
                 );
 

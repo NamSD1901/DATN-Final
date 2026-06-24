@@ -349,7 +349,7 @@ const fetchInvoices = async () => {
         id: `INV-${inv.id}`,
         serviceName,
         iconClass,
-        date: inv.createdAt,
+        date: inv.appointmentDate ? `${inv.appointmentDate.split('T')[0]}T${inv.startTime || '00:00:00'}` : inv.createdAt,
         petName: inv.petName,
         petSpecies: inv.petSpecies || 'Thú cưng',
         doctorName: inv.doctorName || 'Bác sĩ',

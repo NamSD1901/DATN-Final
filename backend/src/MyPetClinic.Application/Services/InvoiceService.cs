@@ -433,6 +433,8 @@ namespace MyPetClinic.Application.Services
                 PaymentMethod = invoice.PaymentMethod,
                 PaidAt = invoice.PaidAt,
                 CreatedAt = invoice.CreatedAt,
+                AppointmentDate = invoice.Appointment?.AppointmentDate,
+                StartTime = invoice.Appointment?.StartTime,
                 CustomerName = invoice.Appointment?.Customer?.FullName ?? "Khách vãng lai",
                 CustomerPhone = invoice.Appointment?.Customer?.Phone ?? "",
                 PetName = invoice.Appointment?.Pet?.Name ?? "Thú cưng",
