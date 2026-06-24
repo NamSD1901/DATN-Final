@@ -9,7 +9,7 @@
     </TransitionGroup>
 
     <!-- Shared Header Layout -->
-    <Header @open-booking="showBookingModal = true" />
+    <Header @open-booking="handleBookingBtnClick" />
 
     <!-- Hero Section with Floating Shapes -->
     <section class="hero-section bg-gold-gradient position-relative" id="hero">
@@ -17,7 +17,7 @@
       <div class="hero-shape-2"></div>
       <div class="container">
         <div class="hero-row">
-          <div class="hero-content-left reveal-left active">
+          <div class="hero-content-left reveal-on-scroll reveal-left active" style="transition-delay: 0.2s;">
             <span class="hero-tag animate-pulse">
               <Heart class="icon-heart-fill" /> Bệnh Viện Thú Y Uy Tín Hàng Đầu
             </span>
@@ -37,7 +37,7 @@
             </div>
           </div>
           
-          <div class="hero-visual-right reveal-right active">
+          <div class="hero-visual-right reveal-on-scroll reveal-right active" style="transition-delay: 0.4s;">
             <div class="position-relative d-inline-block">
               <div class="chat-bubble-floating animate-bounce">
                 <HeartHandshake class="chat-bubble-icon" />
@@ -57,10 +57,10 @@
     <section class="py-5 bg-white border-bottom" id="intro">
       <div class="container my-4">
         <div class="about-row">
-          <div class="about-visual reveal-left active">
+          <div class="about-visual reveal-on-scroll reveal-left">
             <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=600&auto=format&fit=crop" class="about-image" alt="Veterinarian Examining Dog" />
           </div>
-          <div class="about-content reveal-right active">
+          <div class="about-content reveal-on-scroll reveal-right">
             <span class="section-tag-gold">Về Chúng Tôi</span>
             <h2 class="section-title">Nơi Gửi Gắm Niềm Tin Của Hàng Triệu Chủ Nuôi</h2>
             <p class="section-desc">
@@ -102,7 +102,7 @@
 
         <div class="services-grid">
           <!-- Service Cards loop -->
-          <div v-for="service in services" :key="service.id" class="service-card glass-card">
+          <div v-for="service in services" :key="service.id" class="service-card glass-card reveal-on-scroll reveal-bottom">
             <div class="service-icon-wrapper" :style="{ color: service.color, backgroundColor: service.bgColor }">
               <component :is="service.icon" class="service-card-icon" />
             </div>
@@ -129,7 +129,7 @@
 
         <div class="articles-grid">
           <!-- Article Item -->
-          <div v-for="article in articles" :key="article.id" class="article-card glass-card">
+          <div v-for="article in articles" :key="article.id" class="article-card glass-card reveal-on-scroll reveal-bottom">
             <div class="article-img-wrapper">
               <img :src="article.image" class="article-img" :alt="article.title" />
               <span class="article-badge-tag">{{ article.tag }}</span>
@@ -263,7 +263,7 @@ const handleBookingError = (msg: string) => {
 
 const handleBookingBtnClick = () => {
   if (isLoggedIn.value) {
-    showBookingModal.value = true;
+    router.push('/dashboard?action=book');
   } else {
     Swal.fire({
       title: 'Chưa đăng nhập!',
@@ -416,6 +416,23 @@ onMounted(() => {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
   todayDate.value = tomorrowStr;
+
+  // Scroll animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+        observer.unobserve(entry.target); // Optional: if you only want them to animate once
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+  // Delay slightly to ensure DOM is ready
+  setTimeout(() => {
+    document.querySelectorAll('.reveal-on-scroll').forEach(el => {
+      observer.observe(el);
+    });
+  }, 100);
 });
 </script>
 
@@ -424,6 +441,7 @@ onMounted(() => {
   background-color: var(--bg-light);
   color: var(--text-dark);
   min-height: 100vh;
+  overflow-x: hidden; /* Fix horizontal scrollbar issue */
 }
 
 .container {
@@ -1308,4 +1326,40 @@ onMounted(() => {
   font-size: 0.95rem;
   color: var(--text-dark);
 }
+
+/* --- SCROLL ANIMATIONS --- */
+.reveal-on-scroll {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.reveal-on-scroll.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, 0) scale(1) !important;
+}
+
+.reveal-left {
+  transform: translateX(-40px);
+}
+
+.reveal-right {
+  transform: translateX(40px);
+}
+
+.reveal-bottom {
+  transform: translateY(40px);
+}
+
+/* Stagger effects for grids */
+.services-grid .service-card:nth-child(1) { transition-delay: 0.05s; }
+.services-grid .service-card:nth-child(2) { transition-delay: 0.15s; }
+.services-grid .service-card:nth-child(3) { transition-delay: 0.25s; }
+.services-grid .service-card:nth-child(4) { transition-delay: 0.35s; }
+
+.articles-grid .article-card:nth-child(1) { transition-delay: 0.05s; }
+.articles-grid .article-card:nth-child(2) { transition-delay: 0.2s; }
+.articles-grid .article-card:nth-child(3) { transition-delay: 0.35s; }
 </style>

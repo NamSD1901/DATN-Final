@@ -169,7 +169,7 @@
     <Teleport to="body">
       <Transition name="modal-fade">
         <div v-if="showBookModal" class="appt-modal-overlay wizard-overlay" @click.self="closeBookModal">
-          <div class="appt-modal-card wizard-modal" style="max-width: 1000px; height: 85vh; display: flex; flex-direction: column;">
+          <div class="appt-modal-card wizard-modal" style="max-width: 1000px; max-height: 90vh; height: auto; min-height: 60vh; display: flex; flex-direction: column;">
             <div class="appt-modal-header border-0 pb-0">
               <button class="modal-close-btn ms-auto" @click="closeBookModal">
                 <i class="bi bi-x-lg"></i>

@@ -278,34 +278,27 @@
                           <div class="d-flex align-items-center" v-if="rec.doctorName"><i class="bi bi-person-badge me-1"></i> Bác sĩ: {{ rec.doctorName }}</div>
                         </div>
 
-                        <!-- SOAP NOTES -->
+                        <!-- SUMMARY (Simplified) -->
                         <div class="row g-3 mb-4">
-                          <!-- Subjective & Objective -->
-                          <div class="col-md-6">
-                            <div class="p-3 rounded-3 h-100" style="background-color: rgba(255,255,255,0.5); border: 1px solid var(--border-color);">
-                              <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-chat-left-text me-2 text-primary"></i>Lý do khám (S)</h6>
-                              <p class="small text-muted mb-3">{{ rec.medicalHistory || 'Không có ghi nhận' }}</p>
-
-                              <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-activity me-2 text-info"></i>Dấu hiệu lâm sàng (O)</h6>
-                              <div class="d-flex gap-2 mb-2 flex-wrap">
-                                <span class="badge bg-white text-dark border shadow-sm">Nhiệt độ: {{ rec.temperature ? rec.temperature + '°C' : '—' }}</span>
-                                <span class="badge bg-white text-dark border shadow-sm">Cân nặng: {{ rec.weight ? rec.weight + ' kg' : '—' }}</span>
+                          <div class="col-12">
+                            <div class="p-3 rounded-3" style="background-color: rgba(255,255,255,0.5); border: 1px solid var(--border-color);">
+                              <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-clipboard2-pulse me-2 text-warning fs-5"></i>
+                                <h6 class="fw-bold text-dark mb-0">Chẩn đoán sơ bộ</h6>
                               </div>
-                              <p class="small text-muted mb-0">{{ rec.clinicalSigns || 'Bình thường' }}</p>
-                            </div>
-                          </div>
-
-                          <!-- Assessment & Plan -->
-                          <div class="col-md-6">
-                            <div class="p-3 rounded-3 h-100" style="background-color: rgba(255,255,255,0.5); border: 1px solid var(--border-color);">
-                              <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-clipboard2-pulse me-2 text-warning"></i>Chẩn đoán (A)</h6>
-                              <p class="small text-dark fw-bold mb-3">{{ rec.diagnosis || 'Chưa chẩn đoán' }}</p>
-
-                              <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-journal-medical me-2 text-success"></i>Kế hoạch điều trị (P)</h6>
-                              <p class="small text-muted mb-2">{{ rec.treatmentPlan || 'Theo dõi thêm' }}</p>
+                              <p class="small text-dark fw-bold mb-2">{{ rec.diagnosis || 'Chưa có chẩn đoán' }}</p>
                               
-                              <div v-if="rec.doctorNotes || rec.notes" class="mt-2 p-2 rounded" style="background-color: var(--primary-cream); border-left: 3px solid var(--primary-gold);">
-                                <span class="small font-italic text-dark"><strong>Ghi chú BS:</strong> "{{ rec.doctorNotes || rec.notes }}"</span>
+                              <div class="d-flex align-items-center gap-3 mt-3 pt-2 border-top border-black border-opacity-10">
+                                <span class="small text-muted" v-if="rec.prescribedMedicines && rec.prescribedMedicines.length > 0">
+                                  <i class="bi bi-capsule-pill text-success me-1"></i> Có kê {{ rec.prescribedMedicines.length }} loại thuốc
+                                </span>
+                                <span class="small text-muted" v-else>
+                                  <i class="bi bi-capsule-pill text-secondary me-1"></i> Không kê thuốc
+                                </span>
+                                
+                                <span class="small text-muted" v-if="rec.clinicalSigns">
+                                  <i class="bi bi-activity text-info me-1"></i> Có ghi nhận dấu hiệu lâm sàng
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -315,7 +308,7 @@
                           <button v-if="rec.followUpDate" class="btn-premium px-4 py-2 hover-arrow" style="font-size: 0.85rem;">
                             Đặt lịch tái khám <i class="bi bi-arrow-right"></i>
                           </button>
-                          <button class="btn-premium-outline px-4 py-2" style="font-size: 0.85rem; padding: 0.5rem 1.5rem !important;">
+                          <button @click="openMedicalRecordModal(rec)" class="btn-premium-outline px-4 py-2" style="font-size: 0.85rem; padding: 0.5rem 1.5rem !important;">
                             <i class="bi bi-eye"></i> Xem chi tiết
                           </button>
                         </div>
@@ -749,6 +742,111 @@
 
         </div> <!-- End Tab Content -->
       </div> <!-- End Dashboard Container -->
+
+      <!-- Medical Record Detail Modal -->
+      <div v-if="showMedicalRecordModal" class="custom-modal-overlay" @click.self="closeMedicalRecordModal">
+        <div class="custom-modal-card max-w-800">
+          <div class="custom-modal-header bg-light">
+            <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+              <i class="bi bi-file-medical text-primary"></i> Chi tiết bệnh án
+            </h5>
+            <button type="button" class="modal-close" @click="closeMedicalRecordModal">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="custom-modal-body p-4" v-if="selectedMedicalRecord">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+              <div>
+                <h4 class="fw-bold text-dark mb-1">{{ selectedMedicalRecord.serviceName || 'Khám tổng quát' }}</h4>
+                <div class="text-muted small"><i class="bi bi-calendar-check me-1"></i> {{ formatDate(selectedMedicalRecord.visitDate || selectedMedicalRecord.createdAt) }}</div>
+              </div>
+              <div class="text-end">
+                <div class="fw-bold text-dark"><i class="bi bi-person-badge text-primary me-1"></i> Bs. {{ selectedMedicalRecord.doctorName }}</div>
+                <span class="badge bg-success-subtle text-success mt-1" v-if="!selectedMedicalRecord.followUpDate">Đã hoàn thành</span>
+                <span class="badge bg-warning-subtle text-warning mt-1" v-else>Hẹn tái khám: {{ formatDateShort(selectedMedicalRecord.followUpDate) }}</span>
+              </div>
+            </div>
+
+            <div class="row g-4">
+              <!-- Cột S O -->
+              <div class="col-md-6">
+                <div class="bg-light p-3 rounded-3 h-100">
+                  <h6 class="fw-bold text-primary mb-3"><i class="bi bi-chat-left-text me-2"></i>S.O (Chủ quan & Khách quan)</h6>
+                  
+                  <div class="mb-3">
+                    <div class="small fw-bold text-muted mb-1">Lý do khám:</div>
+                    <div class="text-dark">{{ selectedMedicalRecord.medicalHistory || 'Không ghi nhận' }}</div>
+                  </div>
+                  
+                  <div>
+                    <div class="small fw-bold text-muted mb-1">Dấu hiệu lâm sàng:</div>
+                    <div class="d-flex gap-2 mb-2">
+                      <span class="badge bg-white text-dark border">Nhiệt độ: {{ selectedMedicalRecord.temperature ? selectedMedicalRecord.temperature + '°C' : '--' }}</span>
+                      <span class="badge bg-white text-dark border">Cân nặng: {{ selectedMedicalRecord.weight ? selectedMedicalRecord.weight + ' kg' : '--' }}</span>
+                    </div>
+                    <div class="text-dark small">{{ selectedMedicalRecord.clinicalSigns || 'Bình thường' }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cột A P -->
+              <div class="col-md-6">
+                <div class="bg-light p-3 rounded-3 h-100">
+                  <h6 class="fw-bold text-warning mb-3"><i class="bi bi-clipboard2-pulse me-2"></i>A.P (Đánh giá & Kế hoạch)</h6>
+                  
+                  <div class="mb-3">
+                    <div class="small fw-bold text-muted mb-1">Chẩn đoán:</div>
+                    <div class="text-dark fw-bold">{{ selectedMedicalRecord.diagnosis || 'Chưa có chẩn đoán' }}</div>
+                  </div>
+                  
+                  <div class="mb-3">
+                    <div class="small fw-bold text-muted mb-1">Kế hoạch điều trị:</div>
+                    <div class="text-dark small">{{ selectedMedicalRecord.treatmentPlan || 'Theo dõi thêm' }}</div>
+                  </div>
+                  
+                  <div v-if="selectedMedicalRecord.doctorNotes || selectedMedicalRecord.notes" class="p-2 bg-white rounded border-start border-warning border-3">
+                    <div class="small fw-bold text-muted mb-1">Ghi chú thêm:</div>
+                    <div class="text-dark small fst-italic">{{ selectedMedicalRecord.doctorNotes || selectedMedicalRecord.notes }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Đơn thuốc -->
+            <div class="mt-4" v-if="selectedMedicalRecord.prescribedMedicines && selectedMedicalRecord.prescribedMedicines.length > 0">
+              <h6 class="fw-bold text-success mb-3"><i class="bi bi-capsule-pill me-2"></i>Đơn thuốc đã kê</h6>
+              <div class="table-responsive border rounded-3">
+                <table class="table table-hover mb-0 align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Tên thuốc</th>
+                      <th>Liều lượng</th>
+                      <th>SL</th>
+                      <th>Cách dùng</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(med, idx) in selectedMedicalRecord.prescribedMedicines" :key="idx">
+                      <td class="fw-bold text-dark">{{ med.medicineName }}</td>
+                      <td>{{ med.dosage }}</td>
+                      <td class="fw-bold">{{ med.quantity }}</td>
+                      <td class="small">{{ med.frequency }} <span v-if="med.instruction" class="fst-italic text-muted d-block">{{ med.instruction }}</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div v-else class="mt-4 p-3 bg-light rounded-3 text-center text-muted small">
+              Không có đơn thuốc nào được kê trong lần khám này.
+            </div>
+
+          </div>
+          <div class="custom-modal-footer bg-light">
+            <button type="button" class="btn btn-secondary px-4 fw-bold rounded-pill" @click="closeMedicalRecordModal">Đóng</button>
+          </div>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -1032,6 +1130,19 @@ watch(() => activeTab.value, (newTab) => {
 });
 
 // ===== Helpers =====
+const selectedMedicalRecord = ref<any>(null);
+const showMedicalRecordModal = ref(false);
+
+const openMedicalRecordModal = (record: any) => {
+  selectedMedicalRecord.value = record;
+  showMedicalRecordModal.value = true;
+};
+
+const closeMedicalRecordModal = () => {
+  showMedicalRecordModal.value = false;
+  // Giữ lại selectedMedicalRecord để animation đóng modal mượt hơn, hoặc xoá null.
+};
+
 const goBack = () => {
   if (window.history.length > 1) router.back();
   else router.push('/dashboard');
@@ -1712,6 +1823,86 @@ onMounted(fetchAll);
   .appointment-hero-ticket .ticket-cut.bottom {
     display: none;
   }
+}
+
+/* Custom Modal Styles */
+.custom-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.custom-modal-card {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 90%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+}
+
+.max-w-800 {
+  max-width: 800px;
+}
+
+.custom-modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: #0f172a;
+}
+
+.custom-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.custom-modal-footer {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulse {

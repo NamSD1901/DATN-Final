@@ -75,7 +75,7 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 | Mã Task | Tên công việc / Nội dung chi tiết | Người thực hiện | Trạng thái | Minh chứng & Ghi chú |
 | :--- | :--- | :--- | :--- | :--- |
 | **T16** | PB08 - Quản lý hồ sơ thú cưng (Backend CRUD & Chống IDOR bằng ActionFilter) | Nam | `✅ CODE DONE` | Hoàn thành ActionFilter chặn đứng IDOR, tối ưu LINQ queries và phủ đầy đủ Unit Tests. |
-| **T17** | PB08 - Quản lý hồ sơ thú cưng (Frontend Grid & Modal Form Glassmorphic) | Lâm | `✅ CODE DONE` | Tái cấu trúc giao diện danh sách sang Premium Light-Theme Glassmorphism, sửa lỗi hiển thị. <br> **Cải tiến:** Redesign toàn diện trang Chi tiết Hồ sơ Thú cưng (`PetProfile.vue`) sang kiến trúc Clean Modern Dashboard (Nền trắng tinh tế, biểu đồ Chart.js theo dõi cân nặng, hệ thống Cards chi tiết trực quan). |
+| **T17** | PB08 - Quản lý hồ sơ thú cưng (Frontend Grid & Modal Form Glassmorphic) | Lâm | `✅ CODE DONE` | Tái cấu trúc giao diện danh sách sang Premium Light-Theme Glassmorphism, sửa lỗi hiển thị. <br> **Cải tiến:** Redesign toàn diện trang Chi tiết Hồ sơ Thú cưng (`PetProfile.vue`) sang kiến trúc Clean Modern Dashboard. Bổ sung hiển thị Đơn thuốc chi tiết (PrescribedMedicines) đồng bộ thời gian thực vào thẻ Lịch sử khám bệnh. |
 
 ---
 

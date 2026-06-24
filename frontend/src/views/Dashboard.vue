@@ -431,7 +431,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import api from '../services/api';
 import BookingModal from '../components/shared/BookingModal.vue';
 import NotificationBell from '../components/layout/NotificationBell.vue';
@@ -456,6 +456,7 @@ import ReportsAdminTab from '../components/dashboard/ReportsAdminTab.vue';
 import BlogAdminTab from '../components/dashboard/BlogAdminTab.vue';
 
 const router = useRouter();
+const route = useRoute();
 
 // Tab state: 'overview' | 'profile' | 'queue' | 'customers' | 'appointments' | 'invoices'
 const activeTab = ref<string>('overview');
@@ -557,6 +558,10 @@ const fetchDashboardData = async () => {
       avatarUrl.value = avatarPath.startsWith('http') ? avatarPath : `${backendUrl}${avatarPath}`;
     } else {
       avatarUrl.value = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName.value)}&background=f59e0b&color=fff&rounded=true`;
+    }
+
+    if (route.query.action === 'book' && role.value === 'customer') {
+      handleSidebarBookNew();
     }
   } catch (err) {
     console.error('Lỗi khi lấy dữ liệu dashboard:', err);
