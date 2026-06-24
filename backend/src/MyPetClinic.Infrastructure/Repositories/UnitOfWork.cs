@@ -15,6 +15,7 @@ namespace MyPetClinic.Infrastructure.Repositories
 
         public IGenericRepository<Appointment> Appointments { get; private set; }
         public IGenericRepository<User> Users { get; private set; }
+        public IGenericRepository<Customer> Customers { get; private set; }
         public IGenericRepository<Role> Roles { get; private set; }
         public IGenericRepository<Pet> Pets { get; private set; }
         public IGenericRepository<Service> Services { get; private set; }
@@ -39,11 +40,16 @@ namespace MyPetClinic.Infrastructure.Repositories
         public IGenericRepository<ClinicOperatingDay> ClinicOperatingDays { get; private set; }
         public IGenericRepository<ClinicOperatingShift> ClinicOperatingShifts { get; private set; }
         public IGenericRepository<ClinicHoliday> ClinicHolidays { get; private set; }
+        public IGenericRepository<PostCategory> PostCategories { get; private set; }
+        public IGenericRepository<Tag> Tags { get; private set; }
+        public IGenericRepository<PostTag> PostTags { get; private set; }
+        public IGenericRepository<Banner> Banners { get; private set; }
         public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
             Appointments = new GenericRepository<Appointment>(_context);
             Users = new GenericRepository<User>(_context);
+            Customers = new GenericRepository<Customer>(_context);
             Roles = new GenericRepository<Role>(_context);
             Pets = new GenericRepository<Pet>(_context);
             Services = new GenericRepository<Service>(_context);
@@ -68,6 +74,10 @@ namespace MyPetClinic.Infrastructure.Repositories
             ClinicOperatingDays = new GenericRepository<ClinicOperatingDay>(_context);
             ClinicOperatingShifts = new GenericRepository<ClinicOperatingShift>(_context);
             ClinicHolidays = new GenericRepository<ClinicHoliday>(_context);
+            PostCategories = new GenericRepository<PostCategory>(_context);
+            Tags = new GenericRepository<Tag>(_context);
+            PostTags = new GenericRepository<PostTag>(_context);
+            Banners = new GenericRepository<Banner>(_context);
         }
 
         public async Task<int> SaveChangesAsync()

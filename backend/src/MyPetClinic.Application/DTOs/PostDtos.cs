@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace MyPetClinic.Application.DTOs
 {
@@ -8,8 +9,22 @@ namespace MyPetClinic.Application.DTOs
         public string Title { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string? Thumbnail { get; set; }
+        public string? Summary { get; set; }
         public string? Content { get; set; }
         public string Status { get; set; } = string.Empty;
+        public int ViewCount { get; set; }
+        public DateTime? PublishedAt { get; set; }
+        
+        // SEO
+        public string? MetaTitle { get; set; }
+        public string? MetaDescription { get; set; }
+        public string? Keywords { get; set; }
+        
+        // Relationships
+        public long? CategoryId { get; set; }
+        public string? CategoryName { get; set; }
+        public List<string> Tags { get; set; } = new List<string>();
+        
         public DateTime CreatedAt { get; set; }
         public string AuthorName { get; set; } = string.Empty;
     }
@@ -19,7 +34,20 @@ namespace MyPetClinic.Application.DTOs
         public string Title { get; set; } = string.Empty;
         public string? Slug { get; set; }
         public string? Thumbnail { get; set; }
+        public string? Summary { get; set; }
         public string? Content { get; set; }
         public string Status { get; set; } = "draft";
+        public DateTime? PublishedAt { get; set; }
+        
+        public string? MetaTitle { get; set; }
+        public string? MetaDescription { get; set; }
+        public string? Keywords { get; set; }
+        
+        public long? CategoryId { get; set; }
+        public List<string> Tags { get; set; } = new List<string>();
+    }
+
+    public class UpdatePostDto : CreatePostDto
+    {
     }
 }

@@ -15,12 +15,14 @@ namespace MyPetClinic.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IAuditLogService _auditLogService;
+        private readonly IMedicineRepository _medicineRepo;
         private static readonly string ConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "slot_config.json");
 
-        public AdminService(IUnitOfWork unitOfWork, IAuditLogService auditLogService)
+        public AdminService(IUnitOfWork unitOfWork, IAuditLogService auditLogService, IMedicineRepository medicineRepo)
         {
             _unitOfWork = unitOfWork;
             _auditLogService = auditLogService;
+            _medicineRepo = medicineRepo;
         }
 
         public async Task<object> GetUsersAsync()
@@ -157,39 +159,55 @@ namespace MyPetClinic.Application.Services
 
         public async Task<IEnumerable<MedicineDto>> GetMedicinesAsync()
         {
-            var medicines = await _unitOfWork.Medicines.GetAllAsync();
+            // Sử dụng GetMedicinesWithStockAsync để Include(Batches)
+            // vì StockQuantity là [NotMapped] và được tính từ Batches.Sum(CurrentQuantity)
+            var medicines = await _medicineRepo.GetMedicinesWithStockAsync();
             return medicines.Select(m => new MedicineDto
             {
                 Id = m.Id,
                 Name = m.Name,
                 Unit = m.Unit,
-                StockQuantity = m.StockQuantity,
+                StockQuantity = m.StockQuantity,  // [NotMapped] = Batches.Sum(b => b.CurrentQuantity)
+                ImportPrice = m.ImportPrice,
                 SellPrice = m.SellPrice
             });
         }
 
         public async Task<object> GetMedicineWarningsAsync()
         {
-            var medicines = await _unitOfWork.Medicines.GetAllAsync();
+            // Sử dụng GetMedicinesWithStockAsync để Include(Batches)
+            var medicines = await _medicineRepo.GetMedicinesWithStockAsync();
             var today = DateTime.UtcNow.Date;
             var expireThreshold = today.AddDays(30);
 
-            var lowStock = medicines.Where(m => m.StockQuantity <= 10).ToList();
-            var expiring = medicines.Where(m => m.ExpiryDate.HasValue && m.ExpiryDate.Value.Date <= expireThreshold).ToList();
+            var lowStock = medicines
+                .Where(m => m.StockQuantity <= 10)
+                .Select(m => new MedicineDto { Id = m.Id, Name = m.Name, Unit = m.Unit, StockQuantity = m.StockQuantity })
+                .ToList();
+            var expiring = medicines
+                .Where(m => m.ExpiryDate.HasValue && m.ExpiryDate.Value.Date <= expireThreshold)
+                .Select(m => new { id = m.Id, name = m.Name, expiryDate = m.ExpiryDate })
+                .ToList();
 
             return new { lowStock, expiring };
         }
 
         public async Task<MedicineDto> CreateMedicineAsync(CreateMedicineDto dto, string currentUserId)
         {
+            var allCategories = await _unitOfWork.MedicineCategories.GetAllAsync();
+            long defaultCategoryId = allCategories.FirstOrDefault()?.Id ?? 1;
+
+            // Lưu ý: StockQuantity và ExpiryDate là [NotMapped] trên entity Medicine.
+            // Chúng được tính tự động từ MedicineBatches.Sum(CurrentQuantity).
+            // Không gán chúng ở đây; tồn kho phải được quản lý thông qua chức năng Nhập Kho.
             var medicine = new Medicine
             {
                 Name = dto.Name,
+                MedicineCode = "MED-" + DateTime.UtcNow.ToString("yyMMddHHmmss"),
+                CategoryId = defaultCategoryId,
                 Unit = dto.Unit,
-                StockQuantity = dto.StockQuantity,
                 ImportPrice = dto.ImportPrice,
                 SellPrice = dto.SellPrice,
-                ExpiryDate = dto.ExpiryDate.HasValue ? DateTime.SpecifyKind(dto.ExpiryDate.Value, DateTimeKind.Utc) : null,
                 Description = dto.Description
             };
 
@@ -202,21 +220,23 @@ namespace MyPetClinic.Application.Services
                 Id = medicine.Id,
                 Name = medicine.Name,
                 Unit = medicine.Unit,
-                StockQuantity = medicine.StockQuantity,
+                StockQuantity = 0,  // Tồn kho ban đầu = 0, sẽ tăng khi nhập kho
+                ImportPrice = medicine.ImportPrice,
                 SellPrice = medicine.SellPrice
             };
         }
 
         public async Task<MedicineDto> UpdateMedicineAsync(long id, CreateMedicineDto dto, string currentUserId)
         {
-            var medicine = await _unitOfWork.Medicines.GetByIdAsync(id) ?? throw new KeyNotFoundException("Không tìm thấy thuốc.");
+            // Dùng GetMedicineWithBatchesAsync để load Batches, đảm bảo StockQuantity được tính đúng
+            var medicine = await _medicineRepo.GetMedicineWithBatchesAsync(id) ?? throw new KeyNotFoundException("Không tìm thấy thuốc.");
 
+            // Chỉ cập nhật các trường được lưu vào DB.
+            // StockQuantity và ExpiryDate là [NotMapped], không cần và không được set ở đây.
             medicine.Name = dto.Name;
             medicine.Unit = dto.Unit;
-            medicine.StockQuantity = dto.StockQuantity;
             medicine.ImportPrice = dto.ImportPrice;
             medicine.SellPrice = dto.SellPrice;
-            medicine.ExpiryDate = dto.ExpiryDate.HasValue ? DateTime.SpecifyKind(dto.ExpiryDate.Value, DateTimeKind.Utc) : null;
             medicine.Description = dto.Description;
 
             _unitOfWork.Medicines.Update(medicine);
@@ -228,7 +248,8 @@ namespace MyPetClinic.Application.Services
                 Id = medicine.Id,
                 Name = medicine.Name,
                 Unit = medicine.Unit,
-                StockQuantity = medicine.StockQuantity,
+                StockQuantity = medicine.StockQuantity,  // Tính từ Batches (đã Include)
+                ImportPrice = medicine.ImportPrice,
                 SellPrice = medicine.SellPrice
             };
         }

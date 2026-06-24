@@ -13,11 +13,19 @@ namespace MyPetClinic.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IGoogleAuthService _googleAuthService;
+        private readonly MyPetClinic.Application.Interfaces.Repositories.IUserRepository _userRepository;
+        private readonly MyPetClinic.Application.Interfaces.Repositories.IUnitOfWork _unitOfWork;
 
-        public AccountController(IAuthService authService, IGoogleAuthService googleAuthService)
+        public AccountController(
+            IAuthService authService, 
+            IGoogleAuthService googleAuthService,
+            MyPetClinic.Application.Interfaces.Repositories.IUserRepository userRepository,
+            MyPetClinic.Application.Interfaces.Repositories.IUnitOfWork unitOfWork)
         {
             _authService = authService;
             _googleAuthService = googleAuthService;
+            _userRepository = userRepository;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpPost("register")]
@@ -63,7 +71,41 @@ namespace MyPetClinic.Controllers
             var result = await _authService.VerifyOtpAsync(req.Email, req.OtpCode);
             if (!result.Success) return BadRequest(new { message = result.ErrorMessage ?? "Lỗi xác thực." });
 
-            return Ok(new { success = true, message = "Xác thực OTP thành công." });
+            if (result.RequiresClaiming)
+            {
+                return Ok(new 
+                { 
+                    success = true, 
+                    requiresClaiming = true, 
+                    hasPets = result.HasPets, 
+                    tempToken = result.TempToken,
+                    message = "Vui lòng xác minh hồ sơ khách hàng của bạn."
+                });
+            }
+
+            return Ok(new { success = true, requiresClaiming = false, message = "Xác thực OTP thành công." });
+        }
+
+        [HttpPost("claim-profile")]
+        public async Task<IActionResult> ClaimProfile([FromBody] ClaimProfileDto req)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var result = await _authService.ClaimProfileAsync(req);
+            if (!result.Success) return BadRequest(new { message = result.ErrorMessage ?? "Xác minh thất bại." });
+
+            return Ok(new { success = true, message = "Đồng bộ hồ sơ thành công." });
+        }
+
+        [HttpPost("skip-claim")]
+        public async Task<IActionResult> SkipClaim([FromBody] SkipClaimDto req)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var result = await _authService.SkipClaimingAsync(req);
+            if (!result.Success) return BadRequest(new { message = result.ErrorMessage ?? "Có lỗi xảy ra." });
+
+            return Ok(new { success = true, message = "Tạo hồ sơ mới thành công." });
         }
 
         [HttpPost("login")]
@@ -180,6 +222,48 @@ namespace MyPetClinic.Controllers
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Ok(new { success = true, message = "Đã đăng xuất." });
+        }
+
+        /// <summary>
+        /// Tự động tạo Customer record nếu user đăng nhập chưa có CustomerId.
+        /// Gọi ngay sau khi đăng nhập thành công để sửa các tài khoản cũ bị lỗi.
+        /// </summary>
+        [HttpPost("ensure-profile")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "customer")]
+        public async Task<IActionResult> EnsureProfile()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Unauthorized(new { message = "Không tìm thấy thông tin xác thực." });
+
+            var user = await _userRepository.GetUserByIdAsync(userId);
+            if (user == null)
+                return NotFound(new { message = "Không tìm thấy người dùng." });
+
+            // Nếu đã có CustomerId thì không cần làm gì
+            if (user.CustomerId.HasValue)
+                return Ok(new { success = true, customerId = user.CustomerId.Value, message = "Hồ sơ đã tồn tại." });
+
+            // Tự động tạo Customer mới
+            var newCustomer = new MyPetClinic.Domain.Entities.Customer
+            {
+                Id = Guid.NewGuid(),
+                CustomerCode = "CUS" + DateTime.UtcNow.ToString("yyMMddHHmmss"),
+                FullName = user.FullName ?? user.Email,
+                Phone = user.Phone,
+                Email = user.Email,
+                Address = user.Address,
+                HasAccount = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.Customers.AddAsync(newCustomer);
+            user.CustomerId = newCustomer.Id;
+            await _userRepository.UpdateUserAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+            await _userRepository.SaveChangesAsync();
+
+            return Ok(new { success = true, customerId = newCustomer.Id, message = "Tạo hồ sơ khách hàng thành công." });
         }
     }
 

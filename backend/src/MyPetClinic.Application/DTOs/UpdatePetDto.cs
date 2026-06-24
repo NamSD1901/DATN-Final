@@ -33,4 +33,10 @@ namespace MyPetClinic.Application.DTOs
         
         public string? Avatar { get; set; }
     }
+
+    public class UpdatePetStatusRequest
+    {
+        public bool IsDeceased { get; set; }
+        public bool IsAggressive { get; set; }
+    }
 }

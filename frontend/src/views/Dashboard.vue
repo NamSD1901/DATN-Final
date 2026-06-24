@@ -82,8 +82,14 @@
           <li :class="{ 'active': activeTab === 'reports-admin' }">
             <a href="#" @click.prevent="activeTab = 'reports-admin'"><i class="bi bi-graph-up-arrow text-warning opacity-75"></i> Báo cáo doanh thu</a>
           </li>
+          <li :class="{ 'active': activeTab === 'categories-admin' }">
+            <a href="#" @click.prevent="activeTab = 'categories-admin'"><i class="bi bi-tags-fill text-warning opacity-75"></i> Quản lý Danh mục</a>
+          </li>
           <li :class="{ 'active': activeTab === 'blog-admin' }">
             <a href="#" @click.prevent="activeTab = 'blog-admin'"><i class="bi bi-journal-text text-warning opacity-75"></i> Quản lý bài viết</a>
+          </li>
+          <li :class="{ 'active': activeTab === 'banners-admin' }">
+            <a href="#" @click.prevent="activeTab = 'banners-admin'"><i class="bi bi-image text-warning opacity-75"></i> Quản lý Banners</a>
           </li>
         </template>
 
@@ -323,7 +329,12 @@
 
           <!-- tab: My Pets Tab (Customer) -->
           <div v-else-if="activeTab === 'my-pets'" class="container-fluid p-0">
-            <MyPetsTab />
+            <MyPetsTab @view-pet="handleViewPetProfile" />
+          </div>
+
+          <!-- tab: Pet Profile (Customer) -->
+          <div v-else-if="activeTab === 'pet-profile'" class="container-fluid p-0">
+            <PetProfile :pet-id="viewingPetId" @go-back="activeTab = 'my-pets'" />
           </div>
 
           <!-- tab: My Appointments Tab (Customer) -->
@@ -390,6 +401,16 @@
           <div v-else-if="activeTab === 'blog-admin'" class="container-fluid p-0">
             <BlogAdminTab />
           </div>
+
+          <!-- tab: Categories Admin Tab -->
+          <div v-else-if="activeTab === 'categories-admin'" class="container-fluid p-0">
+            <CategoriesAdminTab />
+          </div>
+
+          <!-- tab: Banners Admin Tab -->
+          <div v-else-if="activeTab === 'banners-admin'" class="container-fluid p-0">
+            <BannersAdminTab />
+          </div>
         </Transition>
       </div>
 
@@ -441,6 +462,7 @@ import CustomersTab from '../components/dashboard/CustomersTab.vue';
 import AppointmentsTab from '../components/dashboard/AppointmentsTab.vue';
 import InvoicesTab from '../components/dashboard/InvoicesTab.vue';
 import MyPetsTab from '../components/dashboard/MyPetsTab.vue';
+import PetProfile from '../views/PetProfile.vue';
 import MyAppointmentsTab from '../components/dashboard/MyAppointmentsTab.vue';
 import MyHistoryTab from '../components/dashboard/MyHistoryTab.vue';
 import MyServicesInvoicesTab from '../components/dashboard/MyServicesInvoicesTab.vue';
@@ -454,6 +476,8 @@ import VaccinesAdminTab from '../components/dashboard/VaccinesAdminTab.vue';
 import SchedulesAdminTab from '../components/dashboard/SchedulesAdminTab.vue';
 import ReportsAdminTab from '../components/dashboard/ReportsAdminTab.vue';
 import BlogAdminTab from '../components/dashboard/BlogAdminTab.vue';
+import CategoriesAdminTab from '../components/dashboard/CategoriesAdminTab.vue';
+import BannersAdminTab from '../components/dashboard/BannersAdminTab.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -461,6 +485,12 @@ const route = useRoute();
 // Tab state: 'overview' | 'profile' | 'queue' | 'customers' | 'appointments' | 'invoices'
 const activeTab = ref<string>('overview');
 const selectedInvoiceId = ref<number | undefined>(undefined);
+const viewingPetId = ref<number | string | null>(null);
+
+const handleViewPetProfile = (petId: string | number) => {
+  viewingPetId.value = petId;
+  activeTab.value = 'pet-profile';
+};
 
 const handleSelectInvoice = (id: number) => {
   selectedInvoiceId.value = id;
@@ -509,6 +539,7 @@ const getTitle = computed(() => {
   if (activeTab.value === 'appointments') return 'Quản lý Lịch hẹn & Điều phối';
   if (activeTab.value === 'invoices') return 'Quản lý Hóa đơn & Thu ngân';
   if (activeTab.value === 'my-pets') return 'Thú cưng của tôi';
+  if (activeTab.value === 'pet-profile') return 'Hồ sơ thú cưng chi tiết';
   if (activeTab.value === 'my-appointments') return 'Lịch hẹn của tôi';
   if (activeTab.value === 'my-history') return 'Lịch sử y tế';
   if (activeTab.value === 'my-services-invoices') return 'Dịch vụ & Hóa đơn';

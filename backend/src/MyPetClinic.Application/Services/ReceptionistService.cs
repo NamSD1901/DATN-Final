@@ -45,7 +45,7 @@ namespace MyPetClinic.Application.Services
                 p => (p.Name != null && p.Name.ToLower().Contains(lowerQuery)) || 
                      (p.MicrochipCode != null && p.MicrochipCode.ToLower().Contains(lowerQuery))
             );
-            var matchedOwnerIds = matchedPets.Select(p => p.OwnerId).ToList();
+            var matchedOwnerIds = matchedPets.Select(p => p.CustomerId).ToList();
 
             var usersList = await _unitOfWork.Users.FindWithIncludesAsync(
                 u => u.IsActive == true && u.Role != null && u.Role.Name.ToLower() == "customer" &&
@@ -61,7 +61,7 @@ namespace MyPetClinic.Application.Services
             var result = new List<OmniSearchDto>();
             foreach (var user in users)
             {
-                var userPets = await _unitOfWork.Pets.FindAsync(p => p.OwnerId == user.Id && !p.IsDeceased);
+                var userPets = await _unitOfWork.Pets.FindAsync(p => p.CustomerId == user.Id && !p.IsDeceased);
                 var pets = userPets.Select(p => new OmniSearchPetDto
                     {
                         PetId = p.Id,
@@ -91,7 +91,7 @@ namespace MyPetClinic.Application.Services
             var appointment = await _unitOfWork.Appointments.GetFirstOrDefaultWithIncludesAsync(
                 a => a.QrToken == qrToken,
                 a => a.Pet!,
-                a => a.Pet!.Owner!,
+                a => a.Pet!.Customer!,
                 a => a.Doctor!,
                 a => a.Service!
             );
@@ -145,8 +145,8 @@ namespace MyPetClinic.Application.Services
             {
                 AppointmentId = appointment.Id,
                 QrToken = appointment.QrToken!,
-                CustomerName = appointment.Pet?.Owner?.FullName ?? "Khách vãng lai",
-                CustomerPhone = appointment.Pet?.Owner?.Phone ?? "",
+                CustomerName = appointment.Pet?.Customer?.FullName ?? "Khách vãng lai",
+                CustomerPhone = appointment.Pet?.Customer?.Phone ?? "",
                 PetName = appointment.Pet?.Name ?? "Thú cưng",
                 PetSpecies = appointment.Pet?.Species,
                 PetWeight = (double?)appointment.Pet?.Weight,
@@ -272,36 +272,35 @@ namespace MyPetClinic.Application.Services
             try
             {
                 // 1. Tìm hoặc tạo Customer
-                var customers = await _unitOfWork.Users.FindAsync(u => u.Phone == request.Phone && u.IsActive == true);
+                var customers = await _unitOfWork.Customers.FindAsync(c => c.Phone == request.Phone && c.DeletedAt == null);
                 var customer = customers.FirstOrDefault();
                     
                 if (customer == null)
                 {
-                    var roles = await _unitOfWork.Roles.FindAsync(r => r.Name.ToLower() == "customer");
-                    var role = roles.FirstOrDefault();
-                    customer = new User
+                    customer = new Customer
                     {
                         Id = Guid.NewGuid(),
+                        CustomerCode = "CUS-" + DateTime.UtcNow.ToString("yyyyMMdd") + new Random().Next(100, 999).ToString(),
                         FullName = request.FullName,
                         Phone = request.Phone,
-                        RoleId = role?.Id ?? 3, // Giả sử 3 là Customer
-                        CreatedAt = DateTime.UtcNow,
-                        IsActive = true
+                        HasAccount = false,
+                        Status = "Active",
+                        CreatedAt = DateTime.UtcNow
                     };
-                    await _unitOfWork.Users.AddAsync(customer);
+                    await _unitOfWork.Customers.AddAsync(customer);
                     await _unitOfWork.SaveChangesAsync(); // Cần save để lấy Id
                 }
 
                 // 2. Tái sử dụng hoặc Tạo Pet
                 var petNameLower = request.PetName?.Trim().ToLower();
-                var pets = await _unitOfWork.Pets.FindAsync(p => p.OwnerId == customer.Id && p.Name != null && p.Name.ToLower() == petNameLower && !p.IsDeceased);
+                var pets = await _unitOfWork.Pets.FindAsync(p => p.CustomerId == customer.Id && p.Name != null && p.Name.ToLower() == petNameLower && !p.IsDeceased);
                 var pet = pets.FirstOrDefault();
 
                 if (pet == null)
                 {
                     pet = new Pet
                     {
-                        OwnerId = customer.Id,
+                        CustomerId = customer.Id,
                         Name = request.PetName?.Trim(),
                         Species = request.Species,
                         Breed = request.Breed,
@@ -422,7 +421,7 @@ namespace MyPetClinic.Application.Services
                 return false; 
             }
 
-            var realCustomers = await _unitOfWork.Users.FindAsync(u => u.Id == customerId);
+            var realCustomers = await _unitOfWork.Customers.FindAsync(c => c.Id == customerId && c.DeletedAt == null);
             var realCustomer = realCustomers.FirstOrDefault();
             var realPets = await _unitOfWork.Pets.FindAsync(p => p.Id == petId);
             var realPet = realPets.FirstOrDefault();
@@ -444,7 +443,7 @@ namespace MyPetClinic.Application.Services
             if (dummyCustomer.FullName == "Khách Cấp Cứu")
             {
                 if (dummyPet != null) _unitOfWork.Pets.Remove(dummyPet);
-                if (dummyCustomer != null) _unitOfWork.Users.Remove(dummyCustomer);
+                if (dummyCustomer != null) _unitOfWork.Customers.Remove(dummyCustomer);
                 await _unitOfWork.SaveChangesAsync();
             }
 
@@ -475,7 +474,7 @@ namespace MyPetClinic.Application.Services
             if (user == null)
                 return null;
 
-            var userPets = await _unitOfWork.Pets.FindAsync(p => p.OwnerId == user.Id && !p.IsDeceased);
+            var userPets = await _unitOfWork.Pets.FindAsync(p => p.CustomerId == user.Id && !p.IsDeceased);
             var pets = userPets.Select(p => new PetBasicDto
                 {
                     Id = p.Id,
@@ -533,7 +532,7 @@ namespace MyPetClinic.Application.Services
 
         public async Task<PetDashboardDetailDto?> GetPetDashboardDetailAsync(long id)
         {
-            var pet = await _unitOfWork.Pets.GetFirstOrDefaultWithIncludesAsync(p => p.Id == id, p => p.Owner!);
+            var pet = await _unitOfWork.Pets.GetFirstOrDefaultWithIncludesAsync(p => p.Id == id, p => p.Customer!);
             if (pet == null) return null;
 
             var appointments = await _appointmentService.GetPetAppointmentsAsync(id);
@@ -543,7 +542,7 @@ namespace MyPetClinic.Application.Services
                 Pet = new PetDto 
                 { 
                     Id = pet.Id, 
-                    OwnerId = pet.OwnerId, 
+                    CustomerId = pet.CustomerId, 
                     Name = pet.Name, 
                     Species = pet.Species, 
                     Breed = pet.Breed, 
@@ -558,15 +557,15 @@ namespace MyPetClinic.Application.Services
                 },
                 Customer = new UserProfileDto 
                 { 
-                    Id = pet.Owner?.Id ?? Guid.Empty, 
-                    FullName = pet.Owner?.FullName ?? string.Empty, 
-                    Email = pet.Owner?.Email ?? string.Empty, 
-                    Phone = pet.Owner?.Phone ?? string.Empty, 
-                    Address = pet.Owner?.Address, 
-                    Gender = pet.Owner?.Gender, 
-                    DateOfBirth = pet.Owner?.DateOfBirth, 
-                    Avatar = pet.Owner?.Avatar, 
-                    RoleName = pet.Owner?.Role?.Name 
+                    Id = pet.Customer?.Id ?? Guid.Empty, 
+                    FullName = pet.Customer?.FullName ?? string.Empty, 
+                    Email = pet.Customer?.Email ?? string.Empty, 
+                    Phone = pet.Customer?.Phone ?? string.Empty, 
+                    Address = pet.Customer?.Address, 
+                    Gender = pet.Customer?.Gender, 
+                    DateOfBirth = pet.Customer?.DateOfBirth, 
+                    Avatar = pet.Customer?.Avatar, 
+                    RoleName = "Customer" 
                 },
                 Appointments = appointments
             };
@@ -579,7 +578,7 @@ namespace MyPetClinic.Application.Services
 
             var newPet = new MyPetClinic.Domain.Entities.Pet
             {
-                OwnerId = customerId,
+                CustomerId = customerId,
                 Name = model.Name?.Trim(),
                 Species = model.Species?.Trim(),
                 Breed = model.Breed?.Trim(),

@@ -119,7 +119,7 @@ namespace MyPetClinic.Tests
         public async Task CreateAppointment_ShouldCheckStockAndDecrement_WhenVaccineRequested()
         {
             // Arrange
-            var pet = new Pet { Id = 5, Name = "Lu", Species = "Chó", BirthDate = DateTime.Today.AddYears(-1), OwnerId = Guid.NewGuid() };
+            var pet = new Pet { Id = 5, Name = "Lu", Species = "Chó", BirthDate = DateTime.Today.AddYears(-1), CustomerId = Guid.NewGuid() };
             var vaccine = new Vaccine { Id = 10, Name = "Nobivac Rabies", StockQuantity = 5, TargetSpecies = "Chó", MinAgeWeeks = 12, IntervalDays = 305 };
             var doctorId = Guid.NewGuid();
             var appointmentTime = DateTime.UtcNow.Date.AddDays(1).AddHours(10);
@@ -138,7 +138,7 @@ namespace MyPetClinic.Tests
 
             var dto = new AppointmentCreateDto
             {
-                CustomerId = pet.OwnerId,
+                CustomerId = pet.CustomerId,
                 PetId = pet.Id,
                 ServiceId = 1, // Tiêm chủng service
                 DoctorId = doctorId,
@@ -148,7 +148,7 @@ namespace MyPetClinic.Tests
             };
 
             // Act
-            var appointmentId = await _service.CreateAppointmentAsync(dto, pet.OwnerId);
+            var appointmentId = await _service.CreateAppointmentAsync(dto, pet.CustomerId);
 
             // Assert
             var appt = await _context.Appointments.FindAsync(appointmentId);
@@ -167,7 +167,7 @@ namespace MyPetClinic.Tests
             var userA = Guid.NewGuid();
             var userB = Guid.NewGuid();
             
-            var petB = new Pet { Id = 20, Name = "Mimi", Species = "Mèo", OwnerId = userB };
+            var petB = new Pet { Id = 20, Name = "Mimi", Species = "Mèo", CustomerId = userB };
             _context.Pets.Add(petB);
             await _context.SaveChangesAsync();
 
@@ -182,13 +182,13 @@ namespace MyPetClinic.Tests
             // Arrange
             var customerId = Guid.NewGuid();
             var doctorId = Guid.NewGuid();
-            var pet = new Pet { Id = 30, Name = "Kiki", Species = "Chó", OwnerId = customerId };
+            var pet = new Pet { Id = 30, Name = "Kiki", Species = "Chó", CustomerId = customerId };
             
-            var customerUser = new User { Id = customerId, FullName = "Khách Hàng A", Phone = "0123456789", Email = "customer@test.com", RoleId = 3, IsActive = true };
+            var customerUser = new Customer { Id = customerId, FullName = "Khách Hàng A", Phone = "0123456789", Email = "customer@test.com" };
             var doctorUser = new User { Id = doctorId, FullName = "Bác Sĩ B", Phone = "0987654321", Email = "doctor@test.com", RoleId = 2, IsActive = true };
             var service = new Service { Id = 1, Name = "Khám Tổng Quát", Price = 100000 };
 
-            _context.Users.Add(customerUser);
+            _context.Customers.Add(customerUser);
             _context.Users.Add(doctorUser);
             _context.Services.Add(service);
             _context.Pets.Add(pet);
@@ -223,9 +223,8 @@ namespace MyPetClinic.Tests
         {
             // Arrange
             var doctorId = Guid.NewGuid();
-            var targetDate = DateTime.Today.AddDays(2);
+            var targetDate = DateTime.UtcNow.Date.AddDays(2);
             var doctorRole = new Role { Id = 2, Name = "Doctor" };
-            _context.Roles.Add(doctorRole);
             var doctorUser = new User { Id = doctorId, FullName = "Bác Sĩ C", Phone = "0987654322", Email = "bacsi_test@gmail.com", RoleId = 2, IsActive = true, Role = doctorRole };
             _context.Users.Add(doctorUser);
 

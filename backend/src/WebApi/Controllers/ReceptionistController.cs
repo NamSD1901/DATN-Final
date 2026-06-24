@@ -133,6 +133,24 @@ namespace MyPetClinic.Controllers
             }
         }
 
+        [HttpPut("pets/{id}/status")]
+        public async Task<IActionResult> UpdatePetStatus(long id, [FromBody] UpdatePetStatusRequest req, [FromServices] IPetService petService)
+        {
+            try
+            {
+                await petService.UpdatePetStatusAsync(id, req.IsDeceased, req.IsAggressive);
+                return Ok(new { success = true, message = "Đã cập nhật trạng thái thú cưng thành công!" });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new { success = false, message = "Không tìm thấy thú cưng." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
         [HttpGet("quick-search")]
         public async Task<IActionResult> QuickSearch([FromQuery] string phone)
         {

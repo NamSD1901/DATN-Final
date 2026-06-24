@@ -18,19 +18,22 @@ namespace MyPetClinic.Controllers
         private readonly IVaccinationService _vaccinationService;
         private readonly IAppointmentService _appointmentService;
         private readonly IPrescriptionService _prescriptionService;
+        private readonly MyPetClinic.Application.Interfaces.Repositories.IUserRepository _userRepository;
 
         public MyPetsController(
             IPetService petService,
             IMedicalRecordService medicalRecordService,
             IVaccinationService vaccinationService,
             IAppointmentService appointmentService,
-            IPrescriptionService prescriptionService)
+            IPrescriptionService prescriptionService,
+            MyPetClinic.Application.Interfaces.Repositories.IUserRepository userRepository)
         {
             _petService = petService;
             _medicalRecordService = medicalRecordService;
             _vaccinationService = vaccinationService;
             _appointmentService = appointmentService;
             _prescriptionService = prescriptionService;
+            _userRepository = userRepository;
         }
 
         private Guid GetCurrentUserId()
@@ -43,13 +46,28 @@ namespace MyPetClinic.Controllers
             throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng.");
         }
 
+        private async Task<Guid?> GetCurrentCustomerIdAsync()
+        {
+            var userId = GetCurrentUserId();
+            var user = await _userRepository.GetUserByIdAsync(userId);
+            if (user != null && user.CustomerId.HasValue)
+            {
+                return user.CustomerId.Value;
+            }
+            return null;
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetMyPets()
         {
             try
             {
-                var userId = GetCurrentUserId();
-                var pets = await _petService.GetMyPetsAsync(userId);
+                var customerId = await GetCurrentCustomerIdAsync();
+                if (customerId == null)
+                {
+                    return Ok(new List<PetDto>());
+                }
+                var pets = await _petService.GetMyPetsAsync(customerId.Value);
                 return Ok(pets);
             }
             catch (Exception ex)
@@ -68,8 +86,12 @@ namespace MyPetClinic.Controllers
 
             try
             {
-                var userId = GetCurrentUserId();
-                await _petService.AddPetAsync(dto, userId);
+                var customerId = await GetCurrentCustomerIdAsync();
+                if (customerId == null)
+                {
+                    return BadRequest(new { success = false, message = "Bạn cần cập nhật hồ sơ khách hàng trước khi thêm thú cưng. Vui lòng xác thực số điện thoại." });
+                }
+                await _petService.AddPetAsync(dto, customerId.Value);
                 return Ok(new { success = true, message = "Thêm thú cưng thành công!" });
             }
             catch (Exception ex)
@@ -94,8 +116,12 @@ namespace MyPetClinic.Controllers
 
             try
             {
-                var userId = GetCurrentUserId();
-                await _petService.UpdatePetAsync(dto, userId);
+                var customerId = await GetCurrentCustomerIdAsync();
+                if (customerId == null)
+                {
+                    return BadRequest(new { success = false, message = "Bạn cần cập nhật hồ sơ khách hàng trước." });
+                }
+                await _petService.UpdatePetAsync(dto, customerId.Value);
                 return Ok(new { success = true, message = "Cập nhật thông tin thú cưng thành công!" });
             }
             catch (Exception ex)
@@ -110,8 +136,10 @@ namespace MyPetClinic.Controllers
         {
             try
             {
-                var userId = GetCurrentUserId();
-                var pet = await _petService.GetPetByIdAsync(id, userId);
+                var customerId = await GetCurrentCustomerIdAsync();
+                if (customerId == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
+                
+                var pet = await _petService.GetPetByIdAsync(id, customerId.Value);
                 if (pet == null)
                 {
                     return NotFound(new { message = "Không tìm thấy thú cưng." });
@@ -130,8 +158,12 @@ namespace MyPetClinic.Controllers
         {
             try
             {
-                var userId = GetCurrentUserId();
-                await _petService.DeletePetAsync(id, userId);
+                var customerId = await GetCurrentCustomerIdAsync();
+                if (customerId == null)
+                {
+                    return BadRequest(new { success = false, message = "Lỗi khi xóa thú cưng: Không tìm thấy hồ sơ khách hàng." });
+                }
+                await _petService.DeletePetAsync(id, customerId.Value);
                 return Ok(new { success = true, message = "Đã xóa thú cưng thành công." });
             }
             catch (Exception ex)
@@ -189,9 +221,10 @@ namespace MyPetClinic.Controllers
         {
             try
             {
-                var userId = GetCurrentUserId();
+                var customerId = await GetCurrentCustomerIdAsync();
+                if (customerId == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
                 // Verify ownership
-                var pet = await _petService.GetPetByIdAsync(id, userId);
+                var pet = await _petService.GetPetByIdAsync(id, customerId.Value);
                 if (pet == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
 
                 var records = await _medicalRecordService.GetPetMedicalHistoryAsync(id);
@@ -212,8 +245,9 @@ namespace MyPetClinic.Controllers
         {
             try
             {
-                var userId = GetCurrentUserId();
-                var pet = await _petService.GetPetByIdAsync(id, userId);
+                var customerId = await GetCurrentCustomerIdAsync();
+                if (customerId == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
+                var pet = await _petService.GetPetByIdAsync(id, customerId.Value);
                 if (pet == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
 
                 var vaccinations = await _vaccinationService.GetPetVaccinationHistoryAsync(id);
@@ -234,10 +268,12 @@ namespace MyPetClinic.Controllers
         {
             try
             {
-                var userId = GetCurrentUserId();
-                var pet = await _petService.GetPetByIdAsync(id, userId);
+                var customerId = await GetCurrentCustomerIdAsync();
+                if (customerId == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
+                var pet = await _petService.GetPetByIdAsync(id, customerId.Value);
                 if (pet == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
 
+                var userId = GetCurrentUserId();
                 var appointments = await _appointmentService.GetCustomerAppointmentsPaginatedAsync(userId, null, 1, 100);
                 // Filter chỉ lịch hẹn của pet này
                 return Ok(appointments);
@@ -256,8 +292,9 @@ namespace MyPetClinic.Controllers
         {
             try
             {
-                var userId = GetCurrentUserId();
-                var pet = await _petService.GetPetByIdAsync(id, userId);
+                var customerId = await GetCurrentCustomerIdAsync();
+                if (customerId == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
+                var pet = await _petService.GetPetByIdAsync(id, customerId.Value);
                 if (pet == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
 
                 var prescriptions = await _prescriptionService.GetPetPrescriptionsAsync(id);

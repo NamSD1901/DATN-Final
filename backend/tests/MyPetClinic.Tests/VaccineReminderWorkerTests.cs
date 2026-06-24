@@ -45,8 +45,8 @@ namespace MyPetClinic.Tests
         {
             // Arrange
             var today = DateTime.UtcNow.Date;
-            var owner = new User { Id = Guid.NewGuid(), FullName = "Nam Nguyen", Email = "nam@gmail.com" };
-            var pet = new Pet { Id = 1, Name = "LuLu", OwnerId = owner.Id };
+            var owner = new Customer { Id = Guid.NewGuid(), FullName = "Nam Nguyen", Email = "nam@gmail.com" };
+            var pet = new Pet { Id = 1, Name = "LuLu", CustomerId = owner.Id };
             var vaccine = new Vaccine { Id = 1, Name = "Rabies" };
 
             // Record 1: Target - NextDueDate is exactly today + 3 days
@@ -71,9 +71,9 @@ namespace MyPetClinic.Tests
                 NextDueDate = today.AddDays(5)
             };
 
-            _context.Users.Add(owner);
-            _context.Pets.Add(pet);
             _context.Vaccines.Add(vaccine);
+            _context.Customers.Add(owner);
+            _context.Pets.Add(pet);
             _context.VaccinationRecords.AddRange(record1, record2);
             await _context.SaveChangesAsync();
 

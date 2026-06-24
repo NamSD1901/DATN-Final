@@ -19,5 +19,8 @@ namespace MyPetClinic.Domain.Entities
         public Role? Role { get; set; }
         public EmployeeProfile? EmployeeProfile { get; set; }
         public ICollection<Invitation> Invitations { get; set; } = new List<Invitation>();
+        
+        public Guid? CustomerId { get; set; }
+        public Customer? CustomerProfile { get; set; }
     }
 }

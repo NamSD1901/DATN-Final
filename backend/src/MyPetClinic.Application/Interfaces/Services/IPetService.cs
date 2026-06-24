@@ -11,6 +11,7 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<PetDto?> GetPetByIdAsync(long id, Guid ownerId);
         Task<PetDto> AddPetAsync(CreatePetDto dto, Guid ownerId);
         Task UpdatePetAsync(UpdatePetDto dto, Guid ownerId);
+        Task UpdatePetStatusAsync(long petId, bool isDeceased, bool isAggressive);
         Task DeletePetAsync(long id, Guid ownerId);
     }
 }
