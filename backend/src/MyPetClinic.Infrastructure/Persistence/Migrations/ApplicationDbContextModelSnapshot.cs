@@ -140,6 +140,84 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.ToTable("appointments", (string)null);
                 });
 
+            modelBuilder.Entity("MyPetClinic.Domain.Entities.Banner", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("end_date");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("image_url");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("LinkUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("link_url");
+
+                    b.Property<int>("Order")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("order");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea")
+                        .HasColumnName("row_version");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("start_date");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("UpdatedBy");
+
+                    b.ToTable("banners", (string)null);
+                });
+
             modelBuilder.Entity("MyPetClinic.Domain.Entities.ClinicHoliday", b =>
                 {
                     b.Property<int>("Id")
@@ -234,6 +312,91 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.HasIndex("ClinicOperatingDayId");
 
                     b.ToTable("clinic_operating_shifts", (string)null);
+                });
+
+            modelBuilder.Entity("MyPetClinic.Domain.Entities.Customer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid?>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text")
+                        .HasColumnName("address");
+
+                    b.Property<string>("Avatar")
+                        .HasColumnType("text")
+                        .HasColumnName("avatar");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CustomerCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("customer_code");
+
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("date_of_birth");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("FullName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("full_name");
+
+                    b.Property<short?>("Gender")
+                        .HasColumnType("smallint")
+                        .HasColumnName("gender");
+
+                    b.Property<bool>("HasAccount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("has_account");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone");
+
+                    b.Property<string>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Active")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .IsUnique();
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("customers", (string)null);
                 });
 
             modelBuilder.Entity("MyPetClinic.Domain.Entities.DoctorSchedule", b =>
@@ -856,6 +1019,10 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.Property<string>("CurrentDiet")
                         .HasColumnType("text");
 
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -879,10 +1046,6 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("name");
 
-                    b.Property<Guid>("OwnerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("owner_id");
-
                     b.Property<string>("Species")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
@@ -898,7 +1061,7 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OwnerId");
+                    b.HasIndex("CustomerId");
 
                     b.ToTable("pets", (string)null);
                 });
@@ -916,6 +1079,10 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("author_id");
 
+                    b.Property<long?>("CategoryId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("category_id");
+
                     b.Property<string>("Content")
                         .HasColumnType("text")
                         .HasColumnName("content");
@@ -926,7 +1093,34 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
 
+                    b.Property<string>("Keywords")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("keywords");
+
+                    b.Property<string>("MetaDescription")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)")
+                        .HasColumnName("meta_description");
+
+                    b.Property<string>("MetaTitle")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("meta_title");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea")
+                        .HasColumnName("row_version");
+
                     b.Property<string>("Slug")
+                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("slug");
@@ -939,6 +1133,11 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasDefaultValue("draft")
                         .HasColumnName("status");
 
+                    b.Property<string>("Summary")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("summary");
+
                     b.Property<string>("Thumbnail")
                         .HasColumnType("text")
                         .HasColumnName("thumbnail");
@@ -949,14 +1148,95 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("title");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<int>("ViewCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("view_count");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorId");
 
+                    b.HasIndex("CategoryId");
+
                     b.HasIndex("Slug")
                         .IsUnique();
 
+                    b.HasIndex("UpdatedBy");
+
                     b.ToTable("posts", (string)null);
+                });
+
+            modelBuilder.Entity("MyPetClinic.Domain.Entities.PostCategory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<long?>("ParentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("parent_id");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("slug");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("post_categories", (string)null);
+                });
+
+            modelBuilder.Entity("MyPetClinic.Domain.Entities.PostTag", b =>
+                {
+                    b.Property<long>("PostId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("post_id");
+
+                    b.Property<long>("TagId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tag_id");
+
+                    b.HasKey("PostId", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("post_tags", (string)null);
                 });
 
             modelBuilder.Entity("MyPetClinic.Domain.Entities.Prescription", b =>
@@ -1168,6 +1448,41 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.ToTable("service_categories", (string)null);
                 });
 
+            modelBuilder.Entity("MyPetClinic.Domain.Entities.Tag", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("slug");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("tags", (string)null);
+                });
+
             modelBuilder.Entity("MyPetClinic.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1189,6 +1504,9 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("DateOfBirth")
                         .HasColumnType("timestamp without time zone")
@@ -1232,6 +1550,8 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasColumnName("role_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -1544,8 +1864,8 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("MyPetClinic.Domain.Entities.User", "Customer")
-                        .WithMany()
+                    b.HasOne("MyPetClinic.Domain.Entities.Customer", "Customer")
+                        .WithMany("Appointments")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1586,6 +1906,23 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.Navigation("Vaccine");
                 });
 
+            modelBuilder.Entity("MyPetClinic.Domain.Entities.Banner", b =>
+                {
+                    b.HasOne("MyPetClinic.Domain.Entities.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MyPetClinic.Domain.Entities.User", "Updater")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Creator");
+
+                    b.Navigation("Updater");
+                });
+
             modelBuilder.Entity("MyPetClinic.Domain.Entities.ClinicOperatingShift", b =>
                 {
                     b.HasOne("MyPetClinic.Domain.Entities.ClinicOperatingDay", "ClinicOperatingDay")
@@ -1595,6 +1932,16 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("ClinicOperatingDay");
+                });
+
+            modelBuilder.Entity("MyPetClinic.Domain.Entities.Customer", b =>
+                {
+                    b.HasOne("MyPetClinic.Domain.Entities.User", "Account")
+                        .WithOne()
+                        .HasForeignKey("MyPetClinic.Domain.Entities.Customer", "AccountId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("MyPetClinic.Domain.Entities.DoctorSchedule", b =>
@@ -1732,13 +2079,13 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("MyPetClinic.Domain.Entities.Pet", b =>
                 {
-                    b.HasOne("MyPetClinic.Domain.Entities.User", "Owner")
-                        .WithMany()
-                        .HasForeignKey("OwnerId")
+                    b.HasOne("MyPetClinic.Domain.Entities.Customer", "Customer")
+                        .WithMany("Pets")
+                        .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Owner");
+                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("MyPetClinic.Domain.Entities.Post", b =>
@@ -1748,7 +2095,50 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("MyPetClinic.Domain.Entities.PostCategory", "Category")
+                        .WithMany("Posts")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("MyPetClinic.Domain.Entities.User", "Updater")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Author");
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Updater");
+                });
+
+            modelBuilder.Entity("MyPetClinic.Domain.Entities.PostCategory", b =>
+                {
+                    b.HasOne("MyPetClinic.Domain.Entities.PostCategory", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("MyPetClinic.Domain.Entities.PostTag", b =>
+                {
+                    b.HasOne("MyPetClinic.Domain.Entities.Post", "Post")
+                        .WithMany("PostTags")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MyPetClinic.Domain.Entities.Tag", "Tag")
+                        .WithMany("PostTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("MyPetClinic.Domain.Entities.Prescription", b =>
@@ -1797,7 +2187,7 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MyPetClinic.Domain.Entities.User", "Customer")
+                    b.HasOne("MyPetClinic.Domain.Entities.Customer", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1821,11 +2211,17 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("MyPetClinic.Domain.Entities.User", b =>
                 {
+                    b.HasOne("MyPetClinic.Domain.Entities.Customer", "CustomerProfile")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
                     b.HasOne("MyPetClinic.Domain.Entities.Role", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("CustomerProfile");
 
                     b.Navigation("Role");
                 });
@@ -1897,6 +2293,13 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.Navigation("Shifts");
                 });
 
+            modelBuilder.Entity("MyPetClinic.Domain.Entities.Customer", b =>
+                {
+                    b.Navigation("Appointments");
+
+                    b.Navigation("Pets");
+                });
+
             modelBuilder.Entity("MyPetClinic.Domain.Entities.Invoice", b =>
                 {
                     b.Navigation("InvoiceItems");
@@ -1926,6 +2329,18 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.Navigation("VaccinationRecords");
                 });
 
+            modelBuilder.Entity("MyPetClinic.Domain.Entities.Post", b =>
+                {
+                    b.Navigation("PostTags");
+                });
+
+            modelBuilder.Entity("MyPetClinic.Domain.Entities.PostCategory", b =>
+                {
+                    b.Navigation("Children");
+
+                    b.Navigation("Posts");
+                });
+
             modelBuilder.Entity("MyPetClinic.Domain.Entities.Prescription", b =>
                 {
                     b.Navigation("PrescriptionItems");
@@ -1944,6 +2359,11 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("MyPetClinic.Domain.Entities.ServiceCategory", b =>
                 {
                     b.Navigation("Services");
+                });
+
+            modelBuilder.Entity("MyPetClinic.Domain.Entities.Tag", b =>
+                {
+                    b.Navigation("PostTags");
                 });
 
             modelBuilder.Entity("MyPetClinic.Domain.Entities.User", b =>

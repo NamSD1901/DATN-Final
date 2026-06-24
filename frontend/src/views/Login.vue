@@ -291,6 +291,8 @@ const handleLogin = async () => {
     const response = await api.post('/account/login', loginForm);
     if (response.data.success) {
       showSuccessToast('Đăng nhập thành công! Đang chuyển hướng...');
+      // Tự động sửa lỗi CustomerId cho tài khoản cũ bị thiếu
+      try { await api.post('/account/ensure-profile'); } catch { /* silent - chỉ customer mới cần */ }
       setTimeout(() => {
         router.push('/');
       }, 1000);

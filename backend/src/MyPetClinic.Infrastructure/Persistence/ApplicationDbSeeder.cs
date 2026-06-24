@@ -118,6 +118,27 @@ namespace MyPetClinic.Infrastructure.Persistence
                 });
             }
 
+            // --- AUTO-FIX FOR EXISTING DEMO CUSTOMER ---
+            // Đảm bảo rằng khachhangdemo có hồ sơ Customer (để sửa lỗi Không thể tải dữ liệu thú cưng do CustomerId = null)
+            var demoUser = await context.Users.FirstOrDefaultAsync(u => u.Email == "khachhangdemo@gmail.com");
+            if (demoUser != null && demoUser.CustomerId == null)
+            {
+                var demoCustomer = new Customer
+                {
+                    Id = Guid.NewGuid(),
+                    CustomerCode = "CUS" + DateTime.UtcNow.ToString("yyMMddHHmmss"),
+                    FullName = demoUser.FullName ?? "Khách hàng Demo",
+                    Email = demoUser.Email,
+                    Phone = demoUser.Phone,
+                    Address = demoUser.Address,
+                    HasAccount = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                context.Customers.Add(demoCustomer);
+                demoUser.CustomerId = demoCustomer.Id;
+                await context.SaveChangesAsync();
+            }
+
             var newDoctorEmails = new[] { "bacsilong@gmail.com", "bacsituantran@gmail.com", "bacsichung@gmail.com", "bacsiha@gmail.com" };
 
             if (doctorRole != null)

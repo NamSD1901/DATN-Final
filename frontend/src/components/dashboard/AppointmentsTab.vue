@@ -689,113 +689,121 @@
     </Teleport>
 
     <!-- Reschedule Modal -->
-    <Teleport to="body">
-      <div v-if="showRescheduleModal" class="modal-backdrop fade show"></div>
-      <div v-if="showRescheduleModal" class="modal fade show d-block" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content border-0 rounded-4 shadow-lg">
-            <div class="modal-header border-0 pb-0">
-              <h5 class="fw-bold"><i class="bi bi-calendar-range text-warning me-2"></i>Dời Lịch Khám</h5>
-              <button type="button" class="btn-close" @click="showRescheduleModal = false"></button>
+    <div v-if="showRescheduleModal" class="zalo-modal-overlay" @click.self="showRescheduleModal = false">
+      <div class="zalo-modal-card modal-lg max-w-700">
+        <div class="zalo-modal-header bg-warning text-dark">
+          <h5 class="modal-title fw-bold"><i class="bi bi-calendar-range me-2"></i>Dời Lịch Khám</h5>
+          <button class="modal-close text-dark border-0 bg-transparent" @click="showRescheduleModal = false"><i class="bi bi-x-lg fs-5"></i></button>
+        </div>
+        <div class="zalo-modal-body text-start">
+          <div class="alert alert-warning border-0 bg-warning bg-opacity-10 text-dark rounded-4 mb-4 d-flex align-items-center">
+            <div class="my-1 rounded-circle bg-white d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px;">
+              <span class="fs-3">{{ getAnimalEmoji(rescheduleTarget?.species) }}</span>
             </div>
-            <div class="modal-body pt-3">
-              <p class="text-muted mb-3">Đang dời lịch cho bé <strong>{{ rescheduleTarget?.petName }}</strong> - Khách hàng <strong>{{ rescheduleTarget?.customerName }}</strong></p>
-              
-              <div class="mb-4">
-                <label class="form-label fw-bold small text-muted">Ngày khám mới *</label>
-                <input type="date" class="form-control border-warning" v-model="rescheduleDate" @change="fetchRescheduleSlots">
+            <div>
+              <div class="fw-bold fs-6">Bé {{ rescheduleTarget?.petName }}</div>
+              <div class="small text-muted">Chủ nuôi: {{ rescheduleTarget?.customerName }}</div>
+            </div>
+          </div>
+          
+          <div class="card border-primary border-opacity-25 shadow-sm rounded-4 mb-4">
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-4 border-end pe-md-3">
+                  <label class="form-label fw-bold small text-muted">Ngày khám mới *</label>
+                  <input type="date" class="form-control border-warning" v-model="rescheduleDate" @change="fetchRescheduleSlots">
+                </div>
+                
+                <div class="col-md-8 ps-md-3">
+                  <label class="form-label fw-bold small text-muted">Khung giờ làm việc còn trống *</label>
+                  <div v-if="loadingSlots" class="d-flex align-items-center gap-2 text-muted small mt-2">
+                    <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+                    Đang tải khung giờ trống...
+                  </div>
+                  <div v-else-if="rescheduleDate && availableSlots.length === 0" class="text-danger small fw-bold mt-2 d-flex align-items-center gap-1">
+                    <i class="bi bi-exclamation-circle"></i> Bác sĩ không có giờ rảnh trong ngày này.
+                  </div>
+                  <div v-else class="d-flex flex-column gap-3 mt-2">
+                    <!-- Morning Slots -->
+                    <div v-if="displayRescheduleMorningSlots.length > 0">
+                      <h6 class="text-muted fw-bold mb-2 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-high me-1"></i> BUỔI SÁNG</h6>
+                      <div class="d-flex flex-wrap gap-2">
+                        <button
+                          v-for="slot in displayRescheduleMorningSlots"
+                          :key="slot.time"
+                          type="button"
+                          class="time-slot-btn"
+                          :class="{
+                            'slot-selected': rescheduleTime === slot.time,
+                            'slot-past': slot.isPast,
+                            'slot-too-soon': slot.isTooSoon,
+                            'slot-booked': slot.isBooked,
+                            'slot-available': slot.isAvailable
+                          }"
+                          :disabled="!slot.isAvailable"
+                          :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần dời trước ít nhất 15 phút' : (slot.isBooked ? 'Khung giờ này đã được đặt hoặc ngoài giờ' : ''))"
+                          @click="slot.isAvailable && (rescheduleTime = slot.time)"
+                        >
+                          <span class="slot-time-text">{{ slot.time }}</span>
+                          <i v-if="rescheduleTime === slot.time" class="bi bi-check-circle-fill ms-1"></i>
+                          <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                          <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                          <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <!-- Afternoon Slots -->
+                    <div v-if="displayRescheduleAfternoonSlots.length > 0">
+                      <h6 class="text-muted fw-bold mb-2 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-low me-1"></i> BUỔI CHIỀU</h6>
+                      <div class="d-flex flex-wrap gap-2">
+                        <button
+                          v-for="slot in displayRescheduleAfternoonSlots"
+                          :key="slot.time"
+                          type="button"
+                          class="time-slot-btn"
+                          :class="{
+                            'slot-selected': rescheduleTime === slot.time,
+                            'slot-past': slot.isPast,
+                            'slot-too-soon': slot.isTooSoon,
+                            'slot-booked': slot.isBooked,
+                            'slot-available': slot.isAvailable
+                          }"
+                          :disabled="!slot.isAvailable"
+                          :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần dời trước ít nhất 15 phút' : (slot.isBooked ? 'Khung giờ này đã được đặt hoặc ngoài giờ' : ''))"
+                          @click="slot.isAvailable && (rescheduleTime = slot.time)"
+                        >
+                          <span class="slot-time-text">{{ slot.time }}</span>
+                          <i v-if="rescheduleTime === slot.time" class="bi bi-check-circle-fill ms-1"></i>
+                          <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                          <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                          <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="mt-2 pt-2 border-top" v-if="displayRescheduleMorningSlots.length > 0 || displayRescheduleAfternoonSlots.length > 0">
+                      <p class="small text-muted mb-2 fw-semibold"><i class="bi bi-info-circle me-1"></i> Chú giải màu khung giờ:</p>
+                      <div class="d-flex flex-wrap gap-2">
+                        <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
+                        <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#f8f9fa;border:1.5px solid #e9ecef;display:inline-block"></span> <span class="text-muted">Đã qua</span></span>
+                        <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff8ec;border:1.5px solid #ffc107;display:inline-block"></span> <span class="text-muted">Quá gần</span></span>
+                        <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã đặt/Nghỉ</span></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              
-              <div class="mb-4">
-                <label class="form-label fw-bold small text-muted">Khung giờ làm việc còn trống *</label>
-                <div v-if="loadingSlots" class="d-flex align-items-center gap-2 text-muted small mt-2">
-                  <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
-                  Đang tải khung giờ trống...
-                </div>
-                <div v-else-if="rescheduleDate && availableSlots.length === 0" class="text-danger small fw-bold mt-2 d-flex align-items-center gap-1">
-                  <i class="bi bi-exclamation-circle"></i> Bác sĩ không có giờ rảnh trong ngày này.
-                </div>
-                <div v-else class="d-flex flex-column gap-3 mt-2">
-                  <!-- Morning Slots -->
-                  <div>
-                    <h6 class="text-muted fw-bold mb-2 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-high me-1"></i> BUỔI SÁNG</h6>
-                    <div class="d-flex flex-wrap gap-2">
-                      <button
-                        v-for="slot in displayRescheduleMorningSlots"
-                        :key="slot.time"
-                        type="button"
-                        class="time-slot-btn"
-                        :class="{
-                          'slot-selected': rescheduleTime === slot.time,
-                          'slot-past': slot.isPast,
-                          'slot-too-soon': slot.isTooSoon,
-                          'slot-booked': slot.isBooked,
-                          'slot-available': slot.isAvailable
-                        }"
-                        :disabled="!slot.isAvailable"
-                        :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần dời trước ít nhất 15 phút' : (slot.isBooked ? 'Khung giờ này đã được đặt' : ''))"
-                        @click="slot.isAvailable && (rescheduleTime = slot.time)"
-                      >
-                        <span class="slot-time-text">{{ slot.time }}</span>
-                        <i v-if="rescheduleTime === slot.time" class="bi bi-check-circle-fill ms-1"></i>
-                        <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
-                        <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
-                        <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <!-- Afternoon Slots -->
-                  <div>
-                    <h6 class="text-muted fw-bold mb-2 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-low me-1"></i> BUỔI CHIỀU</h6>
-                    <div class="d-flex flex-wrap gap-2">
-                      <button
-                        v-for="slot in displayRescheduleAfternoonSlots"
-                        :key="slot.time"
-                        type="button"
-                        class="time-slot-btn"
-                        :class="{
-                          'slot-selected': rescheduleTime === slot.time,
-                          'slot-past': slot.isPast,
-                          'slot-too-soon': slot.isTooSoon,
-                          'slot-booked': slot.isBooked,
-                          'slot-available': slot.isAvailable
-                        }"
-                        :disabled="!slot.isAvailable"
-                        :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần dời trước ít nhất 15 phút' : (slot.isBooked ? 'Khung giờ này đã được đặt' : ''))"
-                        @click="slot.isAvailable && (rescheduleTime = slot.time)"
-                      >
-                        <span class="slot-time-text">{{ slot.time }}</span>
-                        <i v-if="rescheduleTime === slot.time" class="bi bi-check-circle-fill ms-1"></i>
-                        <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
-                        <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
-                        <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="mt-2 pt-2 border-top">
-                    <p class="small text-muted mb-2 fw-semibold"><i class="bi bi-info-circle me-1"></i> Chú giải màu khung giờ:</p>
-                    <div class="d-flex flex-wrap gap-2">
-                      <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
-                      <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#f8f9fa;border:1.5px solid #e9ecef;display:inline-block"></span> <span class="text-muted">Đã qua</span></span>
-                      <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff8ec;border:1.5px solid #ffc107;display:inline-block"></span> <span class="text-muted">Quá gần</span></span>
-                      <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã đặt</span></span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-
             </div>
-            <div class="modal-footer border-0 pt-0">
-              <button type="button" class="btn btn-light rounded-pill px-4" @click="showRescheduleModal = false">Đóng</button>
-              <button type="button" class="btn btn-warning text-dark rounded-pill px-4 fw-bold" @click="confirmReschedule" :disabled="!rescheduleDate || !rescheduleTime">Xác nhận Dời</button>
-            </div>
+          </div>
+          
+          <div class="mt-4 pt-3 border-top text-end">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 me-2" @click="showRescheduleModal = false">Hủy</button>
+            <button type="button" class="btn btn-premium rounded-pill px-5 fw-bold" @click="confirmReschedule" :disabled="!rescheduleDate || !rescheduleTime">Xác nhận Dời</button>
           </div>
         </div>
       </div>
-    </Teleport>
+    </div>
 
     <!-- QR Checkin Dialog -->
     <Teleport to="body">
@@ -1024,14 +1032,40 @@ const buildRescheduleSlots = (times: string[]): SlotDisplay[] => {
   const now = Date.now();
   const cutoff = now + BOOKING_BUFFER_MS;
   const [year, month, day] = rescheduleDate.value.split('-');
+  
+  // Find operating hours for this day
+  const slotDateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  const dayOfWeek = slotDateObj.getDay();
+  const operatingDay = clinicStore.weeklyHours.find((d: any) => d.dayOfWeek === dayOfWeek);
+  
+  // Check holidays
+  const isHoliday = clinicStore.holidays.some((h: any) => {
+    if (!h.isActive) return false;
+    const start = new Date(h.startDate);
+    const end = new Date(h.endDate);
+    start.setHours(0,0,0,0);
+    end.setHours(23,59,59,999);
+    return slotDateObj >= start && slotDateObj <= end;
+  });
+
   return times.map(time => {
     const slotStr = `${rescheduleDate.value}T${time}:00`;
     const [hour, minute] = time.split(':');
     const slotDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0);
     const slotMs = slotDate.getTime();
+    
+    let isClosed = isHoliday || !operatingDay || !operatingDay.isOpen;
+    if (!isClosed && operatingDay) {
+      const inShift = operatingDay.shifts.some((shift: any) => {
+        const sTime = shift.startTime.substring(0, 5);
+        const eTime = shift.endTime.substring(0, 5);
+        return time >= sTime && time < eTime;
+      });
+      if (!inShift) isClosed = true;
+    }
+
     const isPast = slotMs < now;
     const isTooSoon = !isPast && slotMs < cutoff;
-    
     const isAvailableFromApi = availableSlots.value.includes(time);
     
     if (forceReschedule.value) {
@@ -1039,15 +1073,16 @@ const buildRescheduleSlots = (times: string[]): SlotDisplay[] => {
         time, slotStr, 
         isAvailable: isAvailableFromApi, 
         isPast: false, 
-        isBooked: !isAvailableFromApi, 
-        isTooSoon: false 
+        isBooked: !isAvailableFromApi && !isClosed, 
+        isTooSoon: false,
+        isClosed
       };
     }
     
-    const isBooked = !isPast && !isTooSoon && !isAvailableFromApi;
-    const isAvailable = !isPast && !isTooSoon && isAvailableFromApi;
-    return { time, slotStr, isAvailable, isPast, isBooked, isTooSoon };
-  });
+    const isBooked = !isPast && !isTooSoon && !isAvailableFromApi && !isClosed;
+    const isAvailable = !isPast && !isTooSoon && isAvailableFromApi && !isClosed;
+    return { time, slotStr, isAvailable, isPast, isBooked, isTooSoon, isClosed };
+  }).filter(s => !s.isClosed);
 };
 
 const displayRescheduleMorningSlots = computed<SlotDisplay[]>(() => buildRescheduleSlots(masterMorningTimes));

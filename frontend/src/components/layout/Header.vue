@@ -387,6 +387,17 @@ onMounted(() => {
   backdrop-filter: blur(10px);
 }
 
+/* Cầu nối vô hình giúp giữ trạng thái hover khi di chuột từ nút xuống menu */
+.dropdown-menu::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: transparent;
+}
+
 .dropdown:hover .dropdown-menu {
   display: block;
 }

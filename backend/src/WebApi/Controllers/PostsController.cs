@@ -22,31 +22,47 @@ namespace MyPetClinic.Controllers
         // ================= PUBLIC ENDPOINTS =================
 
         [HttpGet("posts")]
-        public async Task<IActionResult> GetPublicPosts([FromQuery] string? search)
+        public async Task<IActionResult> GetPublicPosts([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string? categorySlug = null, [FromQuery] string? tagSlug = null)
         {
-            var result = await _postService.GetPublicPostsAsync(search);
+            var result = await _postService.GetPublicPostsAsync(pageIndex, pageSize, search, categorySlug, tagSlug);
             return Ok(result);
         }
 
         [HttpGet("posts/{slug}")]
         public async Task<IActionResult> GetPostBySlug(string slug)
         {
-            var post = await _postService.GetPostBySlugAsync(slug);
-            if (post == null)
+            try
             {
-                return NotFound(new { message = "Không tìm thấy bài viết." });
+                var post = await _postService.GetPostBySlugAsync(slug);
+                return Ok(post);
             }
+            catch (Exception ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+        
+        [HttpPost("posts/{id}/view")]
+        public async Task<IActionResult> IncrementViewCount(long id)
+        {
+            await _postService.IncrementViewCountAsync(id);
+            return Ok();
+        }
 
-            return Ok(post);
+        [HttpGet("posts/{id}/related")]
+        public async Task<IActionResult> GetRelatedPosts(long id, [FromQuery] int count = 3)
+        {
+            var result = await _postService.GetRelatedPostsAsync(id, count);
+            return Ok(result);
         }
 
         // ================= ADMIN MANAGEMENT ENDPOINTS =================
 
         [Authorize(Roles = "admin,Admin")]
         [HttpGet("admin/posts")]
-        public async Task<IActionResult> GetAdminPosts()
+        public async Task<IActionResult> GetAdminPosts([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string? status = null, [FromQuery] long? categoryId = null)
         {
-            var result = await _postService.GetAdminPostsAsync();
+            var result = await _postService.GetAdminPostsAsync(pageIndex, pageSize, search, status, categoryId);
             return Ok(result);
         }
 
@@ -66,7 +82,7 @@ namespace MyPetClinic.Controllers
                 var post = await _postService.CreatePostAsync(dto, authorId);
                 return Ok(new { success = true, post });
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
@@ -74,18 +90,21 @@ namespace MyPetClinic.Controllers
 
         [Authorize(Roles = "admin,Admin")]
         [HttpPut("admin/posts/{id}")]
-        public async Task<IActionResult> UpdatePost(long id, [FromBody] CreatePostDto dto)
+        public async Task<IActionResult> UpdatePost(long id, [FromBody] UpdatePostDto dto)
         {
             try
             {
-                var post = await _postService.UpdatePostAsync(id, dto);
+                var updaterIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                Guid? updaterId = null;
+                if (Guid.TryParse(updaterIdStr, out var updaterGuid))
+                {
+                    updaterId = updaterGuid;
+                }
+
+                var post = await _postService.UpdatePostAsync(id, dto, updaterId);
                 return Ok(new { success = true, post });
             }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
@@ -100,7 +119,7 @@ namespace MyPetClinic.Controllers
                 await _postService.DeletePostAsync(id);
                 return Ok(new { success = true });
             }
-            catch (KeyNotFoundException ex)
+            catch (Exception ex)
             {
                 return NotFound(new { message = ex.Message });
             }

@@ -117,7 +117,7 @@
               </div>
 
               <!-- View Details Button -->
-              <button class="btn-view-detail-glass w-100 mt-3" @click="router.push('/my-pets/' + pet.id)">
+              <button class="btn-view-detail-glass w-100 mt-3" @click="$emit('view-pet', pet.id)">
                 Xem hồ sơ đầy đủ <i class="bi bi-arrow-right ms-2 transition-arrow"></i>
               </button>
             </div>
@@ -416,6 +416,7 @@ import api from '../../services/api';
 
 const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5150';
 const router = useRouter();
+const emit = defineEmits(['switch-tab', 'view-pet']);
 
 // ===== Types =====
 interface Pet {

@@ -8,6 +8,7 @@ namespace MyPetClinic.Application.Interfaces.Repositories
     {
         IGenericRepository<Appointment> Appointments { get; }
         IGenericRepository<User> Users { get; }
+        IGenericRepository<Customer> Customers { get; }
         IGenericRepository<Role> Roles { get; }
         IGenericRepository<Pet> Pets { get; }
         IGenericRepository<Service> Services { get; }
@@ -32,6 +33,10 @@ namespace MyPetClinic.Application.Interfaces.Repositories
         IGenericRepository<ClinicOperatingDay> ClinicOperatingDays { get; }
         IGenericRepository<ClinicOperatingShift> ClinicOperatingShifts { get; }
         IGenericRepository<ClinicHoliday> ClinicHolidays { get; }
+        IGenericRepository<PostCategory> PostCategories { get; }
+        IGenericRepository<Tag> Tags { get; }
+        IGenericRepository<PostTag> PostTags { get; }
+        IGenericRepository<Banner> Banners { get; }
 
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();

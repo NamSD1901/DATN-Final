@@ -11,7 +11,7 @@ namespace MyPetClinic.Domain.Entities
         public string? Comment { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public User? Customer { get; set; }
+        public Customer? Customer { get; set; }
         public Appointment? Appointment { get; set; }
     }
 }

@@ -21,14 +21,14 @@ namespace MyPetClinic.Infrastructure.Repositories
         public async Task<Pet?> GetPetByIdAsync(long id)
         {
             return await _context.Pets
-                .Include(p => p.Owner)
+                .Include(p => p.Customer)
                 .FirstOrDefaultAsync(p => p.Id == id && p.DeletedAt == null);
         }
 
-        public async Task<IEnumerable<Pet>> GetPetsByOwnerIdAsync(Guid ownerId)
+        public async Task<IEnumerable<Pet>> GetPetsByOwnerIdAsync(Guid CustomerId)
         {
             return await _context.Pets
-                .Where(p => p.OwnerId == ownerId && p.DeletedAt == null)
+                .Where(p => p.CustomerId == CustomerId && p.DeletedAt == null)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
         }

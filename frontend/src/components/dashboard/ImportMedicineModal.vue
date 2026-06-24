@@ -67,7 +67,7 @@
                     <input type="date" v-model="item.expiryDate" class="form-control form-control-sm" required />
                   </td>
                   <td>
-                    <input type="number" v-model="item.quantity" class="form-control form-control-sm" required min="1" />
+                    <input type="number" v-model.number="item.quantity" class="form-control form-control-sm" required min="1" />
                   </td>
                   <td class="text-center">
                     <button class="btn btn-sm btn-outline-danger border-0" @click="removeRow(index)" title="Xoá dòng này">
@@ -183,7 +183,14 @@ const submitImport = async () => {
     close();
   } catch (err: any) {
     console.error('Lỗi nhập kho:', err);
-    alert(err.response?.data?.message || `Lỗi khi nhập kho sau ${successCount} lô thành công.`);
+    console.log('Error response:', err.response);
+    let errorMsg = err.response?.data?.message || err.response?.data?.title;
+    if (!errorMsg && err.response?.data) {
+      errorMsg = typeof err.response.data === 'object' ? JSON.stringify(err.response.data) : err.response.data;
+    }
+    if (!errorMsg || errorMsg === '""') errorMsg = err.message || 'Lỗi không xác định';
+    
+    alert(`Lỗi: ${errorMsg}`);
   } finally {
     isSubmitting.value = false;
   }

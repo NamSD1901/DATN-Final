@@ -40,7 +40,7 @@ namespace MyPetClinic.Tests
         public async Task CreateMedicalRecord_ShouldCompleteAppointment_WhenSuccessful()
         {
             // Arrange
-            var pet = new Pet { Id = 1, OwnerId = Guid.NewGuid(), Name = "Milo" };
+            var pet = new Pet { Id = 1, CustomerId = Guid.NewGuid(), Name = "Milo" };
             var doctorId = Guid.NewGuid();
             var appointment = new Appointment
             {
@@ -119,7 +119,7 @@ namespace MyPetClinic.Tests
         public async Task CreateMedicalRecord_ShouldRollbackAllDeductions_WhenAnyMedicineOutOfStock()
         {
             // Arrange
-            var pet = new Pet { Id = 2, OwnerId = Guid.NewGuid(), Name = "Milo2" };
+            var pet = new Pet { Id = 2, CustomerId = Guid.NewGuid(), Name = "Milo2" };
             var doctorId = Guid.NewGuid();
             var appointment = new Appointment
             {

@@ -70,9 +70,10 @@ namespace MyPetClinic.Application.Services
                     await _unitOfWork.Prescriptions.AddAsync(prescription);
                     await _unitOfWork.SaveChangesAsync(); // Lưu để có ID của Prescription
 
+                    // Validate all stock first
                     foreach (var item in dto.Prescriptions)
                     {
-                        var medicine = await _unitOfWork.Medicines.GetByIdAsync(item.MedicineId);
+                        var medicine = await _medicineService.GetMedicineStockAsync(item.MedicineId);
                         if (medicine == null)
                         {
                             throw new KeyNotFoundException($"Không tìm thấy thuốc với ID {item.MedicineId}");
@@ -82,6 +83,11 @@ namespace MyPetClinic.Application.Services
                         {
                             throw new InvalidOperationException($"Thuốc '{medicine.Name}' không đủ tồn kho. Yêu cầu: {item.Quantity}, Hiện có: {medicine.StockQuantity}");
                         }
+                    }
+
+                    // Process export and add prescription items
+                    foreach (var item in dto.Prescriptions)
+                    {
 
                         // Xuất kho tự động áp dụng FEFO qua MedicineService
                         await _medicineService.ExportMedicineAsync(new ExportMedicineDto
@@ -425,11 +431,17 @@ namespace MyPetClinic.Application.Services
                     await _unitOfWork.Prescriptions.AddAsync(prescription);
                     await _unitOfWork.SaveChangesAsync(); 
 
+                    // Validate all stock first
                     foreach (var item in dto.Plan.Prescriptions)
                     {
-                        var medicine = await _unitOfWork.Medicines.GetByIdAsync(item.MedicineId);
+                        var medicine = await _medicineService.GetMedicineStockAsync(item.MedicineId);
                         if (medicine == null) throw new KeyNotFoundException($"Không tìm thấy thuốc với ID {item.MedicineId}");
                         if (medicine.StockQuantity < item.Quantity) throw new InvalidOperationException($"Thuốc '{medicine.Name}' không đủ tồn kho.");
+                    }
+
+                    // Process export
+                    foreach (var item in dto.Plan.Prescriptions)
+                    {
 
                         // Xuất kho tự động áp dụng FEFO
                         await _medicineService.ExportMedicineAsync(new ExportMedicineDto

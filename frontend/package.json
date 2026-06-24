@@ -12,6 +12,7 @@
     "@formkit/auto-animate": "^0.9.0",
     "@lucide/vue": "^1.17.0",
     "@microsoft/signalr": "^10.0.0",
+    "@vueup/vue-quill": "^1.5.5",
     "axios": "^1.17.0",
     "chart.js": "^4.5.1",
     "html2pdf.js": "^0.14.0",

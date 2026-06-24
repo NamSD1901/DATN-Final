@@ -8,7 +8,7 @@ using MyPetClinic.Application.Interfaces.Services;
 
 namespace MyPetClinic.Controllers
 {
-    [Authorize(Roles = "admin,doctor,receptionist")]
+    [Authorize(Roles = "admin,Admin,doctor,Doctor,receptionist,Receptionist")]
     [ApiController]
     [Route("api/medicines")]
     public class MedicinesController : ControllerBase
@@ -38,7 +38,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpGet("low-stock")]
-        [Authorize(Roles = "admin,receptionist")]
+        [Authorize(Roles = "admin,Admin,receptionist,Receptionist")]
         public async Task<IActionResult> GetLowStockMedicines()
         {
             var result = await _medicineService.GetLowStockMedicinesAsync();
@@ -76,17 +76,23 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpGet("{id}/transactions")]
-        [Authorize(Roles = "admin")]
+        [Authorize]
         public async Task<IActionResult> GetMedicineTransactions(long id)
         {
+            var isAdmin = User.IsInRole("admin") || User.IsInRole("Admin") || User.IsInRole("SystemAdmin");
+            if (!isAdmin) return StatusCode(403, new { success = false, message = "Bạn không có quyền xem giao dịch kho." });
+
             var transactions = await _medicineService.GetMedicineTransactionsAsync(id);
             return Ok(transactions);
         }
 
         [HttpPost("import")]
-        [Authorize(Roles = "admin")]
+        [Authorize]
         public async Task<IActionResult> ImportMedicine([FromBody] ImportMedicineDto dto)
         {
+            var isAdmin = User.IsInRole("admin") || User.IsInRole("Admin") || User.IsInRole("SystemAdmin");
+            if (!isAdmin) return StatusCode(403, new { success = false, message = "Bạn không có quyền nhập kho thuốc." });
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -105,7 +111,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPost("export")]
-        [Authorize(Roles = "admin,receptionist,doctor")]
+        [Authorize(Roles = "admin,Admin,receptionist,Receptionist,doctor,Doctor")]
         public async Task<IActionResult> ExportMedicine([FromBody] ExportMedicineDto dto)
         {
             if (!ModelState.IsValid)
@@ -126,9 +132,12 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPost("adjust")]
-        [Authorize(Roles = "admin")]
+        [Authorize]
         public async Task<IActionResult> AdjustMedicineStock([FromBody] AdjustMedicineDto dto)
         {
+            var isAdmin = User.IsInRole("admin") || User.IsInRole("Admin") || User.IsInRole("SystemAdmin");
+            if (!isAdmin) return StatusCode(403, new { success = false, message = "Bạn không có quyền điều chỉnh tồn kho." });
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -147,9 +156,12 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPost("audit")]
-        [Authorize(Roles = "admin")]
+        [Authorize]
         public async Task<IActionResult> AuditMedicineStock([FromBody] AuditMedicineDto dto)
         {
+            var isAdmin = User.IsInRole("admin") || User.IsInRole("Admin") || User.IsInRole("SystemAdmin");
+            if (!isAdmin) return StatusCode(403, new { success = false, message = "Bạn không có quyền kiểm kê kho." });
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -168,7 +180,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpGet("expiring")]
-        [Authorize(Roles = "admin,receptionist")]
+        [Authorize(Roles = "admin,Admin,receptionist,Receptionist")]
         public async Task<IActionResult> GetExpiringMedicines([FromQuery] int days = 30)
         {
             var result = await _medicineService.GetExpiringMedicinesAsync(days);

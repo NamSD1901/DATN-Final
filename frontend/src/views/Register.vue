@@ -57,7 +57,7 @@
                 <!-- Phone -->
                 <div class="input-group-custom">
                   <span class="input-icon"><i class="bi bi-telephone-fill"></i></span>
-                  <input id="phoneNumber" type="tel" v-model="registerForm.phoneNumber" class="input-field" placeholder="Số điện thoại" required />
+                  <input id="phoneNumber" type="tel" v-model="registerForm.phone" class="input-field" placeholder="Số điện thoại" required />
                   <label for="phoneNumber" class="input-label">Số điện thoại</label>
                 </div>
 
@@ -109,6 +109,35 @@
                 <button type="button" @click="goBackToRegister" class="btn-auth-link">← Quay lại đăng ký</button>
               </form>
             </div>
+
+            <div v-else-if="currentStep === 'claim'" key="claim">
+              <div class="form-header">
+                <div class="otp-icon-wrapper" style="background: linear-gradient(135deg, #fbbf24, #d97706);"><i class="bi bi-person-bounding-box"></i></div>
+                <h3>Xác minh Hồ sơ</h3>
+                <p>Số điện thoại này đã từng khám tại phòng khám. Vui lòng xác nhận để đồng bộ hồ sơ cũ.</p>
+              </div>
+              <form @submit.prevent="handleClaimProfile" class="auth-form">
+                <div class="input-group-custom">
+                  <span class="input-icon"><i class="bi bi-upc-scan"></i></span>
+                  <input id="customerCode" type="text" v-model="claimForm.customerCode" class="input-field" placeholder="Mã khách hàng (VD: CUS...)" required />
+                  <label for="customerCode" class="input-label">Mã khách hàng</label>
+                </div>
+                
+                <div v-if="hasPets" class="input-group-custom">
+                  <span class="input-icon"><i class="bi bi-suit-heart-fill"></i></span>
+                  <input id="petName" type="text" v-model="claimForm.petName" class="input-field" placeholder="Tên một bé thú cưng" required />
+                  <label for="petName" class="input-label">Tên thú cưng</label>
+                </div>
+
+                <button type="submit" :disabled="loading" class="btn-auth-submit">
+                  <span v-if="!loading">Đồng bộ hồ sơ <i class="bi bi-arrow-repeat ms-1"></i></span>
+                  <span v-else class="btn-spinner"></span>
+                </button>
+                <button type="button" @click="handleSkipClaim" :disabled="loading" class="btn-auth-secondary">
+                  Tôi là khách mới / Bỏ qua
+                </button>
+              </form>
+            </div>
           </Transition>
         </div>
       </div>
@@ -127,9 +156,11 @@ import {
 } from '@lucide/vue';
 
 const router = useRouter();
-const currentStep = ref<'register' | 'otp'>('register');
+const currentStep = ref<'register' | 'otp' | 'claim'>('register');
 const loading = ref(false);
 const targetEmail = ref('');
+const hasPets = ref(false);
+const tempToken = ref('');
 const resendCountdown = ref(0);
 let countdownInterval: any = null;
 
@@ -157,6 +188,7 @@ const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info')
 
 const showSuccessToast = (msg: string) => showToast(msg, 'success');
 const showErrorToast = (msg: string) => showToast(msg, 'error');
+const showInfoToast = (msg: string) => showToast(msg, 'info');
 
 // Forms State
 const registerForm = reactive({
@@ -164,11 +196,16 @@ const registerForm = reactive({
   password: '',
   confirmPassword: '',
   fullName: '',
-  phoneNumber: ''
+  phone: ''
 });
 
 const otpForm = reactive({
   otpCode: ''
+});
+
+const claimForm = reactive({
+  customerCode: '',
+  petName: ''
 });
 
 const startCountdown = (seconds = 60) => {
@@ -212,10 +249,17 @@ const handleVerifyOtp = async () => {
       otpCode: otpForm.otpCode
     });
     if (response.data.success) {
-      showSuccessToast('Kích hoạt tài khoản thành công! Đang chuyển đến trang Đăng nhập...');
-      setTimeout(() => {
-        router.push('/login');
-      }, 1500);
+      if (response.data.requiresClaiming) {
+        hasPets.value = response.data.hasPets;
+        tempToken.value = response.data.tempToken;
+        currentStep.value = 'claim';
+        showInfoToast(response.data.message || 'Vui lòng xác minh hồ sơ vãng lai của bạn.');
+      } else {
+        showSuccessToast('Kích hoạt tài khoản thành công! Đang chuyển đến trang Đăng nhập...');
+        setTimeout(() => {
+          router.push('/login');
+        }, 1500);
+      }
     }
   } catch (error: any) {
     showErrorToast(error.response?.data?.message || 'Mã OTP không hợp lệ hoặc đã hết hạn.');
@@ -244,6 +288,50 @@ const handleResendOtp = async () => {
 
 const goBackToRegister = () => {
   currentStep.value = 'register';
+};
+
+const handleClaimProfile = async () => {
+  loading.value = true;
+  try {
+    const response = await api.post('/account/claim-profile', {
+      email: targetEmail.value,
+      tempToken: tempToken.value,
+      customerCode: claimForm.customerCode,
+      petName: hasPets.value ? claimForm.petName : null
+    });
+    if (response.data.success) {
+      showSuccessToast(response.data.message || 'Đồng bộ hồ sơ thành công! Đang chuyển đến trang Đăng nhập...');
+      setTimeout(() => {
+        router.push('/login');
+      }, 1500);
+    }
+  } catch (error: any) {
+    showErrorToast(error.response?.data?.message || 'Xác minh hồ sơ thất bại. Kiểm tra lại Mã KH và Tên thú cưng.');
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleSkipClaim = async () => {
+  if (!confirm('Bạn có chắc chắn muốn bỏ qua? Bạn sẽ được tạo 1 hồ sơ mới hoàn toàn và dữ liệu cũ sẽ không được liên kết.')) return;
+  
+  loading.value = true;
+  try {
+    const response = await api.post('/account/skip-claim', {
+      email: targetEmail.value,
+      tempToken: tempToken.value
+    });
+    if (response.data.success) {
+      showSuccessToast(response.data.message || 'Tạo hồ sơ mới thành công! Đang chuyển đến trang Đăng nhập...');
+      setTimeout(() => {
+        router.push('/login');
+      }, 1500);
+    }
+  } catch (error: any) {
+    showErrorToast(error.response?.data?.message || 'Có lỗi xảy ra.');
+  } finally {
+    loading.value = false;
+  }
 };
 
 onUnmounted(() => {

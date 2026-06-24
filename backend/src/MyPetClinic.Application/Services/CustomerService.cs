@@ -11,85 +11,93 @@ namespace MyPetClinic.Application.Services
 {
     public class CustomerService : ICustomerService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IPetRepository _petRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CustomerService(IUserRepository userRepository, IPetRepository petRepository)
+        public CustomerService(IUnitOfWork unitOfWork)
         {
-            _userRepository = userRepository;
-            _petRepository = petRepository;
-        }
-
-        private async Task<Role?> GetCustomerRoleAsync()
-        {
-            return await _userRepository.GetRoleByNameAsync("customer");
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<IEnumerable<UserProfileDto>> SearchCustomersAsync(string keyword)
         {
-            var role = await GetCustomerRoleAsync();
-            if (role == null) return Enumerable.Empty<UserProfileDto>();
-
-            var users = await _userRepository.SearchUsersAsync(keyword, role.Id);
-            return users.Select(u => new UserProfileDto
+            IEnumerable<Customer> customers;
+            if (string.IsNullOrWhiteSpace(keyword))
             {
-                Id = u.Id,
-                FullName = u.FullName,
-                Email = u.Email,
-                Phone = u.Phone,
-                Address = u.Address,
-                Gender = u.Gender,
-                DateOfBirth = u.DateOfBirth,
-                Avatar = u.Avatar,
-                RoleName = role.Name
+                customers = await _unitOfWork.Customers.FindAsync(c => c.DeletedAt == null);
+            }
+            else
+            {
+                var lowerKeyword = keyword.ToLower();
+                customers = await _unitOfWork.Customers.FindAsync(c => 
+                    c.DeletedAt == null && (
+                    (c.FullName != null && c.FullName.ToLower().Contains(lowerKeyword)) ||
+                    (c.Phone != null && c.Phone.Contains(keyword)) ||
+                    (c.Email != null && c.Email.ToLower().Contains(lowerKeyword)) ||
+                    (c.CustomerCode != null && c.CustomerCode.ToLower().Contains(lowerKeyword))
+                    )
+                );
+            }
+
+            return customers.Select(c => new UserProfileDto
+            {
+                Id = c.Id,
+                FullName = c.FullName,
+                Email = c.Email,
+                Phone = c.Phone,
+                Address = c.Address,
+                Gender = c.Gender,
+                DateOfBirth = c.DateOfBirth,
+                Avatar = c.Avatar,
+                RoleName = "Customer"
             });
         }
 
         public async Task<IEnumerable<UserProfileDto>> GetAllCustomersAsync()
         {
-            var role = await GetCustomerRoleAsync();
-            if (role == null) return Enumerable.Empty<UserProfileDto>();
+            var customers = await _unitOfWork.Customers.FindAsync(c => c.DeletedAt == null);
 
-            var users = await _userRepository.GetUsersByRoleAsync(role.Id);
-            return users.Select(u => new UserProfileDto
+            return customers.Select(c => new UserProfileDto
             {
-                Id = u.Id,
-                FullName = u.FullName,
-                Email = u.Email,
-                Phone = u.Phone,
-                Address = u.Address,
-                Gender = u.Gender,
-                DateOfBirth = u.DateOfBirth,
-                Avatar = u.Avatar,
-                RoleName = role.Name
+                Id = c.Id,
+                FullName = c.FullName,
+                Email = c.Email,
+                Phone = c.Phone,
+                Address = c.Address,
+                Gender = c.Gender,
+                DateOfBirth = c.DateOfBirth,
+                Avatar = c.Avatar,
+                RoleName = "Customer"
             });
         }
 
         public async Task<UserProfileDto?> GetCustomerDetailAsync(Guid id)
         {
-            var user = await _userRepository.GetUserByIdAsync(id);
-            if (user == null) return null;
+            var customer = await _unitOfWork.Customers.GetByIdAsync(id);
+            if (customer == null || customer.DeletedAt != null) return null;
+
             return new UserProfileDto
             {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                Phone = user.Phone,
-                Address = user.Address,
-                Gender = user.Gender,
-                DateOfBirth = user.DateOfBirth,
-                Avatar = user.Avatar,
-                RoleName = user.Role?.Name
+                Id = customer.Id,
+                CustomerCode = customer.CustomerCode,
+                FullName = customer.FullName,
+                Email = customer.Email,
+                Phone = customer.Phone,
+                Address = customer.Address,
+                Gender = customer.Gender,
+                DateOfBirth = customer.DateOfBirth,
+                Avatar = customer.Avatar,
+                RoleName = "Customer"
             };
         }
 
         public async Task<IEnumerable<PetDto>> GetPetsByCustomerAsync(Guid customerId)
         {
-            var pets = await _petRepository.GetPetsByOwnerIdAsync(customerId);
+            var pets = await _unitOfWork.Pets.FindAsync(p => p.CustomerId == customerId && p.DeletedAt == null);
+
             return pets.Select(p => new PetDto
             {
                 Id = p.Id,
-                OwnerId = p.OwnerId,
+                CustomerId = p.CustomerId,
                 Name = p.Name,
                 Species = p.Species,
                 Breed = p.Breed,
@@ -106,84 +114,81 @@ namespace MyPetClinic.Application.Services
 
         public async Task<Guid> CreateCustomerWithPetsAsync(CustomerCreateDto dto)
         {
-            var customerRole = await GetCustomerRoleAsync();
-            if (customerRole == null)
-            {
-                throw new Exception("Role 'customer' not found in database.");
-            }
-
-            // Kiểm tra email đã tồn tại chưa
+            // Kiểm tra email
             if (!string.IsNullOrWhiteSpace(dto.Email))
             {
-                var existingByEmail = await _userRepository.GetUserByEmailAsync(dto.Email.Trim().ToLower());
-                if (existingByEmail != null)
+                var existingEmail = await _unitOfWork.Customers.GetFirstOrDefaultWithIncludesAsync(c => c.Email == dto.Email.Trim().ToLower() && c.DeletedAt == null);
+                if (existingEmail != null)
                 {
-                    throw new InvalidOperationException($"Email '{dto.Email}' đã được sử dụng bởi một tài khoản khác. Vui lòng dùng email khác hoặc để trống.");
+                    throw new InvalidOperationException($"Email '{dto.Email}' đã được sử dụng. Vui lòng dùng email khác.");
                 }
             }
 
-            // Kiểm tra số điện thoại đã tồn tại chưa
+            // Kiểm tra SĐT
             if (!string.IsNullOrWhiteSpace(dto.Phone))
             {
-                var existingByPhone = await _userRepository.SearchUsersAsync(dto.Phone.Trim());
-                var phoneExists = existingByPhone.Any(u => u.Phone == dto.Phone.Trim() && u.IsActive == true);
-                if (phoneExists)
+                var existingPhone = await _unitOfWork.Customers.GetFirstOrDefaultWithIncludesAsync(c => c.Phone == dto.Phone.Trim() && c.DeletedAt == null);
+                if (existingPhone != null)
                 {
-                    throw new InvalidOperationException($"Số điện thoại '{dto.Phone}' đã được đăng ký. Khách hàng này có thể đã có hồ sơ trong hệ thống.");
+                    throw new InvalidOperationException($"Số điện thoại '{dto.Phone}' đã tồn tại.");
                 }
             }
 
-            // Tạo mật khẩu ngẫu nhiên tạm thời
-            string tempPassword = BCrypt.Net.BCrypt.HashPassword("123456");
-
-            var newUser = new User
+            var newCustomer = new Customer
             {
                 Id = Guid.NewGuid(),
+                CustomerCode = "CUS" + DateTime.UtcNow.ToString("yyMMddHHmmss"),
                 FullName = dto.FullName?.Trim(),
                 Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim().ToLower(),
                 Phone = dto.Phone?.Trim(),
                 Address = dto.Address?.Trim(),
                 Gender = dto.Gender,
                 DateOfBirth = dto.DateOfBirth.HasValue ? DateTime.SpecifyKind(dto.DateOfBirth.Value, DateTimeKind.Utc) : null,
-                RoleId = customerRole.Id,
-                PasswordHash = tempPassword,
-                IsActive = true,
+                HasAccount = false,
+                Status = "Active",
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _userRepository.CreateUserAsync(newUser);
+            await _unitOfWork.Customers.AddAsync(newCustomer);
 
             if (dto.Pets != null && dto.Pets.Any())
             {
-                var petsToCreate = dto.Pets.Select(p => new Pet
+                foreach (var p in dto.Pets)
                 {
-                    OwnerId = newUser.Id,
-                    Name = p.Name?.Trim(),
-                    Species = p.Species?.Trim(),
-                    Breed = p.Breed?.Trim(),
-                    Gender = p.Gender,
-                    BirthDate = p.BirthDate.HasValue ? DateTime.SpecifyKind(p.BirthDate.Value, DateTimeKind.Utc) : null,
-                    Weight = p.Weight,
-                    Color = p.Color?.Trim(),
-                    BloodType = p.BloodType?.Trim(),
-                    Sterilized = p.Sterilized,
-                    MicrochipCode = p.MicrochipCode?.Trim(),
-                    AllergyNote = p.AllergyNote?.Trim(),
-                    CreatedAt = DateTime.UtcNow
-                }).ToList();
-
-                await _petRepository.CreatePetsAsync(petsToCreate);
+                    var newPet = new Pet
+                    {
+                        CustomerId = newCustomer.Id,
+                        Name = p.Name?.Trim(),
+                        Species = p.Species?.Trim(),
+                        Breed = p.Breed?.Trim(),
+                        Gender = p.Gender,
+                        BirthDate = p.BirthDate.HasValue ? DateTime.SpecifyKind(p.BirthDate.Value, DateTimeKind.Utc) : null,
+                        Weight = p.Weight,
+                        Color = p.Color?.Trim(),
+                        BloodType = p.BloodType?.Trim(),
+                        Sterilized = p.Sterilized,
+                        MicrochipCode = p.MicrochipCode?.Trim(),
+                        AllergyNote = p.AllergyNote?.Trim(),
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _unitOfWork.Pets.AddAsync(newPet);
+                }
             }
 
-            await _userRepository.SaveChangesAsync();
-
-            return newUser.Id;
+            await _unitOfWork.SaveChangesAsync();
+            return newCustomer.Id;
         }
 
         public async Task SoftDeleteCustomerAsync(Guid id)
         {
-            await _userRepository.SoftDeleteUserAsync(id);
-            await _userRepository.SaveChangesAsync();
+            var customer = await _unitOfWork.Customers.GetByIdAsync(id);
+            if (customer != null && customer.DeletedAt == null)
+            {
+                customer.DeletedAt = DateTime.UtcNow;
+                customer.Status = "Inactive";
+                _unitOfWork.Customers.Update(customer);
+                await _unitOfWork.SaveChangesAsync();
+            }
         }
     }
 }

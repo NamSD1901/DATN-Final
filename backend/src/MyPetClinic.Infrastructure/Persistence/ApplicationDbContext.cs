@@ -29,6 +29,7 @@ namespace MyPetClinic.Infrastructure.Persistence
 
         public DbSet<Role> Roles { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Customer> Customers { get; set; }
         public DbSet<EmployeeProfile> EmployeeProfiles { get; set; }
         public DbSet<Invitation> Invitations { get; set; }
         public DbSet<Pet> Pets { get; set; }
@@ -50,6 +51,10 @@ namespace MyPetClinic.Infrastructure.Persistence
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Post> Posts { get; set; }
+        public DbSet<PostCategory> PostCategories { get; set; }
+        public DbSet<Tag> Tags { get; set; }
+        public DbSet<PostTag> PostTags { get; set; }
+        public DbSet<Banner> Banners { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<ClinicOperatingDay> ClinicOperatingDays { get; set; }
         public DbSet<ClinicOperatingShift> ClinicOperatingShifts { get; set; }
@@ -97,6 +102,30 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.HasOne(d => d.Role).WithMany(p => p.Users).HasForeignKey(d => d.RoleId).OnDelete(DeleteBehavior.Restrict);
             });
 
+                        // customers
+            modelBuilder.Entity<Customer>(entity =>
+            {
+                entity.ToTable("customers");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+                entity.Property(e => e.CustomerCode).HasColumnName("customer_code").HasMaxLength(50);
+                entity.Property(e => e.FullName).HasColumnName("full_name").HasMaxLength(255);
+                entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(255);
+                entity.HasIndex(e => e.Email).IsUnique();
+                entity.Property(e => e.Phone).HasColumnName("phone").HasMaxLength(20);
+                entity.Property(e => e.Avatar).HasColumnName("avatar");
+                entity.Property(e => e.Gender).HasColumnName("gender");
+                entity.Property(e => e.DateOfBirth).HasColumnName("date_of_birth");
+                entity.Property(e => e.Address).HasColumnName("address");
+                entity.Property(e => e.HasAccount).HasColumnName("has_account").HasDefaultValue(false);
+                entity.Property(e => e.Status).HasColumnName("status").HasDefaultValue("Active").HasMaxLength(50);
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+                entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
+
+                entity.HasOne(d => d.Account).WithOne().HasForeignKey<Customer>("AccountId").OnDelete(DeleteBehavior.SetNull);
+            });
+
             // employee_profiles
             modelBuilder.Entity<EmployeeProfile>(entity =>
             {
@@ -135,7 +164,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.ToTable("pets");
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
-                entity.Property(e => e.OwnerId).HasColumnName("owner_id");
+                entity.Property(e => e.CustomerId).HasColumnName("owner_id");
                 entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255);
                 entity.Property(e => e.Species).HasColumnName("species").HasMaxLength(100);
                 entity.Property(e => e.Breed).HasColumnName("breed").HasMaxLength(100);
@@ -149,7 +178,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.AllergyNote).HasColumnName("allergy_note");
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
 
-                entity.HasOne(d => d.Owner).WithMany().HasForeignKey(d => d.OwnerId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(d => d.Customer).WithMany(p => p.Pets).HasForeignKey(d => d.CustomerId).OnDelete(DeleteBehavior.Cascade);
             });
 
             // service_categories
@@ -221,7 +250,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.QrToken).HasColumnName("qr_token");
 
                 entity.HasOne(d => d.Pet).WithMany(p => p.Appointments).HasForeignKey(d => d.PetId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(d => d.Customer).WithMany().HasForeignKey(d => d.CustomerId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(d => d.Customer).WithMany(p => p.Appointments).HasForeignKey(d => d.CustomerId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Doctor).WithMany().HasForeignKey(d => d.DoctorId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Service).WithMany(p => p.Appointments).HasForeignKey(d => d.ServiceId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Vaccine).WithMany().HasForeignKey(d => d.VaccineId).OnDelete(DeleteBehavior.Restrict);
@@ -501,6 +530,80 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.HasOne(d => d.Appointment).WithOne(p => p.Review).HasForeignKey<Review>(d => d.AppointmentId).OnDelete(DeleteBehavior.Cascade);
             });
 
+            // post_categories
+            modelBuilder.Entity<PostCategory>(entity =>
+            {
+                entity.ToTable("post_categories");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.Name).HasColumnName("name").IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Slug).HasColumnName("slug").IsRequired().HasMaxLength(255);
+                entity.HasIndex(e => e.Slug).IsUnique();
+                entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(500);
+                entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+                entity.Property(e => e.ParentId).HasColumnName("parent_id");
+
+                entity.HasOne(d => d.Parent)
+                    .WithMany(p => p.Children)
+                    .HasForeignKey(d => d.ParentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // tags
+            modelBuilder.Entity<Tag>(entity =>
+            {
+                entity.ToTable("tags");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.Name).HasColumnName("name").IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Slug).HasColumnName("slug").IsRequired().HasMaxLength(255);
+                entity.HasIndex(e => e.Slug).IsUnique();
+                entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+            });
+
+            // post_tags
+            modelBuilder.Entity<PostTag>(entity =>
+            {
+                entity.ToTable("post_tags");
+                entity.HasKey(e => new { e.PostId, e.TagId });
+                entity.Property(e => e.PostId).HasColumnName("post_id");
+                entity.Property(e => e.TagId).HasColumnName("tag_id");
+
+                entity.HasOne(d => d.Post)
+                    .WithMany(p => p.PostTags)
+                    .HasForeignKey(d => d.PostId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(d => d.Tag)
+                    .WithMany(p => p.PostTags)
+                    .HasForeignKey(d => d.TagId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // banners
+            modelBuilder.Entity<Banner>(entity =>
+            {
+                entity.ToTable("banners");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.Title).HasColumnName("title").IsRequired().HasMaxLength(255);
+                entity.Property(e => e.ImageUrl).HasColumnName("image_url").IsRequired();
+                entity.Property(e => e.LinkUrl).HasColumnName("link_url");
+                entity.Property(e => e.Order).HasColumnName("order").HasDefaultValue(0);
+                entity.Property(e => e.StartDate).HasColumnName("start_date");
+                entity.Property(e => e.EndDate).HasColumnName("end_date");
+                entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+                
+                entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+                entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+                entity.Property(e => e.RowVersion).HasColumnName("row_version").IsRowVersion();
+
+                entity.HasOne(d => d.Creator).WithMany().HasForeignKey(d => d.CreatedBy).OnDelete(DeleteBehavior.SetNull);
+                entity.HasOne(d => d.Updater).WithMany().HasForeignKey(d => d.UpdatedBy).OnDelete(DeleteBehavior.SetNull);
+            });
+
             // posts
             modelBuilder.Entity<Post>(entity =>
             {
@@ -508,15 +611,34 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
                 entity.Property(e => e.Title).HasColumnName("title").IsRequired().HasMaxLength(255);
-                entity.Property(e => e.Slug).HasColumnName("slug").HasMaxLength(255);
+                entity.Property(e => e.Slug).HasColumnName("slug").IsRequired().HasMaxLength(255);
                 entity.HasIndex(e => e.Slug).IsUnique();
                 entity.Property(e => e.Thumbnail).HasColumnName("thumbnail");
+                entity.Property(e => e.Summary).HasColumnName("summary").HasMaxLength(500);
                 entity.Property(e => e.Content).HasColumnName("content");
-                entity.Property(e => e.AuthorId).HasColumnName("author_id");
                 entity.Property(e => e.Status).HasColumnName("status").HasDefaultValue("draft").HasMaxLength(50);
-                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+                entity.Property(e => e.ViewCount).HasColumnName("view_count").HasDefaultValue(0);
+                entity.Property(e => e.PublishedAt).HasColumnName("published_at");
+                
+                // SEO
+                entity.Property(e => e.MetaTitle).HasColumnName("meta_title").HasMaxLength(60);
+                entity.Property(e => e.MetaDescription).HasColumnName("meta_description").HasMaxLength(160);
+                entity.Property(e => e.Keywords).HasColumnName("keywords").HasMaxLength(255);
 
+                // Relationships
+                entity.Property(e => e.CategoryId).HasColumnName("category_id");
+                entity.HasOne(d => d.Category).WithMany(p => p.Posts).HasForeignKey(d => d.CategoryId).OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(e => e.AuthorId).HasColumnName("author_id");
                 entity.HasOne(d => d.Author).WithMany().HasForeignKey(d => d.AuthorId).OnDelete(DeleteBehavior.SetNull);
+
+                entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+                entity.HasOne(d => d.Updater).WithMany().HasForeignKey(d => d.UpdatedBy).OnDelete(DeleteBehavior.SetNull);
+
+                // Audit Logs & Concurrency
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+                entity.Property(e => e.RowVersion).HasColumnName("row_version").IsRowVersion();
             });
 
             // notifications

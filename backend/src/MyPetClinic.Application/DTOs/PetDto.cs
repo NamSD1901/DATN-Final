@@ -5,7 +5,7 @@ namespace MyPetClinic.Application.DTOs
     public class PetDto
     {
         public long Id { get; set; }
-        public Guid OwnerId { get; set; }
+        public Guid CustomerId { get; set; }
         public string? Name { get; set; }
         public string? Species { get; set; }
         public string? Breed { get; set; }
