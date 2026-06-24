@@ -281,73 +281,13 @@
       </div>
     </div>
 
-    <!-- Hidden K80 Print Receipt Layout -->
-    <div id="printReceiptArea" v-if="invoice">
-      <div style="text-align: center; margin-bottom: 4mm;">
-        <h4 style="margin: 0; font-weight: 800; font-size: 1.1rem; text-transform: uppercase;">MYPET CLINIC</h4>
-        <p style="margin: 1mm 0 0; font-size: 0.75rem;">Đ/C: 123 Đường Thú Y, Hà Nội<br>SĐT: 090 123 4567</p>
-        <h5 style="margin: 3mm 0 0; font-weight: 800; font-size: 0.95rem; border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 1.5mm 0; text-transform: uppercase;">Hóa Đơn Thanh Toán</h5>
-      </div>
-
-      <div style="font-size: 0.75rem; margin-bottom: 3mm; line-height: 1.4;">
-        <div style="display: flex; justify-content: space-between;">
-          <span>HĐ số: <strong>#{{ invoice.id }}</strong></span>
-          <span>{{ new Date().toLocaleString('vi-VN') }}</span>
-        </div>
-        <div>Khách hàng: <strong>{{ invoice.customerName }}</strong></div>
-        <div>SĐT: <span>{{ invoice.customerPhone }}</span></div>
-        <div>Thú cưng: <strong>{{ invoice.petName }}</strong> ({{ invoice.petSpecies }})</div>
-        <div>Bác sĩ: <span>{{ invoice.doctorName }}</span></div>
-      </div>
-
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-bottom: 4mm;">
-        <thead>
-          <tr style="border-bottom: 1px dashed #000; font-weight: 800;">
-            <th style="text-align: left; padding: 1mm 0;">Tên</th>
-            <th style="text-align: center; padding: 1mm 0; width: 10mm;">SL</th>
-            <th style="text-align: right; padding: 1mm 0; width: 20mm;">Đơn giá</th>
-            <th style="text-align: right; padding: 1mm 0; width: 22mm;">T.Tiền</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in invoice.items" :key="item.id" style="border-bottom: 1px dotted #ccc;">
-            <td style="padding: 1.5mm 0;">{{ item.itemName }}</td>
-            <td style="text-align: center; padding: 1.5mm 0;">{{ item.quantity }}</td>
-            <td style="text-align: right; padding: 1.5mm 0;">{{ formatCurrency(item.unitPrice) }}</td>
-            <td style="text-align: right; padding: 1.5mm 0;">{{ formatCurrency(item.totalPrice) }}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div style="font-size: 0.75rem; border-top: 1px dashed #000; padding-top: 2mm; line-height: 1.5;">
-        <div style="display: flex; justify-content: space-between;">
-          <span>Tạm tính:</span>
-          <span>{{ formatCurrency(invoice.subtotal) }}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between;">
-          <span>Giảm giá:</span>
-          <span>{{ formatCurrency(discountAmount) }}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 0.85rem; border-top: 1px solid #000; padding-top: 1mm; margin-top: 1mm;">
-          <span>TỔNG CỘNG:</span>
-          <span>{{ formatCurrency(finalTotal) }}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-top: 1mm;">
-          <span>Hình thức:</span>
-          <span>{{ paymentMethod === 'cash' ? 'Tiền mặt' : (paymentMethod === 'qr' ? 'Chuyển khoản VietQR' : 'POS Thẻ') }}</span>
-        </div>
-      </div>
-
-      <div style="text-align: center; margin-top: 6mm; font-size: 0.7rem; border-top: 1px dashed #000; padding-top: 3mm;">
-        <p style="margin: 0; font-style: italic;">Cảm ơn Quý khách & bé yêu!<br>Hẹn gặp lại!</p>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import api from '../../services/api';
+import Swal from 'sweetalert2';
 
 const props = defineProps<{
   initialAppointmentId?: number
@@ -504,12 +444,21 @@ const confirmPayment = async () => {
   if (!invoice.value) return;
 
   if (paymentMethod.value === 'cash' && cashReceived.value < finalTotal.value) {
-    alert('Số tiền khách đưa chưa đủ!');
+    Swal.fire({ icon: 'warning', title: 'Chưa đủ tiền!', text: 'Số tiền khách đưa chưa đủ để thanh toán.', confirmButtonColor: '#f59e0b' });
     return;
   }
 
-  const ok = confirm(`Xác nhận thanh toán hóa đơn trị giá ${finalTotal.value.toLocaleString('vi-VN')}đ?`);
-  if (!ok) return;
+  const result = await Swal.fire({
+    title: 'Xác nhận thanh toán?',
+    html: `Tổng cần thu: <strong class="text-primary">${finalTotal.value.toLocaleString('vi-VN')}đ</strong><br>Hình thức: <strong>${paymentMethod.value === 'cash' ? 'Tiền mặt' : (paymentMethod.value === 'qr' ? 'VietQR' : 'POS Thẻ')}</strong>`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: '✅ Xác nhận & In hóa đơn',
+    cancelButtonText: 'Huỷ',
+    confirmButtonColor: '#f59e0b',
+    cancelButtonColor: '#94a3b8',
+  });
+  if (!result.isConfirmed) return;
 
   try {
     const res = await api.post(`/invoice/${invoice.value.id}/process-payment`, {
@@ -518,22 +467,154 @@ const confirmPayment = async () => {
     });
     
     if (res.data.success) {
-      // Trigger browser K80 print
-      setTimeout(() => {
-        window.print();
-      }, 300);
-
-      alert('Thanh toán hoàn tất & đã in hóa đơn!');
+      printInvoiceWindow();
+      Swal.fire({ icon: 'success', title: 'Thanh toán thành công!', text: 'Hóa đơn đang được in.', timer: 2000, showConfirmButton: false });
       selectedAppointmentId.value = null;
       invoice.value = null;
       await loadPendingCheckouts();
     } else {
-      alert('Giao dịch thanh toán thất bại.');
+      Swal.fire({ icon: 'error', title: 'Thất bại', text: 'Giao dịch thanh toán thất bại.', confirmButtonColor: '#f59e0b' });
     }
   } catch (err: any) {
-    alert(err.response?.data?.message || 'Có lỗi xảy ra khi xác nhận thanh toán.');
+    Swal.fire({ icon: 'error', title: 'Lỗi hệ thống', text: err.response?.data?.message || 'Có lỗi xảy ra khi xác nhận thanh toán.', confirmButtonColor: '#f59e0b' });
   }
 };
+
+// ─── Print: open isolated window with full invoice HTML ───────────────────
+const printInvoiceWindow = () => {
+  if (!invoice.value) return;
+  const inv = invoice.value;
+  const discount = discountAmount.value;
+  const total = Math.max(0, inv.subtotal - discount);
+  const payLabel = paymentMethod.value === 'cash' ? 'Tiền mặt' : (paymentMethod.value === 'qr' ? 'Chuyển khoản VietQR' : 'POS / Thẻ ngân hàng');
+  const now = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const fmtCur = (v: number) => (v ?? 0).toLocaleString('vi-VN') + 'đ';
+
+  const itemsHtml = (inv.items || []).map((item: any, idx: number) => `
+    <tr>
+      <td style="text-align:center;color:#94a3b8;padding:9px 12px">${idx + 1}</td>
+      <td style="padding:9px 12px">
+        <div style="font-weight:600">${item.itemName}</div>
+        <div style="font-size:0.72rem;color:#94a3b8">${item.itemType === 'service' ? 'Dịch vụ y tế' : 'Thuốc / Vật tư'}</div>
+      </td>
+      <td style="text-align:center;padding:9px 12px">${item.quantity}</td>
+      <td style="text-align:right;padding:9px 12px">${fmtCur(item.unitPrice)}</td>
+      <td style="text-align:right;padding:9px 12px;font-weight:700">${fmtCur(item.totalPrice)}</td>
+    </tr>`).join('');
+
+  const discountRow = discount > 0 ? `<tr style="border-bottom:1px dashed #e2e8f0"><td style="padding:5px 0;font-size:0.82rem;color:#475569">Giảm giá</td><td style="padding:5px 0;text-align:right;color:#ef4444">- ${fmtCur(discount)}</td></tr>` : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Hóa đơn #INV-${String(inv.id).padStart(5,'0')}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Be Vietnam Pro', sans-serif; color: #0f172a; font-size: 13px; line-height: 1.5; padding: 20mm 18mm; background: white; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14px; border-bottom: 3px solid #f59e0b; margin-bottom: 18px; }
+    .logo-block { display: flex; align-items: center; gap: 14px; }
+    .logo-circle { width: 54px; height: 54px; background: linear-gradient(135deg,#fef08a,#f59e0b); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+    .clinic-name { font-size: 1.25rem; font-weight: 800; letter-spacing: 1px; }
+    .clinic-sub { font-size: 0.72rem; color: #64748b; margin-top: 3px; }
+    .inv-title { font-size: 1.05rem; font-weight: 800; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px; text-align: right; }
+    .inv-meta { font-size: 0.78rem; color: #64748b; text-align: right; margin-top: 4px; }
+    .info-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; }
+    .info-label { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .info-line { font-size: 0.78rem; color: #334155; }
+    table.items { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    table.items thead tr { background: #0f172a; color: white; }
+    table.items thead th { padding: 9px 12px; font-weight: 600; text-align: left; font-size: 0.72rem; letter-spacing: 0.3px; }
+    table.items tbody tr { border-bottom: 1px solid #f1f5f9; }
+    table.items tbody tr:nth-child(even) { background: #f8fafc; }
+    .totals { margin-left: auto; width: 280px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; background: #f8fafc; margin-bottom: 24px; }
+    .totals table { width: 100%; }
+    .total-final td { font-weight: 800; font-size: 1rem; color: #0f172a; border-top: 2px solid #0f172a; padding-top: 8px !important; }
+    .footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px dashed #cbd5e1; padding-top: 16px; margin-top: 8px; }
+    .sign-line { border-bottom: 1px solid #0f172a; height: 40px; margin: 8px 0; }
+    @page { size: A4 portrait; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-block">
+      <div class="logo-circle">🐾</div>
+      <div>
+        <div class="clinic-name">MYPET CLINIC</div>
+        <div class="clinic-sub">Hệ thống phòng khám thú y cao cấp</div>
+      </div>
+    </div>
+    <div>
+      <div class="inv-title">HÓA ĐƠN DỊCH VỤ</div>
+      <div class="inv-meta">Số: <strong>#INV-${String(inv.id).padStart(5,'0')}</strong></div>
+      <div class="inv-meta">Ngày: ${now}</div>
+    </div>
+  </div>
+
+  <div class="info-row">
+    <div class="info-box">
+      <div class="info-label">THÔNG TIN KHÁCH HÀNG</div>
+      <div class="info-line"><strong>${inv.customerName || '—'}</strong></div>
+      <div class="info-line">Điện thoại: ${inv.customerPhone || 'N/A'}</div>
+    </div>
+    <div class="info-box">
+      <div class="info-label">THÔNG TIN BỆNH NHÂN</div>
+      <div class="info-line"><strong>${inv.petName || '—'}</strong> (${inv.petSpecies || 'Thú cưng'})</div>
+      <div class="info-line">Bác sĩ phụ trách: ${inv.doctorName || '—'}</div>
+    </div>
+    <div class="info-box">
+      <div class="info-label">PHÒNG KHÁM</div>
+      <div class="info-line">MyPet Clinic - 123 Đường Thú Y</div>
+      <div class="info-line">Hà Nội | SĐT: 090 123 4567</div>
+    </div>
+  </div>
+
+  <table class="items">
+    <thead><tr>
+      <th style="width:40px">STT</th>
+      <th>Mô tả dịch vụ / sản phẩm</th>
+      <th style="text-align:center;width:55px">SL</th>
+      <th style="text-align:right;width:110px">Đơn giá</th>
+      <th style="text-align:right;width:120px">Thành tiền</th>
+    </tr></thead>
+    <tbody>${itemsHtml}</tbody>
+  </table>
+
+  <div class="totals">
+    <table>
+      <tr style="border-bottom:1px dashed #e2e8f0"><td style="padding:5px 0;font-size:0.82rem;color:#475569">Tạm tính</td><td style="padding:5px 0;text-align:right;font-size:0.82rem">${fmtCur(inv.subtotal)}</td></tr>
+      ${discountRow}
+      <tr class="total-final"><td style="padding:5px 0">TỔNG CỘNG</td><td style="text-align:right;padding:5px 0">${fmtCur(total)}</td></tr>
+      <tr><td style="padding:4px 0;font-size:0.75rem;color:#64748b" colspan="2">Hình thức: ${payLabel}</td></tr>
+    </table>
+  </div>
+
+  <div class="footer">
+    <div style="flex:1;font-size:0.78rem;color:#475569">
+      <div style="font-weight:700;margin-bottom:4px">Ghi chú:</div>
+      <div>Hóa đơn này là bằng chứng thanh toán hợp lệ tại MyPet Clinic.</div>
+      <div>Cảm ơn quý khách đã tin tưởng sử dụng dịch vụ!</div>
+    </div>
+    <div style="width:160px;text-align:center">
+      <div style="font-weight:700;margin-bottom:4px">Xác nhận của phòng khám</div>
+      <div class="sign-line"></div>
+      <div style="font-size:0.75rem;color:#64748b">Thu ngân</div>
+    </div>
+  </div>
+
+  <script>window.onload = function(){ window.print(); window.onafterprint = function(){ window.close(); }; }<\/script>
+</body>
+</html>`;
+
+  const pw = window.open('', '_blank', 'width=900,height=650');
+  if (pw) {
+    pw.document.write(html);
+    pw.document.close();
+  }
+};
+// ──────────────────────────────────────────────────────────────────────────
 
 // Helpers
 const getAnimalEmoji = (species: string) => {
@@ -651,31 +732,181 @@ export default {
   }
 }
 
-/* K80 Print CSS styles */
+/* A4 Invoice Print Styles */
 #printReceiptArea {
   display: none;
+  font-family: 'Be Vietnam Pro', 'Inter', sans-serif;
+  color: #0f172a;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 @media print {
-  body * {
-    visibility: hidden;
-  }
-  #printReceiptArea, #printReceiptArea * {
-    visibility: visible;
-  }
+  body * { visibility: hidden; }
+  #printReceiptArea, #printReceiptArea * { visibility: visible; }
   #printReceiptArea {
     display: block !important;
     position: absolute;
-    left: 0;
-    top: 0;
-    width: 80mm;
-    padding: 3mm;
+    left: 0; top: 0;
+    width: 100%;
+    padding: 16mm 18mm;
     background: white;
-    color: black;
+    color: #0f172a;
   }
-  @page {
-    size: 80mm auto;
-    margin: 0;
-  }
+  @page { size: A4 portrait; margin: 0; }
+}
+
+/* Invoice Layout Classes */
+.inv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #f59e0b;
+  margin-bottom: 16px;
+}
+.inv-logo-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.inv-logo-circle {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #fef08a, #f59e0b);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+.inv-clinic-name {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #0f172a;
+}
+.inv-clinic-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+.inv-title-block {
+  text-align: right;
+}
+.inv-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #f59e0b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.inv-number, .inv-date {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.inv-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.inv-info-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+.inv-info-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+}
+.inv-info-line {
+  font-size: 0.8rem;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.inv-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  font-size: 0.82rem;
+}
+.inv-table thead tr {
+  background: #0f172a;
+  color: white;
+}
+.inv-table thead th {
+  padding: 9px 12px;
+  font-weight: 600;
+  text-align: left;
+  font-size: 0.75rem;
+  letter-spacing: 0.3px;
+}
+.inv-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+}
+.inv-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+.inv-table tbody td {
+  padding: 9px 12px;
+  vertical-align: middle;
+}
+
+.inv-totals {
+  margin-left: auto;
+  width: 280px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  margin-bottom: 24px;
+}
+.inv-totals-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px dashed #e2e8f0;
+  font-size: 0.82rem;
+  color: #475569;
+}
+.inv-totals-final {
+  font-weight: 800;
+  font-size: 1rem !important;
+  color: #0f172a !important;
+  border-top: 2px solid #0f172a;
+  border-bottom: none;
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.inv-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 16px;
+  margin-top: 8px;
+}
+.inv-footer-left {
+  flex: 1;
+  font-size: 0.8rem;
+  color: #475569;
+}
+.inv-footer-right {
+  width: 160px;
+}
+.inv-sign-line {
+  border-bottom: 1px solid #0f172a;
+  height: 40px;
+  margin: 8px 0;
 }
 </style>

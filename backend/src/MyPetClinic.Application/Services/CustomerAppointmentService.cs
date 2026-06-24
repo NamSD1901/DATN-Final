@@ -50,19 +50,19 @@ namespace MyPetClinic.Application.Services
             return checker.ValidateInterval(lastRecord, vaccine, targetDate, pet);
         }
 
-        public async Task<long> BookAppointmentAsync(MyPetClinic.Application.DTOs.CustomerBookingDto dto, Guid customerId)
+        public async Task<long> BookAppointmentAsync(MyPetClinic.Application.DTOs.CustomerBookingDto dto, Guid customerId, Guid userId)
         {
             if (dto.IsEmergency)
             {
                 throw new InvalidOperationException("TRƯỜNG HỢP CẤP CỨU: Vui lòng KHÔNG đặt lịch online. Hãy đưa bé đến phòng khám ngay lập tức hoặc gọi Hotline khẩn cấp.");
             }
 
-            var appointmentDate = dto.AppointmentDate ?? DateTime.UtcNow;
+            var appointmentDate = dto.AppointmentDate ?? DateTime.Now;
             
-            // 2. Lead Time Check: Must book at least 2 hours in advance
-            if (appointmentDate < DateTime.UtcNow.AddHours(2))
+            // 2. Lead Time Check: Must book at least 15 minutes in advance
+            if (appointmentDate < DateTime.Now.AddMinutes(15))
             {
-                throw new InvalidOperationException("Vui lòng đặt lịch trước ít nhất 2 tiếng để chúng tôi có sự chuẩn bị tốt nhất.");
+                throw new InvalidOperationException("Vui lòng đặt lịch trước ít nhất 15 phút để chúng tôi có sự chuẩn bị tốt nhất.");
             }
 
             // 3. Operating Hours Check (08:00 - 20:00) & Giờ nghỉ trưa (12:00 - 13:30)
@@ -77,7 +77,7 @@ namespace MyPetClinic.Application.Services
             }
 
             // 4. No-show limit & Cancel limit
-            var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+            var thirtyDaysAgo = DateTime.Now.AddDays(-30);
             var recentAppointments = await _unitOfWork.Appointments.FindAsync(
                 a => a.CustomerId == customerId && a.AppointmentDate >= thirtyDaysAgo);
             
@@ -111,7 +111,7 @@ namespace MyPetClinic.Application.Services
                 VaccineId = dto.VaccineId
             };
 
-            var appointmentId = await _appointmentService.CreateAppointmentAsync(createDto, customerId);
+            var appointmentId = await _appointmentService.CreateAppointmentAsync(createDto, userId);
 
             // 7. Update to pending_approval if Cancel Count >= 5
             // [DEMO MODE]: Tạm thời tắt chức năng phạt chờ duyệt đặc biệt để dễ test

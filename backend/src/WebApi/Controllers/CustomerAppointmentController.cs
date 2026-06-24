@@ -21,19 +21,22 @@ namespace MyPetClinic.Controllers
         private readonly ICustomerAppointmentService _customerAppointmentService;
         private readonly IInvoiceService _invoiceService;
         private readonly MyPetClinic.Application.Interfaces.Repositories.IUserRepository _userRepository;
+        private readonly MyPetClinic.Application.Interfaces.Repositories.IUnitOfWork _unitOfWork;
 
         public CustomerAppointmentController(
             IAppointmentService appointmentService,
             IPetService petService,
             ICustomerAppointmentService customerAppointmentService,
             IInvoiceService invoiceService,
-            MyPetClinic.Application.Interfaces.Repositories.IUserRepository userRepository)
+            MyPetClinic.Application.Interfaces.Repositories.IUserRepository userRepository,
+            MyPetClinic.Application.Interfaces.Repositories.IUnitOfWork unitOfWork)
         {
             _appointmentService = appointmentService;
             _petService = petService;
             _customerAppointmentService = customerAppointmentService;
             _invoiceService = invoiceService;
             _userRepository = userRepository;
+            _unitOfWork = unitOfWork;
         }
 
         private async Task<Guid> GetCurrentCustomerIdAsync()
@@ -122,10 +125,16 @@ namespace MyPetClinic.Controllers
 
             try
             {
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!Guid.TryParse(userIdStr, out var userId))
+                {
+                    return Unauthorized("Không tìm thấy thông tin đăng nhập.");
+                }
+
                 var customerId = await GetCurrentCustomerIdAsync();
 
                 // Gọi CustomerAppointmentService để áp dụng các Business Rules
-                var appointmentId = await _customerAppointmentService.BookAppointmentAsync(dto, customerId);
+                var appointmentId = await _customerAppointmentService.BookAppointmentAsync(dto, customerId, userId);
                 return Ok(new { success = true, message = "Đặt lịch hẹn thành công! Chúng tôi sẽ xác nhận sớm.", id = appointmentId });
             }
             catch (Exception ex)

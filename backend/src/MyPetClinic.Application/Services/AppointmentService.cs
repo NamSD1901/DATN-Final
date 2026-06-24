@@ -30,9 +30,10 @@ namespace MyPetClinic.Application.Services
 
         public async Task<long> CreateAppointmentAsync(AppointmentCreateDto dto, Guid createdBy)
         {
+            // Giữ nguyên giờ VN (Unspecified) từ frontend, không ép thành UTC để tránh lệch 7 tiếng
             var appointmentDate = dto.AppointmentDate.HasValue 
-                ? DateTime.SpecifyKind(dto.AppointmentDate.Value, DateTimeKind.Utc) 
-                : DateTime.UtcNow;
+                ? DateTime.SpecifyKind(dto.AppointmentDate.Value, DateTimeKind.Unspecified) 
+                : DateTime.Now;
 
             if (appointmentDate.Year < 2000)
             {
@@ -108,11 +109,21 @@ namespace MyPetClinic.Application.Services
                         List<Guid> doctorsList;
                         if (doctorsWithSchedules.Any())
                         {
+                            // Lọc bác sĩ nằm trong khung giờ ca trực
                             doctorsList = doctorsWithSchedules
                                 .Where(s => appointmentTime >= s.StartTime && appointmentTime + TimeSpan.FromMinutes(30) <= s.EndTime)
                                 .Select(s => s.DoctorId)
                                 .Distinct()
                                 .ToList();
+                            
+                            // Nếu không có bác sĩ nào trong khung giờ, fallback sang tất cả bác sĩ có ca trực ngày đó
+                            if (!doctorsList.Any())
+                            {
+                                doctorsList = doctorsWithSchedules
+                                    .Select(s => s.DoctorId)
+                                    .Distinct()
+                                    .ToList();
+                            }
                         }
                         else
                         {
@@ -130,11 +141,21 @@ namespace MyPetClinic.Application.Services
                         }
 
                         // 2. Lọc ra danh sách các bác sĩ THỰC SỰ RẢNH (không trùng lịch trong khoảng +/- 30 phút)
-                        var busyDoctorIds = _unitOfWork.Appointments.Query()
-                            .Where(a => a.Status != "cancelled" 
-                                        && a.AppointmentDate > appointmentDate.AddMinutes(-30) 
-                                        && a.AppointmentDate < appointmentDate.AddMinutes(30)
+                        // Appointment lưu AppointmentDate (chỉ ngày) + StartTime (giờ) riêng biệt
+                        // Cần kết hợp cả hai để so sánh chính xác
+                        var allAptsForDoctors = _unitOfWork.Appointments.Query()
+                            .Where(a => a.Status != "cancelled"
+                                        && a.AppointmentDate == appointmentDate.Date
                                         && doctorsList.Contains(a.DoctorId))
+                            .Select(a => new { a.DoctorId, a.AppointmentDate, a.StartTime })
+                            .ToList();
+
+                        var busyDoctorIds = allAptsForDoctors
+                            .Where(a => {
+                                var apptStartTime = a.StartTime;
+                                var diff = (apptStartTime - appointmentDate.TimeOfDay).TotalMinutes;
+                                return Math.Abs(diff) < 30;
+                            })
                             .Select(a => a.DoctorId)
                             .Distinct()
                             .ToList();
@@ -179,12 +200,17 @@ namespace MyPetClinic.Application.Services
                     }
 
                     // Chặn đặt lịch nếu Bác sĩ đã có lịch trong khoảng +/- 30 phút (Double-Booking Check)
-                    // Sử dụng so sánh loại trừ (strict inequality) để cho phép đặt các ca liền kề nhau (back-to-back)
-                    var isDoubleBooked = _unitOfWork.Appointments.Query()
-                        .Any(a => a.DoctorId == finalDoctorId 
+                    // AppointmentDate chỉ lưu ngày (00:00:00), giờ lưu riêng tại StartTime
+                    // Phải kết hợp cả hai để kiểm tra trùng lịch chính xác
+                    var sameDay_Apts = _unitOfWork.Appointments.Query()
+                        .Where(a => a.DoctorId == finalDoctorId
                                     && a.Status != "cancelled"
-                                    && a.AppointmentDate > appointmentDate.AddMinutes(-30) 
-                                    && a.AppointmentDate < appointmentDate.AddMinutes(30));
+                                    && a.AppointmentDate == appointmentDate.Date)
+                        .Select(a => a.StartTime)
+                        .ToList();
+
+                    var isDoubleBooked = sameDay_Apts.Any(startTime => 
+                        Math.Abs((startTime - appointmentDate.TimeOfDay).TotalMinutes) < 30);
 
                     if (isDoubleBooked)
                     {
@@ -221,7 +247,7 @@ namespace MyPetClinic.Application.Services
                     };
 
                     // Nếu thời gian lớn hơn hiện tại 1 giờ thì là đặt lịch trước
-                    if (appointmentDate > DateTime.UtcNow.AddHours(1))
+                    if (appointmentDate > DateTime.Now.AddHours(1))
                     {
                         appointment.Status = "pending"; 
                     }
@@ -300,9 +326,10 @@ namespace MyPetClinic.Application.Services
 
         public async Task<long> CreateAppointmentWithNewCustomerAsync(AppointmentWithNewCustomerDto dto, Guid createdBy)
         {
+            // Giữ nguyên giờ VN (Unspecified) từ frontend, không ép thành UTC để tránh lệch 7 tiếng
             var appointmentDate = dto.AppointmentDate.HasValue 
-                ? DateTime.SpecifyKind(dto.AppointmentDate.Value, DateTimeKind.Utc) 
-                : DateTime.UtcNow;
+                ? DateTime.SpecifyKind(dto.AppointmentDate.Value, DateTimeKind.Unspecified) 
+                : DateTime.Now;
 
             int retryCount = 3;
             for (int i = 0; i < retryCount; i++)
@@ -312,30 +339,36 @@ namespace MyPetClinic.Application.Services
                 {
                     var targetDateStart = appointmentDate.Date;
 
-                    // Kiểm tra ca trực của bác sĩ
-                    var schedule = _unitOfWork.DoctorSchedules.Query()
-                        .FirstOrDefault(s => s.DoctorId == dto.DoctorId && s.WorkDate == targetDateStart && s.IsAvailable);
-                    
-                    if (schedule == null)
+                    // Kiểm tra ca trực của bác sĩ (chỉ kiểm tra khi có DoctorId hợp lệ)
+                    if (dto.DoctorId != Guid.Empty)
                     {
-                        throw new InvalidOperationException("Bác sĩ không có lịch trực trong ngày này.");
-                    }
+                        var schedule = _unitOfWork.DoctorSchedules.Query()
+                            .FirstOrDefault(s => s.DoctorId == dto.DoctorId && s.WorkDate == targetDateStart && s.IsAvailable);
 
-                    var appointmentTime = appointmentDate.TimeOfDay;
-                    if (appointmentTime < schedule.StartTime || appointmentTime + TimeSpan.FromMinutes(30) > schedule.EndTime)
-                    {
-                        throw new InvalidOperationException($"Thời gian hẹn phải nằm trong ca trực của bác sĩ ({schedule.StartTime:hh\\:mm} - {schedule.EndTime:hh\\:mm}).");
+                        // Chỉ báo lỗi nếu bác sĩ có cấu hình lịch trực nhưng ngày hẹn không có ca
+                        if (schedule != null)
+                        {
+                            var appointmentTime = appointmentDate.TimeOfDay;
+                            if (appointmentTime < schedule.StartTime || appointmentTime + TimeSpan.FromMinutes(30) > schedule.EndTime)
+                            {
+                                throw new InvalidOperationException($"Thời gian hẹn phải nằm trong ca trực của bác sĩ ({schedule.StartTime:hh\\:mm} - {schedule.EndTime:hh\\:mm}).");
+                            }
+                        }
                     }
 
                     // Kiểm tra trùng lịch (Double-Booking Check) nằm trong transaction
-                    // Sử dụng so sánh loại trừ (strict inequality) để cho phép đặt các ca liền kề nhau (back-to-back)
-                    var isDoubleBooked = _unitOfWork.Appointments.Query()
-                        .Any(a => a.DoctorId == dto.DoctorId 
+                    // AppointmentDate chỉ lưu ngày (00:00:00), giờ lưu riêng tại StartTime
+                    var sameDay_Apts_New = _unitOfWork.Appointments.Query()
+                        .Where(a => a.DoctorId == dto.DoctorId
                                     && a.Status != "cancelled"
-                                    && a.AppointmentDate > appointmentDate.AddMinutes(-30) 
-                                    && a.AppointmentDate < appointmentDate.AddMinutes(30));
+                                    && a.AppointmentDate == appointmentDate.Date)
+                        .Select(a => a.StartTime)
+                        .ToList();
 
-                    if (isDoubleBooked)
+                    var isDoubleBookedNew = sameDay_Apts_New.Any(startTime =>
+                        Math.Abs((startTime - appointmentDate.TimeOfDay).TotalMinutes) < 30);
+
+                    if (isDoubleBookedNew)
                     {
                         throw new InvalidOperationException("Bác sĩ đã có lịch hẹn trong khoảng thời gian này.");
                     }
@@ -398,11 +431,12 @@ namespace MyPetClinic.Application.Services
                         Status = "waiting", // Khám ngay / Chờ khám
                         CreatedBy = createdBy,
                         CreatedAt = DateTime.UtcNow,
-                        AppointmentDate = appointmentDate,
+                        AppointmentDate = appointmentDate.Date,   // Chỉ lưu ngày
+                        StartTime = appointmentDate.TimeOfDay,    // Lưu giờ riêng
                         QrToken = qrToken
                     };
 
-                    if (appointmentDate > DateTime.UtcNow.AddHours(1))
+                    if (appointmentDate > DateTime.Now.AddHours(1))
                     {
                         appointment.Status = "pending"; 
                     }
