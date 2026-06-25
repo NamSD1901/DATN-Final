@@ -45,6 +45,7 @@ namespace MyPetClinic.Infrastructure
             services.AddScoped<IVaccinationService, VaccinationService>();
             services.AddScoped<IPrescriptionService, PrescriptionService>();
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<IDoctorScheduleService, DoctorScheduleService>();
             
             // Nếu muốn để logic Service ở Application Layer, ta chỉ cần đăng ký tại đây
             // Hoặc có thể tạo AddApplicationServices riêng biệt bên Application, 

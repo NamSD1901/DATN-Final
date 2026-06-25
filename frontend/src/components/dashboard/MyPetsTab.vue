@@ -111,10 +111,7 @@
                 <span class="truncate-text">{{ pet.allergyNote }}</span>
               </div>
 
-              <!-- Microchip -->
-              <div v-if="pet.microchipCode" class="microchip-badge-glass mt-2">
-                <i class="bi bi-cpu me-2 text-cyan"></i> <span>{{ pet.microchipCode }}</span>
-              </div>
+
 
               <!-- View Details Button -->
               <button class="btn-view-detail-glass w-100 mt-3" @click="$emit('view-pet', pet.id)">
@@ -244,14 +241,7 @@
                     </div>
                   </div>
 
-                  <!-- Microchip Code -->
-                  <div class="col-sm-6">
-                     <label class="form-label-glass text-secondary">Mã Microchip (nếu có)</label>
-                     <div class="input-group-custom">
-                       <span class="input-icon"><i class="bi bi-upc-scan"></i></span>
-                       <input v-model="form.microchipCode" type="text" class="form-control-glass with-icon" placeholder="Mã chip định danh..." />
-                     </div>
-                  </div>
+
 
                   <!-- Allergy Note -->
                   <div class="col-12">
@@ -346,12 +336,7 @@
                     </span>
                   </div>
                 </div>
-                <div class="col-6">
-                  <div class="detail-info-item-glass">
-                    <span class="detail-label">Microchip</span>
-                    <span class="detail-value text-cyan">{{ selectedPet.microchipCode || 'Chưa gắn chip' }}</span>
-                  </div>
-                </div>
+
                 <div v-if="selectedPet.allergyNote" class="col-12">
                   <div class="detail-info-item-glass allergy-detail-glass">
                     <span class="detail-label text-warning"><i class="bi bi-exclamation-triangle-fill me-1"></i>Dị ứng / Ghi chú đặc biệt</span>

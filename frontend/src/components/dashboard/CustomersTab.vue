@@ -148,10 +148,6 @@
                 <input type="text" v-model="petForm.breed" class="form-control" />
               </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label text-muted small fw-bold">Mã Microchip</label>
-              <input type="text" v-model="petForm.microchipCode" class="form-control" placeholder="Mã định danh chíp..." />
-            </div>
             <div class="form-check form-switch mb-3">
               <input class="form-check-input" type="checkbox" id="addPetSterilized" v-model="petForm.sterilized">
               <label class="form-check-label text-muted small" for="addPetSterilized">Bé đã triệt sản</label>
@@ -205,10 +201,6 @@
                 <label class="form-label text-muted small fw-bold">Giống (Breed)</label>
                 <input type="text" v-model="editPetForm.breed" class="form-control" />
               </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label text-muted small fw-bold">Mã Microchip</label>
-              <input type="text" v-model="editPetForm.microchipCode" class="form-control" />
             </div>
             <div class="form-check form-switch mb-3">
               <input class="form-check-input" type="checkbox" id="editPetSterilized" v-model="editPetForm.sterilized">

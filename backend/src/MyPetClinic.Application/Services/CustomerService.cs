@@ -23,18 +23,18 @@ namespace MyPetClinic.Application.Services
             IEnumerable<Customer> customers;
             if (string.IsNullOrWhiteSpace(keyword))
             {
-                customers = await _unitOfWork.Customers.FindAsync(c => c.DeletedAt == null);
+                customers = await _unitOfWork.Customers.FindWithIncludesAsync(c => c.DeletedAt == null, c => c.Account!);
             }
             else
             {
                 var lowerKeyword = keyword.ToLower();
-                customers = await _unitOfWork.Customers.FindAsync(c => 
+                customers = await _unitOfWork.Customers.FindWithIncludesAsync(c => 
                     c.DeletedAt == null && (
                     (c.FullName != null && c.FullName.ToLower().Contains(lowerKeyword)) ||
                     (c.Phone != null && c.Phone.Contains(keyword)) ||
                     (c.Email != null && c.Email.ToLower().Contains(lowerKeyword)) ||
                     (c.CustomerCode != null && c.CustomerCode.ToLower().Contains(lowerKeyword))
-                    )
+                    ), c => c.Account!
                 );
             }
 
@@ -42,37 +42,39 @@ namespace MyPetClinic.Application.Services
             {
                 Id = c.Id,
                 FullName = c.FullName,
-                Email = c.Email,
+                Email = !string.IsNullOrEmpty(c.Email) ? c.Email : c.Account?.Email,
                 Phone = c.Phone,
                 Address = c.Address,
                 Gender = c.Gender,
                 DateOfBirth = c.DateOfBirth,
                 Avatar = c.Avatar,
-                RoleName = "Customer"
+                RoleName = "Customer",
+                CreatedAt = c.CreatedAt
             });
         }
 
         public async Task<IEnumerable<UserProfileDto>> GetAllCustomersAsync()
         {
-            var customers = await _unitOfWork.Customers.FindAsync(c => c.DeletedAt == null);
+            var customers = await _unitOfWork.Customers.FindWithIncludesAsync(c => c.DeletedAt == null, c => c.Account!);
 
             return customers.Select(c => new UserProfileDto
             {
                 Id = c.Id,
                 FullName = c.FullName,
-                Email = c.Email,
+                Email = !string.IsNullOrEmpty(c.Email) ? c.Email : c.Account?.Email,
                 Phone = c.Phone,
                 Address = c.Address,
                 Gender = c.Gender,
                 DateOfBirth = c.DateOfBirth,
                 Avatar = c.Avatar,
-                RoleName = "Customer"
+                RoleName = "Customer",
+                CreatedAt = c.CreatedAt
             });
         }
 
         public async Task<UserProfileDto?> GetCustomerDetailAsync(Guid id)
         {
-            var customer = await _unitOfWork.Customers.GetByIdAsync(id);
+            var customer = await _unitOfWork.Customers.GetFirstOrDefaultWithIncludesAsync(c => c.Id == id, c => c.Account!);
             if (customer == null || customer.DeletedAt != null) return null;
 
             return new UserProfileDto
@@ -80,13 +82,14 @@ namespace MyPetClinic.Application.Services
                 Id = customer.Id,
                 CustomerCode = customer.CustomerCode,
                 FullName = customer.FullName,
-                Email = customer.Email,
+                Email = !string.IsNullOrEmpty(customer.Email) ? customer.Email : customer.Account?.Email,
                 Phone = customer.Phone,
                 Address = customer.Address,
                 Gender = customer.Gender,
                 DateOfBirth = customer.DateOfBirth,
                 Avatar = customer.Avatar,
-                RoleName = "Customer"
+                RoleName = "Customer",
+                CreatedAt = customer.CreatedAt
             };
         }
 

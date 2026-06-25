@@ -570,7 +570,14 @@ const fetchDashboardData = async () => {
     userId.value = res.data.userId || '';
     userName.value = res.data.userName || 'Người dùng';
     email.value = res.data.email || '';
-    role.value = res.data.role || 'customer';
+    
+    // Normalize doctor roles for UI
+    let fetchedRole = res.data.role || 'customer';
+    if (fetchedRole === 'clinical_doctor' || fetchedRole === 'vaccination_doctor') {
+      fetchedRole = 'doctor';
+    }
+    role.value = fetchedRole;
+    localStorage.setItem('user_role', role.value);
     
     if (role.value === 'receptionist' && activeTab.value === 'overview') {
       activeTab.value = 'queue';

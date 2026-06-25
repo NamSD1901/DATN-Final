@@ -174,6 +174,20 @@ namespace MyPetClinic.Controllers
                 return BadRequest(new { success = false, message = ex.Message });
             }
         }
+
+        [HttpGet("{id}/suitable-doctors")]
+        public async Task<IActionResult> GetSuitableDoctors(long id)
+        {
+            try
+            {
+                var doctors = await _appointmentService.GetSuitableDoctorsForAppointmentAsync(id);
+                return Ok(doctors);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 
     public class CheckInRequest

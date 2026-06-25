@@ -289,7 +289,7 @@ const translateRole = (role: string) => {
   if (!role) return '';
   const r = role.toLowerCase();
   if (r === 'customer') return 'Khách hàng';
-  if (r === 'doctor') return 'Bác sĩ';
+  if (r === 'doctor' || r === 'clinical_doctor' || r === 'vaccination_doctor') return 'Bác sĩ thú y';
   if (r === 'receptionist') return 'Lễ tân';
   if (r === 'admin') return 'Quản trị viên';
   return role;

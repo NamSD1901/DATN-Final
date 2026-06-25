@@ -163,7 +163,7 @@
                   </thead>
                   <tbody>
                     <tr 
-                      v-for="evt in filteredEventsList" 
+                      v-for="evt in paginatedEventsList" 
                       :key="evt.id" 
                       class="cursor-pointer" 
                       @click="handleRowClick($event, evt.id)"
@@ -216,6 +216,25 @@
                   </tbody>
                 </table>
               </div>
+
+              <!-- Pagination Control -->
+              <div class="d-flex justify-content-between align-items-center mt-3" v-if="totalPages > 1">
+                <span class="text-muted small">Hiển thị {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, filteredEventsList.length) }} trong tổng số {{ filteredEventsList.length }} ca khám</span>
+                <nav>
+                  <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                      <button class="page-link text-warning" @click="currentPage--">Trước</button>
+                    </li>
+                    <li class="page-item" v-for="page in totalPages" :key="page" :class="{ active: currentPage === page }">
+                      <button class="page-link" :class="currentPage === page ? 'bg-warning border-warning text-dark' : 'text-dark'" @click="currentPage = page">{{ page }}</button>
+                    </li>
+                    <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                      <button class="page-link text-warning" @click="currentPage++">Sau</button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+
             </div>
           </div>
         </div>
@@ -291,65 +310,105 @@
           <button class="modal-close text-dark border-0 bg-transparent" @click="showCreateModal = false"><i class="bi bi-x-lg fs-5"></i></button>
         </div>
         <div class="zalo-modal-body text-start">
-          <!-- Tab pills for customers selector -->
+          <!-- Tab pills for booking type -->
           <ul class="nav nav-pills nav-fill mb-4 gap-2 border p-1.5 rounded-pill bg-light" role="tablist">
             <li class="nav-item">
-              <button class="nav-link rounded-pill fw-bold border-0" :class="{ 'active': createAptType === 'old' }" @click="createAptType = 'old'">
-                <i class="bi bi-person-check me-2"></i>Khách hàng đã có
+              <button class="nav-link rounded-pill fw-bold border-0" :class="{ 'active': activeBookingTab === 'prebooked' }" @click="activeBookingTab = 'prebooked'">
+                <i class="bi bi-calendar-check me-2"></i>Đặt Lịch Khám Trước
               </button>
             </li>
             <li class="nav-item">
-              <button class="nav-link rounded-pill fw-bold border-0" :class="{ 'active': createAptType === 'new' }" @click="createAptType = 'new'">
-                <i class="bi bi-person-plus me-2"></i>Đăng ký khách mới
+              <button class="nav-link rounded-pill fw-bold border-0" :class="{ 'active': activeBookingTab === 'walkin', 'bg-success text-white': activeBookingTab === 'walkin' }" @click="activeBookingTab = 'walkin'">
+                <i class="bi bi-person-walking me-2"></i>Khách Vãng Lai (Walk-in)
               </button>
             </li>
           </ul>
 
-          <form @submit.prevent="submitCreateAppointment">
-            <!-- Part 1: Select Owner -->
+          <form @submit.prevent="activeBookingTab === 'prebooked' ? submitPrebookedAppointment() : submitWalkInAppointment()">
+            <!-- Part 1: Select Owner (Shared for both tabs) -->
             <div class="mb-4">
-              <!-- Old Customer Selector -->
-              <div v-if="createAptType === 'old'" class="bg-light p-3 rounded-4 border border-warning border-opacity-20">
-                <div class="row align-items-center">
+              <div class="bg-light p-3 rounded-4 border border-primary border-opacity-20 mb-3">
+                <label class="form-label fw-bold small text-muted">Tìm kiếm SĐT khách hàng *</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                  <input type="text" v-model="searchQueryPhone" class="form-control border-start-0" placeholder="Nhập SĐT để tìm hoặc đăng ký mới..." @keyup.enter="handleSearchCustomer" />
+                  <button type="button" class="btn btn-primary fw-bold" @click="handleSearchCustomer">Tìm / Đăng ký</button>
+                </div>
+                
+                <div v-if="searchCustomerStatus === 'idle'" class="mt-2 text-start">
+                  <button type="button" class="btn btn-link text-decoration-none small p-0 text-primary fw-bold" @click="searchCustomerStatus = 'not_found'; customerForm.customerPhone = searchQueryPhone">
+                    <i class="bi bi-person-plus-fill me-1"></i> Bỏ qua tìm kiếm, đăng ký khách mới ngay
+                  </button>
+                </div>
+
+                <small v-if="searchCustomerStatus === 'not_found'" class="text-warning mt-2 d-block fw-bold"><i class="bi bi-info-circle me-1"></i>Vui lòng điền thông tin khách mới bên dưới.</small>
+              </div>
+
+              <!-- Found Customer -->
+              <div v-if="searchCustomerStatus === 'found'" class="bg-success bg-opacity-10 p-3 rounded-4 border border-success border-opacity-25 animate-fade-in">
+                <div class="row align-items-start">
                   <div class="col-md-6 mb-3 mb-md-0">
-                    <label class="form-label fw-bold small text-muted">Tìm kiếm SĐT khách hàng *</label>
-                    <div class="input-group">
-                      <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                      <input type="text" v-model="oldCustPhone" class="form-control border-start-0" placeholder="Nhập SĐT..." />
-                      <button type="button" class="btn btn-warning fw-bold text-dark" @click="searchOldCustomer">Tìm</button>
+                    <label class="form-label fw-bold small text-success">Thông tin khách hàng</label>
+                    <div class="d-flex align-items-center bg-white p-2.5 rounded-3 border border-success border-opacity-25">
+                      <div class="me-3 bg-success bg-opacity-25 p-2 rounded-circle text-success"><i class="bi bi-person-fill"></i></div>
+                      <div>
+                        <div class="fw-bold text-dark">{{ selectedCustomer?.fullName }}</div>
+                        <div class="small text-muted">{{ selectedCustomer?.phone }}</div>
+                      </div>
                     </div>
-                    <small v-if="searchOldCustError" class="text-danger mt-1 d-block"><i class="bi bi-exclamation-circle me-1"></i>Không tìm thấy khách hàng!</small>
                   </div>
-                  <div class="col-md-6" v-if="oldCustData">
-                    <label class="form-label fw-bold small text-muted">Thông tin chủ & Thú cưng</label>
-                    <input type="text" class="form-control bg-white mb-2" readonly :value="oldCustData.customer.fullName" />
-                    
-                    <select v-model="formPayload.petId" class="form-select border-warning" required>
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold small text-success d-flex justify-content-between align-items-center">
+                      <span>Chọn thú cưng *</span>
+                      <button type="button" class="btn btn-sm btn-outline-success rounded-pill py-0 px-2" style="font-size: 0.75rem" @click="isAddingNewPet = !isAddingNewPet">
+                        <i class="bi" :class="isAddingNewPet ? 'bi-x' : 'bi-plus-lg'"></i> {{ isAddingNewPet ? 'Hủy thêm' : 'Thêm bé mới' }}
+                      </button>
+                    </label>
+                    <select v-if="!isAddingNewPet" v-model="formPayload.petId" class="form-select border-success" :required="!isAddingNewPet">
                       <option value="">-- Chọn thú cưng --</option>
-                      <option v-for="pet in oldCustPets" :key="pet.id" :value="pet.id">{{ pet.name }} ({{ pet.species }})</option>
+                      <option v-for="pet in customerPets" :key="pet.id" :value="pet.id">{{ pet.name }} ({{ pet.species }})</option>
                     </select>
+
+                    <!-- Add new pet for old customer -->
+                    <div v-if="isAddingNewPet" class="bg-white p-3 rounded-3 border border-success border-opacity-25 mt-2 animate-fade-in">
+                      <div class="row g-2">
+                        <div class="col-12">
+                          <input type="text" v-model="petForm.petName" class="form-control form-control-sm" placeholder="Tên thú cưng *" :required="isAddingNewPet" />
+                        </div>
+                        <div class="col-6">
+                          <select v-model="petForm.species" class="form-select form-select-sm">
+                            <option value="Chó">Chó</option>
+                            <option value="Mèo">Mèo</option>
+                            <option value="Khác">Khác</option>
+                          </select>
+                        </div>
+                        <div class="col-6">
+                          <input type="number" step="0.1" v-model="petForm.petWeight" class="form-control form-control-sm" placeholder="Cân nặng (kg)" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <!-- New Customer inputs -->
-              <div v-else class="bg-warning bg-opacity-10 p-3 rounded-4 border border-warning border-opacity-35">
+              <!-- New Customer / Not Found -->
+              <div v-if="searchCustomerStatus === 'not_found'" class="bg-warning bg-opacity-10 p-3 rounded-4 border border-warning border-opacity-35 animate-fade-in">
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label class="form-label fw-bold small text-dark-gold">Số điện thoại *</label>
-                    <input type="text" v-model="newCustForm.customerPhone" class="form-control border-warning border-opacity-50" required placeholder="VD: 0901234567" />
+                    <input type="text" v-model="customerForm.customerPhone" class="form-control border-warning border-opacity-50" required placeholder="VD: 0901234567" />
                   </div>
                   <div class="col-md-6">
                     <label class="form-label fw-bold small text-dark-gold">Tên chủ nuôi *</label>
-                    <input type="text" v-model="newCustForm.customerName" class="form-control border-warning border-opacity-50" required placeholder="VD: Nguyễn Văn A" />
+                    <input type="text" v-model="customerForm.customerName" class="form-control border-warning border-opacity-50" required placeholder="VD: Nguyễn Văn A" />
                   </div>
                   <div class="col-md-4">
                     <label class="form-label fw-bold small text-dark-gold">Tên thú cưng *</label>
-                    <input type="text" v-model="newCustForm.petName" class="form-control border-warning border-opacity-50" required placeholder="VD: Milo" />
+                    <input type="text" v-model="petForm.petName" class="form-control border-warning border-opacity-50" required placeholder="VD: Milo" />
                   </div>
                   <div class="col-md-4">
                     <label class="form-label fw-bold small text-dark-gold">Giống loài *</label>
-                    <select v-model="newCustForm.species" class="form-select border-warning border-opacity-50">
+                    <select v-model="petForm.species" class="form-select border-warning border-opacity-50">
                       <option value="Chó">Chó</option>
                       <option value="Mèo">Mèo</option>
                       <option value="Khác">Khác</option>
@@ -357,7 +416,7 @@
                   </div>
                   <div class="col-md-4">
                     <label class="form-label fw-bold small text-dark-gold">Cân nặng (kg)</label>
-                    <input type="number" step="0.1" v-model="newCustForm.petWeight" class="form-control border-warning border-opacity-50" placeholder="VD: 5.5" />
+                    <input type="number" step="0.1" v-model="petForm.petWeight" class="form-control border-warning border-opacity-50" placeholder="VD: 5.5" />
                   </div>
                 </div>
               </div>
@@ -376,12 +435,14 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold text-dark">Bác sĩ phụ trách</label>
-                <input type="text" class="form-control border-primary bg-light text-muted" readonly value="Hệ thống tự động phân công theo dịch vụ" />
+                <div class="form-control border-primary bg-light text-muted fw-bold d-flex align-items-center">
+                  <i class="bi bi-robot me-2 text-primary"></i> Hệ thống tự động phân công
+                </div>
               </div>
             </div>
 
-            <!-- Part 3: Time Slot Selector -->
-            <div class="card border-primary border-opacity-25 shadow-sm rounded-4 mb-4">
+            <!-- Part 3: Time Slot Selector (ONLY FOR PRE-BOOKED) -->
+            <div v-if="activeBookingTab === 'prebooked'" class="card border-primary border-opacity-25 shadow-sm rounded-4 mb-4 animate-fade-in">
               <div class="card-body">
                 <h6 class="fw-bold text-primary mb-3"><i class="bi bi-clock me-2"></i>Chọn thời gian đặt hẹn</h6>
                 <div class="row g-3">
@@ -476,13 +537,14 @@
             <div class="mb-4">
               <div class="form-floating">
                 <textarea v-model="formPayload.symptom" class="form-control" style="height: 80px" placeholder="Lý do khám..." required></textarea>
-                <label class="text-muted">Lý do khám bệnh *</label>
+                <label class="text-muted">Lý do khám bệnh / Triệu chứng *</label>
               </div>
             </div>
 
             <div class="mt-4 pt-3 border-top text-end">
               <button type="button" class="btn btn-outline-secondary rounded-pill px-4 me-2" @click="showCreateModal = false">Hủy</button>
-              <button type="submit" class="btn btn-premium rounded-pill px-5 fw-bold">Xác Nhận Đặt Lịch</button>
+              <button v-if="activeBookingTab === 'prebooked'" type="submit" class="btn btn-premium rounded-pill px-5 fw-bold">Xác Nhận Đặt Lịch</button>
+              <button v-else type="submit" class="btn btn-success rounded-pill px-5 fw-bold shadow-sm"><i class="bi bi-play-fill me-1"></i>Đưa Vào Hàng Đợi Ngay</button>
             </div>
           </form>
         </div>
@@ -664,10 +726,10 @@
               <p class="text-muted mb-3">Bác sĩ hiện tại: <strong>Bs. {{ getLastWord(changeDoctorTarget?.doctorName) }}</strong></p>
               
               <div class="mb-3">
-                <label class="form-label fw-bold small text-muted">Chọn bác sĩ thay thế</label>
-                <select v-model="selectedNewDoctorId" class="form-select rounded-3">
+                <label class="form-label fw-bold small text-muted">Chọn bác sĩ thay thế <span v-if="fetchingSuitableDocs" class="spinner-border spinner-border-sm text-info ms-2" role="status"></span></label>
+                <select v-model="selectedNewDoctorId" class="form-select rounded-3" :disabled="fetchingSuitableDocs">
                   <option value="" disabled>-- Chọn bác sĩ --</option>
-                  <option v-for="doc in doctorList.filter(d => d.id !== changeDoctorTarget?.extendedProps?.doctorId && d.id !== changeDoctorTarget?.doctorId)" :key="doc.id" :value="doc.id">
+                  <option v-for="doc in suitableDoctorsList.filter(d => d.id !== changeDoctorTarget?.extendedProps?.doctorId && d.id !== changeDoctorTarget?.doctorId)" :key="doc.id" :value="doc.id">
                     Bs. {{ doc.fullName }}
                   </option>
                 </select>
@@ -958,6 +1020,20 @@ const filteredEventsList = computed(() => {
   if (selectedStatus.value === 'ALL') return eventsList.value;
   return eventsList.value.filter((evt: any) => evt.status === selectedStatus.value);
 });
+
+// Pagination
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredEventsList.value.length / pageSize.value)));
+const paginatedEventsList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return filteredEventsList.value.slice(start, start + pageSize.value);
+});
+
+watch([selectedDate, selectedStatus, selectedDoctor], () => {
+  currentPage.value = 1;
+});
+
 const pendingList = ref<any[]>([]);
 
 
@@ -1017,6 +1093,8 @@ const showChangeDoctorModal = ref(false);
 const changeDoctorTarget = ref<any>(null);
 const selectedNewDoctorId = ref('');
 const forceChangeDoctor = ref(false);
+const suitableDoctorsList = ref<any[]>([]);
+const fetchingSuitableDocs = ref(false);
 
 // Reschedule Modal
 const showRescheduleModal = ref(false);
@@ -1102,18 +1180,25 @@ const showToast = (message: string, type: 'success' | 'danger' | 'warning' = 'su
   }, 3000);
 };
 
-// Forms
-const createAptType = ref<'old' | 'new'>('old');
-const oldCustPhone = ref('');
-const searchOldCustError = ref(false);
-const oldCustData = ref<any>(null);
-const oldCustPets = ref<any[]>([]);
+// Forms (New - Phase 1)
+const activeBookingTab = ref<'prebooked' | 'walkin'>('prebooked');
 
-const newCustForm = ref({
+const searchQueryPhone = ref('');
+const searchCustomerStatus = ref<'idle' | 'found' | 'not_found'>('idle');
+const selectedCustomer = ref<any>(null);
+const customerPets = ref<any[]>([]);
+
+const isAddingNewPet = ref(false);
+
+const customerForm = ref({
   customerName: '',
   customerPhone: '',
+});
+
+const petForm = ref({
   petName: '',
   species: 'Chó',
+  breed: '',
   petWeight: null as number | null
 });
 
@@ -1345,24 +1430,178 @@ const loadAllData = async () => {
   ]);
 };
 
-// Form methods
-const searchOldCustomer = async () => {
-  const phone = oldCustPhone.value.trim();
+// Form methods (New - Phase 1)
+const handleSearchCustomer = async () => {
+  const phone = searchQueryPhone.value.trim();
   if (!phone) return;
-  searchOldCustError.value = false;
-  oldCustData.value = null;
-  oldCustPets.value = [];
+  
+  searchCustomerStatus.value = 'idle';
+  selectedCustomer.value = null;
+  customerPets.value = [];
+  isAddingNewPet.value = false;
+  
   try {
     const res = await api.get(`/receptionist/customer-by-phone?phone=${encodeURIComponent(phone)}`);
     if (res.data.success) {
-      oldCustData.value = res.data;
-      oldCustPets.value = res.data.pets || [];
+      searchCustomerStatus.value = 'found';
+      selectedCustomer.value = res.data.customer;
+      customerPets.value = res.data.pets || [];
+      if (customerPets.value.length > 0) {
+        formPayload.value.petId = customerPets.value[0].id;
+      } else {
+        formPayload.value.petId = '';
+      }
     } else {
-      searchOldCustError.value = true;
+      searchCustomerStatus.value = 'not_found';
+      customerForm.value.customerPhone = phone;
+      customerForm.value.customerName = '';
+      petForm.value = { petName: '', species: 'Chó', breed: '', petWeight: null };
     }
   } catch (err) {
     console.error(err);
-    searchOldCustError.value = true;
+    searchCustomerStatus.value = 'not_found';
+    customerForm.value.customerPhone = phone;
+  }
+};
+
+const submitPrebookedAppointment = async () => {
+  if (activeBookingTab.value !== 'prebooked') return;
+  
+  if (!formPayload.value.timeOnly) {
+    showToast('Vui lòng chọn khung giờ hẹn khám!', 'warning');
+    return;
+  }
+  
+  if (searchCustomerStatus.value === 'idle') {
+    showToast('Vui lòng tìm kiếm thông tin khách hàng trước!', 'warning');
+    return;
+  }
+
+  const fullDateTime = `${formPayload.value.dateOnly}T${formPayload.value.timeOnly}:00`;
+
+  try {
+    if (searchCustomerStatus.value === 'found') {
+      let finalPetId = formPayload.value.petId;
+      
+      if (isAddingNewPet.value) {
+        if (!petForm.value.petName) {
+          showToast('Vui lòng nhập tên thú cưng mới!', 'warning');
+          return;
+        }
+        const petRes = await api.post(`/receptionist/customers/${selectedCustomer.value.id}/pets`, {
+          name: petForm.value.petName,
+          species: petForm.value.species,
+          breed: petForm.value.breed,
+          weight: petForm.value.petWeight
+        });
+        if (petRes.data.success) {
+          finalPetId = petRes.data.petId;
+        } else {
+          showToast('Lỗi khi thêm thú cưng mới!', 'danger');
+          return;
+        }
+      }
+
+      const payload: any = {
+        customerId: selectedCustomer.value.id,
+        petId: finalPetId,
+        serviceId: formPayload.value.serviceId,
+        appointmentDate: fullDateTime,
+        symptom: formPayload.value.symptom,
+        note: formPayload.value.note
+      };
+      if (formPayload.value.doctorId) payload.doctorId = formPayload.value.doctorId;
+      
+      const res = await api.post('/appointment', payload);
+      if (res.data.success) {
+        showToast('Tạo lịch hẹn thành công!', 'success');
+        showCreateModal.value = false;
+        await loadAllData();
+      }
+    } else if (searchCustomerStatus.value === 'not_found') {
+      const payload: any = {
+        customerName: customerForm.value.customerName,
+        customerPhone: customerForm.value.customerPhone,
+        petName: petForm.value.petName,
+        species: petForm.value.species,
+        petWeight: petForm.value.petWeight,
+        serviceId: formPayload.value.serviceId,
+        appointmentDate: fullDateTime,
+        symptom: formPayload.value.symptom,
+        note: formPayload.value.note
+      };
+      if (formPayload.value.doctorId) payload.doctorId = formPayload.value.doctorId;
+      
+      const res = await api.post('/appointment/with-new-customer', payload);
+      if (res.data.success) {
+        showToast('Đăng ký khách mới và tạo lịch hẹn thành công!', 'success');
+        showCreateModal.value = false;
+        await loadAllData();
+      }
+    }
+  } catch (err: any) {
+    showToast(err.response?.data?.message || 'Lỗi khi tạo lịch hẹn.', 'danger');
+  }
+};
+
+const submitWalkInAppointment = async () => {
+  if (activeBookingTab.value !== 'walkin') return;
+  
+  if (searchCustomerStatus.value === 'idle') {
+    showToast('Vui lòng tìm kiếm thông tin khách hàng trước!', 'warning');
+    return;
+  }
+
+  try {
+    let payload: any = {
+      serviceId: formPayload.value.serviceId,
+      symptom: formPayload.value.symptom,
+      isEmergency: false
+    };
+    if (formPayload.value.doctorId) payload.doctorId = formPayload.value.doctorId;
+
+    if (searchCustomerStatus.value === 'found') {
+      payload.phone = selectedCustomer.value.phone;
+      payload.fullName = selectedCustomer.value.fullName;
+      
+      if (isAddingNewPet.value) {
+        if (!petForm.value.petName) {
+          showToast('Vui lòng nhập tên thú cưng!', 'warning');
+          return;
+        }
+        payload.petName = petForm.value.petName;
+        payload.species = petForm.value.species;
+        payload.weight = petForm.value.petWeight;
+      } else {
+        if (!formPayload.value.petId) {
+          showToast('Vui lòng chọn thú cưng!', 'warning');
+          return;
+        }
+        const pet = customerPets.value.find(p => p.id === formPayload.value.petId);
+        payload.petName = pet.name;
+        payload.species = pet.species;
+        payload.weight = pet.weight;
+      }
+    } else if (searchCustomerStatus.value === 'not_found') {
+      if (!customerForm.value.customerName || !customerForm.value.customerPhone || !petForm.value.petName) {
+        showToast('Vui lòng điền đầy đủ thông tin bắt buộc!', 'warning');
+        return;
+      }
+      payload.phone = customerForm.value.customerPhone;
+      payload.fullName = customerForm.value.customerName;
+      payload.petName = petForm.value.petName;
+      payload.species = petForm.value.species;
+      payload.weight = petForm.value.petWeight;
+    }
+
+    const res = await api.post('/receptionist/walk-in', payload);
+    if (res.data.success) {
+      showToast('Đã đưa vào hàng đợi thành công!', 'success');
+      showCreateModal.value = false;
+      await loadAllData();
+    }
+  } catch (err: any) {
+    showToast(err.response?.data?.message || 'Lỗi khi tạo lịch hẹn vãng lai.', 'danger');
   }
 };
 
@@ -1461,18 +1700,15 @@ const confirmCheckIn = async () => {
 };
 
 const openCreateModal = () => {
-  createAptType.value = 'old';
-  oldCustPhone.value = '';
-  searchOldCustError.value = false;
-  oldCustData.value = null;
-  oldCustPets.value = [];
-  newCustForm.value = {
-    customerName: '',
-    customerPhone: '',
-    petName: '',
-    species: 'Chó',
-    petWeight: null
-  };
+  // Reset new states
+  activeBookingTab.value = 'prebooked';
+  searchQueryPhone.value = '';
+  searchCustomerStatus.value = 'idle';
+  selectedCustomer.value = null;
+  customerPets.value = [];
+  isAddingNewPet.value = false;
+  customerForm.value = { customerName: '', customerPhone: '' };
+  petForm.value = { petName: '', species: 'Chó', breed: '', petWeight: null };
   formPayload.value = {
     petId: '',
     doctorId: '',
@@ -1485,55 +1721,7 @@ const openCreateModal = () => {
   showCreateModal.value = true;
 };
 
-const submitCreateAppointment = async () => {
-  if (!formPayload.value.timeOnly) {
-    showToast('Vui lòng chọn khung giờ hẹn khám!', 'warning');
-    return;
-  }
 
-  const fullDateTime = `${formPayload.value.dateOnly}T${formPayload.value.timeOnly}:00`;
-
-  try {
-    if (createAptType.value === 'old') {
-      const payload: any = {
-        customerId: oldCustData.value.customer.id,
-        petId: formPayload.value.petId,
-        serviceId: formPayload.value.serviceId,
-        appointmentDate: fullDateTime,
-        symptom: formPayload.value.symptom,
-        note: formPayload.value.note
-      };
-      if (formPayload.value.doctorId) payload.doctorId = formPayload.value.doctorId;
-      const res = await api.post('/appointment', payload);
-      if (res.data.success) {
-        showToast('Tạo lịch hẹn thành công!', 'success');
-        showCreateModal.value = false;
-        await loadAllData();
-      }
-    } else {
-      const payload: any = {
-        customerName: newCustForm.value.customerName,
-        customerPhone: newCustForm.value.customerPhone,
-        petName: newCustForm.value.petName,
-        species: newCustForm.value.species,
-        petWeight: newCustForm.value.petWeight,
-        serviceId: formPayload.value.serviceId,
-        appointmentDate: fullDateTime,
-        symptom: formPayload.value.symptom,
-        note: formPayload.value.note
-      };
-      if (formPayload.value.doctorId) payload.doctorId = formPayload.value.doctorId;
-      const res = await api.post('/appointment/with-new-customer', payload);
-      if (res.data.success) {
-        showToast('Đăng ký khách mới và tạo lịch hẹn thành công!', 'success');
-        showCreateModal.value = false;
-        await loadAllData();
-      }
-    }
-  } catch (err: any) {
-    showToast(err.response?.data?.message || 'Lỗi khi tạo lịch hẹn.', 'danger');
-  }
-};
 
 // Detail modal
 const handleRowClick = (event: MouseEvent, apptId: number) => {
@@ -1750,11 +1938,22 @@ const confirmReschedule = async () => {
   }
 };
 
-const openChangeDoctorModal = (evt: any) => {
+const openChangeDoctorModal = async (evt: any) => {
   changeDoctorTarget.value = evt;
   selectedNewDoctorId.value = '';
   forceChangeDoctor.value = false;
   showChangeDoctorModal.value = true;
+  
+  fetchingSuitableDocs.value = true;
+  try {
+    const res = await api.get(`/appointment/${evt.id}/suitable-doctors`);
+    suitableDoctorsList.value = res.data;
+  } catch (err: any) {
+    showToast('Lỗi khi tải danh sách bác sĩ chuyên môn', 'danger');
+    suitableDoctorsList.value = [];
+  } finally {
+    fetchingSuitableDocs.value = false;
+  }
 };
 
 const confirmChangeDoctor = async () => {

@@ -179,9 +179,8 @@ const filteredSchedules = computed(() => {
 const loadSchedules = async () => {
   loading.value = true;
   try {
-    const res = await api.get('/admin/schedules');
+    const res = await api.get('/doctor-schedules');
     schedulesList.value = res.data || [];
-  } catch (err) {
     console.error('Lỗi tải danh sách ca trực:', err);
   } finally {
     loading.value = false;
@@ -192,7 +191,10 @@ const loadDoctors = async () => {
   try {
     const res = await api.get('/admin/users');
     const allUsers = res.data || [];
-    doctorUsers.value = allUsers.filter((u: any) => u.role?.toLowerCase() === 'doctor');
+    doctorUsers.value = allUsers.filter((u: any) => {
+      const r = u.role?.toLowerCase() || '';
+      return r === 'doctor' || r === 'clinical_doctor' || r === 'vaccination_doctor';
+    });
   } catch (err) {
     console.error('Lỗi tải danh sách bác sĩ:', err);
   }
@@ -230,27 +232,37 @@ const submitForm = async () => {
   try {
     const payload = {
       ...form.value,
-      workDate: form.value.workDate
+      startTime: form.value.startTime.length === 5 ? `${form.value.startTime}:00` : form.value.startTime,
+      endTime: form.value.endTime.length === 5 ? `${form.value.endTime}:00` : form.value.endTime,
     };
 
     if (isEdit.value && currentScheduleId.value) {
-      await api.put(`/admin/schedules/${currentScheduleId.value}`, payload);
+      await api.put(`/doctor-schedules/${currentScheduleId.value}`, payload);
       alert('Cập nhật ca trực thành công!');
     } else {
-      await api.post('/admin/schedules', payload);
+      await api.post('/doctor-schedules', payload);
       alert('Phân ca trực thành công!');
     }
     showModal.value = false;
     await loadSchedules();
   } catch (err: any) {
-    alert(err.response?.data?.message || 'Lỗi khi lưu ca trực.');
+    console.error('Lỗi lưu ca trực:', err.response?.data || err);
+    
+    // ASP.NET Core Model Binding errors
+    if (err.response?.data?.errors) {
+      const errorMessages = Object.values(err.response.data.errors).flat().join('\n');
+      alert(`Lỗi dữ liệu:\n${errorMessages}`);
+      return;
+    }
+
+    alert(err.response?.data?.message || err.response?.data?.title || 'Lỗi khi lưu ca trực.');
   }
 };
 
 const handleDelete = async (id: number) => {
   if (!confirm('Bạn có chắc chắn muốn xoá ca trực này không?')) return;
   try {
-    await api.delete(`/admin/schedules/${id}`);
+    await api.delete(`/doctor-schedules/${id}`);
     alert('Xoá ca trực thành công!');
     await loadSchedules();
   } catch (err: any) {

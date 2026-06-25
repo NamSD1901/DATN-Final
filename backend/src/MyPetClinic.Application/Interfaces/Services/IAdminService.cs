@@ -34,11 +34,7 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<VaccineBatchAdminDto> CreateVaccineBatchAsync(long vaccineId, CreateVaccineBatchDto dto, string currentUserId);
         Task DeleteVaccineBatchAsync(long batchId, string currentUserId);
 
-        // Schedules
-        Task<object> GetSchedulesAsync();
-        Task<DoctorScheduleDto> CreateScheduleAsync(CreateScheduleDto dto, string currentUserId);
-        Task<DoctorScheduleDto> UpdateScheduleAsync(long id, CreateScheduleDto dto, string currentUserId);
-        Task DeleteScheduleAsync(long id, string currentUserId);
+
 
         // Config
         SlotConfigModel GetSlotConfig();

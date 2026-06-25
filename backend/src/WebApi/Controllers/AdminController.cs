@@ -208,50 +208,7 @@ namespace MyPetClinic.Controllers
             catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
         }
 
-        // ================= SCHEDULES MANAGEMENT =================
-        [HttpGet("schedules")]
-        public async Task<IActionResult> GetSchedules()
-        {
-            var schedules = await _adminService.GetSchedulesAsync();
-            return Ok(schedules);
-        }
 
-        [HttpPost("schedules")]
-        public async Task<IActionResult> CreateSchedule([FromBody] CreateScheduleDto dto)
-        {
-            try
-            {
-                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var schedule = await _adminService.CreateScheduleAsync(dto, currentUserId!);
-                return Ok(new { success = true, schedule });
-            }
-            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
-        }
-
-        [HttpPut("schedules/{id}")]
-        public async Task<IActionResult> UpdateSchedule(long id, [FromBody] CreateScheduleDto dto)
-        {
-            try
-            {
-                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var schedule = await _adminService.UpdateScheduleAsync(id, dto, currentUserId!);
-                return Ok(new { success = true, schedule });
-            }
-            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
-            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
-        }
-
-        [HttpDelete("schedules/{id}")]
-        public async Task<IActionResult> DeleteSchedule(long id)
-        {
-            try
-            {
-                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                await _adminService.DeleteScheduleAsync(id, currentUserId!);
-                return Ok(new { success = true });
-            }
-            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
-        }
 
         // ================= SLOT CONFIGURATION =================
         [HttpGet("slots/config")]

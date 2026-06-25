@@ -80,19 +80,7 @@
 
     <!-- Advanced Filters & Table -->
     <div class="row g-2 mb-3 align-items-center">
-      <div class="col-md-6">
-        <div class="input-group">
-          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-          <input 
-            type="text" 
-            v-model="searchKeyword" 
-            @input="debouncedSearch"
-            class="form-control border-start-0 input-premium" 
-            placeholder="Tìm kiếm theo tên hoặc email..."
-          />
-        </div>
-      </div>
-      <div class="col-md-6 text-md-end text-muted small">
+      <div class="col-12 text-end text-muted small">
         Tổng số: <strong class="text-dark">{{ totalCustomers }}</strong> khách hàng
       </div>
     </div>
@@ -130,7 +118,7 @@
                 </div>
                 <div>
                   <div class="fw-bold text-dark">{{ cust.fullName }}</div>
-                  <small class="text-muted">{{ cust.email }}</small>
+                  <small class="text-muted" v-if="cust.email"><i class="bi bi-envelope-fill text-warning me-1"></i>{{ cust.email }}</small>
                 </div>
               </div>
             </td>

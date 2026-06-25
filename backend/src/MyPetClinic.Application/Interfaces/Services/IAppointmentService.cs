@@ -22,6 +22,7 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<IEnumerable<AppointmentDetailDto>> GetPetAppointmentsAsync(long petId);
         Task<IEnumerable<MedicalRecordDto>> GetPetMedicalHistoryAsync(long petId, Guid ownerId);
         Task<IEnumerable<DoctorAvailableSlotsDto>> GetAvailableSlotsAsync(DateTime date, long? serviceId = null);
+        Task<IEnumerable<DoctorDto>> GetSuitableDoctorsForAppointmentAsync(long appointmentId);
         Task<AppointmentDetailDto?> CheckInByQrAsync(string qrToken);
     }
 }

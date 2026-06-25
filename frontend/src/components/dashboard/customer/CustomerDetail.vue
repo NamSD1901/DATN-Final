@@ -112,14 +112,13 @@
                     <small class="text-muted">Cân nặng: {{ pet.weight ? pet.weight + ' kg' : '—' }}</small>
                   </div>
                 </div>
-                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top small text-muted">
-                  <span>Mã Microchip: <strong>{{ pet.microchipCode || '—' }}</strong></span>
+                <div v-if="pet.allergyNote" class="mt-3 p-2 bg-danger bg-opacity-10 text-danger rounded small fw-bold">
+                  <i class="bi bi-exclamation-triangle-fill me-1"></i> Dị ứng: {{ pet.allergyNote }}
+                </div>
+                <div class="d-flex justify-content-end align-items-center mt-3 pt-2 border-top small text-muted">
                   <span class="badge rounded-pill" :class="pet.sterilized ? 'bg-success' : 'bg-secondary'">
                     {{ pet.sterilized ? 'Đã triệt sản' : 'Chưa triệt sản' }}
                   </span>
-                </div>
-                <div v-if="pet.allergyNote" class="mt-2 p-2 bg-danger bg-opacity-10 text-danger rounded small fw-bold">
-                  <i class="bi bi-exclamation-triangle-fill me-1"></i> Dị ứng: {{ pet.allergyNote }}
                 </div>
               </div>
             </div>
@@ -144,7 +143,7 @@
                 <tr v-if="detailData.appointments.length === 0" class="text-center text-muted">
                   <td colspan="5" class="py-4">Chưa có lịch sử khám bệnh nào ghi nhận.</td>
                 </tr>
-                <tr v-for="appt in detailData.appointments" :key="appt.id">
+                <tr v-for="appt in paginatedAppointments" :key="appt.id">
                   <td class="small text-muted">{{ formatDateFull(appt.appointmentDate) }}</td>
                   <td class="fw-bold text-dark">{{ appt.petName }}</td>
                   <td><span class="badge bg-success bg-opacity-10 text-success rounded px-2.5 py-1 fw-bold">{{ appt.serviceName }}</span></td>
@@ -158,6 +157,30 @@
               </tbody>
             </table>
           </div>
+          
+          <!-- Pagination -->
+          <div v-if="totalPages > 1" class="d-flex justify-content-between align-items-center mt-3">
+            <span class="text-muted small">
+              Hiển thị {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, detailData.appointments.length) }} trong số {{ detailData.appointments.length }} ca khám
+            </span>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-outline-secondary" :disabled="currentPage === 1" @click="prevPage">
+                <i class="bi bi-chevron-left"></i> Trước
+              </button>
+              <button 
+                v-for="page in totalPages" 
+                :key="page" 
+                class="btn btn-sm" 
+                :class="page === currentPage ? 'btn-secondary text-white' : 'btn-outline-secondary'"
+                @click="currentPage = page"
+              >
+                {{ page }}
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" :disabled="currentPage === totalPages" @click="nextPage">
+                Sau <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -165,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import api from '../../../services/api';
 
 const props = defineProps<{
@@ -177,10 +200,35 @@ const emit = defineEmits(['back', 'add-pet', 'edit-pet', 'view-pet-history']);
 const loading = ref(false);
 const detailData = ref<any>(null);
 
+// Pagination
+const currentPage = ref(1);
+const itemsPerPage = 5;
+
+const paginatedAppointments = computed(() => {
+  if (!detailData.value || !detailData.value.appointments) return [];
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return detailData.value.appointments.slice(start, end);
+});
+
+const totalPages = computed(() => {
+  if (!detailData.value || !detailData.value.appointments) return 0;
+  return Math.ceil(detailData.value.appointments.length / itemsPerPage);
+});
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++;
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) currentPage.value--;
+};
+
 const fetchCustomerDetail = async () => {
   if (!props.customerId) return;
   loading.value = true;
   detailData.value = null;
+  currentPage.value = 1;
   try {
     const res = await api.get(`/receptionist/customers/${props.customerId}`);
     detailData.value = res.data;

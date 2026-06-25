@@ -14,5 +14,6 @@ namespace MyPetClinic.Application.DTOs
         public DateTime? DateOfBirth { get; set; }
         public string? Avatar { get; set; }
         public string? RoleName { get; set; }
+        public DateTime? CreatedAt { get; set; }
     }
 }

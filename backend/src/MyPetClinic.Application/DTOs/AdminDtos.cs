@@ -40,25 +40,5 @@ namespace MyPetClinic.Application.DTOs
         public string? Description { get; set; }
     }
 
-    public class CreateScheduleDto
-    {
-        public Guid DoctorId { get; set; }
-        public DateTime WorkDate { get; set; }
-        public string StartTime { get; set; } = "08:00";
-        public string EndTime { get; set; } = "12:00";
-        public int MaxAppointments { get; set; } = 10;
-        public bool IsAvailable { get; set; } = true;
-    }
 
-    public class DoctorScheduleDto
-    {
-        public long Id { get; set; }
-        public Guid DoctorId { get; set; }
-        public string DoctorName { get; set; } = string.Empty;
-        public DateTime WorkDate { get; set; }
-        public string StartTime { get; set; } = string.Empty;
-        public string EndTime { get; set; } = string.Empty;
-        public int MaxAppointments { get; set; }
-        public bool IsAvailable { get; set; }
-    }
 }

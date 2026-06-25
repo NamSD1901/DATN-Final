@@ -238,19 +238,13 @@ namespace MyPetClinic.Application.Services
                         DoctorId = finalDoctorId,
                         Symptom = dto.Symptom?.Trim(),
                         Note = dto.Note?.Trim(),
-                        Status = "waiting", // Khám ngay / Chờ khám
+                        Status = "pending", // Mặc định là chờ xác nhận
                         CreatedBy = createdBy,
                         CreatedAt = DateTime.UtcNow,
                         AppointmentDate = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc),
                         StartTime = appointmentDate.TimeOfDay,
                         QrToken = qrToken
                     };
-
-                    // Nếu thời gian lớn hơn hiện tại 1 giờ thì là đặt lịch trước
-                    if (appointmentDate > DateTime.Now.AddHours(1))
-                    {
-                        appointment.Status = "pending"; 
-                    }
 
                     if (dto.VaccineId.HasValue)
                     {
@@ -656,13 +650,16 @@ namespace MyPetClinic.Application.Services
             if (!force)
             {
                 // Kiểm tra double booking cho Bác sĩ mới
-                var isDoubleBooked = await _unitOfWork.Appointments
-                    .AnyAsync(a => a.DoctorId == newDoctorId 
+                var allAptsForDoctor = _unitOfWork.Appointments.Query()
+                    .Where(a => a.DoctorId == newDoctorId
                                 && a.Id != id
                                 && a.Status != "cancelled"
                                 && a.Status != "no_show"
-                                && a.AppointmentDate > appointment.AppointmentDate.AddMinutes(-30) 
-                                && a.AppointmentDate < appointment.AppointmentDate.AddMinutes(30));
+                                && a.AppointmentDate == appointment.AppointmentDate)
+                    .Select(a => new { a.StartTime })
+                    .ToList();
+
+                var isDoubleBooked = allAptsForDoctor.Any(a => Math.Abs((a.StartTime - appointment.StartTime).TotalMinutes) < 30);
 
                 if (isDoubleBooked)
                 {
@@ -711,6 +708,7 @@ namespace MyPetClinic.Application.Services
             var rawList = _unitOfWork.Appointments.Query()
                 .Where(a => a.Status == "pending")
                 .OrderBy(a => a.AppointmentDate)
+                .ThenBy(a => a.StartTime)
                 .Select(a => new
                 {
                     a.Id,
@@ -834,6 +832,7 @@ namespace MyPetClinic.Application.Services
             var rawList = _unitOfWork.Appointments.Query()
                 .Where(a => a.CustomerId == customerId)
                 .OrderByDescending(a => a.AppointmentDate)
+                .ThenByDescending(a => a.StartTime)
                 .Select(a => new
                 {
                     a.Id,
@@ -902,6 +901,7 @@ namespace MyPetClinic.Application.Services
             var rawList = _unitOfWork.Appointments.Query()
                 .Where(a => a.PetId == petId)
                 .OrderByDescending(a => a.AppointmentDate)
+                .ThenByDescending(a => a.StartTime)
                 .Select(a => new
                 {
                     a.Id,
@@ -980,6 +980,7 @@ namespace MyPetClinic.Application.Services
 
             var rawList = query
                 .OrderByDescending(a => a.AppointmentDate)
+                .ThenByDescending(a => a.StartTime)
                 .Select(a => new
                 {
                     a.Id,
@@ -1317,6 +1318,47 @@ namespace MyPetClinic.Application.Services
             await _unitOfWork.SaveChangesAsync();
 
             return await GetAppointmentDetailAsync(appointment.Id);
+        }
+
+        public async Task<IEnumerable<DoctorDto>> GetSuitableDoctorsForAppointmentAsync(long appointmentId)
+        {
+            var appointments = await _unitOfWork.Appointments.FindWithIncludesAsync(
+                a => a.Id == appointmentId,
+                a => a.Service!
+            );
+            var appointment = appointments.FirstOrDefault();
+            if (appointment == null) throw new InvalidOperationException("Không tìm thấy ca khám.");
+
+            var service = appointment.Service;
+            bool isVaccine = false;
+            
+            if (service != null && !string.IsNullOrEmpty(service.Name))
+            {
+                var lowerName = service.Name.ToLower();
+                if (lowerName.Contains("tiêm") || lowerName.Contains("vaccin") || lowerName.Contains("vắc xin"))
+                {
+                    isVaccine = true;
+                }
+            }
+
+            // Tiêm phòng -> vaccination_doctor, Khám bệnh -> clinical_doctor
+            var targetRole = isVaccine ? "vaccination_doctor" : "clinical_doctor";
+
+            var doctors = await _unitOfWork.Users.FindWithIncludesAsync(
+                u => u.IsActive == true && u.Role != null && u.Role.Name.ToLower() == targetRole && u.DeletedAt == null,
+                u => u.Role!
+            );
+
+            // Nếu không tìm thấy ai trong Role đích, dự phòng fallback lấy role 'doctor' hoặc role 'clinical_doctor' nếu là ca tiêm nhưng ko có bs tiêm
+            if (!doctors.Any())
+            {
+                doctors = await _unitOfWork.Users.FindWithIncludesAsync(
+                    u => u.IsActive == true && u.Role != null && (u.Role.Name.ToLower() == "clinical_doctor" || u.Role.Name.ToLower().Contains("doctor")) && u.DeletedAt == null,
+                    u => u.Role!
+                );
+            }
+
+            return doctors.Select(u => new DoctorDto { Id = u.Id, FullName = u.FullName ?? string.Empty }).ToList();
         }
     }
 }
