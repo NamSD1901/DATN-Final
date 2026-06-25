@@ -22,6 +22,7 @@ namespace MyPetClinic.Application.DTOs
         public bool IsWalkIn { get; set; }
         public int QueueNumber { get; set; }
         public DateTime? CheckInTime { get; set; }
+        public DateTime AppointmentDate { get; set; }
         
         // Cảnh báo (Ví dụ: Hung dữ)
         public bool IsAggressive { get; set; }

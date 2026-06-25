@@ -774,6 +774,13 @@ const submitForm = async () => {
 
     const res = await api.post('/medical-records/soap', payload);
     if (res.data.success) {
+      // Tự động chuyển sang trạng thái chờ thanh toán
+      try {
+        await api.put(`/receptionist/queue/${form.value.appointmentId}/status`, { status: 'ready_to_pay' });
+      } catch (e) {
+        console.warn('Không thể tự chuyển trạng thái ready_to_pay:', e);
+      }
+
       localStorage.removeItem('active_treatment_appointment_id');
       localStorage.removeItem('active_treatment_pet_id');
       localStorage.removeItem('active_treatment_pet_name');

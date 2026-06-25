@@ -234,15 +234,22 @@ namespace MyPetClinic.Application.Services
         {
             var (todayStartUtc, todayEndUtc) = GetVietnamTodayUtcRange();
             
+            // Lấy tất cả ca còn active (waiting/in_progress/ready_to_pay):
+            // - Hoặc được đặt lịch hôm nay (AppointmentDate)
+            // - Hoặc đã check-in hôm nay (CheckInTime) — bắt cả lịch đặt trước nhưng khám hôm nay
             var appointmentsList = await _unitOfWork.Appointments.FindWithIncludesAsync(
-                a => a.AppointmentDate >= todayStartUtc && a.AppointmentDate < todayEndUtc && 
-                     (a.Status == "waiting" || a.Status == "in_progress" || a.Status == "ready_to_pay"),
+                a => (a.Status == "waiting" || a.Status == "in_progress" || a.Status == "ready_to_pay")
+                     && (
+                         (a.AppointmentDate >= todayStartUtc && a.AppointmentDate < todayEndUtc)
+                         || (a.CheckInTime != null && a.CheckInTime >= todayStartUtc && a.CheckInTime < todayEndUtc)
+                     ),
                 a => a.Pet!, a => a.Customer!, a => a.Doctor!
             );
 
             var appointments = appointmentsList
                 .OrderByDescending(a => a.IsEmergency) // Ưu tiên ca cấp cứu lên đầu
-                .ThenBy(a => a.QueueNumber)           // Sau đó xếp theo số thứ tự
+                .ThenBy(a => a.QueueNumber > 0 ? a.QueueNumber : int.MaxValue) // Sắp xếp theo số thứ tự, ca chưa có số để cuối
+                .ThenBy(a => a.CheckInTime)            // Trong cùng nhóm, theo thời gian check-in
                 .ToList();
 
             return appointments.Select(a => new QueueItemDto
@@ -262,6 +269,7 @@ namespace MyPetClinic.Application.Services
                 IsWalkIn = a.IsWalkIn,
                 QueueNumber = a.QueueNumber,
                 CheckInTime = a.CheckInTime,
+                AppointmentDate = a.AppointmentDate,
                 IsAggressive = a.Pet?.IsAggressive ?? false
             }).ToList();
         }
@@ -395,7 +403,33 @@ namespace MyPetClinic.Application.Services
                 return false;
 
             appointment.Status = newStatus.ToLower();
-            
+
+            // Khi bắt đầu vào hàng chờ hoặc vào phòng khám:
+            // đảm bảo CheckInTime và QueueNumber luôn được gán
+            if (newStatus.ToLower() == "waiting" || newStatus.ToLower() == "in_progress")
+            {
+                if (appointment.CheckInTime == null)
+                    appointment.CheckInTime = DateTime.UtcNow;
+
+                if (appointment.QueueNumber <= 0)
+                {
+                    await _queueSemaphore.WaitAsync();
+                    try
+                    {
+                        var (todayStartUtc, todayEndUtc) = GetVietnamTodayUtcRange();
+                        var todayAppts = await _unitOfWork.Appointments.FindAsync(a =>
+                            a.AppointmentDate >= todayStartUtc && a.AppointmentDate < todayEndUtc
+                            && a.QueueNumber > 0 && a.Id != appointmentId);
+                        var maxQueue = todayAppts.Any() ? todayAppts.Max(a => (int?)a.QueueNumber) ?? 0 : 0;
+                        appointment.QueueNumber = maxQueue + 1;
+                    }
+                    finally
+                    {
+                        _queueSemaphore.Release();
+                    }
+                }
+            }
+
             if (newStatus.ToLower() == "ready_to_pay")
             {
                 appointment.CheckOutTime = DateTime.UtcNow;

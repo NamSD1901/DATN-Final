@@ -476,6 +476,13 @@ const submitForm = async () => {
 
     const res = await api.post(`/vaccinations/appointments/${payload.appointmentId}`, payload);
     if (res.data.success) {
+      // Tự động chuyển sang trạng thái chờ thanh toán
+      try {
+        await api.put(`/receptionist/queue/${payload.appointmentId}/status`, { status: 'ready_to_pay' });
+      } catch (e) {
+        console.warn('Không thể tự chuyển trạng thái ready_to_pay:', e);
+      }
+
       localStorage.removeItem('active_treatment_appointment_id');
       localStorage.removeItem('active_treatment_pet_id');
       localStorage.removeItem('active_treatment_pet_name');

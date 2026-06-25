@@ -119,20 +119,14 @@
                 <span class="small fw-bold text-warning">Bs. {{ getLastWord(card.doctorName) }}</span>
               </div>
 
-              <!-- Quick Actions -->
-              <div class="d-flex gap-2 mt-3 pt-2 border-top">
+              <!-- Auto-transition notice -->
+              <div class="d-flex flex-column gap-2 mt-3 pt-2 border-top">
                 <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger w-100 rounded-pill py-1 fw-bold" @click="openLinkCustomerModal(card)">
                   <i class="bi bi-link-45deg"></i> Ghép Hồ Sơ
                 </button>
-                <div class="dropdown w-100">
-                  <button class="btn btn-sm btn-outline-warning w-100 rounded-pill py-1 dropdown-toggle fw-bold" type="button" @click.stop="toggleDropdown(card.appointmentId)">
-                    Thao tác
-                  </button>
-                  <ul class="dropdown-menu shadow border-0" :class="{ 'show': activeDropdownId === card.appointmentId }" style="width: 100%; top: 100%; left: 0;">
-                    <li><a class="dropdown-menu-item text-dark p-2 d-block text-decoration-none cursor-pointer" @click="updateStatus(card.appointmentId, 'waiting')"><i class="bi bi-hourglass-split text-secondary me-2"></i>Trả lại hàng chờ</a></li>
-                    <li><a class="dropdown-menu-item text-dark p-2 d-block text-decoration-none cursor-pointer" @click="updateStatus(card.appointmentId, 'ready_to_pay')"><i class="bi bi-cash text-success me-2"></i>Thanh toán</a></li>
-                    <li><a class="dropdown-menu-item text-dark p-2 d-block text-decoration-none cursor-pointer" @click="updateStatus(card.appointmentId, 'cancelled')"><i class="bi bi-trash text-danger me-2"></i>Hủy ca</a></li>
-                  </ul>
+                <div class="text-center text-muted small py-1">
+                  <i class="bi bi-arrow-right-circle text-success me-1"></i>
+                  Tự động chuyển sang thanh toán khi hoàn tất khám
                 </div>
               </div>
             </div>
@@ -488,18 +482,20 @@ const nowRef = ref(new Date());
 let timeUpdater: any = null;
 
 const getWaitingTimeText = (card: any) => {
-  if (!card.createdAt) return '0 phút';
-  const createdTime = new Date(card.createdAt);
-  const diffMs = nowRef.value.getTime() - createdTime.getTime();
+  // Ưu tiên dùng checkInTime, fallback về appointmentDate
+  const timeStr = card.checkInTime || card.appointmentDate;
+  if (!timeStr) return '---';
+  const refTime = new Date(timeStr);
+  const diffMs = nowRef.value.getTime() - refTime.getTime();
   const diffMins = Math.max(0, Math.floor(diffMs / 60000));
   return `${diffMins} phút`;
 };
 
 const getSlaClass = (card: any) => {
   if (card.status !== 'waiting') return '';
-  if (!card.createdAt) return '';
-  const createdTime = new Date(card.createdAt);
-  const diffMins = Math.floor((nowRef.value.getTime() - createdTime.getTime()) / 60000);
+  const timeStr = card.checkInTime || card.appointmentDate;
+  if (!timeStr) return '';
+  const diffMins = Math.floor((nowRef.value.getTime() - new Date(timeStr).getTime()) / 60000);
   if (diffMins >= 30) return 'sla-danger';
   if (diffMins >= 15) return 'sla-warning';
   return '';
@@ -507,9 +503,9 @@ const getSlaClass = (card: any) => {
 
 const getSlaTextClass = (card: any) => {
   if (card.status !== 'waiting') return 'text-muted';
-  if (!card.createdAt) return 'text-muted';
-  const createdTime = new Date(card.createdAt);
-  const diffMins = Math.floor((nowRef.value.getTime() - createdTime.getTime()) / 60000);
+  const timeStr = card.checkInTime || card.appointmentDate;
+  if (!timeStr) return 'text-muted';
+  const diffMins = Math.floor((nowRef.value.getTime() - new Date(timeStr).getTime()) / 60000);
   if (diffMins >= 30) return 'text-danger';
   if (diffMins >= 15) return 'text-warning';
   return 'text-success';
@@ -523,10 +519,10 @@ const getAnimalEmoji = (species: string) => {
   return '🐾';
 };
 
-const formatQueueNumber = (num: number | string) => {
-  if (!num) return 'Q-000';
+const formatQueueNumber = (num: number | string | null | undefined) => {
+  if (num == null || num === '') return '---';
   const n = parseInt(num.toString(), 10);
-  if (isNaN(n)) return num;
+  if (isNaN(n) || n <= 0) return '---';
   return `Q-${String(n).padStart(3, '0')}`;
 };
 
