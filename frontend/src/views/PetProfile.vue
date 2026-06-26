@@ -377,148 +377,127 @@
             </div>
           </div>
 
-          <div v-show="activeTab === 'appointments'" class="tab-pane">
-            <div class="row justify-content-center">
-              <div class="col-lg-10">
-                
-                <div v-if="upcomingAppointments.length === 0" class="text-center py-5 glass-card border d-flex flex-column align-items-center justify-content-center" style="min-height: 400px;">
-                  <img src="https://cdn-icons-png.flaticon.com/512/7486/7486747.png" alt="No appointments" style="width: 120px; opacity: 0.7; margin-bottom: 20px;">
-                  <h4 class="fw-bold text-dark mb-3">Lịch trình đang trống</h4>
-                  <p class="text-muted mb-4" style="max-width: 400px;">Thú cưng của bạn chưa có lịch hẹn nào sắp tới. Hãy lên lịch kiểm tra sức khỏe định kỳ để đảm bảo bé luôn khỏe mạnh nhé!</p>
-                  <button class="btn btn-premium px-4 py-2 fw-bold d-flex align-items-center gap-2">
-                    <i class="bi bi-calendar-plus"></i> Tạo lịch hẹn mới ngay
-                  </button>
-                </div>
-                
-                <div v-else class="d-flex flex-column gap-5">
-                  <!-- HERO TICKET (Next Appointment) -->
-                  <div class="appointment-hero-ticket position-relative">
-                    <div class="ticket-wrapper d-flex flex-column flex-md-row shadow-lg rounded-4 overflow-hidden" style="background: white; border: 1px solid var(--border-color);">
-                      
-                      <!-- Left Side: Main Info -->
-                      <div class="ticket-main p-4 p-md-5 position-relative flex-grow-1" style="background: linear-gradient(145deg, #ffffff, #f8fafc);">
-                        <!-- Decor -->
-                        <div class="position-absolute top-0 end-0 p-3 opacity-10">
-                          <i class="bi bi-calendar-heart" style="font-size: 8rem; color: var(--primary-gold); margin-top: -30px; margin-right: -20px;"></i>
-                        </div>
+          <div v-show="activeTab === 'appointments'" class="tab-pane" @click="openMenuId = null">
+            <div v-if="upcomingAppointments.length === 0" class="appt-empty-state">
+              <div class="appt-empty-icon">📅</div>
+              <h4 class="fw-bold text-dark mb-2">Lịch trình đang trống</h4>
+              <p class="text-muted mb-4">Thú cưng của bạn chưa có lịch hẹn nào sắp tới.</p>
+              <button class="btn btn-primary px-5 py-2 rounded-pill fw-bold" @click="$router.push('/dashboard')">
+                <i class="bi bi-calendar-plus me-2"></i>Tạo lịch hẹn mới
+              </button>
+            </div>
 
-                        <div class="d-flex justify-content-between align-items-start mb-4 position-relative z-1">
-                          <div class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold d-flex align-items-center gap-2 shadow-sm" style="font-size: 0.85rem;">
-                            <i class="bi bi-clock-history"></i> {{ getDaysUntil(upcomingAppointments[0].appointmentDate) }}
-                          </div>
-                          <span class="badge" :class="getStatusClass(upcomingAppointments[0].status)" style="font-size: 0.8rem; padding: 8px 16px;">{{ getStatusLabel(upcomingAppointments[0].status) }}</span>
-                        </div>
+            <div v-else class="appt-layout">
 
-                        <h2 class="fw-bold text-dark mb-2 position-relative z-1">{{ upcomingAppointments[0].serviceName || 'Lịch khám tổng quát' }}</h2>
-                        <div class="d-flex align-items-center gap-2 text-muted fw-medium mb-4 position-relative z-1">
-                          <i class="bi bi-person-badge text-primary fs-5"></i>
-                          <span style="font-size: 1.1rem;">Bs. <strong class="text-dark">{{ upcomingAppointments[0].doctorName || 'Sẽ phân công sau' }}</strong></span>
-                        </div>
+              <!-- ============ HERO CARD ============ -->
+              <div class="appt-hero-card">
+                <div class="appt-hero-accent"></div>
+                <div class="appt-hero-body">
+                  <div class="appt-hero-left">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                      <span class="appt-countdown-badge">
+                        <i class="bi bi-clock-history me-1"></i>{{ getDaysUntil(upcomingAppointments[0].appointmentDate) }}
+                      </span>
+                      <span class="appt-status-badge" :class="'status-' + upcomingAppointments[0].status">{{ getStatusLabel(upcomingAppointments[0].status) }}</span>
+                    </div>
 
-                        <div class="row g-3 position-relative z-1">
-                          <div class="col-sm-6">
-                            <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background: rgba(2, 132, 199, 0.05); border-left: 4px solid var(--primary-color);">
-                              <i class="bi bi-calendar3 fs-3 text-primary"></i>
-                              <div>
-                                <div class="small text-muted fw-bold">NGÀY KHÁM</div>
-                                <div class="fw-bold text-dark" style="font-size: 1.1rem;">{{ formatDate(upcomingAppointments[0].appointmentDate) }}</div>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="col-sm-6">
-                            <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background: rgba(245, 158, 11, 0.05); border-left: 4px solid var(--primary-gold);">
-                              <i class="bi bi-clock fs-3 text-warning"></i>
-                              <div>
-                                <div class="small text-muted fw-bold">GIỜ KHÁM</div>
-                                <div class="fw-bold text-dark" style="font-size: 1.1rem;">{{ formatTimeOnly(upcomingAppointments[0].appointmentDate) }}</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                    <h2 class="appt-hero-title">{{ upcomingAppointments[0].serviceName || 'Lịch khám tổng quát' }}</h2>
+                    <div class="appt-hero-doctor">
+                      <span class="appt-doctor-avatar"><i class="bi bi-person-fill"></i></span>
+                      Bs. <strong>{{ upcomingAppointments[0].doctorName || 'Sẽ phân công sau' }}</strong>
+                    </div>
 
-                        <div class="mt-4 p-3 rounded-3 position-relative z-1" style="background: #fffbeb; border: 1px dashed #fcd34d;">
-                          <div class="d-flex align-items-center gap-2 mb-2">
-                            <i class="bi bi-info-circle-fill text-warning"></i>
-                            <span class="fw-bold text-dark small">ĐỂ CHUẨN BỊ TỐT NHẤT:</span>
-                          </div>
-                          <p class="small text-muted mb-0 fw-medium" style="line-height: 1.6;">
-                            {{ upcomingAppointments[0].notes || 'Vui lòng đến sớm 10 phút trước giờ hẹn. Nhớ mang theo sổ khám bệnh (nếu có) nhé!' }}
-                          </p>
+                    <div class="appt-hero-datetime">
+                      <div class="appt-datetime-chip appt-chip-blue">
+                        <div class="appt-chip-icon"><i class="bi bi-calendar-event"></i></div>
+                        <div>
+                          <div class="appt-chip-label">NGÀY KHÁM</div>
+                          <div class="appt-chip-value">{{ formatDate(upcomingAppointments[0].appointmentDate) }}</div>
                         </div>
                       </div>
-
-                      <!-- Right Side: Action & QR -->
-                      <div class="ticket-stub d-flex flex-column align-items-center justify-content-center p-4 position-relative" style="background: var(--bs-primary, #0d6efd); min-width: 260px; border-left: 2px dashed rgba(255,255,255,0.3);">
-                        <div class="ticket-cut top"></div>
-                        <div class="ticket-cut bottom"></div>
-
-                        <div class="text-center mb-4 w-100">
-                          <div class="text-white opacity-75 small fw-bold mb-2" style="letter-spacing: 2px;">MÃ CHECK-IN TẠI QUẦY</div>
-                          <div class="bg-white p-3 rounded-3 d-inline-block shadow-sm">
-                            <i class="bi bi-qr-code text-dark" style="font-size: 4rem; line-height: 1;"></i>
-                          </div>
-                          <div class="text-white fw-bold mt-2" style="font-size: 1.2rem; letter-spacing: 3px;">
-                            {{ upcomingAppointments[0].qrToken ? upcomingAppointments[0].qrToken.substring(0, 6).toUpperCase() : 'PET123' }}
-                          </div>
-                        </div>
-
-                        <div class="d-flex flex-column gap-2 w-100 mt-auto">
-                          <button class="btn btn-light fw-bold text-primary w-100 d-flex align-items-center justify-content-center gap-2">
-                            <i class="bi bi-download"></i> Tải mã QR
-                          </button>
-                          <button class="btn btn-outline-light fw-bold w-100" style="border: 1px solid rgba(255,255,255,0.3);">
-                            Hủy lịch hẹn
-                          </button>
+                      <div class="appt-datetime-chip appt-chip-amber">
+                        <div class="appt-chip-icon appt-chip-icon-amber"><i class="bi bi-clock"></i></div>
+                        <div>
+                          <div class="appt-chip-label">GIỜ KHÁM</div>
+                          <div class="appt-chip-value">{{ formatTimeOnly(upcomingAppointments[0].appointmentDate) }}</div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <!-- TIMELINE (Other Future Appointments) -->
-                  <div class="future-appointments mt-2" v-if="upcomingAppointments.length > 1">
-                    <h5 class="fw-bold text-dark mb-4 d-flex align-items-center gap-2">
-                      <i class="bi bi-calendar-range text-secondary"></i> Các lịch hẹn tiếp theo
-                    </h5>
-                    
-                    <div class="timeline-container position-relative ps-4 ms-2">
-                      <!-- Vertical Line -->
-                      <div class="position-absolute h-100" style="left: 0; top: 0; width: 2px; background-color: #e2e8f0;"></div>
-
-                      <div v-for="(appt, index) in upcomingAppointments.slice(1)" :key="appt.id" class="position-relative mb-4">
-                        <!-- Dot -->
-                        <div class="position-absolute rounded-circle" style="width: 14px; height: 14px; left: -30px; top: 24px; background-color: var(--primary-color); border: 3px solid white; box-shadow: 0 0 0 1px var(--primary-color);"></div>
-                        
-                        <div class="glass-card p-3 p-md-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 hover-glow">
-                          <div class="d-flex gap-4 align-items-center">
-                            <div class="text-center rounded-3 bg-light border shadow-sm overflow-hidden" style="width: 60px; flex-shrink: 0;">
-                              <div class="bg-secondary text-white fw-bold py-1" style="font-size: 0.7rem;">T{{ new Date(appt.appointmentDate).getMonth() + 1 }}</div>
-                              <div class="fw-bold text-dark py-2 fs-5" style="line-height: 1;">{{ new Date(appt.appointmentDate).getDate() }}</div>
-                            </div>
-                            
-                            <div>
-                              <div class="d-flex align-items-center gap-2 mb-1">
-                                <h6 class="fw-bold text-dark mb-0">{{ appt.serviceName }}</h6>
-                                <span class="badge rounded-pill bg-light text-secondary border" style="font-size: 0.65rem;">{{ getStatusLabel(appt.status) }}</span>
-                              </div>
-                              <div class="text-muted small fw-medium d-flex align-items-center gap-3">
-                                <span><i class="bi bi-clock text-primary"></i> {{ formatTimeOnly(appt.appointmentDate) }}</span>
-                                <span><i class="bi bi-person-badge"></i> {{ appt.doctorName || 'Chưa phân công' }}</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <button class="btn btn-sm btn-outline-secondary rounded-pill fw-bold px-3">Chi tiết</button>
-                          </div>
-                        </div>
-                      </div>
+                    <div class="appt-hero-note">
+                      <i class="bi bi-info-circle-fill text-warning me-2 flex-shrink-0"></i>
+                      <span>{{ upcomingAppointments[0].notes || 'Vui lòng đến sớm 10 phút trước giờ hẹn. Nhớ mang theo sổ khám bệnh nhé!' }}</span>
                     </div>
                   </div>
 
+                  <div class="appt-hero-right">
+                    <div class="appt-qr-preview">
+                      <i class="bi bi-qr-code-scan"></i>
+                    </div>
+                    <div class="appt-qr-code-text">{{ upcomingAppointments[0].qrToken ? upcomingAppointments[0].qrToken.substring(0,6).toUpperCase() : 'CHECKIN' }}</div>
+                    <div class="appt-qr-sublabel">MÃ CHECK-IN</div>
+
+                    <button @click.stop="openQrModal(upcomingAppointments[0])" class="appt-btn-primary">
+                      <i class="bi bi-qr-code me-2"></i>Hiện mã QR
+                    </button>
+                    <button @click.stop="confirmCancelAppointment(upcomingAppointments[0].id)" class="appt-btn-danger">
+                      Hủy lịch hẹn
+                    </button>
+                  </div>
                 </div>
               </div>
+
+              <!-- ============ FUTURE APPOINTMENTS GRID ============ -->
+              <div v-if="upcomingAppointments.length > 1" class="appt-grid-section">
+                <div class="appt-section-title">
+                  <i class="bi bi-calendar-week text-primary me-2"></i>Các lịch hẹn tiếp theo
+                </div>
+                <div class="appt-grid">
+                  <div class="appt-grid-card" v-for="appt in upcomingAppointments.slice(1)" :key="appt.id">
+                    <div class="appt-card-strip" :class="'strip-' + appt.status"></div>
+
+                    <div class="appt-card-body">
+                      <div class="appt-card-header">
+                        <span class="appt-card-status-badge" :class="'status-' + appt.status">{{ getStatusLabel(appt.status) }}</span>
+                        <div class="appt-card-menu" @click.stop>
+                          <button class="appt-menu-trigger" @click="openMenuId = openMenuId === appt.id ? null : appt.id">
+                            <i class="bi bi-three-dots-vertical"></i>
+                          </button>
+                          <div class="appt-menu-dropdown" v-if="openMenuId === appt.id">
+                            <button class="appt-menu-item" @click="openQrModal(appt); openMenuId = null">
+                              <i class="bi bi-qr-code me-2"></i>Xem mã QR
+                            </button>
+                            <button class="appt-menu-item appt-menu-item-danger" @click="confirmCancelAppointment(appt.id); openMenuId = null">
+                              <i class="bi bi-x-circle me-2"></i>Hủy lịch hẹn
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <h6 class="appt-card-title">{{ appt.serviceName }}</h6>
+                      <div class="appt-card-meta">
+                        <span><i class="bi bi-calendar3"></i>{{ formatDateShort(appt.appointmentDate) }}</span>
+                        <span><i class="bi bi-clock"></i>{{ formatTimeOnly(appt.appointmentDate) }}</span>
+                      </div>
+                      <div class="appt-card-doctor">
+                        <i class="bi bi-person-badge"></i>{{ appt.doctorName || 'Chưa phân công' }}
+                      </div>
+                    </div>
+
+                    <div class="appt-card-footer">
+                      <span class="appt-card-code">{{ appt.qrToken ? appt.qrToken.substring(0,6).toUpperCase() : '---' }}</span>
+                      <button class="appt-card-qr-btn" @click.stop="openQrModal(appt)">
+                        <i class="bi bi-qr-code me-1"></i>Mã QR
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
+
+
 
           <div v-show="activeTab === 'vaccines'" class="tab-pane">
             <div class="row g-4">
@@ -844,6 +823,42 @@
         </div>
       </div>
     </template>
+
+    <!-- QR Code Modal (teleport → body, fixed full-screen) -->
+    <teleport to="body">
+      <transition name="qr-modal">
+        <div v-if="isQrModalOpen" class="qr-modal-backdrop" @click.self="closeQrModal">
+          <div class="qr-modal-card">
+            <div class="qr-modal-header">
+              <div class="d-flex align-items-center gap-3">
+                <div class="qr-modal-icon-wrap"><i class="bi bi-qr-code text-primary fs-5"></i></div>
+                <div>
+                  <div class="fw-bold text-dark" style="font-size:1rem;">Mã Check-in tại quầy</div>
+                  <div class="small text-muted">{{ selectedApptForQr?.serviceName }}</div>
+                </div>
+              </div>
+              <button class="qr-modal-close" @click="closeQrModal"><i class="bi bi-x-lg"></i></button>
+            </div>
+
+            <div class="qr-modal-body">
+              <p class="text-muted small text-center mb-4">Đưa mã này cho lễ tân tại phòng khám để check-in nhanh chóng</p>
+              <div class="qr-canvas-wrap" id="qr-code-container">
+                <qrcode-vue :value="qrTokenToDisplay" :size="220" level="H" foreground="#0f172a" background="#ffffff" />
+              </div>
+              <div class="qr-code-number">{{ qrTokenToDisplay.substring(0,6).toUpperCase() }}</div>
+              <div class="qr-code-date">{{ selectedApptForQr ? formatDate(selectedApptForQr.appointmentDate) + ' lúc ' + formatTimeOnly(selectedApptForQr.appointmentDate) : '' }}</div>
+            </div>
+
+            <div class="qr-modal-footer">
+              <button class="qr-btn-secondary" @click="closeQrModal">Đóng</button>
+              <button class="qr-btn-primary" @click="downloadQR">
+                <i class="bi bi-download me-2"></i>Tải ảnh QR
+              </button>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </teleport>
   </div>
 </template>
 
@@ -851,6 +866,8 @@
 import { ref, computed, onMounted, nextTick, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Chart from 'chart.js/auto';
+import QrcodeVue from 'qrcode.vue';
+import Swal from 'sweetalert2';
 import api from '../services/api';
 
 const props = defineProps<{ petId?: string | number }>();
@@ -879,6 +896,57 @@ const ownerProfile = ref<any>(null);
 const medicalRecords = ref<any[]>([]);
 const vaccinations = ref<any[]>([]);
 const appointments = ref<any[]>([]);
+
+// QR Code Modal State
+const isQrModalOpen = ref(false);
+const qrTokenToDisplay = ref('');
+const selectedApptForQr = ref<any>(null);
+
+const openQrModal = (appt: any) => {
+  selectedApptForQr.value = appt;
+  qrTokenToDisplay.value = appt.qrToken || 'PET123';
+  isQrModalOpen.value = true;
+};
+
+const closeQrModal = () => {
+  isQrModalOpen.value = false;
+  selectedApptForQr.value = null;
+  qrTokenToDisplay.value = '';
+};
+
+const downloadQR = () => {
+  const canvas = document.querySelector('#qr-code-container canvas') as HTMLCanvasElement;
+  if (canvas) {
+    const url = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = `QR_Checkin_${qrTokenToDisplay.value.substring(0,6)}.png`;
+    link.href = url;
+    link.click();
+  }
+};
+
+const confirmCancelAppointment = async (apptId: string | number) => {
+  const result = await Swal.fire({
+    title: 'Hủy lịch hẹn?',
+    text: "Bạn có chắc chắn muốn hủy lịch hẹn này không?",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#64748b',
+    confirmButtonText: 'Đồng ý hủy',
+    cancelButtonText: 'Không'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      await api.delete(`/appointments/${apptId}`);
+      Swal.fire('Thành công', 'Đã hủy lịch hẹn.', 'success');
+      fetchAppointments();
+    } catch (err: any) {
+      Swal.fire('Lỗi', err.response?.data?.message || 'Không thể hủy lịch hẹn.', 'error');
+    }
+  }
+};
 
 const prescriptions = ref<any[]>([]);
 
