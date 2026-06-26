@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Services;
 using System.Threading.Tasks;
 
-namespace MyPetClinic.Controllers
+namespace WebApi.Controllers
 {
     [Authorize(Roles = "receptionist,admin,Receptionist,Admin")]
     [ApiController]
@@ -39,7 +40,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPost("items")]
-        public async Task<IActionResult> AddItem([FromBody] AddInvoiceItemRequest req)
+        public async Task<IActionResult> AddItem([FromBody] AddInvoiceItemRequestDto req)
         {
             try
             {
@@ -67,7 +68,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPut("items/{itemId}")]
-        public async Task<IActionResult> UpdateQty(long itemId, [FromBody] UpdateQtyRequest req)
+        public async Task<IActionResult> UpdateQty(long itemId, [FromBody] UpdateInvoiceItemQtyRequestDto req)
         {
             try
             {
@@ -81,7 +82,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPost("{invoiceId}/process-payment")]
-        public async Task<IActionResult> ProcessPayment(long invoiceId, [FromBody] ProcessPaymentRequest req)
+        public async Task<IActionResult> ProcessPayment(long invoiceId, [FromBody] ProcessPaymentRequestDto req)
         {
             try
             {
@@ -102,22 +103,4 @@ namespace MyPetClinic.Controllers
         }
     }
 
-    public class AddInvoiceItemRequest
-    {
-        public long InvoiceId { get; set; }
-        public string ItemType { get; set; } = string.Empty;
-        public long ItemId { get; set; }
-        public int Quantity { get; set; }
-    }
-
-    public class UpdateQtyRequest
-    {
-        public int Quantity { get; set; }
-    }
-
-    public class ProcessPaymentRequest
-    {
-        public string PaymentMethod { get; set; } = string.Empty;
-        public decimal DiscountAmount { get; set; }
-    }
 }

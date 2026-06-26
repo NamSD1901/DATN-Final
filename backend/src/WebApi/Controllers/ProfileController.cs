@@ -4,7 +4,7 @@ using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Services;
 using System.Security.Claims;
 
-namespace MyPetClinic.Controllers
+namespace WebApi.Controllers
 {
     [Authorize]
     [ApiController]

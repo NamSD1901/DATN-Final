@@ -5,7 +5,7 @@ using MyPetClinic.Application.Interfaces.Services;
 using System;
 using System.Threading.Tasks;
 
-namespace MyPetClinic.Controllers
+namespace WebApi.Controllers
 {
     [Authorize(Roles = "admin,Admin")]
     [ApiController]

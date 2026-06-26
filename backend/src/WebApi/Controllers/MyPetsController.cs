@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Services;
 
-namespace MyPetClinic.Controllers
+namespace WebApi.Controllers
 {
     [Authorize(Roles = "customer")]
     [ApiController]

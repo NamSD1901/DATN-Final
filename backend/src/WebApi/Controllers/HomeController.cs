@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-namespace MyPetClinic.Controllers;
+namespace WebApi.Controllers;
 
     [ApiController]
     [Route("api/[controller]")]

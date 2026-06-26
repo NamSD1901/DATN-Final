@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace MyPetClinic.Controllers
+namespace WebApi.Controllers
 {
     [Authorize]
     [ApiController]

@@ -6,7 +6,7 @@ using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace MyPetClinic.Controllers
+namespace WebApi.Controllers
 {
     [ApiController]
     [Route("api")]

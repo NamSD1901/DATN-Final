@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces;
 using System.Threading.Tasks;
 
-namespace MyPetClinic.Controllers
+namespace WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -16,7 +17,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPost("chat")]
-        public async Task<IActionResult> Chat([FromBody] ChatRequest request)
+        public async Task<IActionResult> Chat([FromBody] AiChatRequestDto request)
         {
             if (string.IsNullOrWhiteSpace(request.Message))
             {
@@ -36,8 +37,4 @@ namespace MyPetClinic.Controllers
         }
     }
 
-    public class ChatRequest
-    {
-        public string Message { get; set; } = string.Empty;
-    }
 }

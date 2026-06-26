@@ -52,3 +52,22 @@
   2. Cho phép khách hàng chọn giờ trực tiếp mà không cần chọn bác sĩ (Tự động phân công).
   3. Ở Backend, cải tiến logic `CreateAppointmentAsync` để tự động lọc các bác sĩ rảnh vào khung giờ đó và chọn ra bác sĩ có ít ca khám nhất trong ngày (Cân bằng tải).
 - **Hệ quả:** Tối giản hóa quy trình đặt lịch của khách hàng, tối ưu hóa công suất làm việc của đội ngũ bác sĩ thú y, và tránh lỗi trùng lịch/quá tải cục bộ.
+
+## ADR 08: Chứa Business Logic tại Application Layer, hạ tầng Infrastructure chỉ cung cấp kỹ thuật
+
+- **Bối cảnh:** `PrescriptionService` và `ReportService` ban đầu được đặt nhầm trong `Infrastructure.Services`, vi phạm nguyên tắc Clean Architecture: Infrastructure chỉ nên chứa kỹ thuật (kết nối DB, gửi Email, OAuth) chứ không được chứa logic nghiệp vụ (tính trạng thái đơn thuốc, tổng hợp báo cáo doanh thu). Ngoài ra `PrescriptionService` còn chứa stub data cứng nguy hiểm.
+- **Quyết định:**
+  1. Chuyển `PrescriptionService` sang `Application/Services/` — xóa toàn bộ stub data, giữ nguyên business rule tính `status` (`active`/`completed`) dựa trên thời gian dùng thuốc dài nhất.
+  2. Chuyển `ReportService` sang `Application/Services/` — đổi phụ thuộc từ `ApplicationDbContext` trực tiếp sang `IUnitOfWork` (interface Application), mọi GroupBy/Sum đều thực hiện trên DB Server.
+  3. Thêm package `Microsoft.EntityFrameworkCore 10.0.0` vào `Application.csproj` để dùng `IQueryable` async extensions (`ToListAsync`, `SumAsync`...).
+  4. Xóa 2 file cũ trong `Infrastructure.Services`, cập nhật `DependencyInjection.cs` trỏ đến implementation mới bằng fully-qualified name.
+- **Hệ quả:** Triệt tiêu rủi ro stub data trả về cho người dùng thật. Phân tầng rõ ràng, các Application Service có thể unit test độc lập bằng cách mock `IUnitOfWork` mà không cần DB thật.
+
+## ADR 09: Chuyển toàn bộ Request DTO từ inline Controller class sang Application/DTOs
+
+- **Bối cảnh:** 12 class DTO nhỏ được định nghĩa inline ngay trong file Controller (`AppointmentController`, `InvoiceController`, `AccountController`, `AiChatbotController`), vi phạm nguyên tắc Single Responsibility và Clean Architecture — Controller chỉ nên chịu trách nhiệm điều phối HTTP, không nên khai báo kiểu dữ liệu nghiệp vụ.
+- **Quyết định:**
+  1. Tạo 3 file DTO mới trong `Application/DTOs/`: `AppointmentRequestDtos.cs`, `InvoiceRequestDtos.cs`, `AiChatbotRequestDtos.cs`.
+  2. Bổ sung 4 auth request DTOs (`ResendOtpRequestDto`, `VerifyOtpRequestDto`, `ForgotPasswordRequestDto`, `ResetPasswordRequestDto`) vào file `AuthDtos.cs` có sẵn.
+  3. Cập nhật 4 Controller trỏ sang các DTO mới, thêm `using MyPetClinic.Application.DTOs`, xóa toàn bộ inline class.
+- **Hệ quả:** Controller sạch, chỉ chứa logic điều phối HTTP. DTOs tập trung một nơi, dễ tìm kiếm, dễ unit test, dễ tái sử dụng nếu có nhiều Controller cùng nhận cùng một kiểu input.

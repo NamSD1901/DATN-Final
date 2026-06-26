@@ -6,7 +6,7 @@ using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace MyPetClinic.Controllers
+namespace WebApi.Controllers
 {
     /// <summary>
     /// API dành riêng cho Khách hàng (customer role) để xem và quản lý lịch hẹn của họ.

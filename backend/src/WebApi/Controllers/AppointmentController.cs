@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Services;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
-namespace MyPetClinic.Controllers
+namespace WebApi.Controllers
 {
     [Authorize(Roles = "receptionist,admin,Receptionist,Admin")]
     [ApiController]
@@ -27,14 +27,14 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPut("{id}/status")]
-        public async Task<IActionResult> UpdateStatus(long id, [FromBody] UpdateStatusRequest req)
+        public async Task<IActionResult> UpdateStatus(long id, [FromBody] AppointmentUpdateStatusRequestDto req)
         {
             var success = await _appointmentService.UpdateAppointmentStatusAsync(id, req.Status, req.Reason);
             return Ok(new { success });
         }
 
         [HttpPut("{id}/reschedule")]
-        public async Task<IActionResult> Reschedule(long id, [FromBody] RescheduleRequest req)
+        public async Task<IActionResult> Reschedule(long id, [FromBody] AppointmentRescheduleRequestDto req)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPut("{id}/doctor")]
-        public async Task<IActionResult> UpdateDoctor(long id, [FromBody] UpdateDoctorRequest req)
+        public async Task<IActionResult> UpdateDoctor(long id, [FromBody] AppointmentUpdateDoctorRequestDto req)
         {
             try
             {
@@ -152,7 +152,7 @@ namespace MyPetClinic.Controllers
             }
         }
         [HttpPost("check-in")]
-        public async Task<IActionResult> CheckIn([FromBody] CheckInRequest req)
+        public async Task<IActionResult> CheckIn([FromBody] AppointmentCheckInRequestDto req)
         {
             try
             {
@@ -190,26 +190,4 @@ namespace MyPetClinic.Controllers
         }
     }
 
-    public class CheckInRequest
-    {
-        public string QrToken { get; set; } = string.Empty;
-    }
-
-    public class UpdateStatusRequest
-    {
-        public string Status { get; set; } = string.Empty;
-        public string? Reason { get; set; }
-    }
-
-    public class RescheduleRequest
-    {
-        public DateTime NewStart { get; set; }
-        public bool Force { get; set; } = false;
-    }
-
-    public class UpdateDoctorRequest
-    {
-        public Guid DoctorId { get; set; }
-        public bool Force { get; set; } = false;
-    }
 }

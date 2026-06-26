@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyPetClinic.Application.Interfaces.Services;
 using System.Threading.Tasks;
 
-namespace MyPetClinic.Controllers
+namespace WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

@@ -43,7 +43,8 @@ namespace MyPetClinic.Infrastructure
             services.AddScoped<IPetService, PetService>();
             services.AddScoped<IMedicalRecordService, MedicalRecordService>();
             services.AddScoped<IVaccinationService, VaccinationService>();
-            services.AddScoped<IPrescriptionService, PrescriptionService>();
+            // PrescriptionService sống ở Application layer (có business logic tính trạng thái đơn thuốc)
+            services.AddScoped<IPrescriptionService, MyPetClinic.Application.Services.PrescriptionService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IDoctorScheduleService, DoctorScheduleService>();
             
@@ -63,8 +64,8 @@ namespace MyPetClinic.Infrastructure
             // Đăng ký Audit Log Service
             services.AddScoped<IAuditLogService, AuditLogService>();
 
-            // Đăng ký Report Service
-            services.AddScoped<IReportService, ReportService>();
+            // ReportService sống ở Application layer (tổng hợp nghiệp vụ báo cáo qua IUnitOfWork)
+            services.AddScoped<IReportService, MyPetClinic.Application.Services.ReportService>();
 
             // Đăng ký Operating Hours Service
             services.AddScoped<IOperatingHoursService, OperatingHoursService>();

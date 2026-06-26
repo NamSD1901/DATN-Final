@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyPetClinic.Application.Interfaces.Services;
 using System.Security.Claims;
 
-namespace MyPetClinic.Controllers
+namespace WebApi.Controllers
 {
     [Authorize(Roles = "doctor,admin,receptionist,Doctor,Admin,Receptionist,SystemAdmin,clinical_doctor,vaccination_doctor")]
     [ApiController]

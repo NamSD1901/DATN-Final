@@ -5,7 +5,7 @@ using MyPetClinic.Application.Interfaces.Services;
 using MyPetClinic.Application.DTOs;
 using System.Security.Claims;
 
-namespace MyPetClinic.Controllers
+namespace WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -51,7 +51,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPost("resend-otp")]
-        public async Task<IActionResult> ResendOtp([FromBody] ResendOtpRequest req)
+        public async Task<IActionResult> ResendOtp([FromBody] ResendOtpRequestDto req)
         {
             if (string.IsNullOrEmpty(req.Email)) return BadRequest(new { message = "Email không hợp lệ." });
 
@@ -63,7 +63,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPost("verify-otp")]
-        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest req)
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequestDto req)
         {
             if (string.IsNullOrEmpty(req.Email) || string.IsNullOrEmpty(req.OtpCode))
                 return BadRequest(new { message = "Vui lòng nhập email và mã OTP." });
@@ -195,7 +195,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest req)
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto req)
         {
             if (string.IsNullOrEmpty(req.Email)) return BadRequest(new { message = "Vui lòng nhập địa chỉ Email." });
 
@@ -206,7 +206,7 @@ namespace MyPetClinic.Controllers
         }
 
         [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest req)
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto req)
         {
             if (string.IsNullOrEmpty(req.Email) || string.IsNullOrEmpty(req.OtpCode) || string.IsNullOrEmpty(req.NewPassword))
                 return BadRequest(new { message = "Vui lòng điền đầy đủ thông tin." });
@@ -267,28 +267,4 @@ namespace MyPetClinic.Controllers
         }
     }
 
-    public class ResendOtpRequest
-    {
-        public required string Email { get; set; }
-        public required string Type { get; set; }
-    }
-
-    public class VerifyOtpRequest
-    {
-        public required string Email { get; set; }
-        public required string OtpCode { get; set; }
-    }
-
-    public class ForgotPasswordRequest
-    {
-        public required string Email { get; set; }
-    }
-
-    public class ResetPasswordRequest
-    {
-        public required string Email { get; set; }
-        public required string OtpCode { get; set; }
-        public required string NewPassword { get; set; }
-        public required string ConfirmPassword { get; set; }
-    }
 }

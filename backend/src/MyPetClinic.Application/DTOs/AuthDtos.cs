@@ -45,4 +45,33 @@ namespace MyPetClinic.Application.DTOs
         public string Email { get; set; } = string.Empty;
         public string TempToken { get; set; } = string.Empty;
     }
+
+    /// <summary>Request DTO để yêu cầu gửi lại mã OTP.</summary>
+    public class ResendOtpRequestDto
+    {
+        public required string Email { get; set; }
+        public required string Type { get; set; }
+    }
+
+    /// <summary>Request DTO để xác thực mã OTP.</summary>
+    public class VerifyOtpRequestDto
+    {
+        public required string Email { get; set; }
+        public required string OtpCode { get; set; }
+    }
+
+    /// <summary>Request DTO để yêu cầu đặt lại mật khẩu (gửi OTP).</summary>
+    public class ForgotPasswordRequestDto
+    {
+        public required string Email { get; set; }
+    }
+
+    /// <summary>Request DTO để đặt lại mật khẩu bằng mã OTP.</summary>
+    public class ResetPasswordRequestDto
+    {
+        public required string Email { get; set; }
+        public required string OtpCode { get; set; }
+        public required string NewPassword { get; set; }
+        public required string ConfirmPassword { get; set; }
+    }
 }
