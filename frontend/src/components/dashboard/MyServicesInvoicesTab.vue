@@ -127,9 +127,7 @@
             <div class="text-muted small">Xuất ngày {{ formatDate(selectedInvoice.date) }}</div>
           </div>
           <div class="d-flex gap-2">
-            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-medium"><i class="bi bi-share me-1"></i> Chia sẻ</button>
-            <button class="btn btn-dark btn-sm rounded-pill px-3 fw-medium"><i class="bi bi-download me-1"></i> Tải PDF</button>
-            <button class="btn btn-light btn-sm rounded-circle ms-2" @click="closeInvoiceDetail"><i class="bi bi-x-lg"></i></button>
+            <button class="btn btn-light btn-sm rounded-circle" @click="closeInvoiceDetail"><i class="bi bi-x-lg"></i></button>
           </div>
         </div>
 
@@ -262,24 +260,7 @@
               </div>
             </div>
             
-            <!-- Notes -->
-            <div class="p-3 border rounded-3 bg-light">
-              <div class="d-flex align-items-center gap-2 mb-2">
-                <i class="bi bi-info-circle text-primary"></i>
-                <span class="small fw-bold text-dark text-uppercase">Ghi chú lâm sàng</span>
-              </div>
-              <p class="small text-muted mb-4" style="line-height: 1.5;">{{ selectedInvoice.clinicalNotes || 'Không có ghi chú.' }}</p>
-              
-              <div class="border-top pt-3">
-                <div class="small fw-bold text-dark text-uppercase mb-1" style="font-size: 0.7rem;">Địa chỉ phòng khám</div>
-                <div class="small text-muted" style="line-height: 1.5;">
-                  MyPet Clinic - Trụ sở chính<br>
-                  123 Đường Thú Y, Quận 1<br>
-                  Hồ Chí Minh, VN<br>
-                  +84 (28) 3910 1234
-                </div>
-              </div>
-            </div>
+
           </div>
         </div>
       </div>
