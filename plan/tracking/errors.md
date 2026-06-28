@@ -212,3 +212,28 @@ Frontend gửi AppointmentDate dạng yyyy-MM-ddTHH:mm:00 (VD: 25/06/2026 10:30)
 ### Giải pháp
 1. **Trong AppointmentService.cs**: Cập nhật tất cả các biểu thức mapping DTO từ .AppointmentDate.Date.Add(a.StartTime) thành .AppointmentDate.ToLocalTime().Date.Add(a.StartTime). Việc chuyển đổi về LocalTime trước khi lấy Date giúp lấy lại đúng múi giờ trước khi nối chuỗi ngày tháng gửi về Frontend.
 2. **Trong SlotCalculationHelper.cs**: Cập nhật biểu thức tính pptTime tương tự để logic kiểm tra trùng lịch không bị sai lệch ngày.
+
+## [BUG-WALKIN-001] Lỗi 500 khi tạo lịch hẹn vãng lai do truy vấn LINQ
+- **Trạng thái:** FIXED
+- **Thời gian:** 28-06-2026
+### Nguyên nhân
+Dùng .Contains("doctor") trên đối tượng Role gây lỗi dịch ngược (InvalidOperationException) của EF Core trên PostgreSQL.
+### Giải pháp
+Sửa lại truy vấn so sánh chuỗi tường minh: .Where(u => u.Role != null && (u.Role.Name.ToLower() == "clinical_doctor" || u.Role.Name.ToLower() == "vaccination_doctor" || u.Role.Name.ToLower() == "doctor") && u.IsActive == true && u.DeletedAt == null).
+
+## [BUG-WALKIN-002] Lỗi 400 Bad Request thiếu Số điện thoại
+- **Trạng thái:** FIXED
+- **Thời gian:** 28-06-2026
+### Nguyên nhân
+API GetCustomerByPhone không trả về số điện thoại. Frontend lấy selectedCustomer.value.phone bị undefined, dẫn đến Model Validation [Required] của WalkInRequestDto.Phone bị lỗi 400 Bad Request, trả về thông báo chung chung.
+### Giải pháp
+1. Thêm Phone vào object trả về của API GetCustomerByPhone trong ReceptionistController.cs.
+2. Bọc lót lấy customerForm.value.customerPhone trong AppointmentsTab.vue nếu phone rỗng. Thêm Validation frontend cho serviceId và hiển thị chi tiết mảng errors.
+
+## [BUG-WALKIN-003] Lỗi lệch múi giờ khi lưu giờ hẹn vãng lai
+- **Trạng thái:** FIXED
+- **Thời gian:** 28-06-2026
+### Nguyên nhân
+CreateWalkInAsync sử dụng DateTime.UtcNow để lưu AppointmentDate, StartTime, CheckInTime. Nếu giờ Việt Nam là 19h27, giờ UTC là 12h27, CSDL lưu 12h27 dẫn đến giao diện hiển thị sai.
+### Giải pháp
+Dùng TimeZoneInfo.ConvertTimeFromUtc(utcNow, vnTimeZone) để chuyển sang giờ Việt Nam trước khi gán vào các thuộc tính thời gian.

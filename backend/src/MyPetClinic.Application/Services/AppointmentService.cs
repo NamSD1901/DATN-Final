@@ -46,7 +46,6 @@ namespace MyPetClinic.Application.Services
                 await _unitOfWork.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
                 try
                 {
-                    var finalDoctorId = dto.DoctorId;
                     var targetDateStart = appointmentDate.Date;
                     var targetDateEnd = targetDateStart.AddDays(1);
 
@@ -79,143 +78,7 @@ namespace MyPetClinic.Application.Services
                     }
 
 
-                    if (finalDoctorId == Guid.Empty)
-                    {
-                        var appointmentTime = appointmentDate.TimeOfDay;
-                        var allowedDoctorEmails = new List<string>();
-                        var serviceEntity = _unitOfWork.Services.Query()
-                            .Where(s => s.Id == dto.ServiceId)
-                            .Select(s => new { CategoryName = s.Category != null ? s.Category.Name : null })
-                            .FirstOrDefault();
-
-                        if (serviceEntity != null && serviceEntity.CategoryName != null)
-                        {
-                            if (serviceEntity.CategoryName.Equals("Khám bệnh", StringComparison.OrdinalIgnoreCase))
-                            {
-                                allowedDoctorEmails.AddRange(new[] { "bacsi_test@gmail.com", "bacsituantran@gmail.com" });
-                            }
-                            else if (serviceEntity.CategoryName.Equals("Tiêm phòng", StringComparison.OrdinalIgnoreCase))
-                            {
-                                allowedDoctorEmails.AddRange(new[] { "bacsichung@gmail.com", "bacsiha@gmail.com" });
-                            }
-                        }
-
-                        // 1. Lấy tất cả bác sĩ có lịch trực vào ngày hẹn mà thời gian hẹn nằm trong ca trực của họ
-                        var doctorsWithSchedules = _unitOfWork.DoctorSchedules.Query()
-                            .Where(s => s.WorkDate == targetDateStart && s.IsAvailable && s.Doctor != null && s.Doctor.IsActive == true
-                                        && (!allowedDoctorEmails.Any() || (s.Doctor.Email != null && allowedDoctorEmails.Contains(s.Doctor.Email))))
-                            .ToList();
-
-                        List<Guid> doctorsList;
-                        if (doctorsWithSchedules.Any())
-                        {
-                            // Lọc bác sĩ nằm trong khung giờ ca trực
-                            doctorsList = doctorsWithSchedules
-                                .Where(s => appointmentTime >= s.StartTime && appointmentTime + TimeSpan.FromMinutes(30) <= s.EndTime)
-                                .Select(s => s.DoctorId)
-                                .Distinct()
-                                .ToList();
-                            
-                            // Nếu không có bác sĩ nào trong khung giờ, fallback sang tất cả bác sĩ có ca trực ngày đó
-                            if (!doctorsList.Any())
-                            {
-                                doctorsList = doctorsWithSchedules
-                                    .Select(s => s.DoctorId)
-                                    .Distinct()
-                                    .ToList();
-                            }
-                        }
-                        else
-                        {
-                            // Fallback nếu không có cấu hình lịch trực cho ngày đó
-                            doctorsList = _unitOfWork.Users.Query()
-                                .Where(u => u.Role != null && (u.Role.Name.ToLower() == "clinical_doctor" || u.Role.Name.ToLower() == "vaccination_doctor") && u.IsActive == true
-                                        && (!allowedDoctorEmails.Any() || (u.Email != null && allowedDoctorEmails.Contains(u.Email))))
-                                .Select(u => u.Id)
-                                .ToList();
-                        }
-
-                        if (!doctorsList.Any())
-                        {
-                            throw new InvalidOperationException("Hệ thống hiện không có bác sĩ nào đang trực vào khung giờ này cho dịch vụ bạn chọn!");
-                        }
-
-                        // 2. Lọc ra danh sách các bác sĩ THỰC SỰ RẢNH (không trùng lịch trong khoảng +/- 30 phút)
-                        // Appointment lưu AppointmentDate (chỉ ngày) + StartTime (giờ) riêng biệt
-                        // Cần kết hợp cả hai để so sánh chính xác
-                        var allAptsForDoctors = _unitOfWork.Appointments.Query()
-                            .Where(a => a.Status != "cancelled"
-                                        && a.AppointmentDate == appointmentDate.Date
-                                        && doctorsList.Contains(a.DoctorId))
-                            .Select(a => new { a.DoctorId, a.AppointmentDate, a.StartTime })
-                            .ToList();
-
-                        var busyDoctorIds = allAptsForDoctors
-                            .Where(a => {
-                                var apptStartTime = a.StartTime;
-                                var diff = (apptStartTime - appointmentDate.TimeOfDay).TotalMinutes;
-                                return Math.Abs(diff) < 30;
-                            })
-                            .Select(a => a.DoctorId)
-                            .Distinct()
-                            .ToList();
-
-                        var availableDoctors = doctorsList.Except(busyDoctorIds).ToList();
-
-                        if (!availableDoctors.Any())
-                        {
-                            throw new InvalidOperationException("Tất cả bác sĩ trực khung giờ này đã kín lịch. Vui lòng chọn khung giờ khác.");
-                        }
-
-                        // 3. Chọn bác sĩ có ít lịch hẹn nhất trong ngày hôm đó từ danh sách bác sĩ rảnh
-                        var doctorApptCounts = _unitOfWork.Appointments.Query()
-                            .Where(a => a.AppointmentDate >= targetDateStart && a.AppointmentDate < targetDateEnd && a.Status != "cancelled" && availableDoctors.Contains(a.DoctorId))
-                            .GroupBy(a => a.DoctorId)
-                            .Select(g => new { DoctorId = g.Key, Count = g.Count() })
-                            .ToList();
-
-                        var doctorWithCount = availableDoctors
-                            .Select(id => new { DoctorId = id, Count = doctorApptCounts.FirstOrDefault(c => c.DoctorId == id)?.Count ?? 0 })
-                            .OrderBy(x => x.Count)
-                            .First();
-
-                        finalDoctorId = doctorWithCount.DoctorId;
-                    }
-                    else
-                    {
-                        // Kiểm tra xem bác sĩ được chọn có ca trực trong ngày hẹn không
-                        var schedule = _unitOfWork.DoctorSchedules.Query()
-                            .FirstOrDefault(s => s.DoctorId == finalDoctorId && s.WorkDate == targetDateStart && s.IsAvailable);
-                        
-                        if (schedule == null)
-                        {
-                            throw new InvalidOperationException("Bác sĩ không có lịch trực trong ngày này.");
-                        }
-
-                        var appointmentTime = appointmentDate.TimeOfDay;
-                        if (appointmentTime < schedule.StartTime || appointmentTime + TimeSpan.FromMinutes(30) > schedule.EndTime)
-                        {
-                            throw new InvalidOperationException($"Thời gian hẹn phải nằm trong ca trực của bác sĩ ({schedule.StartTime:hh\\:mm} - {schedule.EndTime:hh\\:mm}).");
-                        }
-                    }
-
-                    // Chặn đặt lịch nếu Bác sĩ đã có lịch trong khoảng +/- 30 phút (Double-Booking Check)
-                    // AppointmentDate chỉ lưu ngày (00:00:00), giờ lưu riêng tại StartTime
-                    // Phải kết hợp cả hai để kiểm tra trùng lịch chính xác
-                    var sameDay_Apts = _unitOfWork.Appointments.Query()
-                        .Where(a => a.DoctorId == finalDoctorId
-                                    && a.Status != "cancelled"
-                                    && a.AppointmentDate == appointmentDate.Date)
-                        .Select(a => a.StartTime)
-                        .ToList();
-
-                    var isDoubleBooked = sameDay_Apts.Any(startTime => 
-                        Math.Abs((startTime - appointmentDate.TimeOfDay).TotalMinutes) < 30);
-
-                    if (isDoubleBooked)
-                    {
-                        throw new InvalidOperationException("Bác sĩ đã có lịch hẹn trong khoảng thời gian này.");
-                    }
+                    var finalDoctorId = ResolveAndValidateDoctorId(dto.DoctorId, appointmentDate, dto.ServiceId);
 
                     // Sinh QR Token duy nhất
                     string qrToken = string.Empty;
@@ -337,72 +200,44 @@ namespace MyPetClinic.Application.Services
                 {
                     var targetDateStart = appointmentDate.Date;
 
-                    // Kiểm tra ca trực của bác sĩ (chỉ kiểm tra khi có DoctorId hợp lệ)
-                    if (dto.DoctorId != Guid.Empty)
-                    {
-                        var schedule = _unitOfWork.DoctorSchedules.Query()
-                            .FirstOrDefault(s => s.DoctorId == dto.DoctorId && s.WorkDate == targetDateStart && s.IsAvailable);
+                    var finalDoctorId = ResolveAndValidateDoctorId(dto.DoctorId, appointmentDate, dto.ServiceId);
 
-                        // Chỉ báo lỗi nếu bác sĩ có cấu hình lịch trực nhưng ngày hẹn không có ca
-                        if (schedule != null)
-                        {
-                            var appointmentTime = appointmentDate.TimeOfDay;
-                            if (appointmentTime < schedule.StartTime || appointmentTime + TimeSpan.FromMinutes(30) > schedule.EndTime)
-                            {
-                                throw new InvalidOperationException($"Thời gian hẹn phải nằm trong ca trực của bác sĩ ({schedule.StartTime:hh\\:mm} - {schedule.EndTime:hh\\:mm}).");
-                            }
-                        }
-                    }
-
-                    // Kiểm tra trùng lịch (Double-Booking Check) nằm trong transaction
-                    // AppointmentDate chỉ lưu ngày (00:00:00), giờ lưu riêng tại StartTime
-                    var sameDay_Apts_New = _unitOfWork.Appointments.Query()
-                        .Where(a => a.DoctorId == dto.DoctorId
-                                    && a.Status != "cancelled"
-                                    && a.AppointmentDate == appointmentDate.Date)
-                        .Select(a => a.StartTime)
-                        .ToList();
-
-                    var isDoubleBookedNew = sameDay_Apts_New.Any(startTime =>
-                        Math.Abs((startTime - appointmentDate.TimeOfDay).TotalMinutes) < 30);
-
-                    if (isDoubleBookedNew)
-                    {
-                        throw new InvalidOperationException("Bác sĩ đã có lịch hẹn trong khoảng thời gian này.");
-                    }
 
                     // 1. Kiểm tra sđt đã tồn tại chưa
-                    var customer = _unitOfWork.Users.Query()
-                        .FirstOrDefault(u => u.Phone == dto.CustomerPhone && u.IsActive == true);
+                    var customer = _unitOfWork.Customers.Query()
+                        .FirstOrDefault(c => c.Phone == dto.CustomerPhone && c.DeletedAt == null);
 
                     if (customer == null)
                     {
-                        var role = _unitOfWork.Roles.Query().FirstOrDefault(r => r.Name.ToLower() == "customer");
-                        customer = new User
+                        customer = new Customer
                         {
                             Id = Guid.NewGuid(),
+                            CustomerCode = "CUS-" + DateTime.UtcNow.ToString("yyyyMMdd") + new Random().Next(100, 999).ToString(),
                             FullName = dto.CustomerName,
                             Phone = dto.CustomerPhone,
-                            Email = $"{dto.CustomerPhone}@noemail.local",
-                            RoleId = role?.Id ?? 3,
-                            CreatedAt = DateTime.UtcNow,
-                            IsActive = true
+                            HasAccount = false,
+                            Status = "Active",
+                            CreatedAt = DateTime.UtcNow
                         };
-                        await _unitOfWork.Users.AddAsync(customer);
-                        await _unitOfWork.SaveChangesAsync();
+                        Console.WriteLine($"DEBUG: Creating new Customer with ID={customer.Id}");
+                        await _unitOfWork.Customers.AddAsync(customer);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"DEBUG: Found existing Customer with ID={customer.Id}");
                     }
 
                     // 2. Tạo Pet mới
                     var pet = new Pet
                     {
-                        CustomerId = customer.Id,
+                        Customer = customer,
                         Name = dto.PetName,
                         Species = dto.Species,
                         Weight = (decimal?)dto.PetWeight,
                         CreatedAt = DateTime.UtcNow
                     };
+                    Console.WriteLine($"DEBUG: Creating Pet for CustomerId={customer.Id}");
                     await _unitOfWork.Pets.AddAsync(pet);
-                    await _unitOfWork.SaveChangesAsync();
 
                     // Sinh QR Token duy nhất
                     string qrToken = string.Empty;
@@ -420,10 +255,10 @@ namespace MyPetClinic.Application.Services
                     // 3. Tạo Lịch hẹn
                     var appointment = new Appointment
                     {
-                        CustomerId = customer.Id,
-                        PetId = pet.Id,
+                        Customer = customer,
+                        Pet = pet,
                         ServiceId = dto.ServiceId,
-                        DoctorId = dto.DoctorId,
+                        DoctorId = finalDoctorId,
                         Symptom = dto.Symptom?.Trim(),
                         Note = dto.Note?.Trim(),
                         Status = "waiting", // Khám ngay / Chờ khám
@@ -440,7 +275,7 @@ namespace MyPetClinic.Application.Services
                     }
 
                     await _unitOfWork.Appointments.AddAsync(appointment);
-                    await _unitOfWork.SaveChangesAsync();
+                    await _unitOfWork.SaveChangesAsync(); // <-- ONE single save
 
                     await _unitOfWork.CommitTransactionAsync();
                     return appointment.Id;
@@ -1359,6 +1194,148 @@ namespace MyPetClinic.Application.Services
             }
 
             return doctors.Select(u => new DoctorDto { Id = u.Id, FullName = u.FullName ?? string.Empty }).ToList();
+        }
+        private Guid ResolveAndValidateDoctorId(Guid requestedDoctorId, DateTime appointmentDate, long serviceId)
+        {
+            var finalDoctorId = requestedDoctorId;
+            var targetDateStart = appointmentDate.Date;
+            var targetDateEnd = targetDateStart.AddDays(1);
+
+            if (finalDoctorId == Guid.Empty)
+            {
+                var appointmentTime = appointmentDate.TimeOfDay;
+                var allowedDoctorEmails = new List<string>();
+                var serviceEntity = _unitOfWork.Services.Query()
+                    .Where(s => s.Id == serviceId)
+                    .Select(s => new { CategoryName = s.Category != null ? s.Category.Name : null })
+                    .FirstOrDefault();
+
+                if (serviceEntity != null && serviceEntity.CategoryName != null)
+                {
+                    if (serviceEntity.CategoryName.Equals("Khám bệnh", StringComparison.OrdinalIgnoreCase))
+                    {
+                        allowedDoctorEmails.AddRange(new[] { "bacsi_test@gmail.com", "bacsituantran@gmail.com" });
+                    }
+                    else if (serviceEntity.CategoryName.Equals("Tiêm phòng", StringComparison.OrdinalIgnoreCase))
+                    {
+                        allowedDoctorEmails.AddRange(new[] { "bacsichung@gmail.com", "bacsiha@gmail.com" });
+                    }
+                }
+
+                // 1. Lấy tất cả bác sĩ có lịch trực vào ngày hẹn mà thời gian hẹn nằm trong ca trực của họ
+                var doctorsWithSchedules = _unitOfWork.DoctorSchedules.Query()
+                    .Where(s => s.WorkDate == targetDateStart && s.IsAvailable && s.Doctor != null && s.Doctor.IsActive == true
+                                && (!allowedDoctorEmails.Any() || (s.Doctor.Email != null && allowedDoctorEmails.Contains(s.Doctor.Email))))
+                    .ToList();
+
+                List<Guid> doctorsList;
+                if (doctorsWithSchedules.Any())
+                {
+                    // Lọc bác sĩ nằm trong khung giờ ca trực
+                    doctorsList = doctorsWithSchedules
+                        .Where(s => appointmentTime >= s.StartTime && appointmentTime + TimeSpan.FromMinutes(30) <= s.EndTime)
+                        .Select(s => s.DoctorId)
+                        .Distinct()
+                        .ToList();
+                    
+                    // Nếu không có bác sĩ nào trong khung giờ, fallback sang tất cả bác sĩ có ca trực ngày đó
+                    if (!doctorsList.Any())
+                    {
+                        doctorsList = doctorsWithSchedules
+                            .Select(s => s.DoctorId)
+                            .Distinct()
+                            .ToList();
+                    }
+                }
+                else
+                {
+                    // Fallback nếu không có cấu hình lịch trực cho ngày đó
+                    doctorsList = _unitOfWork.Users.Query()
+                        .Where(u => u.Role != null && (u.Role.Name.ToLower() == "clinical_doctor" || u.Role.Name.ToLower() == "vaccination_doctor") && u.IsActive == true
+                                && (!allowedDoctorEmails.Any() || (u.Email != null && allowedDoctorEmails.Contains(u.Email))))
+                        .Select(u => u.Id)
+                        .ToList();
+                }
+
+                if (!doctorsList.Any())
+                {
+                    throw new InvalidOperationException("Hệ thống hiện không có bác sĩ nào đang trực vào khung giờ này cho dịch vụ bạn chọn!");
+                }
+
+                // 2. Lọc ra danh sách các bác sĩ THỰC SỰ RẢNH (không trùng lịch trong khoảng +/- 30 phút)
+                var allAptsForDoctors = _unitOfWork.Appointments.Query()
+                    .Where(a => a.Status != "cancelled"
+                                && a.AppointmentDate == appointmentDate.Date
+                                && doctorsList.Contains(a.DoctorId))
+                    .Select(a => new { a.DoctorId, a.AppointmentDate, a.StartTime })
+                    .ToList();
+
+                var busyDoctorIds = allAptsForDoctors
+                    .Where(a => {
+                        var apptStartTime = a.StartTime;
+                        var diff = (apptStartTime - appointmentDate.TimeOfDay).TotalMinutes;
+                        return Math.Abs(diff) < 30;
+                    })
+                    .Select(a => a.DoctorId)
+                    .Distinct()
+                    .ToList();
+
+                var availableDoctors = doctorsList.Except(busyDoctorIds).ToList();
+
+                if (!availableDoctors.Any())
+                {
+                    throw new InvalidOperationException("Tất cả bác sĩ trực khung giờ này đã kín lịch. Vui lòng chọn khung giờ khác.");
+                }
+
+                // 3. Chọn bác sĩ có ít lịch hẹn nhất trong ngày hôm đó từ danh sách bác sĩ rảnh
+                var doctorApptCounts = _unitOfWork.Appointments.Query()
+                    .Where(a => a.AppointmentDate >= targetDateStart && a.AppointmentDate < targetDateEnd && a.Status != "cancelled" && availableDoctors.Contains(a.DoctorId))
+                    .GroupBy(a => a.DoctorId)
+                    .Select(g => new { DoctorId = g.Key, Count = g.Count() })
+                    .ToList();
+
+                var doctorWithCount = availableDoctors
+                    .Select(id => new { DoctorId = id, Count = doctorApptCounts.FirstOrDefault(c => c.DoctorId == id)?.Count ?? 0 })
+                    .OrderBy(x => x.Count)
+                    .First();
+
+                finalDoctorId = doctorWithCount.DoctorId;
+            }
+            else
+            {
+                // Kiểm tra xem bác sĩ được chọn có ca trực trong ngày hẹn không
+                var schedule = _unitOfWork.DoctorSchedules.Query()
+                    .FirstOrDefault(s => s.DoctorId == finalDoctorId && s.WorkDate == targetDateStart && s.IsAvailable);
+                
+                if (schedule == null)
+                {
+                    throw new InvalidOperationException("Bác sĩ không có lịch trực trong ngày này.");
+                }
+
+                var appointmentTime = appointmentDate.TimeOfDay;
+                if (appointmentTime < schedule.StartTime || appointmentTime + TimeSpan.FromMinutes(30) > schedule.EndTime)
+                {
+                    throw new InvalidOperationException($"Thời gian hẹn phải nằm trong ca trực của bác sĩ ({schedule.StartTime:hh\\:mm} - {schedule.EndTime:hh\\:mm}).");
+                }
+            }
+
+            // Chặn đặt lịch nếu Bác sĩ đã có lịch trong khoảng +/- 30 phút (Double-Booking Check)
+            var sameDay_Apts = _unitOfWork.Appointments.Query()
+                .Where(a => a.DoctorId == finalDoctorId
+                            && a.Status != "cancelled"
+                            && a.AppointmentDate == appointmentDate.Date)
+                .Select(a => a.StartTime)
+                .ToList();
+
+            var isDoubleBooked = sameDay_Apts.Any(startTime => 
+                Math.Abs((startTime - appointmentDate.TimeOfDay).TotalMinutes) < 30);
+
+            if (isDoubleBooked)
+            {
+                throw new InvalidOperationException("Bác sĩ đã có lịch hẹn trong khoảng thời gian này.");
+            }
+
+            return finalDoctorId;
         }
     }
 }

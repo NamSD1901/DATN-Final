@@ -269,7 +269,7 @@ namespace WebApi.Controllers
 
             return Ok(new { 
                 success = true, 
-                customer = new { Id = customerWithPets.CustomerId, FullName = customerWithPets.FullName },
+                customer = new { Id = customerWithPets.CustomerId, FullName = customerWithPets.FullName, Phone = customerWithPets.Phone },
                 pets = customerWithPets.Pets.Select(p => new { p.Id, p.Name, p.Species })
             });
         }

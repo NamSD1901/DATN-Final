@@ -296,7 +296,6 @@ namespace MyPetClinic.Application.Services
                         CreatedAt = DateTime.UtcNow
                     };
                     await _unitOfWork.Customers.AddAsync(customer);
-                    await _unitOfWork.SaveChangesAsync(); // Cần save để lấy Id
                 }
 
                 // 2. Tái sử dụng hoặc Tạo Pet
@@ -308,7 +307,7 @@ namespace MyPetClinic.Application.Services
                 {
                     pet = new Pet
                     {
-                        CustomerId = customer.Id,
+                        Customer = customer,
                         Name = request.PetName?.Trim(),
                         Species = request.Species,
                         Breed = request.Breed,
@@ -317,7 +316,6 @@ namespace MyPetClinic.Application.Services
                         CreatedAt = DateTime.UtcNow
                     };
                     await _unitOfWork.Pets.AddAsync(pet);
-                    await _unitOfWork.SaveChangesAsync(); // Lưu để lấy PetId
                 }
                 else
                 {
@@ -334,10 +332,11 @@ namespace MyPetClinic.Application.Services
                     var finalDoctorId = request.DoctorId ?? Guid.Empty;
                     if (finalDoctorId == Guid.Empty)
                     {
-                        var doctors = await _unitOfWork.Users.FindWithIncludesAsync(
-                            u => u.Role != null && u.Role.Name.ToLower().Contains("doctor") && u.IsActive == true,
-                            u => u.Role!
-                        );
+                        var doctors = _unitOfWork.Users.Query()
+                            .Where(u => u.Role != null && 
+                                        (u.Role.Name.ToLower() == "clinical_doctor" || u.Role.Name.ToLower() == "vaccination_doctor" || u.Role.Name.ToLower() == "doctor") && 
+                                        u.IsActive == true && u.DeletedAt == null)
+                            .ToList();
                         var doctor = doctors.FirstOrDefault();
                             
                         if (doctor != null) {
@@ -352,24 +351,28 @@ namespace MyPetClinic.Application.Services
                         a.AppointmentDate >= todayStartUtc && a.AppointmentDate < todayEndUtc && a.QueueNumber > 0);
                     var maxQueueToday = todayAppointments.Any() ? todayAppointments.Max(a => (int?)a.QueueNumber) ?? 0 : 0;
 
+                    var utcNow = DateTime.UtcNow;
+                    var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                    var vnTime = TimeZoneInfo.ConvertTimeFromUtc(utcNow, vnTimeZone);
+
                     // 5. Tạo Appointment với trạng thái Waiting luôn
                     var appointment = new Appointment
                     {
-                        PetId = pet.Id,
-                        CustomerId = customer.Id,
+                        Pet = pet,
+                        Customer = customer,
                         DoctorId = finalDoctorId,
                         ServiceId = request.ServiceId,
-                        AppointmentDate = DateTime.UtcNow,
-                        StartTime = DateTime.UtcNow.TimeOfDay,
+                        AppointmentDate = vnTime,
+                        StartTime = vnTime.TimeOfDay,
                         Status = "waiting", // Đã vô phòng khám chờ
                         Symptom = request.Symptom,
                         CreatedBy = createdBy,
-                        CreatedAt = DateTime.UtcNow,
+                        CreatedAt = utcNow,
                         
                         // Workflow fields
                         IsWalkIn = true,
                         IsEmergency = request.IsEmergency,
-                        CheckInTime = DateTime.UtcNow,
+                        CheckInTime = vnTime,
                         QueueNumber = maxQueueToday + 1
                     };
                     
@@ -486,11 +489,12 @@ namespace MyPetClinic.Application.Services
 
         public async Task<List<DoctorDto>> GetActiveDoctorsAsync()
         {
-            var doctors = await _unitOfWork.Users.FindWithIncludesAsync(
-                u => u.IsActive == true && u.Role != null && u.Role.Name.ToLower().Contains("doctor") && u.DeletedAt == null,
-                u => u.Role!
-            );
-
+            var doctors = _unitOfWork.Users.Query()
+                .Where(u => u.Role != null && 
+                            (u.Role.Name.ToLower() == "clinical_doctor" || u.Role.Name.ToLower() == "vaccination_doctor" || u.Role.Name.ToLower() == "doctor") && 
+                            u.IsActive == true && u.DeletedAt == null)
+                .ToList();
+                
             return doctors.Select(u => new DoctorDto { Id = u.Id, FullName = u.FullName ?? string.Empty }).ToList();
         }
 

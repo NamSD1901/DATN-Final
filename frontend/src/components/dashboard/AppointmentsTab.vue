@@ -1188,6 +1188,21 @@ const searchCustomerStatus = ref<'idle' | 'found' | 'not_found'>('idle');
 const selectedCustomer = ref<any>(null);
 const customerPets = ref<any[]>([]);
 
+const resetCustomerSearch = () => {
+  searchQueryPhone.value = '';
+  searchCustomerStatus.value = 'idle';
+  selectedCustomer.value = null;
+  customerPets.value = [];
+  isAddingNewPet.value = false;
+  customerForm.value = { customerName: '', customerPhone: '' };
+  petForm.value = { petName: '', species: 'Chó', breed: '', petWeight: null };
+  formPayload.value.petId = '';
+};
+
+watch(activeBookingTab, () => {
+  resetCustomerSearch();
+});
+
 const isAddingNewPet = ref(false);
 
 const customerForm = ref({
@@ -1560,8 +1575,13 @@ const submitWalkInAppointment = async () => {
     };
     if (formPayload.value.doctorId) payload.doctorId = formPayload.value.doctorId;
 
+    if (!formPayload.value.serviceId) {
+      showToast('Vui lòng chọn dịch vụ khám bệnh!', 'warning');
+      return;
+    }
+
     if (searchCustomerStatus.value === 'found') {
-      payload.phone = selectedCustomer.value.phone;
+      payload.phone = selectedCustomer.value.phone || customerForm.value.customerPhone;
       payload.fullName = selectedCustomer.value.fullName;
       
       if (isAddingNewPet.value) {
@@ -1578,9 +1598,14 @@ const submitWalkInAppointment = async () => {
           return;
         }
         const pet = customerPets.value.find(p => p.id === formPayload.value.petId);
-        payload.petName = pet.name;
-        payload.species = pet.species;
-        payload.weight = pet.weight;
+        if (pet) {
+            payload.petName = pet.name;
+            payload.species = pet.species;
+            payload.weight = pet.weight;
+        } else {
+            showToast('Không tìm thấy thông tin thú cưng!', 'warning');
+            return;
+        }
       }
     } else if (searchCustomerStatus.value === 'not_found') {
       if (!customerForm.value.customerName || !customerForm.value.customerPhone || !petForm.value.petName) {
@@ -1601,7 +1626,11 @@ const submitWalkInAppointment = async () => {
       await loadAllData();
     }
   } catch (err: any) {
-    showToast(err.response?.data?.message || 'Lỗi khi tạo lịch hẹn vãng lai.', 'danger');
+    let msg = err.response?.data?.message;
+    if (!msg && err.response?.data?.errors) {
+      msg = Object.values(err.response.data.errors).flat().join(', ');
+    }
+    showToast(msg || 'Lỗi khi tạo lịch hẹn vãng lai.', 'danger');
   }
 };
 
@@ -1702,13 +1731,7 @@ const confirmCheckIn = async () => {
 const openCreateModal = () => {
   // Reset new states
   activeBookingTab.value = 'prebooked';
-  searchQueryPhone.value = '';
-  searchCustomerStatus.value = 'idle';
-  selectedCustomer.value = null;
-  customerPets.value = [];
-  isAddingNewPet.value = false;
-  customerForm.value = { customerName: '', customerPhone: '' };
-  petForm.value = { petName: '', species: 'Chó', breed: '', petWeight: null };
+  resetCustomerSearch();
   formPayload.value = {
     petId: '',
     doctorId: '',

@@ -131,6 +131,7 @@ namespace MyPetClinic.Infrastructure.Repositories
                 {
                     await _currentTransaction.RollbackAsync();
                 }
+                _context.ChangeTracker.Clear();
             }
             finally
             {
