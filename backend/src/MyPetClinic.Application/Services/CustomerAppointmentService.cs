@@ -57,6 +57,13 @@ namespace MyPetClinic.Application.Services
                 throw new InvalidOperationException("TRƯỜNG HỢP CẤP CỨU: Vui lòng KHÔNG đặt lịch online. Hãy đưa bé đến phòng khám ngay lập tức hoặc gọi Hotline khẩn cấp.");
             }
 
+            var customers = await _unitOfWork.Customers.FindAsync(c => c.Id == customerId && c.DeletedAt == null);
+            var customer = customers.FirstOrDefault();
+            if (customer != null && string.IsNullOrWhiteSpace(customer.Phone))
+            {
+                throw new InvalidOperationException("MISSING_PHONE: Tài khoản của bạn chưa có số điện thoại. Vui lòng cập nhật số điện thoại trong phần Hồ sơ để chúng tôi có thể liên hệ xác nhận.");
+            }
+
             var appointmentDate = dto.AppointmentDate ?? DateTime.Now;
             
             // 2. Lead Time Check: Must book at least 15 minutes in advance

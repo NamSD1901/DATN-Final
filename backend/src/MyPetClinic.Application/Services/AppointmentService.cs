@@ -78,6 +78,40 @@ namespace MyPetClinic.Application.Services
                     }
 
 
+                    var targetDateUtc = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc);
+
+                    // Kiểm tra xem khách hàng có lịch hẹn trùng giờ không (cách nhau dưới 30 phút)
+                    var customerSameDayApts = _unitOfWork.Appointments.Query()
+                        .Where(a => a.CustomerId == dto.CustomerId
+                                    && a.Status != "cancelled"
+                                    && a.AppointmentDate == targetDateUtc)
+                        .Select(a => a.StartTime)
+                        .ToList();
+
+                    var isCustomerDoubleBooked = customerSameDayApts.Any(startTime => 
+                        Math.Abs((startTime - appointmentDate.TimeOfDay).TotalMinutes) < 30);
+
+                    if (isCustomerDoubleBooked)
+                    {
+                        string msg = createdBy == dto.CustomerId
+                            ? "Bạn đã có lịch hẹn trong khung giờ này. Vui lòng chọn khung giờ khác."
+                            : "Khách hàng này đã có lịch hẹn trong khung giờ này. Vui lòng chọn khung giờ khác.";
+                        throw new InvalidOperationException(msg);
+                    }
+
+                    // Kiểm tra tổng số lịch hẹn đang active (để chống spam)
+                    var activeAppointmentsCount = _unitOfWork.Appointments.Query()
+                        .Count(a => a.CustomerId == dto.CustomerId
+                                    && (a.Status == "pending" || a.Status == "confirmed"));
+
+                    if (activeAppointmentsCount >= 3)
+                    {
+                        string msg = createdBy == dto.CustomerId
+                            ? "Bạn đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi đặt lịch mới."
+                            : "Khách hàng này đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi tạo thêm lịch.";
+                        throw new InvalidOperationException(msg);
+                    }
+
                     var finalDoctorId = ResolveAndValidateDoctorId(dto.DoctorId, appointmentDate, dto.ServiceId);
 
                     // Sinh QR Token duy nhất
@@ -225,6 +259,39 @@ namespace MyPetClinic.Application.Services
                     else
                     {
                         Console.WriteLine($"DEBUG: Found existing Customer with ID={customer.Id}");
+                        
+                        var targetDateUtc = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc);
+                        // Nếu đã tồn tại khách hàng, kiểm tra xem khách hàng này có lịch hẹn trùng giờ không
+                        var customerSameDayApts = _unitOfWork.Appointments.Query()
+                            .Where(a => a.CustomerId == customer.Id
+                                        && a.Status != "cancelled"
+                                        && a.AppointmentDate == targetDateUtc)
+                            .Select(a => a.StartTime)
+                            .ToList();
+
+                        var isCustomerDoubleBooked = customerSameDayApts.Any(startTime => 
+                            Math.Abs((startTime - appointmentDate.TimeOfDay).TotalMinutes) < 30);
+
+                        if (isCustomerDoubleBooked)
+                        {
+                            string msg = createdBy == customer.Id
+                                ? "Bạn đã có lịch hẹn trong khung giờ này. Vui lòng chọn khung giờ khác."
+                                : "Khách hàng này đã có lịch hẹn trong khung giờ này. Vui lòng chọn khung giờ khác.";
+                            throw new InvalidOperationException(msg);
+                        }
+
+                        // Kiểm tra tổng số lịch hẹn đang active (để chống spam)
+                        var activeAppointmentsCount = _unitOfWork.Appointments.Query()
+                            .Count(a => a.CustomerId == customer.Id
+                                        && (a.Status == "pending" || a.Status == "confirmed"));
+
+                        if (activeAppointmentsCount >= 3)
+                        {
+                            string msg = createdBy == customer.Id
+                                ? "Bạn đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi đặt lịch mới."
+                                : "Khách hàng này đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi tạo thêm lịch.";
+                            throw new InvalidOperationException(msg);
+                        }
                     }
 
                     // 2. Tạo Pet mới

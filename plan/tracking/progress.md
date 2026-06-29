@@ -104,6 +104,7 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
         *   Khóa chặn đặt lịch online nếu User có >= 3 lần No-show.
         *   Đưa vào danh sách chờ duyệt (`pending_approval`) nếu User có >= 3 lần Cancel trong 30 ngày qua.
         *   **Cập nhật mới:** Gỡ bỏ tính năng tự chọn bác sĩ. Hệ thống **Bắt buộc Tự động phân công** (ẩn dropdown trên UI và đè `DoctorId = Guid.Empty` tại Backend) dựa theo Nhóm dịch vụ (Khám bệnh -> BS. Long/Tuấn; Tiêm phòng -> BS. Chung/Hà).
+        *   **Cập nhật mới:** Chặn khách hàng đặt nhiều lịch trùng khung giờ (double-booking) tại `CreateAppointmentAsync` và `CreateAppointmentWithNewCustomerAsync`.
 
 
 ### 🎯 Sprint 8: Theo Dõi Cuộc Hẹn & Lịch Sử

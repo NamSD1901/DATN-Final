@@ -1,6 +1,6 @@
 <template>
   <router-view />
-  <AiChatbotWidget v-if="!isDashboard" />
+  <AiChatbotWidget v-if="showChatbot" />
 </template>
 
 <script setup lang="ts">
@@ -9,8 +9,8 @@ import { useRoute } from 'vue-router';
 import AiChatbotWidget from './components/shared/AiChatbotWidget.vue';
 
 const route = useRoute();
-const isDashboard = computed(() => {
-  return route.path.startsWith('/dashboard');
+const showChatbot = computed(() => {
+  return !route.path.startsWith('/dashboard') && !route.path.startsWith('/login') && !route.path.startsWith('/register');
 });
 </script>
 

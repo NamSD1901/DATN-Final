@@ -263,48 +263,7 @@
 
           <!-- tab: Profile Details Tab -->
           <div v-else-if="activeTab === 'profile'" class="container-fluid p-0">
-            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
-              <div class="row g-4">
-                <div class="col-md-4 text-center border-end-md">
-                  <div class="position-relative d-inline-block mb-3">
-                    <img :src="avatarUrl" @error="handleAvatarError" alt="User Avatar" class="rounded-circle shadow-sm border border-4 border-warning" width="130" height="130" style="object-fit: cover;">
-                  </div>
-                  <h4 class="fw-bold text-dark mb-1">{{ userName }}</h4>
-                  <p class="text-muted small mb-3">{{ getRoleLabel }}</p>
-                  <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold text-uppercase shadow-sm">
-                    Tài khoản hoạt động
-                  </span>
-                  <div class="mt-3">
-                    <router-link to="/profile" class="btn btn-outline-warning rounded-pill px-4 fw-bold shadow-sm">
-                      <i class="bi bi-pencil-square me-1"></i> Chỉnh sửa hồ sơ
-                    </router-link>
-                  </div>
-                </div>
-                
-                <div class="col-md-8 ps-md-4">
-                  <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom"><i class="bi bi-person-lines-fill me-2 text-warning"></i>Thông Tin Cá Nhân</h5>
-                  
-                  <div class="row g-3">
-                    <div class="col-sm-6">
-                      <label class="text-muted small d-block mb-1">Họ và Tên</label>
-                      <strong class="text-dark">{{ userName }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                      <label class="text-muted small d-block mb-1">Địa chỉ Email</label>
-                      <strong class="text-dark">{{ email }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                      <label class="text-muted small d-block mb-1">Số điện thoại</label>
-                      <strong class="text-dark">{{ phone || 'Chưa cung cấp' }}</strong>
-                    </div>
-                    <div class="col-sm-6">
-                      <label class="text-muted small d-block mb-1">Địa chỉ liên hệ</label>
-                      <strong class="text-dark">{{ address || 'Chưa cung cấp' }}</strong>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ProfileTab @profile-updated="fetchDashboardData" />
           </div>
 
           <!-- tab: Queue Tab -->
@@ -478,6 +437,7 @@ import ReportsAdminTab from '../components/dashboard/ReportsAdminTab.vue';
 import BlogAdminTab from '../components/dashboard/BlogAdminTab.vue';
 import CategoriesAdminTab from '../components/dashboard/CategoriesAdminTab.vue';
 import BannersAdminTab from '../components/dashboard/BannersAdminTab.vue';
+import ProfileTab from '../components/dashboard/ProfileTab.vue';
 
 const router = useRouter();
 const route = useRoute();

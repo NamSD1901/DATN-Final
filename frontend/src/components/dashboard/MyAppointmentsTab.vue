@@ -864,8 +864,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import api from '../../services/api';
 import QrcodeVue from 'qrcode.vue';
+
+const router = useRouter();
 
 // ===== Emits =====
 const emit = defineEmits<{
@@ -1325,7 +1328,14 @@ const submitBooking = async () => {
     bookingSuccess.value = true;
     await fetchAppointments();
   } catch (err: any) {
-    bookingError.value = err?.response?.data?.message || 'Đặt lịch thất bại. Vui lòng thử lại.';
+    const apiError = err?.response?.data?.message || 'Đặt lịch thất bại. Vui lòng thử lại.';
+    if (apiError.startsWith('MISSING_PHONE:')) {
+      alert(apiError.replace('MISSING_PHONE: ', ''));
+      closeBookModal();
+      router.push('/profile');
+    } else {
+      bookingError.value = apiError;
+    }
   } finally {
     bookingLoading.value = false;
   }

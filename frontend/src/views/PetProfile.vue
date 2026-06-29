@@ -426,7 +426,7 @@
 
                     <div class="appt-hero-note">
                       <i class="bi bi-info-circle-fill text-warning me-2 flex-shrink-0"></i>
-                      <span>{{ upcomingAppointments[0].notes || 'Vui lòng đến sớm 10 phút trước giờ hẹn. Nhớ mang theo sổ khám bệnh nhé!' }}</span>
+                      <span>{{ upcomingAppointments[0].notes || 'Vui lòng đến sớm 10 phút trước giờ hẹn.' }}</span>
                     </div>
                   </div>
 
@@ -437,8 +437,11 @@
                     <div class="appt-qr-code-text">{{ upcomingAppointments[0].qrToken ? upcomingAppointments[0].qrToken.substring(0,6).toUpperCase() : 'CHECKIN' }}</div>
                     <div class="appt-qr-sublabel">MÃ CHECK-IN</div>
 
-                    <button @click.stop="openQrModal(upcomingAppointments[0])" class="appt-btn-primary">
+                    <button v-if="upcomingAppointments[0].qrToken" @click.stop="openQrModal(upcomingAppointments[0])" class="appt-btn-primary">
                       <i class="bi bi-qr-code me-2"></i>Hiện mã QR
+                    </button>
+                    <button v-else class="appt-btn-primary" style="opacity: 0.6; cursor: not-allowed; background: #94a3b8; box-shadow: none;" disabled title="Vui lòng chờ xác nhận để lấy mã QR">
+                      <i class="bi bi-hourglass-split me-2"></i>Chờ xác nhận
                     </button>
                     <button @click.stop="confirmCancelAppointment(upcomingAppointments[0].id)" class="appt-btn-danger">
                       Hủy lịch hẹn
@@ -464,7 +467,7 @@
                             <i class="bi bi-three-dots-vertical"></i>
                           </button>
                           <div class="appt-menu-dropdown" v-if="openMenuId === appt.id">
-                            <button class="appt-menu-item" @click="openQrModal(appt); openMenuId = null">
+                            <button v-if="appt.qrToken" class="appt-menu-item" @click="openQrModal(appt); openMenuId = null">
                               <i class="bi bi-qr-code me-2"></i>Xem mã QR
                             </button>
                             <button class="appt-menu-item appt-menu-item-danger" @click="confirmCancelAppointment(appt.id); openMenuId = null">
@@ -486,8 +489,11 @@
 
                     <div class="appt-card-footer">
                       <span class="appt-card-code">{{ appt.qrToken ? appt.qrToken.substring(0,6).toUpperCase() : '---' }}</span>
-                      <button class="appt-card-qr-btn" @click.stop="openQrModal(appt)">
+                      <button v-if="appt.qrToken" class="appt-card-qr-btn" @click.stop="openQrModal(appt)">
                         <i class="bi bi-qr-code me-1"></i>Mã QR
+                      </button>
+                      <button v-else class="appt-card-qr-btn text-muted" style="border-color: transparent; background: transparent; cursor: not-allowed;" disabled title="Chờ xác nhận">
+                        <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt
                       </button>
                     </div>
                   </div>
@@ -654,7 +660,7 @@
                     <div class="p-4 border-bottom">
                       <div class="d-flex justify-content-between align-items-start mb-2">
                         <div class="d-flex align-items-center flex-wrap gap-2">
-                          <h5 class="fw-bold text-dark mb-0">{{ rx.diagnosis }}</h5>
+                          <h5 class="fw-bold text-dark mb-0">{{ formatDiagnosisTitle(rx.diagnosis) }}</h5>
                           <span class="badge rounded-pill px-3 py-1 fw-bold" :class="rx.status === 'active' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">
                             {{ rx.status === 'active' ? 'Đang dùng' : 'Đã hoàn thành' }}
                           </span>
@@ -749,8 +755,16 @@
                   <h6 class="fw-bold text-primary mb-3"><i class="bi bi-chat-left-text me-2"></i>S.O (Chủ quan & Khách quan)</h6>
                   
                   <div class="mb-3">
-                    <div class="small fw-bold text-muted mb-1">Lý do khám:</div>
-                    <div class="text-dark">{{ selectedMedicalRecord.medicalHistory || 'Không ghi nhận' }}</div>
+                    <div class="small fw-bold text-muted mb-1">Bệnh sử & Lý do khám:</div>
+                    <div v-if="safeParseJSON(selectedMedicalRecord.medicalHistory)" class="mt-2 p-2 bg-info bg-opacity-10 rounded-3 small">
+                      <div class="row g-2">
+                        <div class="col-12" v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).chiefComplaint"><span class="text-muted fw-semibold">Lý do khám:</span> {{safeParseJSON(selectedMedicalRecord.medicalHistory).chiefComplaint}}</div>
+                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).appetite"><span class="text-muted">Ăn uống:</span> {{safeParseJSON(selectedMedicalRecord.medicalHistory).appetite}}</div>
+                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).urinationIssues"><span class="text-muted">Tiêu tiểu:</span> {{safeParseJSON(selectedMedicalRecord.medicalHistory).urinationIssues}}</div>
+                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).activityLevel"><span class="text-muted">Hoạt động:</span> {{safeParseJSON(selectedMedicalRecord.medicalHistory).activityLevel}}</div>
+                      </div>
+                    </div>
+                    <div v-else class="text-dark">{{ selectedMedicalRecord.medicalHistory || 'Không ghi nhận' }}</div>
                   </div>
                   
                   <div>
@@ -759,7 +773,16 @@
                       <span class="badge bg-white text-dark border">Nhiệt độ: {{ selectedMedicalRecord.temperature ? selectedMedicalRecord.temperature + '°C' : '--' }}</span>
                       <span class="badge bg-white text-dark border">Cân nặng: {{ selectedMedicalRecord.weight ? selectedMedicalRecord.weight + ' kg' : '--' }}</span>
                     </div>
-                    <div class="text-dark small">{{ selectedMedicalRecord.clinicalSigns || 'Bình thường' }}</div>
+                    <div v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns)" class="mt-2 bg-warning bg-opacity-10 p-2 rounded-3 small">
+                      <div class="row g-2">
+                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns).heartRate"><span class="text-muted">Nhịp tim:</span> {{safeParseJSON(selectedMedicalRecord.clinicalSigns).heartRate}} bpm</div>
+                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns).respiratoryRate"><span class="text-muted">Nhịp thở:</span> {{safeParseJSON(selectedMedicalRecord.clinicalSigns).respiratoryRate}} l/p</div>
+                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns).mentation"><span class="text-muted">Tinh thần:</span> {{safeParseJSON(selectedMedicalRecord.clinicalSigns).mentation}}</div>
+                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns).hydration"><span class="text-muted">Mất nước:</span> {{safeParseJSON(selectedMedicalRecord.clinicalSigns).hydration}}</div>
+                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns).bodyConditionScore"><span class="text-muted">BCS:</span> {{safeParseJSON(selectedMedicalRecord.clinicalSigns).bodyConditionScore}}/9</div>
+                      </div>
+                    </div>
+                    <div v-else class="text-dark small">{{ selectedMedicalRecord.clinicalSigns || 'Bình thường' }}</div>
                   </div>
                 </div>
               </div>
@@ -771,12 +794,25 @@
                   
                   <div class="mb-3">
                     <div class="small fw-bold text-muted mb-1">Chẩn đoán:</div>
-                    <div class="text-dark fw-bold">{{ selectedMedicalRecord.diagnosis || 'Chưa có chẩn đoán' }}</div>
+                    <div v-if="safeParseJSON(selectedMedicalRecord.diagnosis)" class="mt-2 p-2 bg-danger bg-opacity-10 rounded-3 small">
+                      <div v-if="safeParseJSON(selectedMedicalRecord.diagnosis).tentativeDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ sơ bộ:</span> {{safeParseJSON(selectedMedicalRecord.diagnosis).tentativeDiagnosis}}</div>
+                      <div v-if="safeParseJSON(selectedMedicalRecord.diagnosis).definitiveDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ xác định:</span> <span class="fw-bold text-danger">{{safeParseJSON(selectedMedicalRecord.diagnosis).definitiveDiagnosis}}</span></div>
+                      <div v-if="safeParseJSON(selectedMedicalRecord.diagnosis).differentialDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ phân biệt:</span> {{safeParseJSON(selectedMedicalRecord.diagnosis).differentialDiagnosis}}</div>
+                      <div class="d-flex gap-3 mt-2">
+                        <span v-if="safeParseJSON(selectedMedicalRecord.diagnosis).diseaseSeverity" class="badge bg-white text-dark border">Mức độ: {{safeParseJSON(selectedMedicalRecord.diagnosis).diseaseSeverity}}</span>
+                        <span v-if="safeParseJSON(selectedMedicalRecord.diagnosis).prognosis" class="badge bg-white text-dark border">Tiên lượng: {{safeParseJSON(selectedMedicalRecord.diagnosis).prognosis}}</span>
+                      </div>
+                    </div>
+                    <div v-else class="text-dark fw-bold">{{ selectedMedicalRecord.diagnosis || 'Chưa có chẩn đoán' }}</div>
                   </div>
                   
                   <div class="mb-3">
                     <div class="small fw-bold text-muted mb-1">Kế hoạch điều trị:</div>
-                    <div class="text-dark small">{{ selectedMedicalRecord.treatmentPlan || 'Theo dõi thêm' }}</div>
+                    <ul v-if="Array.isArray(safeParseJSON(selectedMedicalRecord.treatmentPlan)) && safeParseJSON(selectedMedicalRecord.treatmentPlan).length > 0" class="mt-2 mb-0 ps-3 bg-success bg-opacity-10 p-2 rounded-3">
+                      <li v-for="(step, idx) in safeParseJSON(selectedMedicalRecord.treatmentPlan)" :key="idx" class="text-dark small mb-1">{{ step }}</li>
+                    </ul>
+                    <div v-else-if="!safeParseJSON(selectedMedicalRecord.treatmentPlan)" class="text-dark small">{{ selectedMedicalRecord.treatmentPlan || 'Theo dõi thêm' }}</div>
+                    <div v-else class="text-dark small">Chưa ghi nhận</div>
                   </div>
                   
                   <div v-if="selectedMedicalRecord.doctorNotes || selectedMedicalRecord.notes" class="p-2 bg-white rounded border-start border-warning border-3">
@@ -877,6 +913,27 @@ const route = useRoute();
 const router = useRouter();
 const petId = computed(() => props.petId?.toString() || route.params.id as string);
 
+const safeParseJSON = (jsonStr: string | undefined | null): any => {
+  if (!jsonStr) return null;
+  try {
+    return JSON.parse(jsonStr);
+  } catch (e) {
+    return null;
+  }
+};
+
+const formatDiagnosisTitle = (diagnosisStr: string | undefined | null): string => {
+  if (!diagnosisStr) return 'Đơn thuốc';
+  if (diagnosisStr.trim().startsWith('{')) {
+    const parsed = safeParseJSON(diagnosisStr);
+    if (parsed) {
+      if (parsed.definitiveDiagnosis) return parsed.definitiveDiagnosis;
+      if (parsed.tentativeDiagnosis) return `Sơ bộ: ${parsed.tentativeDiagnosis}`;
+    }
+  }
+  return diagnosisStr;
+};
+
 const goBack = () => {
   if (props.petId) {
     emit('go-back');
@@ -903,8 +960,9 @@ const qrTokenToDisplay = ref('');
 const selectedApptForQr = ref<any>(null);
 
 const openQrModal = (appt: any) => {
+  if (!appt.qrToken) return;
   selectedApptForQr.value = appt;
-  qrTokenToDisplay.value = appt.qrToken || 'PET123';
+  qrTokenToDisplay.value = appt.qrToken;
   isQrModalOpen.value = true;
 };
 
@@ -1990,5 +2048,606 @@ onMounted(() => {
   0% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.1); opacity: 0.7; }
   100% { transform: scale(1); opacity: 1; }
+}
+/* =========================================================
+   APPOINTMENT TAB UI STYLES (PREMIUM GLASSMORPHISM)
+   ========================================================= */
+.appt-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* --- Hero Card --- */
+.appt-hero-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  display: flex;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.appt-hero-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.08);
+}
+
+.appt-hero-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(180deg, var(--primary-gold) 0%, #f59e0b 100%);
+}
+
+.appt-hero-body {
+  display: flex;
+  flex: 1;
+  padding: 0;
+}
+
+.appt-hero-left {
+  flex: 1;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.appt-hero-right {
+  width: 280px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-left: 1px solid rgba(0,0,0,0.05);
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Badges */
+.appt-countdown-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.appt-status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.appt-status-badge.status-pending { background: #fffbeb; color: #d97706; border: 1px solid #fef3c7; }
+.appt-status-badge.status-confirmed { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+.appt-status-badge.status-completed { background: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7; }
+.appt-status-badge.status-cancelled { background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
+
+/* Text Elements */
+.appt-hero-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
+}
+
+.appt-hero-doctor {
+  display: flex;
+  align-items: center;
+  font-size: 1.1rem;
+  color: #475569;
+  margin-bottom: 2rem;
+}
+
+.appt-doctor-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.75rem;
+}
+
+/* Date & Time Chips */
+.appt-hero-datetime {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.appt-datetime-chip {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  flex: 1;
+  min-width: 200px;
+}
+.appt-chip-blue {
+  background: #f0f9ff;
+  border: 1px solid #e0f2fe;
+}
+.appt-chip-amber {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+}
+
+.appt-chip-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background: #bae6fd;
+  color: #0369a1;
+}
+.appt-chip-icon-amber {
+  background: #fde68a;
+  color: #b45309;
+}
+
+.appt-chip-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 1px;
+  margin-bottom: 0.25rem;
+}
+
+.appt-chip-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.appt-hero-note {
+  display: flex;
+  align-items: flex-start;
+  font-size: 0.95rem;
+  color: #64748b;
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 12px;
+  line-height: 1.5;
+}
+
+/* Right Panel (QR & Actions) */
+.appt-qr-preview {
+  width: 80px;
+  height: 80px;
+  background: white;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: var(--primary-gold);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  margin-bottom: 1rem;
+}
+
+.appt-qr-code-text {
+  font-family: monospace;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--text-dark);
+}
+
+.appt-qr-sublabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 1px;
+  margin-bottom: 2rem;
+}
+
+.appt-btn-primary {
+  width: 100%;
+  padding: 0.8rem;
+  background: linear-gradient(135deg, var(--primary-gold) 0%, #f59e0b 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+  transition: all 0.2s ease;
+}
+.appt-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+.appt-btn-danger {
+  width: 100%;
+  padding: 0.8rem;
+  background: white;
+  color: #ef4444;
+  border: 1px solid #fca5a5;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.appt-btn-danger:hover {
+  background: #fef2f2;
+}
+
+
+/* --- Grid Section --- */
+.appt-grid-section {
+  margin-top: 1rem;
+}
+
+.appt-section-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.appt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.appt-grid-card {
+  position: relative;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 20px;
+  overflow: visible; /* to allow dropdowns */
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.appt-grid-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  background: rgba(255,255,255,0.95);
+}
+
+.appt-card-strip {
+  height: 6px;
+  width: 100%;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+.appt-card-strip.strip-pending { background: #fcd34d; }
+.appt-card-strip.strip-confirmed { background: #60a5fa; }
+.appt-card-strip.strip-completed { background: #4ade80; }
+.appt-card-strip.strip-cancelled { background: #f87171; }
+
+.appt-card-body {
+  padding: 1.5rem;
+  flex: 1;
+}
+
+.appt-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.appt-card-status-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+.appt-card-status-badge.status-pending { background: #fffbeb; color: #d97706; }
+.appt-card-status-badge.status-confirmed { background: #eff6ff; color: #2563eb; }
+.appt-card-status-badge.status-completed { background: #f0fdf4; color: #16a34a; }
+.appt-card-status-badge.status-cancelled { background: #fef2f2; color: #dc2626; }
+
+.appt-card-menu {
+  position: relative;
+}
+.appt-menu-trigger {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.appt-menu-trigger:hover { background: #f1f5f9; color: #475569; }
+
+.appt-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  border: 1px solid rgba(0,0,0,0.05);
+  padding: 0.5rem;
+  min-width: 150px;
+  z-index: 10;
+}
+.appt-menu-item {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+}
+.appt-menu-item:hover { background: #f8fafc; color: var(--text-dark); }
+.appt-menu-item-danger { color: #ef4444; }
+.appt-menu-item-danger:hover { background: #fef2f2; color: #dc2626; }
+
+.appt-card-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 1rem;
+}
+
+.appt-card-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+.appt-card-meta i { color: #cbd5e1; margin-right: 0.4rem; }
+
+.appt-card-doctor {
+  font-size: 0.9rem;
+  color: #475569;
+  display: flex;
+  align-items: center;
+}
+.appt-card-doctor i { margin-right: 0.4rem; color: #94a3b8; }
+
+.appt-card-footer {
+  padding: 1rem 1.5rem;
+  background: #f8fafc;
+  border-top: 1px solid rgba(0,0,0,0.03);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.appt-card-code {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-dark);
+}
+
+.appt-card-qr-btn {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: var(--text-dark);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.appt-card-qr-btn:hover {
+  border-color: var(--primary-gold);
+  color: var(--primary-gold);
+  background: #fffbeb;
+}
+
+/* Empty State */
+.appt-empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: rgba(255,255,255,0.6);
+  border-radius: 24px;
+  border: 1px dashed rgba(0,0,0,0.1);
+}
+.appt-empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .appt-hero-body {
+    flex-direction: column;
+  }
+  .appt-hero-right {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid rgba(0,0,0,0.05);
+  }
+}
+/* =========================================================
+   QR MODAL STYLES
+   ========================================================= */
+.qr-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.qr-modal-card {
+  background: #ffffff;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.qr-modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qr-modal-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0.5rem;
+}
+.qr-modal-close:hover {
+  color: #ef4444;
+}
+
+.qr-modal-body {
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qr-canvas-wrap {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.qr-code-number {
+  font-family: monospace;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--primary-dark, #0f172a);
+  margin-bottom: 0.5rem;
+}
+
+.qr-code-date {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.qr-modal-footer {
+  padding: 1.5rem;
+  background: #f8fafc;
+  display: flex;
+  gap: 1rem;
+}
+
+.qr-btn-secondary,
+.qr-btn-primary {
+  flex: 1;
+  padding: 0.8rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-btn-secondary {
+  background: white;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+.qr-btn-secondary:hover {
+  background: #f1f5f9;
+}
+
+.qr-btn-primary {
+  background: linear-gradient(135deg, var(--primary-gold, #d97706) 0%, #f59e0b 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+.qr-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+/* Transitions */
+.qr-modal-enter-active,
+.qr-modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+.qr-modal-enter-from,
+.qr-modal-leave-to {
+  opacity: 0;
+}
+.qr-modal-enter-active .qr-modal-card,
+.qr-modal-leave-active .qr-modal-card {
+  transition: transform 0.3s ease;
+}
+.qr-modal-enter-from .qr-modal-card,
+.qr-modal-leave-to .qr-modal-card {
+  transform: scale(0.9) translateY(20px);
 }
 </style>

@@ -79,6 +79,56 @@ namespace MyPetClinic.Tests
         }
 
         [Fact]
+        public async Task CreateAppointment_ShouldThrowError_WhenActiveAppointmentsReachLimit()
+        {
+            // Arrange
+            var doctorId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+            var appointmentTime = DateTime.UtcNow.Date.AddDays(1).AddHours(10);
+            
+            var doctorUser = new User { Id = doctorId, FullName = "Bác Sĩ A", Email = "bacsi_test_limit@gmail.com", RoleId = 2, IsActive = true };
+            _context.Users.Add(doctorUser);
+
+            // Seed DoctorSchedule
+            _context.DoctorSchedules.Add(new DoctorSchedule
+            {
+                DoctorId = doctorId,
+                WorkDate = appointmentTime.Date,
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(17, 0, 0),
+                IsAvailable = true
+            });
+
+            // Seed 3 active appointments for this customer
+            for(int i = 1; i <= 3; i++)
+            {
+                _context.Appointments.Add(new Appointment
+                {
+                    Id = i + 10,
+                    CustomerId = customerId,
+                    DoctorId = doctorId,
+                    AppointmentDate = appointmentTime.AddDays(i),
+                    StartTime = appointmentTime.TimeOfDay,
+                    Status = "pending"
+                });
+            }
+            await _context.SaveChangesAsync();
+
+            var dto = new AppointmentCreateDto
+            {
+                DoctorId = doctorId,
+                AppointmentDate = appointmentTime.AddDays(4), // Different time to avoid double-booking
+                CustomerId = customerId,
+                PetId = 1,
+                ServiceId = 1
+            };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.CreateAppointmentAsync(dto, customerId));
+            Assert.Equal("Bạn đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi đặt lịch mới.", ex.Message);
+        }
+
+        [Fact]
         public async Task RescheduleAppointment_ShouldThrowError_WhenDateInPast()
         {
             // Arrange
