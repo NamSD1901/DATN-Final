@@ -208,7 +208,10 @@ namespace MyPetClinic.Application.Services
                 }
 
                 if (remainingToExport > 0)
-                    throw new Exception("Lỗi hệ thống: Số lượng lô không khớp với tổng tồn kho.");
+                    throw new Exception($"Lỗi hệ thống: Số lượng lô không đủ để xuất ({remainingToExport} thiếu). Vui lòng kiểm kê lại kho.");
+
+                medicine.StockQuantity -= dto.Quantity;
+                _unitOfWork.Medicines.Update(medicine);
 
                 await _unitOfWork.CommitTransactionAsync();
             }

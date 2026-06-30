@@ -100,17 +100,17 @@ namespace MyPetClinic.Application.Services
                     }
 
                     // Kiểm tra tổng số lịch hẹn đang active (để chống spam)
-                    var activeAppointmentsCount = _unitOfWork.Appointments.Query()
-                        .Count(a => a.CustomerId == dto.CustomerId
-                                    && (a.Status == "pending" || a.Status == "confirmed"));
+                    // var activeAppointmentsCount = _unitOfWork.Appointments.Query()
+                    //     .Count(a => a.CustomerId == dto.CustomerId
+                    //                 && (a.Status == "pending" || a.Status == "confirmed"));
 
-                    if (activeAppointmentsCount >= 3)
-                    {
-                        string msg = createdBy == dto.CustomerId
-                            ? "Bạn đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi đặt lịch mới."
-                            : "Khách hàng này đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi tạo thêm lịch.";
-                        throw new InvalidOperationException(msg);
-                    }
+                    // if (activeAppointmentsCount >= 3)
+                    // {
+                    //     string msg = createdBy == dto.CustomerId
+                    //         ? "Bạn đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi đặt lịch mới."
+                    //         : "Khách hàng này đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi tạo thêm lịch.";
+                    //     throw new InvalidOperationException(msg);
+                    // }
 
                     var finalDoctorId = ResolveAndValidateDoctorId(dto.DoctorId, appointmentDate, dto.ServiceId);
 
@@ -196,7 +196,7 @@ namespace MyPetClinic.Application.Services
                         await _notificationService.CreateNotificationAsync(
                             customerUser.Id,
                             "Đặt lịch thành công",
-                            $"Lịch hẹn của bạn vào lúc {appointment.AppointmentDate:HH:mm dd/MM/yyyy} {statusMsg}.",
+                            $"Lịch hẹn của bạn vào lúc {appointment.AppointmentDate.Add(appointment.StartTime):HH:mm dd/MM/yyyy} {statusMsg}.",
                             "System"
                         );
                     }
@@ -281,17 +281,17 @@ namespace MyPetClinic.Application.Services
                         }
 
                         // Kiểm tra tổng số lịch hẹn đang active (để chống spam)
-                        var activeAppointmentsCount = _unitOfWork.Appointments.Query()
-                            .Count(a => a.CustomerId == customer.Id
-                                        && (a.Status == "pending" || a.Status == "confirmed"));
+                        // var activeAppointmentsCount = _unitOfWork.Appointments.Query()
+                        //     .Count(a => a.CustomerId == customer.Id
+                        //                 && (a.Status == "pending" || a.Status == "confirmed"));
 
-                        if (activeAppointmentsCount >= 3)
-                        {
-                            string msg = createdBy == customer.Id
-                                ? "Bạn đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi đặt lịch mới."
-                                : "Khách hàng này đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi tạo thêm lịch.";
-                            throw new InvalidOperationException(msg);
-                        }
+                        // if (activeAppointmentsCount >= 3)
+                        // {
+                        //     string msg = createdBy == customer.Id
+                        //         ? "Bạn đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi đặt lịch mới."
+                        //         : "Khách hàng này đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi tạo thêm lịch.";
+                        //     throw new InvalidOperationException(msg);
+                        // }
                     }
 
                     // 2. Tạo Pet mới
@@ -474,9 +474,9 @@ namespace MyPetClinic.Application.Services
             await _unitOfWork.SaveChangesAsync();
 
             // Gửi thông báo cho khách hàng
-            var message = newStatus == "confirmed" ? $"Lịch hẹn của bạn vào ngày {appointment.AppointmentDate:dd/MM/yyyy} đã được phê duyệt."
-                        : newStatus == "cancelled" ? $"Lịch hẹn của bạn vào ngày {appointment.AppointmentDate:dd/MM/yyyy} đã bị hủy."
-                        : newStatus == "completed" ? $"Lịch hẹn của bạn vào ngày {appointment.AppointmentDate:dd/MM/yyyy} đã hoàn tất."
+            var message = newStatus == "confirmed" ? $"Lịch hẹn của bạn vào lúc {appointment.AppointmentDate.Add(appointment.StartTime):HH:mm dd/MM/yyyy} đã được phê duyệt."
+                        : newStatus == "cancelled" ? $"Lịch hẹn của bạn vào lúc {appointment.AppointmentDate.Add(appointment.StartTime):HH:mm dd/MM/yyyy} đã bị hủy."
+                        : newStatus == "completed" ? $"Lịch hẹn của bạn vào lúc {appointment.AppointmentDate.Add(appointment.StartTime):HH:mm dd/MM/yyyy} đã hoàn tất."
                         : $"Trạng thái lịch hẹn của bạn đã thay đổi thành: {newStatus}.";
 
             if (newStatus == "confirmed" || newStatus == "cancelled" || newStatus == "completed")

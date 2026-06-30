@@ -169,7 +169,7 @@
               <div class="small text-muted fw-bold mb-2 text-uppercase" style="font-size: 0.75rem;">Bác sĩ phụ trách</div>
               <div class="d-flex align-items-center gap-3">
                 <div class="avatar-circle bg-info-subtle text-info fw-bold d-flex align-items-center justify-content-center rounded-3" style="width: 48px; height: 48px; font-size: 1.2rem;">
-                  <i class="bi bi-person-badge"></i>
+                  <i class="bi bi-person-vcard"></i>
                 </div>
                 <div>
                   <h6 class="fw-bold text-dark mb-0">{{ selectedInvoice.doctorName }}</h6>
@@ -339,12 +339,12 @@ const fetchInvoices = async () => {
         totalAmount: inv.totalAmount,
         serviceFee,
         medicineFee,
-        paymentMethod: inv.paymentMethod || (status === 'paid' ? 'Tiền mặt' : undefined),
+        paymentMethod: (inv.paymentMethod?.toLowerCase() === 'cash' ? 'Tiền mặt' : inv.paymentMethod) || (status === 'paid' ? 'Tiền mặt' : undefined),
         transactionId: status === 'paid' ? `TXN_${inv.id}` : undefined,
         items: inv.items?.map((i: any) => ({
           description: i.itemName,
           descNote: i.itemType === 'service' ? 'Dịch vụ y tế' : 'Thuốc/Vật tư',
-          icon: i.itemType === 'service' ? 'bi bi-stethoscope' : 'bi bi-capsule',
+          icon: i.itemType === 'service' ? 'bi bi-heart-pulse' : 'bi bi-capsule',
           qty: i.quantity,
           price: i.unitPrice,
           total: i.totalPrice

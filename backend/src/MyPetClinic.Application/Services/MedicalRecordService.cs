@@ -114,8 +114,7 @@ namespace MyPetClinic.Application.Services
                 }
 
                 // 4. Đồng bộ trạng thái cuộc hẹn
-                appointment.Status = "completed";
-                appointment.CheckOutTime = DateTime.UtcNow;
+                appointment.Status = "ready_to_pay";
                 _unitOfWork.Appointments.Update(appointment);
 
                 await _unitOfWork.SaveChangesAsync();
@@ -473,8 +472,7 @@ namespace MyPetClinic.Application.Services
                     }
                 }
 
-                appointment.Status = "completed";
-                appointment.CheckOutTime = DateTime.UtcNow;
+                appointment.Status = "ready_to_pay";
                 _unitOfWork.Appointments.Update(appointment);
 
                 await _unitOfWork.SaveChangesAsync();

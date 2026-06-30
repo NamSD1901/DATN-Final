@@ -237,3 +237,12 @@ API GetCustomerByPhone không trả về số điện thoại. Frontend lấy se
 CreateWalkInAsync sử dụng DateTime.UtcNow để lưu AppointmentDate, StartTime, CheckInTime. Nếu giờ Việt Nam là 19h27, giờ UTC là 12h27, CSDL lưu 12h27 dẫn đến giao diện hiển thị sai.
 ### Giải pháp
 Dùng TimeZoneInfo.ConvertTimeFromUtc(utcNow, vnTimeZone) để chuyển sang giờ Việt Nam trước khi gán vào các thuộc tính thời gian.
+## [BUG-QUEUE-001] Trang thai lich kham bi bo qua buoc Cho thanh toan
+- **Trang thai:** FIXED
+- **Thoi gian:** 30-06-2026
+### Nguyen nhan
+Khi bac si hoan tat kham va tao MedicalRecord, MedicalRecordService.cs gan truc tiep appointment.Status = "completed" thay vi "ready_to_pay". Do do, ca kham bi lot qua buoc hien thi tren bang Hang kham voi cot "Cho thanh toan".
+### Giai phap
+Sua doi appointment.Status = "ready_to_pay" trong MedicalRecordService.cs khi khoi tao benh an moi qua SOAP hoac thong thuong.
+
+| 6/30/2026 | BUG-MED-001 | Medicine stock desync causes MedicalRecord save failure | ExportMedicineAsync deducted Batch CurrentQuantity but forgot Medicine StockQuantity | Fixed in MedicineService.cs |
