@@ -566,8 +566,8 @@ const printInvoiceWindow = () => {
     </div>
     <div class="info-box">
       <div class="info-label">PHÒNG KHÁM</div>
-      <div class="info-line">MyPet Clinic - 123 Đường Thú Y</div>
-      <div class="info-line">Hà Nội | SĐT: 090 123 4567</div>
+      <div class="info-line">MyPet Clinic - 124A Xuân Thủy</div>
+      <div class="info-line">P. An Khánh, TP. HCM | Hotline: 0905 090 629</div>
     </div>
   </div>
 

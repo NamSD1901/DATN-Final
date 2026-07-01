@@ -36,7 +36,7 @@
           <!-- Doctor 1 -->
           <div class="doctor-card-wrapper text-center">
             <div class="card border-0 glass-card h-100 p-4 doctor-card">
-              <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=200&auto=format&fit=crop" class="doctor-avatar" alt="Dr. Nguyen Van A" />
+              <img src="../assets/bsi1.png" class="doctor-avatar" alt="Dr. Nguyen Van A" />
               <h5 class="fw-bold mb-1">ThS. BS. Nguyễn Văn An</h5>
               <p class="text-warning-highlight small fw-bold mb-2">Giám Đốc Y Khoa</p>
               <p class="text-muted small mb-0">
@@ -48,7 +48,7 @@
           <!-- Doctor 2 -->
           <div class="doctor-card-wrapper text-center">
             <div class="card border-0 glass-card h-100 p-4 doctor-card">
-              <img src="https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&w=300&h=300" class="doctor-avatar" alt="BS. Lê Thị Bình" />
+              <img src="../assets/bsi2.png" class="doctor-avatar" alt="BS. Lê Thị Bình" />
               <h5 class="fw-bold mb-1">BS. Lê Thị Bình</h5>
               <p class="text-warning-highlight small fw-bold mb-2">Trưởng Khoa Nội Trực</p>
               <p class="text-muted small mb-0">
@@ -60,7 +60,7 @@
           <!-- Doctor 3 -->
           <div class="doctor-card-wrapper text-center">
             <div class="card border-0 glass-card h-100 p-4 doctor-card">
-              <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=200&auto=format&fit=crop" class="doctor-avatar" alt="Dr. Tran Hoang C" />
+              <img src="../assets/bsi3.png" class="doctor-avatar" alt="Dr. Tran Hoang C" />
               <h5 class="fw-bold mb-1">BS. Trần Hoàng Cường</h5>
               <p class="text-warning-highlight small fw-bold mb-2">Chuyên Gia Chẩn Đoán Hình Ảnh</p>
               <p class="text-muted small mb-0">
@@ -72,7 +72,7 @@
           <!-- Doctor 4 -->
           <div class="doctor-card-wrapper text-center">
             <div class="card border-0 glass-card h-100 p-4 doctor-card">
-              <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop" class="doctor-avatar" alt="Dr. Pham Minh D" />
+              <img src="../assets/bsi4.png" class="doctor-avatar" alt="Dr. Pham Minh D" />
               <h5 class="fw-bold mb-1">BS. Phạm Minh Duy</h5>
               <p class="text-warning-highlight small fw-bold mb-2">Chuyên Khoa Da Liễu</p>
               <p class="text-muted small mb-0">
