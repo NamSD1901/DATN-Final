@@ -143,25 +143,25 @@
           </div>
         </div>
       </TransitionGroup>
+    </div>
 
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="d-flex justify-content-center align-items-center gap-2 mt-4 pb-2">
-        <button 
-          class="btn btn-outline-secondary btn-sm rounded-pill px-3" 
-          :disabled="currentPage === 1" 
-          @click="prevPage"
-        >
-          <i class="bi bi-chevron-left me-1"></i> Trang trước
-        </button>
-        <span class="text-muted small mx-2" style="font-size: 0.8rem; font-weight: 600;">Trang {{ currentPage }} / {{ totalPages }} (Tổng số: {{ totalCount }} lịch hẹn)</span>
-        <button 
-          class="btn btn-outline-secondary btn-sm rounded-pill px-3" 
-          :disabled="currentPage === totalPages" 
-          @click="nextPage"
-        >
-          Trang sau <i class="bi bi-chevron-right ms-1"></i>
-        </button>
-      </div>
+    <!-- Pagination (Moved outside of v-else so it doesn't disappear when a page is empty) -->
+    <div v-if="totalPages > 1" class="d-flex justify-content-center align-items-center gap-2 mt-4 pb-2">
+      <button 
+        class="btn btn-outline-secondary btn-sm rounded-pill px-3" 
+        :disabled="currentPage === 1" 
+        @click="prevPage"
+      >
+        <i class="bi bi-chevron-left me-1"></i> Trang trước
+      </button>
+      <span class="text-muted small mx-2" style="font-size: 0.8rem; font-weight: 600;">Trang {{ currentPage }} / {{ totalPages }} (Tổng số: {{ totalCount }} lịch hẹn)</span>
+      <button 
+        class="btn btn-outline-secondary btn-sm rounded-pill px-3" 
+        :disabled="currentPage === totalPages" 
+        @click="nextPage"
+      >
+        Trang sau <i class="bi bi-chevron-right ms-1"></i>
+      </button>
     </div>
 
     

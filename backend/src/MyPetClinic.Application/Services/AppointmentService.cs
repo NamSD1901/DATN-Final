@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace MyPetClinic.Application.Services
 {
@@ -668,7 +669,7 @@ namespace MyPetClinic.Application.Services
 
         public async Task<AppointmentDetailDto?> GetAppointmentDetailAsync(long id)
         {
-            var a = _unitOfWork.Appointments.Query()
+            var a = _unitOfWork.Appointments.Query().IgnoreQueryFilters()
                 .Where(x => x.Id == id)
                 .Select(x => new
                 {
@@ -731,145 +732,33 @@ namespace MyPetClinic.Application.Services
 
         public async Task<IEnumerable<AppointmentDetailDto>> GetCustomerAppointmentsAsync(Guid customerId)
         {
-            var rawList = _unitOfWork.Appointments.Query()
+            var rawList = _unitOfWork.Appointments.Query().IgnoreQueryFilters()
                 .Where(a => a.CustomerId == customerId)
                 .OrderByDescending(a => a.AppointmentDate)
                 .ThenByDescending(a => a.StartTime)
-                .Select(a => new
-                {
-                    a.Id,
-                    a.PetId,
-                    PetName = a.Pet != null ? a.Pet.Name : null,
-                    Species = a.Pet != null ? a.Pet.Species : null,
-                    Breed = a.Pet != null ? a.Pet.Breed : null,
-                    Weight = a.Pet != null ? a.Pet.Weight : null,
-                    IsAggressive = a.Pet != null ? (bool?)a.Pet.IsAggressive : null,
-                    a.CustomerId,
-                    CustomerName = a.Customer != null ? a.Customer.FullName : null,
-                    CustomerPhone = a.Customer != null ? a.Customer.Phone : null,
-                    a.ServiceId,
-                    ServiceName = a.Service != null ? a.Service.Name : null,
-                    ServicePrice = a.Service != null ? (decimal?)a.Service.Price : null,
-                    a.DoctorId,
-                    DoctorName = a.Doctor != null ? a.Doctor.FullName : null,
-                    a.AppointmentDate,
-                    a.StartTime,
-                    a.Symptom,
-                    a.Note,
-                    a.Status,
-                    a.QrToken,
-                    InvoiceId = a.Invoice != null ? (long?)a.Invoice.Id : null,
-                    InvoiceStatus = a.Invoice != null ? a.Invoice.PaymentStatus : null,
-                    InvoiceTotalAmount = a.Invoice != null ? (decimal?)a.Invoice.TotalAmount : null,
-                    a.VaccineId,
-                    VaccineName = a.Vaccine != null ? a.Vaccine.Name : null
-                })
                 .ToList();
 
-            var mapped = rawList.Select(a => new AppointmentDetailDto
-            {
-                Id = a.Id,
-                PetId = a.PetId,
-                PetName = a.PetName,
-                Species = a.Species,
-                Breed = a.Breed,
-                Weight = a.Weight,
-                IsAggressive = a.IsAggressive ?? false,
-                CustomerId = a.CustomerId,
-                CustomerName = a.CustomerName,
-                CustomerPhone = a.CustomerPhone,
-                ServiceId = a.ServiceId,
-                ServiceName = a.ServiceName,
-                ServicePrice = a.ServicePrice,
-                DoctorId = a.DoctorId,
-                DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.ToLocalTime().Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
-                Symptom = a.Symptom,
-                Note = a.Note,
-                Status = a.Status,
-                QrToken = a.QrToken,
-                InvoiceId = a.InvoiceId,
-                InvoiceStatus = a.InvoiceStatus,
-                InvoiceTotalAmount = a.InvoiceTotalAmount,
-                VaccineId = a.VaccineId,
-                VaccineName = a.VaccineName
-            });
+            var mapped = await MapToDetailDtoAsync(rawList);
 
-            return await Task.FromResult(mapped);
+            return mapped;
         }
 
         public async Task<IEnumerable<AppointmentDetailDto>> GetPetAppointmentsAsync(long petId)
         {
-            var rawList = _unitOfWork.Appointments.Query()
+            var rawList = _unitOfWork.Appointments.Query().IgnoreQueryFilters()
                 .Where(a => a.PetId == petId)
                 .OrderByDescending(a => a.AppointmentDate)
                 .ThenByDescending(a => a.StartTime)
-                .Select(a => new
-                {
-                    a.Id,
-                    a.PetId,
-                    PetName = a.Pet != null ? a.Pet.Name : null,
-                    Species = a.Pet != null ? a.Pet.Species : null,
-                    Breed = a.Pet != null ? a.Pet.Breed : null,
-                    Weight = a.Pet != null ? a.Pet.Weight : null,
-                    IsAggressive = a.Pet != null ? (bool?)a.Pet.IsAggressive : null,
-                    a.CustomerId,
-                    CustomerName = a.Customer != null ? a.Customer.FullName : null,
-                    CustomerPhone = a.Customer != null ? a.Customer.Phone : null,
-                    a.ServiceId,
-                    ServiceName = a.Service != null ? a.Service.Name : null,
-                    ServicePrice = a.Service != null ? (decimal?)a.Service.Price : null,
-                    a.DoctorId,
-                    DoctorName = a.Doctor != null ? a.Doctor.FullName : null,
-                    a.AppointmentDate,
-                    a.StartTime,
-                    a.Symptom,
-                    a.Note,
-                    a.Status,
-                    a.QrToken,
-                    InvoiceId = a.Invoice != null ? (long?)a.Invoice.Id : null,
-                    InvoiceStatus = a.Invoice != null ? a.Invoice.PaymentStatus : null,
-                    InvoiceTotalAmount = a.Invoice != null ? (decimal?)a.Invoice.TotalAmount : null,
-                    a.VaccineId,
-                    VaccineName = a.Vaccine != null ? a.Vaccine.Name : null
-                })
                 .ToList();
 
-            var mapped = rawList.Select(a => new AppointmentDetailDto
-            {
-                Id = a.Id,
-                PetId = a.PetId,
-                PetName = a.PetName,
-                Species = a.Species,
-                Breed = a.Breed,
-                Weight = a.Weight,
-                IsAggressive = a.IsAggressive ?? false,
-                CustomerId = a.CustomerId,
-                CustomerName = a.CustomerName,
-                CustomerPhone = a.CustomerPhone,
-                ServiceId = a.ServiceId,
-                ServiceName = a.ServiceName,
-                ServicePrice = a.ServicePrice,
-                DoctorId = a.DoctorId,
-                DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.ToLocalTime().Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
-                Symptom = a.Symptom,
-                Note = a.Note,
-                Status = a.Status,
-                QrToken = a.QrToken,
-                InvoiceId = a.InvoiceId,
-                InvoiceStatus = a.InvoiceStatus,
-                InvoiceTotalAmount = a.InvoiceTotalAmount,
-                VaccineId = a.VaccineId,
-                VaccineName = a.VaccineName
-            });
+            var mapped = await MapToDetailDtoAsync(rawList);
 
-            return await Task.FromResult(mapped);
+            return mapped;
         }
 
         public async Task<PaginatedResultDto<AppointmentDetailDto>> GetCustomerAppointmentsPaginatedAsync(Guid customerId, string? status, int page, int pageSize)
         {
-            var query = _unitOfWork.Appointments.Query()
+            var query = _unitOfWork.Appointments.Query().IgnoreQueryFilters()
                 .Where(a => a.CustomerId == customerId);
 
             if (!string.IsNullOrEmpty(status) && status != "all")
@@ -883,70 +772,80 @@ namespace MyPetClinic.Application.Services
             var rawList = query
                 .OrderByDescending(a => a.AppointmentDate)
                 .ThenByDescending(a => a.StartTime)
-                .Select(a => new
-                {
-                    a.Id,
-                    a.PetId,
-                    PetName = a.Pet != null ? a.Pet.Name : null,
-                    Species = a.Pet != null ? a.Pet.Species : null,
-                    Breed = a.Pet != null ? a.Pet.Breed : null,
-                    Weight = a.Pet != null ? a.Pet.Weight : null,
-                    IsAggressive = a.Pet != null ? (bool?)a.Pet.IsAggressive : null,
-                    a.CustomerId,
-                    CustomerName = a.Customer != null ? a.Customer.FullName : null,
-                    CustomerPhone = a.Customer != null ? a.Customer.Phone : null,
-                    a.ServiceId,
-                    ServiceName = a.Service != null ? a.Service.Name : null,
-                    ServicePrice = a.Service != null ? (decimal?)a.Service.Price : null,
-                    a.DoctorId,
-                    DoctorName = a.Doctor != null ? a.Doctor.FullName : null,
-                    a.AppointmentDate,
-                    a.StartTime,
-                    a.Symptom,
-                    a.Note,
-                    a.Status,
-                    a.QrToken,
-                    InvoiceId = a.Invoice != null ? (long?)a.Invoice.Id : null,
-                    InvoiceStatus = a.Invoice != null ? a.Invoice.PaymentStatus : null,
-                    InvoiceTotalAmount = a.Invoice != null ? (decimal?)a.Invoice.TotalAmount : null,
-                    a.VaccineId,
-                    VaccineName = a.Vaccine != null ? a.Vaccine.Name : null
-                })
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
-            var mapped = rawList.Select(a => new AppointmentDetailDto
-            {
-                Id = a.Id,
-                PetId = a.PetId,
-                PetName = a.PetName,
-                Species = a.Species,
-                Breed = a.Breed,
-                Weight = a.Weight,
-                IsAggressive = a.IsAggressive ?? false,
-                CustomerId = a.CustomerId,
-                CustomerName = a.CustomerName,
-                CustomerPhone = a.CustomerPhone,
-                ServiceId = a.ServiceId,
-                ServiceName = a.ServiceName,
-                ServicePrice = a.ServicePrice,
-                DoctorId = a.DoctorId,
-                DoctorName = a.DoctorName,
-                AppointmentDate = a.AppointmentDate.ToLocalTime().Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
-                Symptom = a.Symptom,
-                Note = a.Note,
-                Status = a.Status,
-                QrToken = a.QrToken,
-                InvoiceId = a.InvoiceId,
-                InvoiceStatus = a.InvoiceStatus,
-                InvoiceTotalAmount = a.InvoiceTotalAmount,
-                VaccineId = a.VaccineId,
-                VaccineName = a.VaccineName
-            });
+            var mapped = await MapToDetailDtoAsync(rawList);
 
             var result = new PaginatedResultDto<AppointmentDetailDto>(mapped, totalCount, page, pageSize);
-            return await Task.FromResult(result);
+            return result;
+        }
+
+        private async Task<List<AppointmentDetailDto>> MapToDetailDtoAsync(IEnumerable<Appointment> appointments)
+        {
+            if (!appointments.Any()) return new List<AppointmentDetailDto>();
+
+            var petIds = appointments.Select(a => a.PetId).Distinct().ToList();
+            var pets = await _unitOfWork.Pets.Query().IgnoreQueryFilters().Where(p => petIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id);
+
+            var customerIds = appointments.Select(a => a.CustomerId).Distinct().ToList();
+            var customers = await _unitOfWork.Customers.Query().IgnoreQueryFilters().Where(c => customerIds.Contains(c.Id)).ToDictionaryAsync(c => c.Id);
+
+            var doctorIds = appointments.Select(a => a.DoctorId).Distinct().ToList();
+            var doctors = await _unitOfWork.Users.Query().IgnoreQueryFilters().Where(u => doctorIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id);
+
+            var serviceIds = appointments.Select(a => a.ServiceId).Distinct().ToList();
+            var services = await _unitOfWork.Services.Query().IgnoreQueryFilters().Where(s => serviceIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id);
+
+            var vaccineIds = appointments.Where(a => a.VaccineId.HasValue).Select(a => a.VaccineId!.Value).Distinct().ToList();
+            var vaccines = await _unitOfWork.Vaccines.Query().IgnoreQueryFilters().Where(v => vaccineIds.Contains(v.Id)).ToDictionaryAsync(v => v.Id);
+
+            var appointmentIds = appointments.Select(a => a.Id).ToList();
+            var invoices = await _unitOfWork.Invoices.Query().IgnoreQueryFilters().Where(i => appointmentIds.Contains(i.AppointmentId)).ToDictionaryAsync(i => i.AppointmentId);
+
+            var result = new List<AppointmentDetailDto>();
+            foreach (var a in appointments)
+            {
+                pets.TryGetValue(a.PetId, out var pet);
+                customers.TryGetValue(a.CustomerId, out var customer);
+                doctors.TryGetValue(a.DoctorId, out var doctor);
+                services.TryGetValue(a.ServiceId, out var service);
+                Vaccine? vaccine = null;
+                if (a.VaccineId.HasValue) vaccines.TryGetValue(a.VaccineId.Value, out vaccine);
+                invoices.TryGetValue(a.Id, out var invoice);
+
+                result.Add(new AppointmentDetailDto
+                {
+                    Id = a.Id,
+                    PetId = a.PetId,
+                    PetName = pet?.Name ?? "Thú cưng đã xóa",
+                    Species = pet?.Species ?? "Không rõ",
+                    Breed = pet?.Breed,
+                    Weight = pet?.Weight,
+                    IsAggressive = pet?.IsAggressive ?? false,
+                    CustomerId = a.CustomerId,
+                    CustomerName = customer?.FullName ?? "Khách hàng",
+                    CustomerPhone = customer?.Phone,
+                    ServiceId = a.ServiceId,
+                    ServiceName = service?.Name ?? "Dịch vụ đã xóa",
+                    ServicePrice = service?.Price,
+                    DoctorId = a.DoctorId,
+                    DoctorName = doctor?.FullName ?? "Bác sĩ đã nghỉ",
+                    AppointmentDate = a.AppointmentDate.ToLocalTime().Date.Add(a.StartTime).ToString("yyyy-MM-ddTHH:mm:ss"),
+                    Symptom = a.Symptom,
+                    Note = a.Note,
+                    Status = a.Status,
+                    QrToken = a.QrToken,
+                    InvoiceId = invoice?.Id,
+                    InvoiceStatus = invoice?.PaymentStatus,
+                    InvoiceTotalAmount = invoice?.TotalAmount,
+                    VaccineId = a.VaccineId,
+                    VaccineName = vaccine?.Name
+                });
+            }
+
+            return result;
         }
 
         public async Task<IEnumerable<MedicalRecordDto>> GetPetMedicalHistoryAsync(long petId, Guid CustomerId)
@@ -957,7 +856,7 @@ namespace MyPetClinic.Application.Services
                 throw new UnauthorizedAccessException("Bạn không có quyền truy cập thông tin bệnh án của thú cưng này.");
             }
 
-            var records = _unitOfWork.MedicalRecords.Query()
+            var records = _unitOfWork.MedicalRecords.Query().IgnoreQueryFilters()
                 .Where(mr => mr.Appointment != null && mr.Appointment.PetId == petId)
                 .OrderByDescending(mr => mr.CreatedAt)
                 .Select(mr => new
