@@ -184,10 +184,6 @@
                         <option value="">-- Chọn loài --</option>
                         <option value="Chó">🐕 Chó</option>
                         <option value="Mèo">🐈 Mèo</option>
-                        <option value="Thỏ">🐇 Thỏ</option>
-                        <option value="Chim">🦜 Chim</option>
-                        <option value="Cá">🐟 Cá</option>
-                        <option value="Bò sát">🦎 Bò sát</option>
                       </select>
                     </div>
                   </div>

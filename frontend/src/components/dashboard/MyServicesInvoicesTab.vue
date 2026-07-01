@@ -70,7 +70,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="inv in filteredInvoices" :key="inv.id" class="cursor-pointer" style="transition: all 0.2s;" @click="openInvoiceDetail(inv)">
+              <tr v-for="inv in paginatedInvoices" :key="inv.id" class="cursor-pointer" style="transition: all 0.2s;" @click="openInvoiceDetail(inv)">
                 <td class="px-4 py-3">
                   <div class="d-flex align-items-center">
                     <div class="service-icon-box bg-warning-subtle text-warning rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
@@ -105,7 +105,7 @@
                   <i class="bi bi-chevron-right text-muted"></i>
                 </td>
               </tr>
-              <tr v-if="filteredInvoices.length === 0">
+              <tr v-if="paginatedInvoices.length === 0">
                 <td colspan="6" class="text-center py-5 text-muted">
                   <div class="mb-3"><i class="bi bi-inbox fs-1 opacity-50"></i></div>
                   Không tìm thấy hóa đơn nào.
@@ -113,6 +113,24 @@
               </tr>
             </tbody>
           </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center p-3 border-top" v-if="totalPages > 1">
+          <span class="text-muted small">
+            Hiển thị {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, filteredInvoices.length) }} trong số {{ filteredInvoices.length }}
+          </span>
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" :class="{ disabled: currentPage === 1 }">
+              <a class="page-link text-dark" href="#" @click.prevent="prevPage">Trước</a>
+            </li>
+            <li class="page-item" v-for="page in totalPages" :key="page" :class="{ active: currentPage === page }">
+              <a class="page-link" :class="currentPage === page ? 'bg-warning border-warning text-dark fw-bold' : 'text-dark'" href="#" @click.prevent="goToPage(page)">{{ page }}</a>
+            </li>
+            <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+              <a class="page-link text-dark" href="#" @click.prevent="nextPage">Sau</a>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -269,7 +287,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import api from '../../services/api';
 
 // --- Types ---
@@ -388,6 +406,25 @@ const filteredInvoices = computed(() => {
   if (filterStatus.value === 'all') return invoices.value;
   return invoices.value.filter(inv => inv.status === filterStatus.value);
 });
+
+// --- Pagination ---
+const currentPage = ref(1);
+const itemsPerPage = 5;
+
+watch(filterStatus, () => {
+  currentPage.value = 1;
+});
+
+const totalPages = computed(() => Math.ceil(filteredInvoices.value.length / itemsPerPage) || 1);
+
+const paginatedInvoices = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  return filteredInvoices.value.slice(start, start + itemsPerPage);
+});
+
+const prevPage = () => { if (currentPage.value > 1) currentPage.value--; };
+const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++; };
+const goToPage = (page: number) => { currentPage.value = page; };
 
 // --- Methods ---
 const formatCurrency = (amount: number): string => {

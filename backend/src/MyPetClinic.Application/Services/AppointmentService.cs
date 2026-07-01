@@ -918,9 +918,58 @@ namespace MyPetClinic.Application.Services
                 InvoiceId = mr.InvoiceId,
                 InvoiceStatus = mr.InvoiceStatus,
                 InvoiceTotalAmount = mr.InvoiceTotalAmount
-            });
+            }).ToList();
 
-            return await Task.FromResult(mapped);
+            var vacRecords = _unitOfWork.VaccinationRecords.Query().IgnoreQueryFilters()
+                .Where(v => v.PetId == petId)
+                .Select(v => new
+                {
+                    v.Id,
+                    v.AppointmentId,
+                    v.DoctorId,
+                    DoctorName = v.Doctor != null ? v.Doctor.FullName : string.Empty,
+                    v.CreatedAt,
+                    v.Weight,
+                    v.Temperature,
+                    v.ClinicalAssessment,
+                    v.ReasonForVisit,
+                    v.DoctorRemarks,
+                    v.NextDueDate,
+                    VaccineName = v.Vaccine != null ? v.Vaccine.Name : string.Empty,
+                    v.Dose,
+                    InvoiceId = v.Appointment != null && v.Appointment.Invoice != null ? (long?)v.Appointment.Invoice.Id : null,
+                    InvoiceStatus = v.Appointment != null && v.Appointment.Invoice != null ? v.Appointment.Invoice.PaymentStatus : null,
+                    InvoiceTotalAmount = v.Appointment != null && v.Appointment.Invoice != null ? (decimal?)v.Appointment.Invoice.TotalAmount : null
+                })
+                .ToList();
+
+            var vacMapped = vacRecords.Select(v => new MedicalRecordDto
+            {
+                RecordId = v.Id + 1000000, 
+                AppointmentId = v.AppointmentId ?? 0,
+                PetId = pet.Id,
+                PetName = pet.Name ?? string.Empty,
+                VisitDate = v.CreatedAt,
+                RecordType = "Vaccination",
+                MedicalHistory = v.ReasonForVisit ?? "Tiêm phòng",
+                Diagnosis = v.VaccineName ?? string.Empty,
+                TreatmentPlan = v.Dose != null ? $"Tiêm {v.Dose} ml {v.VaccineName}" : $"Tiêm {v.VaccineName}",
+                DoctorName = v.DoctorName ?? string.Empty,
+                DoctorId = v.DoctorId.ToString(),
+                Weight = v.Weight,
+                Temperature = v.Temperature ?? 0m,
+                ClinicalSigns = v.ClinicalAssessment ?? string.Empty,
+                DoctorNotes = v.DoctorRemarks ?? string.Empty,
+                FollowUpDate = v.NextDueDate,
+                PrescribedMedicines = new List<PrescribedMedicineDto>(),
+                InvoiceId = v.InvoiceId,
+                InvoiceStatus = v.InvoiceStatus,
+                InvoiceTotalAmount = v.InvoiceTotalAmount
+            }).ToList();
+
+            var combinedList = mapped.Concat(vacMapped).OrderByDescending(r => r.VisitDate).ToList();
+
+            return await Task.FromResult(combinedList);
         }
 
         public async Task<IEnumerable<DoctorAvailableSlotsDto>> GetAvailableSlotsAsync(DateTime date, long? serviceId = null)

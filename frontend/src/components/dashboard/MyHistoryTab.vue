@@ -77,7 +77,7 @@
             <div class="timeline-badge" :class="record.recordType === 'Vaccination' ? 'bg-success' : 'bg-primary'">
               <div class="badge-inner">
                 <i v-if="record.recordType === 'Vaccination'" class="bi bi-shield-plus text-white"></i>
-                <i v-else class="bi bi-heartpulse-fill text-white"></i>
+                <i v-else class="bi bi-heart-pulse-fill text-white"></i>
               </div>
             </div>
             

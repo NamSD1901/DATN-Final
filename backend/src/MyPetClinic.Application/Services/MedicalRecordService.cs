@@ -424,6 +424,14 @@ namespace MyPetClinic.Application.Services
                 };
 
                 await _unitOfWork.MedicalRecords.AddAsync(medicalRecord);
+                
+                // Cập nhật ưu tiên cân nặng từ Bác sĩ
+                if (appointment.Pet != null && dto.Objective.Weight > 0)
+                {
+                    appointment.Pet.Weight = dto.Objective.Weight;
+                    _unitOfWork.Pets.Update(appointment.Pet);
+                }
+
                 await _unitOfWork.SaveChangesAsync(); 
 
                 if (dto.Plan.Prescriptions != null && dto.Plan.Prescriptions.Any())

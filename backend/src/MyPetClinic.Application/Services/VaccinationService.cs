@@ -34,7 +34,8 @@ namespace MyPetClinic.Application.Services
 
         public async Task<long> SubmitSoapRecordAsync(long appointmentId, Guid doctorId, VaccinationSoapRequestDto request)
         {
-            var appointment = await _unitOfWork.Appointments.GetByIdAsync(appointmentId);
+            var appointments = await _unitOfWork.Appointments.FindWithIncludesAsync(a => a.Id == appointmentId, a => a.Pet!);
+            var appointment = appointments.FirstOrDefault();
             if (appointment == null)
                 throw new KeyNotFoundException("Không tìm thấy cuộc hẹn.");
 
@@ -61,6 +62,13 @@ namespace MyPetClinic.Application.Services
             
             _unitOfWork.Appointments.Update(appointment);
             await _unitOfWork.VaccinationRecords.AddAsync(record);
+            
+            // Cập nhật ưu tiên cân nặng từ Bác sĩ
+            if (appointment.Pet != null && request.Weight > 0)
+            {
+                appointment.Pet.Weight = request.Weight;
+                _unitOfWork.Pets.Update(appointment.Pet);
+            }
             
             await _unitOfWork.SaveChangesAsync();
 

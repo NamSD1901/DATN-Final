@@ -10,7 +10,7 @@
       </div>
 
       <ul class="list-unstyled components px-2 py-3">
-        <li v-if="role !== 'receptionist' && role !== 'doctor'" :class="{ 'active': activeTab === 'overview' }">
+        <li v-if="role === 'customer'" :class="{ 'active': activeTab === 'overview' }">
           <a href="#" @click.prevent="activeTab = 'overview'">
             <i class="bi bi-grid-1x2-fill text-warning"></i> Tổng quan
           </a>
@@ -22,7 +22,7 @@
         </li>
 
         <!-- Staff/Admin specific routes -->
-        <template v-if="role === 'admin' || role === 'receptionist'">
+        <template v-if="role === 'receptionist'">
           <li class="mt-4 mb-2 px-3 text-muted sidebar-section-title">Quản lý chuyên môn</li>
           <li :class="{ 'active': activeTab === 'queue' }">
             <a href="#" @click.prevent="activeTab = 'queue'"><i class="bi bi-kanban text-warning opacity-75"></i> Hàng khám</a>
@@ -44,7 +44,7 @@
           </li>
         </template>
 
-        <template v-if="role === 'admin'">
+        <template v-if="false">
           <li class="mt-4 mb-2 px-3 text-muted sidebar-section-title text-nowrap text-truncate">Quản lý lâm sàng</li>
           <li :class="{ 'active': activeTab === 'doctor-cases' || activeTab === 'medical-records' }">
             <a href="#" class="text-nowrap text-truncate" @click.prevent="activeTab = 'doctor-cases'" title="Ca khám & Bệnh án">
@@ -53,7 +53,7 @@
           </li>
         </template>
 
-        <template v-if="role === 'receptionist' || role === 'admin'">
+        <template v-if="role === 'receptionist'">
           <li :class="{ 'active': activeTab === 'invoices' }">
             <a href="#" @click.prevent="activeTab = 'invoices'"><i class="bi bi-receipt-cutoff text-warning opacity-75"></i> Quản lý Hóa đơn</a>
           </li>
@@ -543,6 +543,8 @@ const fetchDashboardData = async () => {
       activeTab.value = 'queue';
     } else if (role.value === 'doctor' && activeTab.value === 'overview') {
       activeTab.value = 'doctor-cases';
+    } else if (role.value === 'admin' && activeTab.value === 'overview') {
+      activeTab.value = 'profile';
     }
 
     // Fetch details to get avatar, phone, address
