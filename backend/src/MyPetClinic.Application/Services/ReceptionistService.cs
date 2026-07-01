@@ -34,58 +34,6 @@ namespace MyPetClinic.Application.Services
             return (startUtc, endUtc);
         }
 
-        public async Task<List<OmniSearchDto>> OmniSearchAsync(string query)
-        {
-            if (string.IsNullOrWhiteSpace(query))
-                return new List<OmniSearchDto>();
-
-            var lowerQuery = query.ToLower();
-
-            var matchedPets = await _unitOfWork.Pets.FindAsync(
-                p => (p.Name != null && p.Name.ToLower().Contains(lowerQuery)) || 
-                     (p.MicrochipCode != null && p.MicrochipCode.ToLower().Contains(lowerQuery))
-            );
-            var matchedOwnerIds = matchedPets.Select(p => p.CustomerId).ToList();
-
-            var usersList = await _unitOfWork.Users.FindWithIncludesAsync(
-                u => u.IsActive == true && u.Role != null && u.Role.Name.ToLower() == "customer" &&
-                    ((u.FullName != null && u.FullName.ToLower().Contains(lowerQuery)) ||
-                     (u.Phone != null && u.Phone.Contains(lowerQuery)) ||
-                     (u.Email != null && u.Email.ToLower().Contains(lowerQuery)) ||
-                     matchedOwnerIds.Contains(u.Id)),
-                u => u.Role!
-            );
-            
-            var users = usersList.Take(20).ToList();
-
-            var result = new List<OmniSearchDto>();
-            foreach (var user in users)
-            {
-                var userPets = await _unitOfWork.Pets.FindAsync(p => p.CustomerId == user.Id && !p.IsDeceased);
-                var pets = userPets.Select(p => new OmniSearchPetDto
-                    {
-                        PetId = p.Id,
-                        Name = p.Name,
-                        Species = p.Species,
-                        Breed = p.Breed,
-                        Weight = p.Weight,
-                        MicrochipCode = p.MicrochipCode
-                    })
-                    .ToList();
-
-                result.Add(new OmniSearchDto
-                {
-                    CustomerId = user.Id,
-                    FullName = user.FullName,
-                    Phone = user.Phone,
-                    Email = user.Email,
-                    Pets = pets
-                });
-            }
-
-            return result;
-        }
-
         public async Task<AppointmentPreviewDto> GetAppointmentPreviewByQrAsync(string qrToken)
         {
             var appointment = await _unitOfWork.Appointments.GetFirstOrDefaultWithIncludesAsync(

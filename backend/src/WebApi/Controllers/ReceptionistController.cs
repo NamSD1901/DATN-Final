@@ -173,12 +173,6 @@ namespace WebApi.Controllers
             });
         }
 
-        [HttpGet("omni-search")]
-        public async Task<IActionResult> OmniSearch([FromQuery] string q)
-        {
-            var results = await _receptionistService.OmniSearchAsync(q);
-            return Ok(results);
-        }
         [HttpGet("appointment-preview")]
         public async Task<IActionResult> GetAppointmentPreview([FromQuery] string qrToken)
         {
