@@ -119,14 +119,16 @@
                 <span class="small fw-bold text-warning">Bs. {{ getLastWord(card.doctorName) }}</span>
               </div>
 
-              <!-- Auto-transition notice -->
+              <!-- Auto-transition notice & Manual Demo Action -->
               <div class="d-flex flex-column gap-2 mt-3 pt-2 border-top">
                 <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger w-100 rounded-pill py-1 fw-bold" @click="openLinkCustomerModal(card)">
                   <i class="bi bi-link-45deg"></i> Ghép Hồ Sơ
                 </button>
-                <div class="text-center text-muted small py-1">
-                  <i class="bi bi-arrow-right-circle text-success me-1"></i>
-                  Tự động chuyển sang thanh toán khi hoàn tất khám
+                <button class="btn btn-sm btn-success w-100 rounded-pill py-1 fw-bold text-white shadow-sm" @click.stop="updateStatus(card.appointmentId, 'ready_to_pay')">
+                  <i class="bi bi-check-circle me-1"></i> Chuyển Thu Ngân
+                </button>
+                <div class="text-center text-muted" style="font-size: 0.65rem;">
+                  (Hoặc tự động chuyển khi BS khám xong)
                 </div>
               </div>
             </div>
