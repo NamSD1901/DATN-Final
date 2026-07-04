@@ -102,9 +102,7 @@
                 <button class="btn btn-primary w-100 rounded-3 fw-bold py-2 shadow-sm" style="background-color: #034694; border: none;" @click="downloadQr">
                   <i class="bi bi-download me-2"></i> Tải xuống mã QR
                 </button>
-                <button class="btn w-100 rounded-3 fw-bold py-2" style="background-color: #e2e8f0; color: #0f172a; border: none;" @click="printQr">
-                  <i class="bi bi-printer me-2"></i> In thẻ Check-in
-                </button>
+
               </div>
 
             </div>
@@ -213,9 +211,6 @@ const goBack = () => {
   router.push('/dashboard');
 };
 
-const printQr = () => {
-  window.print();
-};
 
 const downloadQr = () => {
   const canvas = document.querySelector('.qr-container canvas') as HTMLCanvasElement;

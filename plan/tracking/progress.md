@@ -207,4 +207,6 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 
 ### 🎯 Sprint 17: Trợ Lý Gemini AI, Nhắc Lịch Tự Động & E2E Test
 *   **Mục tiêu:** Chatbot AI, background job nhắc lịch và tối ưu hóa hệ thống.
-*   **Trạng thái chung:** `✅ CODE DONE` (T51, T52, T53, T57).
+*   **Trạng thái chung:** `✅ CODE DONE` (T51, T52, T53, T57, T58).
+*   **Chi tiết:**
+    *   T58: Tích hợp Background Email Notifications (`✅ CODE DONE` - Xây dựng EmailQueue Worker chạy ngầm, gửi email tự động khi Duyệt đặt lịch, Hủy lịch, Dời lịch và Cảm ơn khi thanh toán hóa đơn).

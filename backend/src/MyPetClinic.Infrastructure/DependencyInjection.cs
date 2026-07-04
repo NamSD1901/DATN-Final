@@ -73,6 +73,10 @@ namespace MyPetClinic.Infrastructure
             // Đăng ký Background Service nhắc lịch tiêm phòng
             services.AddHostedService<Workers.VaccineReminderWorker>();
 
+            // Đăng ký Background Email Queue
+            services.AddSingleton<IEmailQueue, EmailQueue>();
+            services.AddHostedService<Workers.EmailQueueWorker>();
+
             return services;
         }
     }

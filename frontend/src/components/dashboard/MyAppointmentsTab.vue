@@ -128,13 +128,7 @@
                 <button class="btn-appt-detail" @click="openDetailModal(appt)">
                   <i class="bi bi-eye me-1"></i> Xem chi tiết
                 </button>
-                <button
-                  v-if="canCancel(appt.status)"
-                  class="btn-appt-cancel"
-                  @click="confirmCancel(appt)"
-                >
-                  <i class="bi bi-x-circle me-1"></i> Huỷ lịch
-                </button>
+
                 <div v-if="appt.invoiceTotalAmount && appt.invoiceTotalAmount > 0" class="appt-price-tag">
                   {{ formatCurrency(appt.invoiceTotalAmount) }}
                 </div>

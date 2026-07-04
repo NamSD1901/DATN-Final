@@ -28,6 +28,7 @@ namespace MyPetClinic.Infrastructure.Repositories
         {
             return await _context.Users
                 .Include(u => u.Role)
+                .Include(u => u.CustomerProfile)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
 

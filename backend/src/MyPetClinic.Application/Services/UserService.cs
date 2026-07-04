@@ -54,6 +54,15 @@ namespace MyPetClinic.Application.Services
                 user.DateOfBirth = null;
             }
 
+            if (user.CustomerProfile != null)
+            {
+                user.CustomerProfile.FullName = dto.FullName;
+                user.CustomerProfile.Phone = dto.Phone;
+                user.CustomerProfile.Address = dto.Address;
+                user.CustomerProfile.Gender = dto.Gender;
+                user.CustomerProfile.DateOfBirth = user.DateOfBirth;
+            }
+
             await _userRepository.UpdateUserAsync(user);
             await _userRepository.SaveChangesAsync();
 

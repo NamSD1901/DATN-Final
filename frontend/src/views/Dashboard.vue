@@ -76,9 +76,7 @@
           <li :class="{ 'active': activeTab === 'vaccines-admin' }">
             <a href="#" @click.prevent="activeTab = 'vaccines-admin'"><i class="bi bi-droplet-half text-warning opacity-75"></i> Quản lý Vắc-xin</a>
           </li>
-          <li :class="{ 'active': activeTab === 'schedules-admin' }">
-            <a href="#" @click.prevent="activeTab = 'schedules-admin'"><i class="bi bi-calendar-event-fill text-warning opacity-75"></i> Lịch trực Bác sĩ</a>
-          </li>
+
           <li :class="{ 'active': activeTab === 'reports-admin' }">
             <a href="#" @click.prevent="activeTab = 'reports-admin'"><i class="bi bi-graph-up-arrow text-warning opacity-75"></i> Báo cáo doanh thu</a>
           </li>
@@ -88,9 +86,7 @@
           <li :class="{ 'active': activeTab === 'blog-admin' }">
             <a href="#" @click.prevent="activeTab = 'blog-admin'"><i class="bi bi-journal-text text-warning opacity-75"></i> Quản lý bài viết</a>
           </li>
-          <li :class="{ 'active': activeTab === 'banners-admin' }">
-            <a href="#" @click.prevent="activeTab = 'banners-admin'"><i class="bi bi-image text-warning opacity-75"></i> Quản lý Banners</a>
-          </li>
+
         </template>
 
         <!-- Customer specific routes -->

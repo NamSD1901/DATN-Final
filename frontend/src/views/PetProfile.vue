@@ -1061,7 +1061,6 @@ const chartInstance = shallowRef<Chart | null>(null);
 const tabs = computed(() => [
   { key: 'overview', label: 'Tổng quan', icon: 'bi bi-grid-1x2-fill' },
   { key: 'history', label: 'Lịch sử khám', icon: 'bi bi-file-medical-fill' },
-  { key: 'appointments', label: 'Lịch hẹn', icon: 'bi bi-calendar-check-fill' },
   { key: 'vaccines', label: 'Vaccine', icon: 'bi bi-bandaid' },
   { key: 'prescriptions', label: 'Đơn thuốc', icon: 'bi bi-capsule' }
 ]);

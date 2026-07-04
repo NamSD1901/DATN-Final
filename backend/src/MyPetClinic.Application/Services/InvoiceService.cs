@@ -12,10 +12,12 @@ namespace MyPetClinic.Application.Services
     public class InvoiceService : IInvoiceService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IEmailQueue _emailQueue;
 
-        public InvoiceService(IUnitOfWork unitOfWork)
+        public InvoiceService(IUnitOfWork unitOfWork, IEmailQueue emailQueue)
         {
             _unitOfWork = unitOfWork;
+            _emailQueue = emailQueue;
         }
 
         public async Task<IEnumerable<QueueItemDto>> GetPendingCheckoutsAsync()
@@ -316,7 +318,10 @@ namespace MyPetClinic.Application.Services
         {
             var invoice = await _unitOfWork.Invoices.GetFirstOrDefaultWithIncludesAsync(
                 i => i.Id == invoiceId,
-                i => i.Appointment!
+                i => i.Appointment!,
+                i => i.Appointment!.Pet!,
+                i => i.Appointment!.Doctor!,
+                i => i.InvoiceItems
             );
 
             if (invoice == null) return false;
@@ -353,6 +358,40 @@ namespace MyPetClinic.Application.Services
             }
 
             await _unitOfWork.SaveChangesAsync();
+
+            // TH4: Gửi email hóa đơn cảm ơn khi đã thanh toán thành công
+            try
+            {
+                var customerId = invoice.Appointment?.CustomerId;
+                if (customerId.HasValue)
+                {
+                    var customerUser = _unitOfWork.Users.Query().FirstOrDefault(u => u.CustomerId == customerId.Value && u.IsActive == true);
+                    if (customerUser != null && !string.IsNullOrEmpty(customerUser.Email))
+                    {
+                        string invoiceCode = "INV-" + invoice.Id.ToString("D5");
+                        var itemsDto = invoice.InvoiceItems?.Select(ii => (ii.ItemName ?? "", ii.Quantity, ii.TotalPrice)) 
+                                       ?? new List<(string, int, decimal)>();
+
+                        var emailHtml = MyPetClinic.Application.Utils.EmailTemplateBuilder.BuildThankYouInvoiceEmail(
+                            customerName: customerUser.FullName ?? invoice.Appointment?.Customer?.FullName ?? "Khách hàng",
+                            invoiceCode: invoiceCode,
+                            totalAmount: invoice.TotalAmount,
+                            petName: invoice.Appointment?.Pet?.Name,
+                            doctorName: invoice.Appointment?.Doctor?.FullName,
+                            appointmentDate: invoice.Appointment?.AppointmentDate,
+                            items: itemsDto
+                        );
+                        await _emailQueue.QueueEmailAsync(new MyPetClinic.Application.DTOs.Notification.EmailMessageDto
+                        {
+                            ToEmail = customerUser.Email,
+                            Subject = $"MyPetClinic - Cảm ơn bạn đã sử dụng dịch vụ ({invoiceCode})",
+                            BodyHtml = emailHtml
+                        });
+                    }
+                }
+            }
+            catch { /* Ignore error to not rollback */ }
+
             return true;
         }
 

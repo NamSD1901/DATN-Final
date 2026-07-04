@@ -61,14 +61,13 @@ namespace MyPetClinic.Tests
             await _context.SaveChangesAsync();
 
             // Act 1: Search by pet name
-            var searchPetResult = await _service.OmniSearchAsync("Milu");
+            var searchPetResult = await _service.SearchCustomersAsync("Milu");
             // Act 2: Search by customer phone
-            var searchPhoneResult = await _service.OmniSearchAsync("09123");
+            var searchPhoneResult = await _service.SearchCustomersAsync("09123");
 
             // Assert
             Assert.NotEmpty(searchPetResult);
             Assert.Equal(customer.FullName, searchPetResult.First().FullName);
-            Assert.Equal("Milu", searchPetResult.First().Pets.First().Name);
 
             Assert.NotEmpty(searchPhoneResult);
             Assert.Equal(customer.FullName, searchPhoneResult.First().FullName);

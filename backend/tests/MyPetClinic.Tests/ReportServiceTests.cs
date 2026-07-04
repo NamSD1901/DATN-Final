@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using MyPetClinic.Infrastructure.Services;
+using MyPetClinic.Application.Services;
 using MyPetClinic.Domain.Entities;
 using MyPetClinic.Infrastructure.Persistence;
 using MyPetClinic.Infrastructure.Repositories;

@@ -147,7 +147,7 @@ namespace MyPetClinic.Tests
             var invoice = await _context.Invoices.Include(i => i.InvoiceItems).FirstOrDefaultAsync(i => i.AppointmentId == 2);
             Assert.NotNull(invoice);
             Assert.Equal(100000, invoice.TotalAmount);
-            Assert.Contains(invoice.InvoiceItems, i => i.ItemType == "Service" && i.ItemName.Contains("Phí khám lâm sàng"));
+            Assert.Contains(invoice.InvoiceItems, i => i.ItemType == "Service" && i.ItemName != null && i.ItemName.Contains("Phí khám lâm sàng"));
         }
 
         public void Dispose()

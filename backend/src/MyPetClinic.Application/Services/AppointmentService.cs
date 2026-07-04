@@ -15,12 +15,14 @@ namespace MyPetClinic.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IVaccinationScheduleChecker _vaccinationScheduleChecker;
         private readonly INotificationService _notificationService;
+        private readonly IEmailQueue _emailQueue;
 
-        public AppointmentService(IUnitOfWork unitOfWork, IVaccinationScheduleChecker vaccinationScheduleChecker, INotificationService notificationService)
+        public AppointmentService(IUnitOfWork unitOfWork, IVaccinationScheduleChecker vaccinationScheduleChecker, INotificationService notificationService, IEmailQueue emailQueue)
         {
             _unitOfWork = unitOfWork;
             _vaccinationScheduleChecker = vaccinationScheduleChecker;
             _notificationService = notificationService;
+            _emailQueue = emailQueue;
         }
 
         private bool IsTransientConflict(Exception ex)
@@ -435,8 +437,10 @@ namespace MyPetClinic.Application.Services
 
         public async Task<bool> UpdateAppointmentStatusAsync(long id, string status, string? reason = null)
         {
-            var appointments = await _unitOfWork.Appointments.FindAsync(a => a.Id == id);
-            var appointment = appointments.FirstOrDefault();
+            var appointment = await _unitOfWork.Appointments.GetFirstOrDefaultWithIncludesAsync(
+                a => a.Id == id,
+                a => a.Customer!, a => a.Pet!, a => a.Doctor!);
+                
             if (appointment == null) return false;
 
             // Kiểm tra tính hợp lệ của việc chuyển đổi trạng thái (State Machine)
@@ -491,6 +495,42 @@ namespace MyPetClinic.Application.Services
                         message,
                         "AppointmentUpdate"
                     );
+
+                    // TH1 & TH2: Gửi email khi xác nhận hoặc hủy lịch
+                    if (!string.IsNullOrEmpty(customerUser.Email))
+                    {
+                        if (newStatus == "confirmed")
+                        {
+                            var emailHtml = MyPetClinic.Application.Utils.EmailTemplateBuilder.BuildAppointmentConfirmedEmail(
+                                customerName: appointment.Customer?.FullName ?? "Khách hàng",
+                                petName: appointment.Pet?.Name ?? "thú cưng",
+                                appointmentDate: appointment.AppointmentDate,
+                                doctorName: appointment.Doctor?.FullName ?? "Bác sĩ",
+                                timeSlot: appointment.StartTime.ToString(@"hh\:mm")
+                            );
+                            await _emailQueue.QueueEmailAsync(new MyPetClinic.Application.DTOs.Notification.EmailMessageDto
+                            {
+                                ToEmail = customerUser.Email,
+                                Subject = "MyPetClinic - Xác nhận đặt lịch khám thành công",
+                                BodyHtml = emailHtml
+                            });
+                        }
+                        else if (newStatus == "cancelled")
+                        {
+                            var emailHtml = MyPetClinic.Application.Utils.EmailTemplateBuilder.BuildAppointmentCancelledEmail(
+                                customerName: appointment.Customer?.FullName ?? "Khách hàng",
+                                petName: appointment.Pet?.Name ?? "thú cưng",
+                                appointmentDate: appointment.AppointmentDate,
+                                reason: appointment.CancelReason ?? "Lý do khác"
+                            );
+                            await _emailQueue.QueueEmailAsync(new MyPetClinic.Application.DTOs.Notification.EmailMessageDto
+                            {
+                                ToEmail = customerUser.Email,
+                                Subject = "MyPetClinic - Thông báo hủy lịch khám",
+                                BodyHtml = emailHtml
+                            });
+                        }
+                    }
                 }
             }
 
@@ -506,8 +546,9 @@ namespace MyPetClinic.Application.Services
                 throw new InvalidOperationException("Không thể dời lịch về quá khứ.");
             }
 
-            var appointments = await _unitOfWork.Appointments.FindAsync(a => a.Id == id);
-            var appointment = appointments.FirstOrDefault();
+            var appointment = await _unitOfWork.Appointments.GetFirstOrDefaultWithIncludesAsync(
+                a => a.Id == id,
+                a => a.Customer!, a => a.Pet!);
             if (appointment == null) return false;
 
             var currentStatus = appointment.Status.ToLower();
@@ -530,11 +571,36 @@ namespace MyPetClinic.Application.Services
                 throw new InvalidOperationException("Bác sĩ đã có lịch hẹn trong khoảng thời gian này.");
             }
 
+            var oldDate = appointment.AppointmentDate;
             appointment.AppointmentDate = targetDate.Date;
             appointment.StartTime = targetDate.TimeOfDay;
             
             _unitOfWork.Appointments.Update(appointment);
             await _unitOfWork.SaveChangesAsync();
+
+            // TH3: Gửi email khi dời lịch
+            try 
+            {
+                var customerUser = _unitOfWork.Users.Query().FirstOrDefault(u => u.CustomerId == appointment.CustomerId && u.IsActive == true);
+                if (customerUser != null && !string.IsNullOrEmpty(customerUser.Email))
+                {
+                    var emailHtml = MyPetClinic.Application.Utils.EmailTemplateBuilder.BuildAppointmentRescheduledEmail(
+                        customerName: appointment.Customer?.FullName ?? "Khách hàng",
+                        petName: appointment.Pet?.Name ?? "thú cưng",
+                        oldDate: oldDate,
+                        newDate: appointment.AppointmentDate,
+                        newTimeSlot: appointment.StartTime.ToString(@"hh\:mm")
+                    );
+                    await _emailQueue.QueueEmailAsync(new MyPetClinic.Application.DTOs.Notification.EmailMessageDto
+                    {
+                        ToEmail = customerUser.Email,
+                        Subject = "MyPetClinic - Thông báo dời lịch khám",
+                        BodyHtml = emailHtml
+                    });
+                }
+            } 
+            catch { /* Bỏ qua lỗi gửi email để không rollback data */ }
+
             return true;
         }
 

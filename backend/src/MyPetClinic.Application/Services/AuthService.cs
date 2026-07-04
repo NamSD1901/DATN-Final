@@ -345,7 +345,7 @@ namespace MyPetClinic.Application.Services
                 return new AuthResult { Success = false, ErrorMessage = "Không tìm thấy hồ sơ vãng lai khớp với SĐT này." };
 
             // 2FA Validation 1: Customer Code (Must be exactly matched)
-            if (string.IsNullOrEmpty(request.CustomerCode) || !existingCustomer.CustomerCode.Equals(request.CustomerCode, StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrEmpty(request.CustomerCode) || !string.Equals(existingCustomer.CustomerCode, request.CustomerCode, StringComparison.OrdinalIgnoreCase))
                 return new AuthResult { Success = false, ErrorMessage = "Mã Khách Hàng không chính xác." };
 
             var pets = await _unitOfWork.Pets.FindAsync(p => p.CustomerId == existingCustomer.Id && !p.IsDeceased);

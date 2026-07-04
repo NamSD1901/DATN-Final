@@ -57,9 +57,17 @@ namespace MyPetClinic.Application.Services
                 throw new InvalidOperationException("TRƯỜNG HỢP CẤP CỨU: Vui lòng KHÔNG đặt lịch online. Hãy đưa bé đến phòng khám ngay lập tức hoặc gọi Hotline khẩn cấp.");
             }
 
+            var users = await _unitOfWork.Users.FindAsync(u => u.Id == userId);
+            var user = users.FirstOrDefault();
+            
             var customers = await _unitOfWork.Customers.FindAsync(c => c.Id == customerId && c.DeletedAt == null);
             var customer = customers.FirstOrDefault();
-            if (customer != null && string.IsNullOrWhiteSpace(customer.Phone))
+
+            bool hasPhone = false;
+            if (user != null && !string.IsNullOrWhiteSpace(user.Phone)) hasPhone = true;
+            if (customer != null && !string.IsNullOrWhiteSpace(customer.Phone)) hasPhone = true;
+
+            if (!hasPhone)
             {
                 throw new InvalidOperationException("MISSING_PHONE: Tài khoản của bạn chưa có số điện thoại. Vui lòng cập nhật số điện thoại trong phần Hồ sơ để chúng tôi có thể liên hệ xác nhận.");
             }
