@@ -83,6 +83,9 @@
           <li :class="{ 'active': activeTab === 'categories-admin' }">
             <a href="#" @click.prevent="activeTab = 'categories-admin'"><i class="bi bi-tags-fill text-warning opacity-75"></i> Quản lý Danh mục</a>
           </li>
+          <li :class="{ 'active': activeTab === 'reviews-admin' }">
+            <a href="#" @click.prevent="activeTab = 'reviews-admin'"><i class="bi bi-star-fill text-warning opacity-75"></i> Quản lý Đánh giá</a>
+          </li>
           <li :class="{ 'active': activeTab === 'blog-admin' }">
             <a href="#" @click.prevent="activeTab = 'blog-admin'"><i class="bi bi-journal-text text-warning opacity-75"></i> Quản lý bài viết</a>
           </li>
@@ -362,6 +365,11 @@
             <CategoriesAdminTab />
           </div>
 
+          <!-- tab: Reviews Admin Tab -->
+          <div v-else-if="activeTab === 'reviews-admin'" class="container-fluid p-0">
+            <ReviewsAdminTab />
+          </div>
+
           <!-- tab: Banners Admin Tab -->
           <div v-else-if="activeTab === 'banners-admin'" class="container-fluid p-0">
             <BannersAdminTab />
@@ -433,6 +441,7 @@ import ReportsAdminTab from '../components/dashboard/ReportsAdminTab.vue';
 import BlogAdminTab from '../components/dashboard/BlogAdminTab.vue';
 import CategoriesAdminTab from '../components/dashboard/CategoriesAdminTab.vue';
 import BannersAdminTab from '../components/dashboard/BannersAdminTab.vue';
+import ReviewsAdminTab from '../components/dashboard/ReviewsAdminTab.vue';
 import ProfileTab from '../components/dashboard/ProfileTab.vue';
 
 const router = useRouter();
@@ -508,6 +517,7 @@ const getTitle = computed(() => {
   if (activeTab.value === 'vaccines-admin') return 'Quản lý Vắc-xin & Lô nhập';
   if (activeTab.value === 'schedules-admin') return 'Quản lý Ca trực Bác sĩ';
   if (activeTab.value === 'reports-admin') return 'Báo cáo Doanh thu & Hiệu suất';
+  if (activeTab.value === 'reviews-admin') return 'Quản lý Đánh giá';
   if (activeTab.value === 'blog-admin') return 'Quản trị Bài viết & Tin tức';
   return 'Bảng điều khiển';
 });

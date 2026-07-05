@@ -60,6 +60,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/TinTuc.vue')
   },
   {
+    path: '/reviews',
+    name: 'Reviews',
+    component: () => import('../views/Reviews.vue')
+  },
+  {
     path: '/news/:slug',
     name: 'PostDetail',
     component: () => import('../views/PostDetail.vue')

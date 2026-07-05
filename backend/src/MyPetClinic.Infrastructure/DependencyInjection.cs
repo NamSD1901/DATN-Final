@@ -42,6 +42,7 @@ namespace MyPetClinic.Infrastructure
             
             services.AddScoped<IPetService, PetService>();
             services.AddScoped<IMedicalRecordService, MedicalRecordService>();
+            services.AddScoped<IReviewService, ReviewService>();
             services.AddScoped<IVaccinationService, VaccinationService>();
             // PrescriptionService sống ở Application layer (có business logic tính trạng thái đơn thuốc)
             services.AddScoped<IPrescriptionService, MyPetClinic.Application.Services.PrescriptionService>();

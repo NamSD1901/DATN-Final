@@ -166,3 +166,4 @@ Dưới đây là nhật ký ghi nhận các tính năng đã được kiểm th
 - **Kịch bản kiểm thử:**
   - `SendVaccineReminders_ShouldSendEmail_OnlyWhenNextDueDateIsExactlyThreeDaysAhead`: Kiểm thử logic quét và tự động gửi email nhắc lịch tiêm chủng vắc-xin trước đúng 3 ngày, bỏ qua các mũi tiêm chưa đến hạn hoặc đã quá hạn.
 - **Trạng thái:** `✅ PASSED`
+- [x] **ReviewService**: Th�m Unit Tests cho CreateReview, UpdateReview, SoftDeleteReview

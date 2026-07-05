@@ -157,16 +157,33 @@
         </div>
       </div>
     </div>
+
+    <!-- Auto Review Modal -->
+    <ReviewModal
+      :is-open="showAutoReviewModal"
+      :initial-data="{ appointmentId: autoReviewApptId }"
+      @close="onAutoReviewClosed"
+      @submit="onAutoReviewSubmitted"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import api from '../../services/api';
+import { useReviewStore } from '../../stores/review.store';
+import ReviewModal from '../shared/ReviewModal.vue';
+import confetti from 'canvas-confetti';
 
 const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5150';
 
 const emit = defineEmits(['switch-tab']);
+const reviewStore = useReviewStore();
+
+// Auto review state
+const showAutoReviewModal = ref(false);
+const autoReviewApptId = ref(0);
+const autoReviewServiceName = ref('');
 
 // State
 const pets = ref<any[]>([]);
@@ -308,9 +325,121 @@ const getStatusTitle = (status: string) => {
   }
 };
 
-onMounted(() => {
+const triggerConfetti = () => {
+  const duration = 2.5 * 1000;
+  const animationEnd = Date.now() + duration;
+  const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1200 };
+
+  function randomInRange(min: number, max: number) {
+    return Math.random() * (max - min) + min;
+  }
+
+  const interval: any = setInterval(function() {
+    const timeLeft = animationEnd - Date.now();
+    if (timeLeft <= 0) {
+      return clearInterval(interval);
+    }
+    const particleCount = 40 * (timeLeft / duration);
+    // Pháo giấy bắn ra từ 2 bên cạnh màn hình
+    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+  }, 250);
+};
+
+const onAutoReviewClosed = () => {
+  showAutoReviewModal.value = false;
+  try {
+    const dismissedReviewsStr = localStorage.getItem('dismissedReviews');
+    const dismissedReviews: number[] = dismissedReviewsStr ? JSON.parse(dismissedReviewsStr) : [];
+    if (!dismissedReviews.includes(autoReviewApptId.value)) {
+      dismissedReviews.push(autoReviewApptId.value);
+      localStorage.setItem('dismissedReviews', JSON.stringify(dismissedReviews));
+    }
+  } catch (err) {
+    console.error("Lỗi lưu trạng thái dismiss review", err);
+  }
+};
+
+const onAutoReviewSubmitted = async (data: any) => {
+  try {
+    await reviewStore.submitReview({
+      appointmentId: data.appointmentId,
+      rating: data.rating,
+      comment: data.comment
+    });
+    showAutoReviewModal.value = false;
+    
+    // Đánh dấu đã review thành công vào dismiss (để chắc chắn ko popup lại dù DB có delay)
+    try {
+      const dismissedReviewsStr = localStorage.getItem('dismissedReviews');
+      const dismissedReviews: number[] = dismissedReviewsStr ? JSON.parse(dismissedReviewsStr) : [];
+      if (!dismissedReviews.includes(data.appointmentId)) {
+        dismissedReviews.push(data.appointmentId);
+        localStorage.setItem('dismissedReviews', JSON.stringify(dismissedReviews));
+      }
+    } catch (e) {}
+
+    // Bắn pháo giấy chúc mừng lớn ở giữa khi Đánh giá thành công
+    confetti({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      zIndex: 1200
+    });
+  } catch (err: any) {
+    console.error('Lỗi khi gửi đánh giá', err);
+    // Nếu lỗi do đã đánh giá rồi thì cũng đóng luôn popup
+    if (err.response?.data?.message?.includes("đã được đánh giá")) {
+      showAutoReviewModal.value = false;
+      try {
+        const dismissedReviewsStr = localStorage.getItem('dismissedReviews');
+        const dismissedReviews: number[] = dismissedReviewsStr ? JSON.parse(dismissedReviewsStr) : [];
+        if (!dismissedReviews.includes(data.appointmentId)) {
+          dismissedReviews.push(data.appointmentId);
+          localStorage.setItem('dismissedReviews', JSON.stringify(dismissedReviews));
+        }
+      } catch (e) {}
+    }
+  }
+};
+
+onMounted(async () => {
   fetchPets();
-  fetchAppointments();
+  await fetchAppointments();
+  
+  // Logic kiểm tra xem có lịch khám nào đã hoàn thành mà chưa được đánh giá không
+  try {
+    await reviewStore.fetchMyReviews(1);
+    
+    const dismissedReviewsStr = localStorage.getItem('dismissedReviews');
+    const dismissedReviews: number[] = dismissedReviewsStr ? JSON.parse(dismissedReviewsStr) : [];
+
+    // Tìm các lịch hẹn đã hoàn thành và sắp xếp theo ngày khám gần nhất (mới nhất lên đầu)
+    const completedAppts = appointments.value
+      .filter(a => a.status === 'completed')
+      .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime());
+      
+    // Chỉ kiểm tra LỊCH HẸN MỚI NHẤT (gần đây nhất) để không làm phiền khách với các lịch hẹn cũ.
+    if (completedAppts.length > 0) {
+      const latestAppt = completedAppts[0];
+      const hasReviewed = reviewStore.myReviews.some(r => r.appointmentId == latestAppt.id);
+      
+      // Nếu chưa review và chưa từng bấm "Huỷ/Đóng"
+      if (!hasReviewed && !dismissedReviews.includes(latestAppt.id)) {
+        // Đặt dữ liệu và hiển thị Popup tự động
+        autoReviewApptId.value = latestAppt.id;
+        autoReviewServiceName.value = latestAppt.serviceName || 'Dịch vụ khám';
+        
+        // Timeout một chút để UI load xong mới hiện popup và nổ sao
+        setTimeout(() => {
+          showAutoReviewModal.value = true;
+          triggerConfetti(); // Bắn pháo giấy sao trời!
+        }, 800);
+      }
+    }
+  } catch (e) {
+    console.error("Lỗi khi tải lịch sử đánh giá auto:", e);
+  }
 });
 </script>
 

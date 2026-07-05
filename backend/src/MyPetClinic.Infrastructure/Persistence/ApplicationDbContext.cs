@@ -525,6 +525,9 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.Rating).HasColumnName("rating");
                 entity.Property(e => e.Comment).HasColumnName("comment");
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+                entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
+
+                entity.HasQueryFilter(e => e.DeletedAt == null);
 
                 entity.HasOne(d => d.Customer).WithMany().HasForeignKey(d => d.CustomerId).OnDelete(DeleteBehavior.Cascade);
                 entity.HasOne(d => d.Appointment).WithOne(p => p.Review).HasForeignKey<Review>(d => d.AppointmentId).OnDelete(DeleteBehavior.Cascade);

@@ -201,7 +201,9 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 
 ### 🎯 Sprint 16: Báo Cáo Doanh Thu & Cổng Tin Tức
 *   **Mục tiêu:** Thống kê doanh thu, quản lý bài viết/đánh giá của khách hàng.
-*   **Trạng thái chung:** `✅ CODE DONE` (T50, T54, T55, T56).
+*   **Trạng thái chung:** `🟡 IN PROGRESS` (Review Management).
+*   **Chi tiết:**
+    *   T55: Quản lý Đánh giá (Review Management) - `🟡 IN PROGRESS` (Đã hoàn thành Phase 1: Tái thiết lập Domain & Database theo luồng Soft Delete `DeletedAt`).
 
 ---
 

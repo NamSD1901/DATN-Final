@@ -740,6 +740,15 @@
                     <div class="small text-success fw-bold mt-2">Bạn đã check-in thành công.</div>
                   </div>
                 </div>
+                
+                <div v-if="detailAppt.status === 'completed' && !hasReviewed" class="col-12 mt-3">
+                  <button class="btn btn-warning w-100 rounded-pill fw-bold text-dark shadow-sm py-2" @click="openReviewModal(detailAppt)">
+                    <i class="bi bi-star-fill me-2"></i> Đánh giá dịch vụ
+                  </button>
+                </div>
+                <div v-else-if="detailAppt.status === 'completed' && hasReviewed" class="col-12 mt-3 text-center p-2 rounded-3" style="background: #fffbeb; border: 1px dashed #fbbf24;">
+                  <span class="text-warning-emphasis small fw-bold"><i class="bi bi-check-circle-fill me-1 text-warning"></i> Bạn đã đánh giá dịch vụ này</span>
+                </div>
               </div>
 
               <div class="d-flex gap-2 mt-4">
@@ -853,6 +862,14 @@
       </Transition>
     </Teleport>
 
+    <!-- ===== REVIEW MODAL ===== -->
+    <ReviewModal
+      :is-open="showReviewModal"
+      :initial-data="{ appointmentId: reviewApptId }"
+      @close="closeReviewModal"
+      @submit="onReviewSubmitted"
+    />
+
   </div>
 </template>
 
@@ -861,6 +878,8 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../../services/api';
 import QrcodeVue from 'qrcode.vue';
+import ReviewModal from '../shared/ReviewModal.vue';
+import { useReviewStore } from '../../stores/review.store';
 
 const router = useRouter();
 
@@ -907,6 +926,46 @@ interface Service {
   name: string;
   price: number | null;
 }
+
+// ===== Review State =====
+const reviewStore = useReviewStore();
+const showReviewModal = ref(false);
+const reviewApptId = ref(0);
+const reviewServiceName = ref('');
+
+const hasReviewed = computed(() => {
+  if (!detailAppt.value) return false;
+  return reviewStore.myReviews.some(r => r.appointmentId === detailAppt.value!.id);
+});
+
+const openReviewModal = (appt: AppointmentDetail) => {
+  reviewApptId.value = appt.id;
+  reviewServiceName.value = appt.serviceName || 'Dịch vụ khám';
+  showDetailModal.value = false;
+  showReviewModal.value = true;
+};
+
+const closeReviewModal = () => {
+  showReviewModal.value = false;
+};
+
+const onReviewSubmitted = async (data: any) => {
+  try {
+    await reviewStore.submitReview({
+      appointmentId: data.appointmentId,
+      rating: data.rating,
+      comment: data.comment
+    });
+    closeReviewModal();
+    await reviewStore.fetchMyReviews(1);
+    // Optionally reopen detail modal
+    if (detailAppt.value) {
+      showDetailModal.value = true;
+    }
+  } catch (error) {
+    console.error('Lỗi khi gửi đánh giá', error);
+  }
+};
 
 // ===== State =====
 const appointments = ref<AppointmentDetail[]>([]);
@@ -1656,6 +1715,9 @@ onMounted(async () => {
   await clinicStore.fetchWeeklyHours();
   await clinicStore.fetchHolidays();
   fetchAppointments();
+  
+  // Load reviews to check which appointments have been reviewed
+  await reviewStore.fetchMyReviews(1);
 });
 
 defineExpose({
