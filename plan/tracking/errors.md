@@ -105,3 +105,14 @@ Sua doi appointment.Status = "ready_to_pay" trong MedicalRecordService.cs khi kh
 | L?i phân trang b? tr?ng (?n nút) do d? li?u b? orphaned | Vi?c dùng .IgnoreQueryFilters() chua d? n?u b?n ghi (Pet, Doctor) b? xóa c?ng (hard-delete), EF Core v?n dùng INNER JOIN lo?i b? l?ch h?n. Gi?i pháp: L?y danh sách l?ch h?n tru?c b?ng ToList() (ch? 5 record m?i trang) r?i gán d? li?u th? công (manual fetching). Frontend cung c?n chuy?n nút phân trang ra ngoài -else d? không b? ?n. | Vi?t hàm MapToDetailDtoAsync trong AppointmentService.cs d? query d? li?u r?i r?c, tránh EF Core t?o INNER JOIN. |
 =======
 
+### Error: Follow-up Appointment Timezone & Missing Slots Bug
+- **Symptom:** Bác sĩ chọn lịch tái khám nhưng danh sách báo rỗng, hoặc chọn giờ 08:00 nhưng khách hàng xem lại thấy 02:00.
+- **Root Cause:** 
+  1. Lỗi EF Core dịch sai biểu thức !allowedDoctorEmails.Any() khi mảng rỗng.
+  2. Bác sĩ gọi nhầm endpoint /my-appointments/available-slots của Khách hàng, dẫn đến lỗi 403.
+  3. Frontend dùng hàm .toISOString() để gửi giờ làm nó bị lệch múi giờ (UTC lùi 7 tiếng).
+- **Solution:**
+  1. Sửa biểu thức LINQ trong AppointmentService.cs (tách riêng biến ool filterByEmail).
+  2. Chuyển Frontend gọi API /appointment/available-slots và cấp quyền truy cập cho clinical_doctor.
+  3. Xóa lệnh .toISOString() bên Frontend để gửi giờ dạng Local.
+- **Status:** Resolved (Đã push lên nhánh fix/follow-up-timezone-and-fallback)
