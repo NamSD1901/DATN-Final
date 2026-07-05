@@ -249,6 +249,12 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
                 entity.Property(e => e.QrToken).HasColumnName("qr_token");
 
+                // Mở rộng cho Reminder & Follow-up
+                entity.Property(e => e.Type).HasColumnName("type").HasDefaultValue("Normal").HasMaxLength(50);
+                entity.Property(e => e.ReferenceRecordId).HasColumnName("reference_record_id");
+                entity.Property(e => e.IsSystemGenerated).HasColumnName("is_system_generated").HasDefaultValue(false);
+                entity.Property(e => e.ReminderStatus).HasColumnName("reminder_status").HasMaxLength(50);
+
                 entity.HasOne(d => d.Pet).WithMany(p => p.Appointments).HasForeignKey(d => d.PetId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Customer).WithMany(p => p.Appointments).HasForeignKey(d => d.CustomerId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(d => d.Doctor).WithMany().HasForeignKey(d => d.DoctorId).OnDelete(DeleteBehavior.Restrict);

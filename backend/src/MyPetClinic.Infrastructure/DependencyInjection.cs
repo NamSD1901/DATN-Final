@@ -71,8 +71,9 @@ namespace MyPetClinic.Infrastructure
             // Đăng ký Operating Hours Service
             services.AddScoped<IOperatingHoursService, OperatingHoursService>();
 
-            // Đăng ký Background Service nhắc lịch tiêm phòng
+            // Đăng ký Background Service nhắc lịch tiêm phòng và lịch tái khám tự động
             services.AddHostedService<Workers.VaccineReminderWorker>();
+            services.AddHostedService<Workers.AppointmentReminderWorker>();
 
             // Đăng ký Background Email Queue
             services.AddSingleton<IEmailQueue, EmailQueue>();

@@ -42,6 +42,14 @@ namespace MyPetClinic.Application.DTOs
         public string TreatmentPlan { get; set; } = string.Empty;
         public string? DoctorNotes { get; set; }
         public DateTime? FollowUpDate { get; set; }
+        
+        // Auto-create Follow-up appointment
+        public bool CreateFollowUpAppointment { get; set; }
+        public string? FollowUpType { get; set; } // Normal, FollowUp, Revaccination
+        public string? FollowUpNote { get; set; }
+        public long? FollowUpServiceId { get; set; }
+        public Guid? FollowUpDoctorId { get; set; } // Nếu muốn chỉ định bác sĩ khác, hoặc null để giữ nguyên bác sĩ hiện tại
+
         public List<PrescriptionLineDto> Prescriptions { get; set; } = new();
     }
 

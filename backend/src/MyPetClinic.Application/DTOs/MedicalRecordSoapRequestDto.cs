@@ -83,6 +83,14 @@ namespace MyPetClinic.Application.DTOs
         public List<string> TreatmentDirections { get; set; } = new();
         public string CareInstructions { get; set; } = string.Empty;
         public DateTime? FollowUpDate { get; set; }
+
+        // Auto-create Follow-up appointment
+        public bool CreateFollowUpAppointment { get; set; }
+        public string? FollowUpType { get; set; } // Normal, FollowUp, Revaccination
+        public string? FollowUpNote { get; set; }
+        public long? FollowUpServiceId { get; set; }
+        public Guid? FollowUpDoctorId { get; set; }
+
         public List<PrescriptionLineDto> Prescriptions { get; set; } = new();
     }
 }

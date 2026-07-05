@@ -117,6 +117,41 @@ namespace MyPetClinic.Application.Services
                 appointment.Status = "ready_to_pay";
                 _unitOfWork.Appointments.Update(appointment);
 
+                // 5. Tự động sinh lịch hẹn tái khám nếu có yêu cầu
+                if (dto.CreateFollowUpAppointment && dto.FollowUpDate.HasValue)
+                {
+                    string qrToken = string.Empty;
+                    bool isQrUnique = false;
+                    for (int q = 0; q < 5 && !isQrUnique; q++)
+                    {
+                        qrToken = "QR-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+                        isQrUnique = !_unitOfWork.Appointments.Query().Any(a => a.QrToken == qrToken);
+                    }
+                    if (!isQrUnique) throw new InvalidOperationException("Không thể tạo mã QR duy nhất cho lịch hẹn tái khám.");
+
+                    var followUpApt = new Appointment
+                    {
+                        CustomerId = appointment.CustomerId,
+                        PetId = medicalRecord.PetId,
+                        ServiceId = dto.FollowUpServiceId ?? appointment.ServiceId,
+                        DoctorId = dto.FollowUpDoctorId ?? doctorId,
+                        Symptom = "Tái khám / Tái tiêm theo chỉ định",
+                        Note = dto.FollowUpNote,
+                        Status = "pending",
+                        CreatedBy = doctorId,
+                        CreatedAt = DateTime.UtcNow,
+                        AppointmentDate = DateTime.SpecifyKind(dto.FollowUpDate.Value.Date, DateTimeKind.Utc),
+                        StartTime = dto.FollowUpDate.Value.TimeOfDay,
+                        QrToken = qrToken,
+                        Type = string.IsNullOrWhiteSpace(dto.FollowUpType) ? "FollowUp" : dto.FollowUpType,
+                        IsSystemGenerated = true,
+                        ReferenceRecordId = medicalRecord.Id,
+                        ReminderStatus = "Pending"
+                    };
+
+                    await _unitOfWork.Appointments.AddAsync(followUpApt);
+                }
+
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitTransactionAsync();
 
@@ -482,6 +517,41 @@ namespace MyPetClinic.Application.Services
 
                 appointment.Status = "ready_to_pay";
                 _unitOfWork.Appointments.Update(appointment);
+
+                // 5. Tự động sinh lịch hẹn tái khám nếu có yêu cầu (SOAP)
+                if (dto.Plan.CreateFollowUpAppointment && dto.Plan.FollowUpDate.HasValue)
+                {
+                    string qrToken = string.Empty;
+                    bool isQrUnique = false;
+                    for (int q = 0; q < 5 && !isQrUnique; q++)
+                    {
+                        qrToken = "QR-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+                        isQrUnique = !_unitOfWork.Appointments.Query().Any(a => a.QrToken == qrToken);
+                    }
+                    if (!isQrUnique) throw new InvalidOperationException("Không thể tạo mã QR duy nhất cho lịch hẹn tái khám.");
+
+                    var followUpApt = new Appointment
+                    {
+                        CustomerId = appointment.CustomerId,
+                        PetId = medicalRecord.PetId,
+                        ServiceId = dto.Plan.FollowUpServiceId ?? appointment.ServiceId,
+                        DoctorId = dto.Plan.FollowUpDoctorId ?? doctorId,
+                        Symptom = "Tái khám / Tái tiêm theo chỉ định",
+                        Note = dto.Plan.FollowUpNote,
+                        Status = "pending",
+                        CreatedBy = doctorId,
+                        CreatedAt = DateTime.UtcNow,
+                        AppointmentDate = DateTime.SpecifyKind(dto.Plan.FollowUpDate.Value.Date, DateTimeKind.Utc),
+                        StartTime = dto.Plan.FollowUpDate.Value.TimeOfDay,
+                        QrToken = qrToken,
+                        Type = string.IsNullOrWhiteSpace(dto.Plan.FollowUpType) ? "FollowUp" : dto.Plan.FollowUpType,
+                        IsSystemGenerated = true,
+                        ReferenceRecordId = medicalRecord.Id,
+                        ReminderStatus = "Pending"
+                    };
+
+                    await _unitOfWork.Appointments.AddAsync(followUpApt);
+                }
 
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitTransactionAsync();

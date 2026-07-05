@@ -176,6 +176,120 @@ namespace MyPetClinic.Tests
             }
         }
 
+        [Fact]
+        public async Task CreateMedicalRecord_ShouldCreateFollowUpAppointment_WhenHasFollowUpIsTrue()
+        {
+            // Arrange
+            var pet = new Pet { Id = 3, CustomerId = Guid.NewGuid(), Name = "Milo3" };
+            var doctorId = Guid.NewGuid();
+            var appointment = new Appointment
+            {
+                Id = 3,
+                PetId = 3,
+                CustomerId = pet.CustomerId,
+                DoctorId = doctorId,
+                ServiceId = 1,
+                Status = "in_progress",
+                AppointmentDate = DateTime.UtcNow
+            };
+
+            _context.Pets.Add(pet);
+            _context.Appointments.Add(appointment);
+            await _context.SaveChangesAsync();
+
+            var dto = new MedicalRecordSoapRequestDto
+            {
+                AppointmentId = 3,
+                PetId = 3,
+                Subjective = new SubjectiveDto { ChiefComplaint = "Sốt nhẹ" },
+                Assessment = new AssessmentDto { DefinitiveDiagnosis = "Cảm cúm" },
+                Plan = new PlanDto 
+                { 
+                    CreateFollowUpAppointment = true,
+                    FollowUpType = "FollowUp",
+                    FollowUpDate = DateTime.UtcNow.AddDays(7),
+                    FollowUpNote = "Kiểm tra lại sau 1 tuần"
+                }
+            };
+
+            // Act
+            var recordId = await _service.CreateSoapMedicalRecordAsync(dto, doctorId);
+
+            // Assert
+            using (var verifyContext = new ApplicationDbContext(_options))
+            {
+                var record = await verifyContext.MedicalRecords.FindAsync(recordId);
+                Assert.NotNull(record);
+                
+                var systemAppt = await verifyContext.Appointments
+                    .FirstOrDefaultAsync(a => a.Type == "FollowUp" && a.ReferenceRecordId == recordId);
+                
+                Assert.NotNull(systemAppt);
+                Assert.Equal(3, systemAppt!.PetId);
+                Assert.Equal("pending", systemAppt.Status);
+                Assert.Equal("Kiểm tra lại sau 1 tuần", systemAppt.Note);
+                Assert.True(systemAppt.IsSystemGenerated);
+                Assert.Equal(dto.Plan.FollowUpDate.Value.Date, systemAppt.AppointmentDate.Date);
+            }
+        }
+
+        [Fact]
+        public async Task CreateMedicalRecord_ShouldCreateRevaccinationAppointment_WhenHasRevaccinationIsTrue()
+        {
+            // Arrange
+            var pet = new Pet { Id = 4, CustomerId = Guid.NewGuid(), Name = "Milo4" };
+            var doctorId = Guid.NewGuid();
+            var appointment = new Appointment
+            {
+                Id = 4,
+                PetId = 4,
+                CustomerId = pet.CustomerId,
+                DoctorId = doctorId,
+                ServiceId = 1,
+                Status = "in_progress",
+                AppointmentDate = DateTime.UtcNow
+            };
+
+            _context.Pets.Add(pet);
+            _context.Appointments.Add(appointment);
+            await _context.SaveChangesAsync();
+
+            var dto = new MedicalRecordSoapRequestDto
+            {
+                AppointmentId = 4,
+                PetId = 4,
+                Subjective = new SubjectiveDto { ChiefComplaint = "Khỏe mạnh" },
+                Assessment = new AssessmentDto { DefinitiveDiagnosis = "Bình thường" },
+                Plan = new PlanDto 
+                {
+                    CreateFollowUpAppointment = true,
+                    FollowUpType = "Revaccination",
+                    FollowUpDate = DateTime.UtcNow.AddMonths(1),
+                    FollowUpNote = "Tiêm dại"
+                }
+            };
+
+            // Act
+            var recordId = await _service.CreateSoapMedicalRecordAsync(dto, doctorId);
+
+            // Assert
+            using (var verifyContext = new ApplicationDbContext(_options))
+            {
+                var record = await verifyContext.MedicalRecords.FindAsync(recordId);
+                Assert.NotNull(record);
+                
+                var systemAppt = await verifyContext.Appointments
+                    .FirstOrDefaultAsync(a => a.Type == "Revaccination" && a.ReferenceRecordId == recordId);
+                
+                Assert.NotNull(systemAppt);
+                Assert.Equal(4, systemAppt!.PetId);
+                Assert.Equal("pending", systemAppt.Status);
+                Assert.Equal("Tiêm dại", systemAppt.Note);
+                Assert.True(systemAppt.IsSystemGenerated);
+                Assert.Equal(dto.Plan.FollowUpDate.Value.Date, systemAppt.AppointmentDate.Date);
+            }
+        }
+
         public void Dispose()
         {
             _context.Database.EnsureDeleted();

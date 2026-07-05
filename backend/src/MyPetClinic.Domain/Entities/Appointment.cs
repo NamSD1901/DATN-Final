@@ -26,6 +26,12 @@ namespace MyPetClinic.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string? QrToken { get; set; }
 
+        // Mở rộng cho Reminder & Follow-up
+        public string Type { get; set; } = "Normal"; // Normal, FollowUp, Revaccination
+        public long? ReferenceRecordId { get; set; }
+        public bool IsSystemGenerated { get; set; } = false;
+        public string? ReminderStatus { get; set; }
+
         public Pet? Pet { get; set; }
         public Customer? Customer { get; set; }
         public User? Doctor { get; set; }

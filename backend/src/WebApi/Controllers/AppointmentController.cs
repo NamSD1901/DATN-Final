@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace WebApi.Controllers
 {
-    [Authorize(Roles = "receptionist,admin,Receptionist,Admin")]
+    [Authorize(Roles = "receptionist,admin,clinical_doctor,vaccination_doctor,Receptionist,Admin")]
     [ApiController]
     [Route("api/[controller]")]
     public class AppointmentController : ControllerBase

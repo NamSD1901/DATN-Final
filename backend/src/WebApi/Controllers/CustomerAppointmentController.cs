@@ -152,6 +152,32 @@ namespace WebApi.Controllers
         }
 
         /// <summary>
+        /// Khách hàng xác nhận lịch hẹn (chủ yếu dùng cho lịch tái khám/tái tiêm tự tạo).
+        /// </summary>
+        [HttpPut("{id:long}/confirm")]
+        public async Task<IActionResult> ConfirmAppointment(long id)
+        {
+            try
+            {
+                var customerId = await GetCurrentCustomerIdAsync();
+                var appt = await _appointmentService.GetAppointmentDetailAsync(id);
+
+                if (appt == null || appt.CustomerId != customerId)
+                    return NotFound(new { message = "Không tìm thấy lịch hẹn hợp lệ." });
+
+                if (appt.Status != "pending")
+                    return BadRequest(new { message = "Chỉ có thể xác nhận lịch hẹn đang ở trạng thái chờ." });
+
+                var success = await _appointmentService.UpdateAppointmentStatusAsync(id, "confirmed");
+                return Ok(new { success, message = "Đã xác nhận lịch hẹn thành công." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = "Xác nhận lịch thất bại: " + ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Lấy danh sách dịch vụ để khách hàng chọn khi đặt lịch.
         /// </summary>
         [HttpGet("services")]

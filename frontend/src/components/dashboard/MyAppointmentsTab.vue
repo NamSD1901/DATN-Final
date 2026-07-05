@@ -96,6 +96,10 @@
                   <i class="bi bi-receipt me-1"></i>
                   {{ getInvoiceStatusLabel(appt.invoiceStatus) }}
                 </span>
+                <span v-if="appt.isSystemGenerated" class="invoice-badge ms-2" style="background-color: #f3e8ff; color: #7e22ce; border-color: #d8b4fe;">
+                  <i class="bi bi-robot me-1"></i>
+                  Lịch tự động
+                </span>
               </div>
 
               <!-- Middle: 3-col fixed info grid -->
@@ -125,6 +129,10 @@
 
               <!-- Actions -->
               <div class="appt-actions">
+                <button v-if="appt.status === 'pending' && appt.isSystemGenerated" class="btn btn-sm btn-success rounded-pill px-3 fw-bold me-2" @click.stop="confirmSystemAppt(appt.id)" :disabled="confirmingAppt">
+                  <span v-if="confirmingAppt" class="spinner-border spinner-border-sm me-2"></span>
+                  <i v-else class="bi bi-check-circle me-1"></i> Xác nhận lịch
+                </button>
                 <button class="btn-appt-detail" @click="openDetailModal(appt)">
                   <i class="bi bi-eye me-1"></i> Xem chi tiết
                 </button>
@@ -660,6 +668,9 @@
                   <i :class="getStatusIcon(detailAppt.status)" class="me-1"></i>
                   {{ getStatusLabel(detailAppt.status) }}
                 </span>
+                <span v-if="detailAppt.isSystemGenerated" class="badge bg-info text-white ms-2">
+                  <i class="bi bi-robot me-1"></i>Lịch tự động
+                </span>
               </div>
               <button class="modal-close-btn" @click="showDetailModal = false">
                 <i class="bi bi-x-lg"></i>
@@ -715,8 +726,13 @@
                 </div>
                 <div v-if="detailAppt.status === 'pending'" class="col-12">
                   <div class="detail-item text-center p-3" style="background: #fafafa; border: 1px solid #e2e8f0; border-radius: 12px;">
-                    <div class="detail-label"><i class="bi bi-info-circle me-1 text-primary"></i>Mã QR Check-in</div>
-                    <div class="small text-muted mt-2">Vui lòng chờ phòng khám xác nhận lịch hẹn. Mã QR sẽ hiển thị tại đây sau khi lịch được xác nhận.</div>
+                    <div class="detail-label"><i class="bi bi-info-circle me-1 text-primary"></i>Trạng thái</div>
+                    <div v-if="detailAppt.isSystemGenerated" class="small text-muted mt-2">
+                      Phòng khám đã tạo lịch hẹn tự động cho bạn. Vui lòng xác nhận bên dưới nếu bạn đồng ý tham gia.
+                    </div>
+                    <div v-else class="small text-muted mt-2">
+                      Vui lòng chờ phòng khám xác nhận lịch hẹn. Mã QR sẽ hiển thị tại đây sau khi lịch được xác nhận.
+                    </div>
                   </div>
                 </div>
                 <div v-else-if="detailAppt.status === 'confirmed' && detailAppt.qrToken" class="col-12">
@@ -751,7 +767,16 @@
                 </div>
               </div>
 
-              <div class="d-flex gap-2 mt-4">
+              <div class="d-flex gap-2 mt-4 flex-wrap">
+                <button
+                  v-if="detailAppt.status === 'pending' && detailAppt.isSystemGenerated"
+                  class="btn btn-primary rounded-pill fw-semibold flex-fill"
+                  @click="confirmSystemAppt(detailAppt.id)"
+                  :disabled="confirmingAppt"
+                >
+                  <span v-if="confirmingAppt" class="spinner-border spinner-border-sm me-2"></span>
+                  <i v-else class="bi bi-check-circle-fill me-2"></i>Xác nhận lịch hẹn
+                </button>
                 <button
                   v-if="canCancel(detailAppt.status)"
                   class="btn btn-outline-danger rounded-pill fw-semibold flex-fill"
@@ -908,8 +933,10 @@ interface AppointmentDetail {
   appointmentDate: string;
   symptom: string | null;
   note: string | null;
-  status: string | null;
   qrToken: string | null;
+  type?: string;
+  isSystemGenerated?: boolean;
+  referenceRecordId?: number | null;
   invoiceId: number | null;
   invoiceStatus: string | null;
   invoiceTotalAmount: number | null;
@@ -988,6 +1015,7 @@ const detailAppt = ref<AppointmentDetail | null>(null);
 const showCancelModal = ref(false);
 const apptToCancel = ref<AppointmentDetail | null>(null);
 const cancelLoading = ref(false);
+const confirmingAppt = ref(false);
 
 // QR List modal
 const showQrListModal = ref(false);
@@ -1319,6 +1347,22 @@ const changeFilter = (val: string) => {
   activeFilter.value = val;
   currentPage.value = 1;
   fetchAppointments();
+};
+
+const confirmSystemAppt = async (id: number) => {
+  confirmingAppt.value = true;
+  try {
+    const res = await api.put(`/my-appointments/${id}/confirm`);
+    if (res.data.success) {
+      if (detailAppt.value) detailAppt.value.status = 'confirmed';
+      fetchAppointments();
+    }
+  } catch (error: any) {
+    console.error('Lỗi khi xác nhận lịch hẹn', error);
+    alert(error.response?.data?.message || 'Không thể xác nhận lịch hẹn.');
+  } finally {
+    confirmingAppt.value = false;
+  }
 };
 
 const prevPage = () => {

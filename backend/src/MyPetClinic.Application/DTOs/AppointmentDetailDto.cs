@@ -24,6 +24,9 @@ namespace MyPetClinic.Application.DTOs
         public string? Note { get; set; }
         public string? Status { get; set; }
         public string? QrToken { get; set; }
+        public string? Type { get; set; }
+        public bool IsSystemGenerated { get; set; }
+        public long? ReferenceRecordId { get; set; }
         
         // Invoice Info
         public long? InvoiceId { get; set; }

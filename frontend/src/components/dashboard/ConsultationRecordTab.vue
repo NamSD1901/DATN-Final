@@ -315,15 +315,68 @@
             </div>
           </div>
 
-          <!-- Bottom Row: Followup -->
+          <!-- Bottom Row: Followup / Next Steps -->
           <div class="row g-4 mb-4">
-            <div class="col-md-6">
-              <label class="form-label small fw-bold text-secondary"><i class="bi bi-calendar-event text-warning me-1"></i> Ngày hẹn tái khám / Tiêm nhắc lại</label>
-              <input type="date" v-model="form.plan.followUpDate" class="form-control rounded-pill shadow-sm border px-3">
-            </div>
-            <div class="col-md-6 d-flex align-items-end">
-              <div class="alert alert-info py-2 px-3 mb-0 rounded-pill small w-100 border-0 shadow-sm d-flex align-items-center">
-                <i class="bi bi-info-circle-fill me-2"></i> Bệnh án SOAP sẽ được lưu nguyên trạng vào hệ thống.
+            <div class="col-12">
+              <div class="p-4 rounded-4 bg-primary bg-opacity-10 border border-primary border-opacity-25 shadow-sm">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="form-check form-switch fs-5 me-3">
+                    <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="switchFollowUp" v-model="form.plan.createFollowUpAppointment">
+                  </div>
+                  <label class="form-check-label fw-bold text-primary mb-0 cursor-pointer" for="switchFollowUp">
+                    <i class="bi bi-calendar2-check-fill me-1"></i> Đặt lịch tự động cho lần khám tiếp theo
+                  </label>
+                </div>
+                
+                <div v-if="form.plan.createFollowUpAppointment" class="row g-3 bg-white p-3 rounded-4 shadow-sm mt-2">
+                  <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary">Loại lịch hẹn <span class="text-danger">*</span></label>
+                    <select v-model="form.plan.followUpType" class="form-select rounded-pill border-primary" required>
+                      <option value="FollowUp">Tái khám</option>
+                      <option value="Revaccination">Tái tiêm</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary">Ngày tái khám <span class="text-danger">*</span></label>
+                    <input type="date" v-model="followUpDateOnly" @change="onFollowUpDateChange" :min="minDateOnlyStr" class="form-control rounded-pill border-primary" required>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary">Ghi chú (Tùy chọn)</label>
+                    <input type="text" v-model="form.plan.followUpNote" class="form-control rounded-pill border-primary" placeholder="VD: Nhớ mang theo sổ khám...">
+                  </div>
+                  
+                  <div class="col-12 mt-2" v-if="followUpDateOnly">
+                    <label class="form-label small fw-bold text-secondary mb-2">Chọn khung giờ trống <span class="text-danger">*</span></label>
+                    
+                    <div v-if="fetchingFollowUpSlots" class="text-primary small mb-2"><span class="spinner-border spinner-border-sm me-1"></span> Đang tải khung giờ...</div>
+                    <div v-else-if="availableFollowUpSlots.length === 0" class="alert alert-warning small py-2 mb-0 d-flex align-items-center"><i class="bi bi-exclamation-triangle-fill me-2"></i> Không có khung giờ làm việc nào trống trong ngày này.</div>
+                    <div v-else>
+                       <div class="mb-2 d-flex flex-wrap gap-2">
+                         <span class="small fw-bold text-muted d-flex align-items-center w-100"><i class="bi bi-brightness-alt-high me-1"></i> Buổi Sáng:</span>
+                         <button type="button" v-for="time in masterMorningTimes" :key="time" 
+                            class="btn btn-sm rounded-pill px-3"
+                            :class="followUpTimeOnly === time ? 'btn-primary shadow-sm fw-bold' : (availableFollowUpSlots.includes(time) ? 'btn-outline-primary' : 'btn-light text-muted border')"
+                            :disabled="!availableFollowUpSlots.includes(time)"
+                            @click="followUpTimeOnly = time">
+                           {{ time }} <i v-if="followUpTimeOnly === time" class="bi bi-check2 ms-1"></i>
+                         </button>
+                       </div>
+                       <div class="d-flex flex-wrap gap-2 mt-2">
+                         <span class="small fw-bold text-muted d-flex align-items-center w-100"><i class="bi bi-brightness-alt-low me-1"></i> Buổi Chiều:</span>
+                         <button type="button" v-for="time in masterAfternoonTimes" :key="time" 
+                            class="btn btn-sm rounded-pill px-3"
+                            :class="followUpTimeOnly === time ? 'btn-primary shadow-sm fw-bold' : (availableFollowUpSlots.includes(time) ? 'btn-outline-primary' : 'btn-light text-muted border')"
+                            :disabled="!availableFollowUpSlots.includes(time)"
+                            @click="followUpTimeOnly = time">
+                           {{ time }} <i v-if="followUpTimeOnly === time" class="bi bi-check2 ms-1"></i>
+                         </button>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="alert alert-light py-2 px-3 mb-0 rounded-pill small w-100 border-0 shadow-sm d-flex align-items-center">
+                  <i class="bi bi-info-circle-fill text-muted me-2"></i> Bệnh án SOAP sẽ được lưu nguyên trạng vào hệ thống mà không sinh thêm lịch hẹn.
+                </div>
               </div>
             </div>
           </div>
@@ -572,6 +625,9 @@ const form = ref({
     treatmentDirections: [] as string[],
     careInstructions: '',
     followUpDate: '',
+    createFollowUpAppointment: false,
+    followUpType: 'FollowUp',
+    followUpNote: '',
     prescriptions: [] as Array<{
       medicineId: number | null;
       searchQuery: string;
@@ -595,6 +651,44 @@ const medicalHistory = ref<any[]>([]);
 const loadingHistory = ref(false);
 const submitting = ref(false);
 const errorMessage = ref('');
+
+const followUpDateOnly = ref('');
+const followUpTimeOnly = ref('');
+const fetchingFollowUpSlots = ref(false);
+const availableFollowUpSlots = ref<string[]>([]);
+const masterMorningTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
+const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
+
+const minDateOnlyStr = computed(() => {
+  const now = new Date();
+  return now.toISOString().split('T')[0];
+});
+
+const onFollowUpDateChange = async () => {
+  followUpTimeOnly.value = '';
+  if (!followUpDateOnly.value) {
+    availableFollowUpSlots.value = [];
+    return;
+  }
+  fetchingFollowUpSlots.value = true;
+  try {
+    const res = await api.get('/appointment/available-slots', {
+      params: { date: followUpDateOnly.value }
+    });
+    const allSlots = new Set<string>();
+    res.data.forEach((doc: any) => {
+      if (doc.availableSlots) {
+        doc.availableSlots.forEach((slot: string) => allSlots.add(slot));
+      }
+    });
+    availableFollowUpSlots.value = Array.from(allSlots);
+  } catch (err) {
+    console.error('Lỗi khi tải danh sách giờ trống', err);
+    availableFollowUpSlots.value = [];
+  } finally {
+    fetchingFollowUpSlots.value = false;
+  }
+};
 
 // Computed: Check if any medicine does not have enough stock
 const hasStockDeficit = computed(() => {
@@ -745,10 +839,22 @@ const submitForm = async () => {
     return;
   }
 
+  if (form.value.plan.createFollowUpAppointment) {
+    if (!followUpDateOnly.value || !followUpTimeOnly.value) {
+      errorMessage.value = 'Vui lòng chọn đầy đủ Ngày và Khung giờ trống cho lịch tái khám.';
+      soapActiveTab.value = 'plan';
+      return;
+    }
+  }
+
   submitting.value = true;
   errorMessage.value = '';
 
   try {
+    const finalFollowUpDate = (form.value.plan.createFollowUpAppointment && followUpDateOnly.value && followUpTimeOnly.value)
+      ? `${followUpDateOnly.value}T${followUpTimeOnly.value}:00`
+      : null;
+
     const payload = {
       appointmentId: form.value.appointmentId,
       petId: form.value.petId,
@@ -758,7 +864,10 @@ const submitForm = async () => {
       plan: {
         treatmentDirections: form.value.plan.treatmentDirections,
         careInstructions: form.value.plan.careInstructions,
-        followUpDate: form.value.plan.followUpDate ? new Date(form.value.plan.followUpDate).toISOString() : null,
+        followUpDate: finalFollowUpDate,
+        createFollowUpAppointment: form.value.plan.createFollowUpAppointment,
+        followUpType: form.value.plan.followUpType,
+        followUpNote: form.value.plan.followUpNote,
         prescriptions: form.value.plan.prescriptions
           .filter(p => p.medicineId !== null)
           .map(p => ({

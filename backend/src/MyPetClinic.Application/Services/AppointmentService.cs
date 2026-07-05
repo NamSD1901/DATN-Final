@@ -700,6 +700,9 @@ namespace MyPetClinic.Application.Services
                     a.Symptom,
                     a.Note,
                     a.QrToken,
+                    a.Type,
+                    a.IsSystemGenerated,
+                    a.ReferenceRecordId,
                     a.VaccineId,
                     VaccineName = a.Vaccine != null ? a.Vaccine.Name : null
                 })
@@ -726,6 +729,9 @@ namespace MyPetClinic.Application.Services
                 Symptom = a.Symptom,
                 Note = a.Note,
                 QrToken = a.QrToken,
+                Type = a.Type,
+                IsSystemGenerated = a.IsSystemGenerated,
+                ReferenceRecordId = a.ReferenceRecordId,
                 VaccineId = a.VaccineId,
                 VaccineName = a.VaccineName
             });
@@ -760,6 +766,9 @@ namespace MyPetClinic.Application.Services
                     x.Note,
                     x.Status,
                     x.QrToken,
+                    x.Type,
+                    x.IsSystemGenerated,
+                    x.ReferenceRecordId,
                     x.VaccineId,
                     VaccineName = x.Vaccine != null ? x.Vaccine.Name : null
                 })
@@ -789,6 +798,9 @@ namespace MyPetClinic.Application.Services
                 Note = a.Note,
                 Status = a.Status,
                 QrToken = a.QrToken,
+                Type = a.Type,
+                IsSystemGenerated = a.IsSystemGenerated,
+                ReferenceRecordId = a.ReferenceRecordId,
                 VaccineId = a.VaccineId,
                 VaccineName = a.VaccineName
             };
@@ -903,6 +915,9 @@ namespace MyPetClinic.Application.Services
                     Note = a.Note,
                     Status = a.Status,
                     QrToken = a.QrToken,
+                    Type = a.Type,
+                    IsSystemGenerated = a.IsSystemGenerated,
+                    ReferenceRecordId = a.ReferenceRecordId,
                     InvoiceId = invoice?.Id,
                     InvoiceStatus = invoice?.PaymentStatus,
                     InvoiceTotalAmount = invoice?.TotalAmount,
@@ -1082,17 +1097,18 @@ namespace MyPetClinic.Application.Services
             }
 
             // 1. Lấy tất cả ca trực của bác sĩ còn hoạt động vào ngày chỉ định
-            var schedules = await _unitOfWork.DoctorSchedules.FindWithIncludesAsync(
+            bool filterByEmail = allowedDoctorEmails.Any();
+            var schedulesList = (await _unitOfWork.DoctorSchedules.FindWithIncludesAsync(
                 s => s.WorkDate == targetDate && s.IsAvailable && s.Doctor != null && s.Doctor.IsActive == true
-                     && (!allowedDoctorEmails.Any() || (s.Doctor.Email != null && allowedDoctorEmails.Contains(s.Doctor.Email))),
+                     && (!filterByEmail || (s.Doctor.Email != null && allowedDoctorEmails.Contains(s.Doctor.Email))),
                 s => s.Doctor!
-            );
+            )).ToList();
 
             var result = new List<DoctorAvailableSlotsDto>();
 
-            if (schedules.Any())
+            if (schedulesList.Any())
             {
-                foreach (var schedule in schedules)
+                foreach (var schedule in schedulesList)
                 {
                     var nextDay = targetDate.AddDays(1);
                     var appointments = await _unitOfWork.Appointments.FindAsync(
@@ -1126,7 +1142,7 @@ namespace MyPetClinic.Application.Services
                 // ta tự động lấy toàn bộ các bác sĩ đang hoạt động và tạo ca trực in-memory dựa trên cấu hình slot_config.json
                 var doctors = await _unitOfWork.Users.FindAsync(
                     u => u.Role != null && u.Role.Name.ToLower().Contains("doctor") && u.IsActive == true
-                         && (!allowedDoctorEmails.Any() || (u.Email != null && allowedDoctorEmails.Contains(u.Email)))
+                         && (!filterByEmail || (u.Email != null && allowedDoctorEmails.Contains(u.Email)))
                 );
 
                 if (doctors.Any())
@@ -1304,9 +1320,10 @@ namespace MyPetClinic.Application.Services
                 }
 
                 // 1. Lấy tất cả bác sĩ có lịch trực vào ngày hẹn mà thời gian hẹn nằm trong ca trực của họ
+                bool filterByEmail = allowedDoctorEmails.Any();
                 var doctorsWithSchedules = _unitOfWork.DoctorSchedules.Query()
                     .Where(s => s.WorkDate == targetDateStart && s.IsAvailable && s.Doctor != null && s.Doctor.IsActive == true
-                                && (!allowedDoctorEmails.Any() || (s.Doctor.Email != null && allowedDoctorEmails.Contains(s.Doctor.Email))))
+                                && (!filterByEmail || (s.Doctor.Email != null && allowedDoctorEmails.Contains(s.Doctor.Email))))
                     .ToList();
 
                 List<Guid> doctorsList;
@@ -1333,7 +1350,7 @@ namespace MyPetClinic.Application.Services
                     // Fallback nếu không có cấu hình lịch trực cho ngày đó
                     doctorsList = _unitOfWork.Users.Query()
                         .Where(u => u.Role != null && (u.Role.Name.ToLower() == "clinical_doctor" || u.Role.Name.ToLower() == "vaccination_doctor") && u.IsActive == true
-                                && (!allowedDoctorEmails.Any() || (u.Email != null && allowedDoctorEmails.Contains(u.Email))))
+                                && (!filterByEmail || (u.Email != null && allowedDoctorEmails.Contains(u.Email))))
                         .Select(u => u.Id)
                         .ToList();
                 }
