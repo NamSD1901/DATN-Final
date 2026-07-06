@@ -410,6 +410,14 @@
       @success="handleBookingSuccess" 
       @error="handleBookingError" 
     />
+
+    <!-- Auto Review Modal -->
+    <ReviewModal
+      :is-open="showAutoReviewModal"
+      :initial-data="{ appointmentId: autoReviewApptId }"
+      @close="onAutoReviewClosed"
+      @submit="onAutoReviewSubmitted"
+    />
   </div>
 </template>
 
@@ -418,7 +426,10 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import api from '../services/api';
 import BookingModal from '../components/shared/BookingModal.vue';
+import ReviewModal from '../components/shared/ReviewModal.vue';
 import NotificationBell from '../components/layout/NotificationBell.vue';
+import { useReviewStore } from '../stores/review.store';
+import confetti from 'canvas-confetti';
 import CustomerOverviewTab from '../components/dashboard/CustomerOverviewTab.vue';
 import QueueTab from '../components/dashboard/QueueTab.vue';
 import CustomersTab from '../components/dashboard/CustomersTab.vue';
@@ -465,6 +476,10 @@ const isSidebarActive = ref(false);
 const showBookingModal = ref(false);
 const showQrModal = ref(false);
 const myAppointmentsTabRef = ref<any>(null);
+
+const reviewStore = useReviewStore();
+const showAutoReviewModal = ref(false);
+const autoReviewApptId = ref(0);
 const appointmentsTabRef = ref<any>(null);
 
 const handleSidebarBookNew = () => {
@@ -545,6 +560,10 @@ const fetchDashboardData = async () => {
     role.value = fetchedRole;
     localStorage.setItem('user_role', role.value);
     
+    if (role.value === 'customer') {
+      checkPendingReviews();
+    }
+    
     if (role.value === 'receptionist' && activeTab.value === 'overview') {
       activeTab.value = 'queue';
     } else if (role.value === 'doctor' && activeTab.value === 'overview') {
@@ -594,6 +613,112 @@ const handleBookingSuccess = (msg: string) => {
 
 const handleBookingError = (msg: string) => {
   alert(msg);
+};
+
+const triggerConfetti = () => {
+  const duration = 2.5 * 1000;
+  const animationEnd = Date.now() + duration;
+  const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1200 };
+
+  function randomInRange(min: number, max: number) {
+    return Math.random() * (max - min) + min;
+  }
+
+  const interval: any = setInterval(function() {
+    const timeLeft = animationEnd - Date.now();
+    if (timeLeft <= 0) {
+      return clearInterval(interval);
+    }
+    const particleCount = 40 * (timeLeft / duration);
+    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+  }, 250);
+};
+
+const onAutoReviewClosed = () => {
+  showAutoReviewModal.value = false;
+  try {
+    const dismissedReviewsStr = localStorage.getItem('dismissedReviews');
+    const dismissedReviews: number[] = dismissedReviewsStr ? JSON.parse(dismissedReviewsStr) : [];
+    if (!dismissedReviews.includes(autoReviewApptId.value)) {
+      dismissedReviews.push(autoReviewApptId.value);
+      localStorage.setItem('dismissedReviews', JSON.stringify(dismissedReviews));
+    }
+  } catch (err) {
+    console.error("Lỗi lưu trạng thái dismiss review", err);
+  }
+};
+
+const onAutoReviewSubmitted = async (data: any) => {
+  try {
+    await reviewStore.submitReview({
+      appointmentId: data.appointmentId,
+      rating: data.rating,
+      comment: data.comment
+    });
+    showAutoReviewModal.value = false;
+    
+    try {
+      const dismissedReviewsStr = localStorage.getItem('dismissedReviews');
+      const dismissedReviews: number[] = dismissedReviewsStr ? JSON.parse(dismissedReviewsStr) : [];
+      if (!dismissedReviews.includes(data.appointmentId)) {
+        dismissedReviews.push(data.appointmentId);
+        localStorage.setItem('dismissedReviews', JSON.stringify(dismissedReviews));
+      }
+    } catch (e) {}
+
+    confetti({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      zIndex: 1200
+    });
+  } catch (err: any) {
+    console.error('Lỗi khi gửi đánh giá', err);
+    if (err.response?.data?.message?.includes("đã được đánh giá")) {
+      showAutoReviewModal.value = false;
+      try {
+        const dismissedReviewsStr = localStorage.getItem('dismissedReviews');
+        const dismissedReviews: number[] = dismissedReviewsStr ? JSON.parse(dismissedReviewsStr) : [];
+        if (!dismissedReviews.includes(data.appointmentId)) {
+          dismissedReviews.push(data.appointmentId);
+          localStorage.setItem('dismissedReviews', JSON.stringify(dismissedReviews));
+        }
+      } catch (e) {}
+    }
+  }
+};
+
+const checkPendingReviews = async () => {
+  try {
+    const res = await api.get('/my-appointments?page=1&pageSize=50');
+    const appointments = res.data.items || res.data || [];
+    
+    await reviewStore.fetchMyReviews(1);
+    
+    const dismissedReviewsStr = localStorage.getItem('dismissedReviews');
+    const dismissedReviews: number[] = dismissedReviewsStr ? JSON.parse(dismissedReviewsStr) : [];
+
+    const completedAppts = appointments
+      .filter((a: any) => a.status === 'completed')
+      .sort((a: any, b: any) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime());
+      
+    if (completedAppts.length > 0) {
+      const latestAppt = completedAppts[0];
+      const hasReviewed = reviewStore.myReviews.some(r => r.appointmentId == latestAppt.id);
+      
+      if (!hasReviewed && !dismissedReviews.includes(latestAppt.id)) {
+        autoReviewApptId.value = latestAppt.id;
+        
+        setTimeout(() => {
+          showAutoReviewModal.value = true;
+          triggerConfetti();
+        }, 800);
+      }
+    }
+  } catch (e) {
+    console.error("Lỗi khi tải lịch sử đánh giá auto:", e);
+  }
 };
 
 onMounted(() => {

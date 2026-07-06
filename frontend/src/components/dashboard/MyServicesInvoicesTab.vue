@@ -348,7 +348,7 @@ const fetchInvoices = async () => {
         id: `INV-${inv.id}`,
         serviceName,
         iconClass,
-        date: inv.appointmentDate ? `${inv.appointmentDate.split('T')[0]}T${inv.startTime || '00:00:00'}` : inv.createdAt,
+        date: inv.appointmentDate ? `${inv.appointmentDate.split('T')[0]}T${inv.startTime || '00:00:00'}` : (inv.createdAt.endsWith('Z') ? inv.createdAt : inv.createdAt + 'Z'),
         petName: inv.petName,
         petSpecies: inv.petSpecies || 'Thú cưng',
         doctorName: inv.doctorName || 'Bác sĩ',
@@ -433,8 +433,7 @@ const formatCurrency = (amount: number): string => {
 
 const formatDate = (dateStr: string): string => {
   if (!dateStr) return '—';
-  const finalDateStr = dateStr.endsWith('Z') ? dateStr : dateStr + 'Z';
-  const d = new Date(finalDateStr);
+  const d = new Date(dateStr);
   const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
   const day = d.getDate().toString().padStart(2, '0');
   const monthNames = ["Th01", "Th02", "Th03", "Th04", "Th05", "Th06", "Th07", "Th08", "Th09", "Th10", "Th11", "Th12"];
