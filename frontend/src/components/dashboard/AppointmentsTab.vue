@@ -298,92 +298,98 @@
           </table>
         </div>
       </div>
-
-
     </div>
 
     <!-- Modal 1: Create Appointment Modal -->
     <div v-if="showCreateModal" class="zalo-modal-overlay" @click.self="showCreateModal = false">
-      <div class="zalo-modal-card modal-lg max-w-700">
-        <div class="zalo-modal-header bg-warning text-dark">
-          <h5 class="modal-title fw-bold"><i class="bi bi-calendar-plus me-2"></i> Tạo Lịch Hẹn Khám Mới</h5>
-          <button class="modal-close text-dark border-0 bg-transparent" @click="showCreateModal = false"><i class="bi bi-x-lg fs-5"></i></button>
+      <div class="zalo-modal-card modal-lg max-w-700 bg-light">
+        <div class="zalo-modal-header bg-white border-bottom border-light" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+          <h5 class="modal-title fw-bold text-dark">
+            <i class="bi bi-calendar2-plus-fill text-warning me-2"></i> Tạo Lịch Hẹn Khám Mới
+          </h5>
+          <button class="btn-close shadow-none" @click="showCreateModal = false"></button>
         </div>
         <div class="zalo-modal-body text-start">
-          <!-- Tab pills for booking type -->
-          <ul class="nav nav-pills nav-fill mb-4 gap-2 border p-1.5 rounded-pill bg-light" role="tablist">
-            <li class="nav-item">
-              <button class="nav-link rounded-pill fw-bold border-0" :class="{ 'active': activeBookingTab === 'prebooked' }" @click="activeBookingTab = 'prebooked'">
-                <i class="bi bi-calendar-check me-2"></i>Đặt Lịch Khám Trước
-              </button>
-            </li>
-            <li class="nav-item">
-              <button class="nav-link rounded-pill fw-bold border-0" :class="{ 'active': activeBookingTab === 'walkin', 'bg-success text-white': activeBookingTab === 'walkin' }" @click="activeBookingTab = 'walkin'">
-                <i class="bi bi-person-walking me-2"></i>Khách Vãng Lai (Walk-in)
-              </button>
-            </li>
-          </ul>
+          <!-- Segmented Control for booking type -->
+          <div class="d-flex p-1 bg-white rounded-pill shadow-sm mb-4 border border-gray-200" style="max-width: 500px; margin: 0 auto;">
+            <button class="flex-fill btn rounded-pill fw-bold transition-all py-2" 
+                    :class="activeBookingTab === 'prebooked' ? 'btn-primary shadow-sm' : 'btn-light text-muted border-0 bg-transparent'" 
+                    @click="activeBookingTab = 'prebooked'">
+              <i class="bi bi-calendar-check me-1"></i> Đặt Lịch Khám Trước
+            </button>
+            <button class="flex-fill btn rounded-pill fw-bold transition-all py-2" 
+                    :class="activeBookingTab === 'walkin' ? 'btn-success shadow-sm text-white' : 'btn-light text-muted border-0 bg-transparent'" 
+                    @click="activeBookingTab = 'walkin'">
+              <i class="bi bi-person-walking me-1"></i> Khách Vãng Lai (Walk-in)
+            </button>
+          </div>
 
           <form @submit.prevent="activeBookingTab === 'prebooked' ? submitPrebookedAppointment() : submitWalkInAppointment()">
             <!-- Part 1: Select Owner (Shared for both tabs) -->
             <div class="mb-4">
-              <div class="bg-light p-3 rounded-4 border border-primary border-opacity-20 mb-3">
-                <label class="form-label fw-bold small text-muted">Tìm kiếm SĐT khách hàng *</label>
-                <div class="input-group">
-                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                  <input type="text" v-model="searchQueryPhone" class="form-control border-start-0" placeholder="Nhập SĐT để tìm hoặc đăng ký mới..." @keyup.enter="handleSearchCustomer" />
-                  <button type="button" class="btn btn-primary fw-bold" @click="handleSearchCustomer">Tìm / Đăng ký</button>
+              <div class="bg-white p-4 rounded-4 shadow-sm border border-light mb-4 position-relative">
+                <label class="form-label fw-bold text-dark mb-3">Tìm kiếm SĐT khách hàng <span class="text-danger">*</span></label>
+                <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden border border-gray-200">
+                  <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-search text-muted"></i></span>
+                  <input type="text" v-model="searchQueryPhone" class="form-control border-0 px-2" style="font-size: 0.95rem; box-shadow: none;" placeholder="Nhập SĐT để tìm hoặc đăng ký mới..." @keyup.enter="handleSearchCustomer" />
+                  <button type="button" class="btn btn-primary px-4 fw-bold border-0" @click="handleSearchCustomer">Tìm / Đăng ký</button>
                 </div>
                 
-                <div v-if="searchCustomerStatus === 'idle'" class="mt-2 text-start">
-                  <button type="button" class="btn btn-link text-decoration-none small p-0 text-primary fw-bold" @click="searchCustomerStatus = 'not_found'; customerForm.customerPhone = searchQueryPhone">
-                    <i class="bi bi-person-plus-fill me-1"></i> Bỏ qua tìm kiếm, đăng ký khách mới ngay
+                <div v-if="searchCustomerStatus === 'idle'" class="mt-3 text-start ms-2">
+                  <button type="button" class="btn btn-link text-decoration-none small p-0 text-secondary hover-primary transition-all" @click="searchCustomerStatus = 'not_found'; customerForm.customerPhone = searchQueryPhone">
+                    <i class="bi bi-person-plus-fill me-1"></i> Bỏ qua tìm kiếm, <span class="text-primary fw-bold">đăng ký khách mới ngay</span>
                   </button>
                 </div>
 
-                <small v-if="searchCustomerStatus === 'not_found'" class="text-warning mt-2 d-block fw-bold"><i class="bi bi-info-circle me-1"></i>Vui lòng điền thông tin khách mới bên dưới.</small>
+                <div v-if="searchCustomerStatus === 'not_found'" class="alert alert-warning border-0 bg-warning bg-opacity-10 d-flex align-items-center mt-3 py-2 px-3 rounded-3 mb-0">
+                  <i class="bi bi-info-circle-fill text-warning me-2"></i>
+                  <span class="small fw-bold text-dark-gold">Vui lòng điền thông tin khách mới bên dưới.</span>
+                </div>
               </div>
 
               <!-- Found Customer -->
-              <div v-if="searchCustomerStatus === 'found'" class="bg-success bg-opacity-10 p-3 rounded-4 border border-success border-opacity-25 animate-fade-in">
-                <div class="row align-items-start">
-                  <div class="col-md-6 mb-3 mb-md-0">
-                    <label class="form-label fw-bold small text-success">Thông tin khách hàng</label>
-                    <div class="d-flex align-items-center bg-white p-2.5 rounded-3 border border-success border-opacity-25">
-                      <div class="me-3 bg-success bg-opacity-25 p-2 rounded-circle text-success"><i class="bi bi-person-fill"></i></div>
+              <div v-if="searchCustomerStatus === 'found'" class="bg-white p-4 rounded-4 shadow-sm border border-success border-opacity-25 mb-4 animate-fade-in">
+                <div class="row align-items-center">
+                  <div class="col-md-5 border-end pe-4 mb-3 mb-md-0">
+                    <label class="form-label fw-bold text-success mb-3"><i class="bi bi-person-check-fill me-2"></i>Thông tin khách hàng</label>
+                    <div class="d-flex align-items-center">
+                      <div class="me-3 bg-success bg-opacity-10 p-3 rounded-circle text-success fs-4 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;"><i class="bi bi-person-fill"></i></div>
                       <div>
-                        <div class="fw-bold text-dark">{{ selectedCustomer?.fullName }}</div>
-                        <div class="small text-muted">{{ selectedCustomer?.phone }}</div>
+                        <div class="fw-bold text-dark fs-6">{{ selectedCustomer?.fullName }}</div>
+                        <div class="text-muted small"><i class="bi bi-telephone-fill me-1"></i>{{ selectedCustomer?.phone }}</div>
                       </div>
                     </div>
                   </div>
-                  <div class="col-md-6">
-                    <label class="form-label fw-bold small text-success d-flex justify-content-between align-items-center">
-                      <span>Chọn thú cưng *</span>
-                      <button type="button" class="btn btn-sm btn-outline-success rounded-pill py-0 px-2" style="font-size: 0.75rem" @click="isAddingNewPet = !isAddingNewPet">
-                        <i class="bi" :class="isAddingNewPet ? 'bi-x' : 'bi-plus-lg'"></i> {{ isAddingNewPet ? 'Hủy thêm' : 'Thêm bé mới' }}
+                  <div class="col-md-7 ps-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <label class="form-label fw-bold text-success mb-0">Chọn thú cưng <span class="text-danger">*</span></label>
+                      <button type="button" class="btn btn-sm rounded-pill fw-bold" :class="isAddingNewPet ? 'btn-outline-danger' : 'btn-outline-success'" @click="isAddingNewPet = !isAddingNewPet">
+                        <i class="bi" :class="isAddingNewPet ? 'bi-x-lg' : 'bi-plus-lg'"></i> {{ isAddingNewPet ? 'Hủy thêm' : 'Thêm bé mới' }}
                       </button>
-                    </label>
-                    <select v-if="!isAddingNewPet" v-model="formPayload.petId" class="form-select border-success" :required="!isAddingNewPet">
-                      <option value="">-- Chọn thú cưng --</option>
-                      <option v-for="pet in customerPets" :key="pet.id" :value="pet.id">{{ pet.name }} ({{ pet.species }})</option>
-                    </select>
+                    </div>
+                    
+                    <div v-if="!isAddingNewPet" class="position-relative">
+                      <select v-model="formPayload.petId" class="form-select form-select-lg border-success border-opacity-25 rounded-3 fs-6" style="box-shadow: none;" :required="!isAddingNewPet">
+                        <option value="">-- Vui lòng chọn thú cưng --</option>
+                        <option v-for="pet in customerPets" :key="pet.id" :value="pet.id">{{ pet.name }} ({{ pet.species }})</option>
+                      </select>
+                    </div>
 
                     <!-- Add new pet for old customer -->
-                    <div v-if="isAddingNewPet" class="bg-white p-3 rounded-3 border border-success border-opacity-25 mt-2 animate-fade-in">
+                    <div v-if="isAddingNewPet" class="bg-success bg-opacity-10 p-3 rounded-4 border border-success border-opacity-25 mt-2 animate-fade-in">
                       <div class="row g-2">
                         <div class="col-12">
-                          <input type="text" v-model="petForm.petName" class="form-control form-control-sm" placeholder="Tên thú cưng *" :required="isAddingNewPet" />
+                          <input type="text" v-model="petForm.petName" class="form-control rounded-3" placeholder="Tên thú cưng *" :required="isAddingNewPet" />
                         </div>
                         <div class="col-6">
-                          <select v-model="petForm.species" class="form-select form-select-sm">
+                          <select v-model="petForm.species" class="form-select rounded-3">
                             <option value="Chó">Chó</option>
                             <option value="Mèo">Mèo</option>
                             <option value="Khác">Khác</option>
                           </select>
                         </div>
                         <div class="col-6">
-                          <input type="number" step="0.1" v-model="petForm.petWeight" class="form-control form-control-sm" placeholder="Cân nặng (kg)" />
+                          <input type="number" step="0.1" v-model="petForm.petWeight" class="form-control rounded-3" placeholder="Cân nặng (kg)" />
                         </div>
                       </div>
                     </div>
@@ -392,31 +398,33 @@
               </div>
 
               <!-- New Customer / Not Found -->
-              <div v-if="searchCustomerStatus === 'not_found'" class="bg-warning bg-opacity-10 p-3 rounded-4 border border-warning border-opacity-35 animate-fade-in">
-                <div class="row g-3">
+              <div v-if="searchCustomerStatus === 'not_found'" class="bg-white p-4 rounded-4 shadow-sm border border-warning border-opacity-50 mb-4 animate-fade-in position-relative overflow-hidden">
+                <div class="position-absolute top-0 end-0 p-2 opacity-10 fs-1" style="transform: translate(10px, -10px);"><i class="bi bi-person-plus-fill text-warning" style="font-size: 5rem;"></i></div>
+                <h6 class="fw-bold text-dark-gold mb-4"><i class="bi bi-pencil-square me-2"></i>Đăng ký thông tin khách mới</h6>
+                <div class="row g-3 position-relative z-1">
                   <div class="col-md-6">
-                    <label class="form-label fw-bold small text-dark-gold">Số điện thoại *</label>
-                    <input type="text" v-model="customerForm.customerPhone" class="form-control border-warning border-opacity-50" required placeholder="VD: 0901234567" />
+                    <label class="form-label fw-bold small text-muted">Số điện thoại *</label>
+                    <input type="text" v-model="customerForm.customerPhone" class="form-control bg-light border-0 px-3 py-2 rounded-3" required placeholder="VD: 0901234567" />
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label fw-bold small text-dark-gold">Tên chủ nuôi *</label>
-                    <input type="text" v-model="customerForm.customerName" class="form-control border-warning border-opacity-50" required placeholder="VD: Nguyễn Văn A" />
+                    <label class="form-label fw-bold small text-muted">Tên chủ nuôi *</label>
+                    <input type="text" v-model="customerForm.customerName" class="form-control bg-light border-0 px-3 py-2 rounded-3" required placeholder="VD: Nguyễn Văn A" />
                   </div>
                   <div class="col-md-4">
-                    <label class="form-label fw-bold small text-dark-gold">Tên thú cưng *</label>
-                    <input type="text" v-model="petForm.petName" class="form-control border-warning border-opacity-50" required placeholder="VD: Milo" />
+                    <label class="form-label fw-bold small text-muted">Tên thú cưng *</label>
+                    <input type="text" v-model="petForm.petName" class="form-control bg-light border-0 px-3 py-2 rounded-3" required placeholder="VD: Milo" />
                   </div>
                   <div class="col-md-4">
-                    <label class="form-label fw-bold small text-dark-gold">Giống loài *</label>
-                    <select v-model="petForm.species" class="form-select border-warning border-opacity-50">
+                    <label class="form-label fw-bold small text-muted">Giống loài *</label>
+                    <select v-model="petForm.species" class="form-select bg-light border-0 px-3 py-2 rounded-3">
                       <option value="Chó">Chó</option>
                       <option value="Mèo">Mèo</option>
                       <option value="Khác">Khác</option>
                     </select>
                   </div>
                   <div class="col-md-4">
-                    <label class="form-label fw-bold small text-dark-gold">Cân nặng (kg)</label>
-                    <input type="number" step="0.1" v-model="petForm.petWeight" class="form-control border-warning border-opacity-50" placeholder="VD: 5.5" />
+                    <label class="form-label fw-bold small text-muted">Cân nặng (kg)</label>
+                    <input type="number" step="0.1" v-model="petForm.petWeight" class="form-control bg-light border-0 px-3 py-2 rounded-3" placeholder="VD: 5.5" />
                   </div>
                 </div>
               </div>
@@ -425,8 +433,8 @@
             <!-- Part 2: Service & Doctor -->
             <div class="row g-3 mb-4">
               <div class="col-md-6">
-                <label class="form-label fw-bold text-dark">Dịch vụ khám bệnh *</label>
-                <select v-model="formPayload.serviceId" class="form-select border-primary" required>
+                <label class="form-label fw-bold text-dark">Dịch vụ khám bệnh <span class="text-danger">*</span></label>
+                <select v-model="formPayload.serviceId" class="form-select form-select-lg border-gray-200 rounded-3 shadow-sm fs-6" style="box-shadow: none;" required>
                   <option value="">-- Chọn dịch vụ khám --</option>
                   <option v-for="srv in serviceList" :key="srv.id" :value="srv.id">
                     {{ srv.name }} ({{ formatCurrency(srv.price) }})
@@ -435,35 +443,45 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold text-dark">Bác sĩ phụ trách</label>
-                <div class="form-control border-primary bg-light text-muted fw-bold d-flex align-items-center">
-                  <i class="bi bi-robot me-2 text-primary"></i> Hệ thống tự động phân công
+                <div class="form-control form-control-lg border-gray-200 bg-light text-primary fw-bold d-flex align-items-center rounded-3 shadow-sm fs-6" style="box-shadow: none;">
+                  <i class="bi bi-robot me-2 fs-5"></i> Hệ thống tự động phân công
                 </div>
               </div>
             </div>
 
             <!-- Part 3: Time Slot Selector (ONLY FOR PRE-BOOKED) -->
-            <div v-if="activeBookingTab === 'prebooked'" class="card border-primary border-opacity-25 shadow-sm rounded-4 mb-4 animate-fade-in">
-              <div class="card-body">
-                <h6 class="fw-bold text-primary mb-3"><i class="bi bi-clock me-2"></i>Chọn thời gian đặt hẹn</h6>
-                <div class="row g-3">
-                  <div class="col-md-4 border-end pe-md-3">
-                    <label class="form-label fw-bold small text-muted">Ngày đặt lịch *</label>
-                    <input type="date" v-model="formPayload.dateOnly" class="form-control border-primary" required />
+            <div v-if="activeBookingTab === 'prebooked'" class="card border-0 shadow-sm rounded-4 mb-4 animate-fade-in overflow-hidden">
+              <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                <h6 class="fw-bold text-primary mb-0"><i class="bi bi-clock-history me-2"></i>Chọn thời gian đặt hẹn</h6>
+              </div>
+              <div class="card-body pt-3">
+                <div class="row g-4">
+                  <div class="col-md-4 border-end pe-md-4">
+                    <label class="form-label fw-bold small text-muted mb-3">Ngày đặt lịch <span class="text-danger">*</span></label>
+                    <input type="date" v-model="formPayload.dateOnly" class="form-control form-control-lg border-gray-200 shadow-sm rounded-3 fs-6" style="box-shadow: none;" required />
+                    
+                    <div class="mt-4 p-4 bg-light rounded-4 text-center border border-gray-100">
+                      <i class="bi bi-calendar2-check text-primary fs-1 opacity-25 mb-2 d-block"></i>
+                      <p class="small text-muted mb-0 fw-medium">Lịch làm việc của bác sĩ có thể thay đổi tùy ngày. Vui lòng chọn ngày để xem giờ trống.</p>
+                    </div>
                   </div>
-                  <div class="col-md-8 ps-md-3">
-                    <label class="form-label fw-bold small text-muted">Khung giờ làm việc còn trống *</label>
-                    <div v-if="fetchingSlots" class="d-flex align-items-center gap-2 text-muted small mt-2">
-                      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                  <div class="col-md-8 ps-md-4">
+                    <label class="form-label fw-bold small text-muted mb-3">Khung giờ làm việc còn trống <span class="text-danger">*</span></label>
+                    <div v-if="fetchingSlots" class="d-flex justify-content-center align-items-center py-5 text-muted small">
+                      <div class="spinner-border text-primary me-2" role="status"></div>
                       Đang tải khung giờ trống...
                     </div>
                     <div v-else-if="slotFetchError" class="text-danger small mt-2">{{ slotFetchError }}</div>
-                    <div v-else-if="availableTimeSlots.length === 0" class="text-warning small fw-bold mt-2 d-flex align-items-center gap-1">
-                      <i class="bi bi-exclamation-circle"></i> Hiện không có khung giờ làm việc nào còn trống. Bạn vui lòng chọn ngày khác!
+                    <div v-else-if="availableTimeSlots.length === 0" class="alert alert-warning border-0 bg-warning bg-opacity-10 d-flex align-items-center py-3">
+                      <i class="bi bi-exclamation-circle-fill text-warning me-3 fs-4"></i>
+                      <span class="small fw-bold">Hiện không có khung giờ làm việc nào còn trống. Bạn vui lòng chọn ngày khác!</span>
                     </div>
-                    <div v-else class="d-flex flex-column gap-3 mt-2">
+                    <div v-else class="d-flex flex-column gap-4">
                       <!-- Morning Slots -->
                       <div>
-                        <h6 class="text-muted fw-bold mb-2 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-high me-1"></i> BUỔI SÁNG</h6>
+                        <h6 class="text-muted fw-bold mb-3 small d-flex align-items-center gap-2">
+                          <span class="badge bg-warning text-dark rounded-pill px-3 py-1.5"><i class="bi bi-brightness-alt-high me-1"></i> BUỔI SÁNG</span>
+                        </h6>
                         <div class="d-flex flex-wrap gap-2">
                           <button
                             v-for="slot in displayMorningSlots"
@@ -482,7 +500,7 @@
                             @click="slot.isAvailable && (formPayload.timeOnly = slot.time)"
                           >
                             <span class="slot-time-text">{{ slot.time }}</span>
-                            <i v-if="formPayload.timeOnly === slot.time" class="bi bi-check-circle-fill ms-1"></i>
+                            <i v-if="formPayload.timeOnly === slot.time" class="bi bi-check-circle-fill text-white ms-1 position-absolute top-0 start-100 translate-middle" style="font-size: 1.1rem; background: #0d6efd; border-radius: 50%;"></i>
                             <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
                             <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
                             <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
@@ -492,7 +510,9 @@
                       
                       <!-- Afternoon Slots -->
                       <div>
-                        <h6 class="text-muted fw-bold mb-2 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-low me-1"></i> BUỔI CHIỀU</h6>
+                        <h6 class="text-muted fw-bold mb-3 small d-flex align-items-center gap-2">
+                          <span class="badge bg-secondary bg-opacity-25 text-dark rounded-pill px-3 py-1.5"><i class="bi bi-brightness-alt-low me-1"></i> BUỔI CHIỀU</span>
+                        </h6>
                         <div class="d-flex flex-wrap gap-2">
                           <button
                             v-for="slot in displayAfternoonSlots"
@@ -511,7 +531,7 @@
                             @click="slot.isAvailable && (formPayload.timeOnly = slot.time)"
                           >
                             <span class="slot-time-text">{{ slot.time }}</span>
-                            <i v-if="formPayload.timeOnly === slot.time" class="bi bi-check-circle-fill ms-1"></i>
+                            <i v-if="formPayload.timeOnly === slot.time" class="bi bi-check-circle-fill text-white ms-1 position-absolute top-0 start-100 translate-middle" style="font-size: 1.1rem; background: #0d6efd; border-radius: 50%;"></i>
                             <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
                             <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
                             <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
@@ -519,13 +539,12 @@
                         </div>
                       </div>
 
-                      <div class="mt-3 pt-2 border-top">
-                        <p class="small text-muted mb-2 fw-semibold"><i class="bi bi-info-circle me-1"></i> Chú giải màu khung giờ:</p>
-                        <div class="d-flex flex-wrap gap-2">
-                          <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
-                          <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#f8f9fa;border:1.5px solid #e9ecef;display:inline-block"></span> <span class="text-muted">Đã qua</span></span>
-                          <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff8ec;border:1.5px solid #ffc107;display:inline-block"></span> <span class="text-muted">Quá gần</span></span>
-                          <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã đặt</span></span>
+                      <div class="mt-3 pt-3 border-top">
+                        <div class="d-flex flex-wrap gap-3 justify-content-center">
+                          <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
+                          <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#f8f9fa;border:1.5px solid #e9ecef;display:inline-block"></span> <span class="text-muted">Đã qua</span></span>
+                          <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#fff8ec;border:1.5px solid #ffc107;display:inline-block"></span> <span class="text-muted">Quá gần</span></span>
+                          <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã đặt</span></span>
                         </div>
                       </div>
                     </div>
@@ -535,16 +554,18 @@
             </div>
 
             <div class="mb-4">
-              <div class="form-floating">
-                <textarea v-model="formPayload.symptom" class="form-control" style="height: 80px" placeholder="Lý do khám..." required></textarea>
-                <label class="text-muted">Lý do khám bệnh / Triệu chứng *</label>
-              </div>
+              <label class="form-label fw-bold text-dark mb-2">Lý do khám bệnh / Triệu chứng <span class="text-danger">*</span></label>
+              <textarea v-model="formPayload.symptom" class="form-control border-gray-200 shadow-sm rounded-3 p-3" style="height: 100px; resize: none; box-shadow: none;" placeholder="Mô tả tóm tắt tình trạng của bé..." required></textarea>
             </div>
 
-            <div class="mt-4 pt-3 border-top text-end">
-              <button type="button" class="btn btn-outline-secondary rounded-pill px-4 me-2" @click="showCreateModal = false">Hủy</button>
-              <button v-if="activeBookingTab === 'prebooked'" type="submit" class="btn btn-premium rounded-pill px-5 fw-bold">Xác Nhận Đặt Lịch</button>
-              <button v-else type="submit" class="btn btn-success rounded-pill px-5 fw-bold shadow-sm"><i class="bi bi-play-fill me-1"></i>Đưa Vào Hàng Đợi Ngay</button>
+            <div class="mt-5 pt-4 border-top d-flex justify-content-end gap-3">
+              <button type="button" class="btn btn-light text-muted fw-bold rounded-pill px-4" @click="showCreateModal = false">Hủy Bỏ</button>
+              <button v-if="activeBookingTab === 'prebooked'" type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow d-flex align-items-center gap-2">
+                <i class="bi bi-calendar-check"></i> Xác Nhận Đặt Lịch
+              </button>
+              <button v-else type="submit" class="btn btn-success rounded-pill px-5 fw-bold shadow d-flex align-items-center gap-2">
+                <i class="bi bi-play-fill fs-5"></i> Đưa Vào Hàng Đợi Ngay
+              </button>
             </div>
           </form>
         </div>
