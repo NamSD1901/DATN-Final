@@ -12,7 +12,7 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<IEnumerable<CalendarEventDto>> GetCalendarEventsAsync(DateTime start, DateTime end, Guid? doctorId);
         Task<bool> UpdateAppointmentStatusAsync(long id, string status, string? reason = null);
         Task<bool> RescheduleAppointmentAsync(long id, DateTime newStart, bool force = false);
-        Task<bool> UpdateAppointmentDoctorAsync(long id, Guid newDoctorId, bool force = false);
+        Task<bool> UpdateAppointmentDoctorAsync(long id, ChangeDoctorRequestDto request);
         Task<IEnumerable<ServiceDto>> GetServicesAsync();
         Task<AppointmentStatsDto> GetAppointmentStatsAsync();
         Task<IEnumerable<AppointmentDetailDto>> GetPendingAppointmentsAsync();
@@ -22,7 +22,7 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<IEnumerable<AppointmentDetailDto>> GetPetAppointmentsAsync(long petId);
         Task<IEnumerable<MedicalRecordDto>> GetPetMedicalHistoryAsync(long petId, Guid ownerId);
         Task<IEnumerable<DoctorAvailableSlotsDto>> GetAvailableSlotsAsync(DateTime date, long? serviceId = null);
-        Task<IEnumerable<DoctorDto>> GetSuitableDoctorsForAppointmentAsync(long appointmentId);
+        Task<IEnumerable<EligibleDoctorDto>> GetSuitableDoctorsForAppointmentAsync(long appointmentId);
         Task<AppointmentDetailDto?> CheckInByQrAsync(string qrToken);
     }
 }

@@ -18,5 +18,9 @@ namespace MyPetClinic.Application.DTOs
         public TimeSpan EndTime { get; set; }
         
         public int? MaxAppointments { get; set; } = 10;
+        
+        public Guid? RecurringGroupId { get; set; }
+        
+        public string? Notes { get; set; }
     }
 }

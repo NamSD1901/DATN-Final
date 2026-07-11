@@ -203,7 +203,7 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 *   **Mục tiêu:** Thống kê doanh thu, quản lý bài viết/đánh giá của khách hàng.
 *   **Trạng thái chung:** `🟡 IN PROGRESS` (Review Management).
 *   **Chi tiết:**
-    *   T55: Quản lý Đánh giá (Review Management) - `🟡 IN PROGRESS` (Đã hoàn thành Phase 1: Tái thiết lập Domain & Database theo luồng Soft Delete `DeletedAt`).
+    *   T55: Quản| 4. Customer Experience & Available Slots Logic | `✅ CODE DONE` | Backend (`SlotCalculationHelper.cs`, `AppointmentService.cs`), Frontend (`BookingModal.vue`). Lọc rảnh = Ca trực - (BlockTime + Lịch kín). Tích hợp API thời gian thực. |dAt`).
 
 ---
 

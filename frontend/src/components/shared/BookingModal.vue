@@ -522,37 +522,40 @@ const fetchTimeSlots = async () => {
   if (!selectedDate.value) return;
   loadingSlots.value = true;
   try {
-    // In real app: call API
-    // const res = await api.get(`/my-appointments/available-slots?date=${selectedDate.value}`);
-    await new Promise(resolve => setTimeout(resolve, 600)); // fake delay
+    const serviceId = selectedService.value?.id ? `&serviceId=${selectedService.value.id}` : '';
+    const res = await api.get(`/my-appointments/available-slots?date=${selectedDate.value}${serviceId}`);
+    const data = res.data || [];
     
-    // Generate mock slots
-    morningSlots.value = [
-      { time: '08:00', available: true },
-      { time: '08:30', available: true },
-      { time: '09:00', available: true },
-      { time: '09:30', available: true },
-      { time: '10:00', available: true },
-      { time: '10:30', available: true },
-      { time: '11:00', available: false },
-    ];
-    afternoonSlots.value = [
-      { time: '13:30', available: true },
-      { time: '14:00', available: true },
-      { time: '14:30', available: false },
-      { time: '15:00', available: true },
-      { time: '15:30', available: true, fast: true },
-      { time: '16:00', available: true },
-      { time: '16:30', available: true },
-      { time: '17:00', available: true },
-      { time: '17:30', available: true },
-      { time: '18:00', available: true },
-      { time: '18:30', available: true },
-      { time: '19:00', available: true },
-      { time: '19:30', available: true },
-    ];
+    // Thu thập tất cả các slot từ tất cả bác sĩ
+    const allSlotsSet = new Set<string>();
+    data.forEach((doctor: any) => {
+      if (doctor.availableSlots && Array.isArray(doctor.availableSlots)) {
+        doctor.availableSlots.forEach((slot: string) => allSlotsSet.add(slot));
+      }
+    });
+
+    const sortedSlots = Array.from(allSlotsSet).sort();
+
+    morningSlots.value = [];
+    afternoonSlots.value = [];
+
+    sortedSlots.forEach((time: string) => {
+      const hour = parseInt(time.split(':')[0], 10);
+      if (hour < 12) {
+        morningSlots.value.push({ time, available: true });
+      } else {
+        afternoonSlots.value.push({ time, available: true, fast: hour >= 15 });
+      }
+    });
+
+    // Nếu không có slot nào từ server, fallback hiển thị thông báo hoặc mảng rỗng
+    if (morningSlots.value.length === 0 && afternoonSlots.value.length === 0) {
+      console.warn('Không có ca trực nào khả dụng cho ngày này.');
+    }
   } catch (error) {
-    console.error(error);
+    console.error('Lỗi khi lấy danh sách slot thời gian:', error);
+    morningSlots.value = [];
+    afternoonSlots.value = [];
   } finally {
     loadingSlots.value = false;
   }

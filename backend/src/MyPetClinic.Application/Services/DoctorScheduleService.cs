@@ -53,7 +53,9 @@ namespace MyPetClinic.Application.Services
                 StartTime = s.StartTime,
                 EndTime = s.EndTime,
                 MaxAppointments = s.MaxAppointments,
-                IsAvailable = s.IsAvailable
+                IsAvailable = s.IsAvailable,
+                RecurringGroupId = s.RecurringGroupId,
+                Notes = s.Notes
             });
         }
 
@@ -73,7 +75,9 @@ namespace MyPetClinic.Application.Services
                 StartTime = schedule.StartTime,
                 EndTime = schedule.EndTime,
                 MaxAppointments = schedule.MaxAppointments,
-                IsAvailable = schedule.IsAvailable
+                IsAvailable = schedule.IsAvailable,
+                RecurringGroupId = schedule.RecurringGroupId,
+                Notes = schedule.Notes
             };
         }
 
@@ -114,7 +118,9 @@ namespace MyPetClinic.Application.Services
                 StartTime = dto.StartTime,
                 EndTime = dto.EndTime,
                 MaxAppointments = dto.MaxAppointments,
-                IsAvailable = true
+                IsAvailable = true,
+                RecurringGroupId = dto.RecurringGroupId,
+                Notes = dto.Notes
             };
 
             await _unitOfWork.DoctorSchedules.AddAsync(schedule);
@@ -158,6 +164,8 @@ namespace MyPetClinic.Application.Services
             schedule.EndTime = dto.EndTime;
             schedule.MaxAppointments = dto.MaxAppointments;
             schedule.IsAvailable = dto.IsAvailable;
+            schedule.RecurringGroupId = dto.RecurringGroupId;
+            schedule.Notes = dto.Notes;
 
             _unitOfWork.DoctorSchedules.Update(schedule);
             await _unitOfWork.SaveChangesAsync();

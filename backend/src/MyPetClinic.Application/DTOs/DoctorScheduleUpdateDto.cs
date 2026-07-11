@@ -14,5 +14,9 @@ namespace MyPetClinic.Application.DTOs
         public int? MaxAppointments { get; set; }
         
         public bool IsAvailable { get; set; }
+        
+        public Guid? RecurringGroupId { get; set; }
+        
+        public string? Notes { get; set; }
     }
 }

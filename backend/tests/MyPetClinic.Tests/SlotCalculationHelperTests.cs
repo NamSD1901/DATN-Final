@@ -42,7 +42,7 @@ namespace MyPetClinic.Tests
             var appointments = new List<Appointment>();
 
             // Act
-            var availableSlots = SlotCalculationHelper.GetAvailableSlots(schedule, appointments, 30);
+            var availableSlots = SlotCalculationHelper.GetAvailableSlots(schedule, appointments, null, 30);
 
             // Assert
             Assert.Equal(4, availableSlots.Count);
@@ -67,7 +67,7 @@ namespace MyPetClinic.Tests
             };
 
             // Act
-            var availableSlots = SlotCalculationHelper.GetAvailableSlots(schedule, appointments, 30);
+            var availableSlots = SlotCalculationHelper.GetAvailableSlots(schedule, appointments, null, 30);
 
             // Assert
             // Remaining: 8:00, 9:00, 9:30 (8:30 is removed)
@@ -96,7 +96,7 @@ namespace MyPetClinic.Tests
             };
 
             // Act
-            var availableSlots = SlotCalculationHelper.GetAvailableSlots(schedule, appointments, 30);
+            var availableSlots = SlotCalculationHelper.GetAvailableSlots(schedule, appointments, null, 30);
 
             // Assert
             // All 4 slots should be available because the appointment is cancelled
@@ -123,7 +123,7 @@ namespace MyPetClinic.Tests
             };
 
             // Act
-            var availableSlots = SlotCalculationHelper.GetAvailableSlots(schedule, appointments, 30);
+            var availableSlots = SlotCalculationHelper.GetAvailableSlots(schedule, appointments, null, 30);
 
             // Assert
             // 8:00 (diff = 45m -> Ok)

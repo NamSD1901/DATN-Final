@@ -11,6 +11,8 @@ namespace MyPetClinic.Domain.Entities
         public TimeSpan EndTime { get; set; }
         public int? MaxAppointments { get; set; } = 10;
         public bool IsAvailable { get; set; } = true;
+        public Guid? RecurringGroupId { get; set; }
+        public string? Notes { get; set; }
 
         public User? Doctor { get; set; }
     }

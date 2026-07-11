@@ -68,7 +68,10 @@
             <a href="#" @click.prevent="activeTab = 'services-admin'"><i class="bi bi-box-seam-fill text-warning opacity-75"></i> Quản lý Dịch vụ</a>
           </li>
           <li :class="{ 'active': activeTab === 'settings-admin' }">
-            <a href="#" @click.prevent="activeTab = 'settings-admin'"><i class="bi bi-clock-fill text-warning opacity-75"></i> Khung giờ làm việc (Mới)</a>
+            <a href="#" @click.prevent="activeTab = 'settings-admin'"><i class="bi bi-gear-wide-connected text-warning opacity-75"></i> Cấu hình Phòng khám</a>
+          </li>
+          <li :class="{ 'active': activeTab === 'schedules-admin' }">
+            <a href="#" @click.prevent="activeTab = 'schedules-admin'"><i class="bi bi-clock-fill text-warning opacity-75"></i> Lịch trực Bác sĩ (Mới)</a>
           </li>
           <li :class="{ 'active': activeTab === 'medicines-admin' }">
             <a href="#" @click.prevent="activeTab = 'medicines-admin'"><i class="bi bi-capsule text-warning opacity-75"></i> Quản lý Kho thuốc</a>

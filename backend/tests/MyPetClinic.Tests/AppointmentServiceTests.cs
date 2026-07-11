@@ -390,6 +390,109 @@ namespace MyPetClinic.Tests
             Assert.Equal(doctorIdB, appt.DoctorId);
         }
 
+        [Fact]
+        public async Task GetSuitableDoctorsForAppointment_ShouldReturnDoctors_OrderedByScore()
+        {
+            // Arrange
+            var customerId = Guid.NewGuid();
+            var petId = 100L;
+            var doc1 = Guid.NewGuid();
+            var doc2 = Guid.NewGuid();
+            var doc3 = Guid.NewGuid();
+            var aptDate = DateTime.UtcNow.Date.AddDays(5);
+
+            var clinicalRole = new Role { Id = 3, Name = "clinical_doctor" };
+            if (await _context.Roles.FindAsync(3L) == null) _context.Roles.Add(clinicalRole);
+
+            // Doc 1: Has past history (50 pts), 5.0 rating (30 pts), 2 years exp (20 pts) -> 100 pts
+            _context.Users.Add(new User { Id = doc1, FullName = "Doctor 1", RoleId = 3, Role = clinicalRole, IsActive = true, EmployeeProfile = new EmployeeProfile { CreatedAt = DateTime.UtcNow.AddYears(-2) } });
+            _context.Appointments.Add(new Appointment { Id = 401, CustomerId = customerId, PetId = petId, DoctorId = doc1, Status = "completed" });
+            _context.Reviews.Add(new Review { Id = 1, AppointmentId = 401, Rating = 5, Appointment = new Appointment { DoctorId = doc1 } });
+
+            // Doc 2: No history, 4.0 rating (24 pts), 1 year exp (12 pts) -> ~36 pts
+            _context.Users.Add(new User { Id = doc2, FullName = "Doctor 2", RoleId = 3, Role = clinicalRole, IsActive = true, EmployeeProfile = new EmployeeProfile { CreatedAt = DateTime.UtcNow.AddYears(-1) } });
+            _context.Appointments.Add(new Appointment { Id = 402, CustomerId = Guid.NewGuid(), PetId = 200, DoctorId = doc2, Status = "completed" });
+            _context.Reviews.Add(new Review { Id = 2, AppointmentId = 402, Rating = 4, Appointment = new Appointment { DoctorId = doc2 } });
+
+            // Doc 3: Has history with Customer but different pet (25 pts), 3.0 rating (18 pts), 0 exp -> ~43 pts
+            _context.Users.Add(new User { Id = doc3, FullName = "Doctor 3", RoleId = 3, Role = clinicalRole, IsActive = true, EmployeeProfile = new EmployeeProfile { CreatedAt = DateTime.UtcNow } });
+            _context.Appointments.Add(new Appointment { Id = 403, CustomerId = customerId, PetId = 999, DoctorId = doc3, Status = "completed" });
+            _context.Reviews.Add(new Review { Id = 3, AppointmentId = 403, Rating = 3, Appointment = new Appointment { DoctorId = doc3 } });
+
+            // Target appointment
+            _context.Appointments.Add(new Appointment
+            {
+                Id = 400,
+                CustomerId = customerId,
+                Customer = new Customer { Id = customerId, FullName = "Test", Phone = "123" },
+                PetId = petId,
+                Pet = new Pet { Id = petId, Name = "Test Pet", CustomerId = customerId },
+                AppointmentDate = aptDate,
+                StartTime = new TimeSpan(10, 0, 0),
+                ServiceId = 1,
+                Service = new Service { Id = 1, Name = "Khám bệnh" }
+            });
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = (await _service.GetSuitableDoctorsForAppointmentAsync(400)).ToList();
+
+            // Assert
+            Assert.Equal(3, result.Count);
+            Assert.Equal(doc1, result[0].DoctorId); // Doc 1 Highest (100)
+            Assert.Equal(doc3, result[1].DoctorId); // Doc 3 (43)
+            Assert.Equal(doc2, result[2].DoctorId); // Doc 2 (36)
+        }
+
+        [Fact]
+        public async Task UpdateAppointmentDoctor_ShouldThrowError_WhenNewDoctorIsBlocked()
+        {
+            // Arrange
+            var newDoctorId = Guid.NewGuid();
+            var targetDate = DateTime.UtcNow.Date.AddDays(5);
+            var oldDoctorId = Guid.NewGuid();
+
+            var pet = new Pet { Id = 999, Name = "Test Pet", CustomerId = Guid.NewGuid() };
+            var customer = new Customer { Id = pet.CustomerId, FullName = "Test Cust", Phone = "0999" };
+            var oldDoctor = new User { Id = oldDoctorId, FullName = "Old Doc", RoleId = 2 };
+
+            _context.Pets.Add(pet);
+            _context.Customers.Add(customer);
+            _context.Users.Add(oldDoctor);
+
+            _context.Appointments.Add(new Appointment
+            {
+                Id = 500,
+                AppointmentDate = targetDate,
+                StartTime = new TimeSpan(9, 0, 0), // 09:00 - 09:30
+                Status = "pending",
+                DoctorId = oldDoctorId, // Old doctor
+                CustomerId = customer.Id,
+                PetId = pet.Id
+            });
+
+            // Block Time overlap with appointment
+            _context.BlockTimes.Add(new BlockTime
+            {
+                Id = Guid.NewGuid(),
+                DoctorId = newDoctorId,
+                StartTime = new DateTimeOffset(targetDate.AddHours(8), TimeSpan.Zero),
+                EndTime = new DateTimeOffset(targetDate.AddHours(12), TimeSpan.Zero)
+            });
+            await _context.SaveChangesAsync();
+
+            var req = new ChangeDoctorRequestDto
+            {
+                NewDoctorId = newDoctorId,
+                Force = false,
+                Reason = "Khách hàng yêu cầu"
+            };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.UpdateAppointmentDoctorAsync(500, req));
+            Assert.Equal("Bác sĩ mới đang trong thời gian nghỉ phép/bận.", ex.Message);
+        }
+
         public void Dispose()
         {
             _context.Database.EnsureDeleted();

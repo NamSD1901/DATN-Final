@@ -365,7 +365,7 @@
                             <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
                             <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#f8f9fa;border:1.5px solid #e9ecef;display:inline-block"></span> <span class="text-muted">Đã qua</span></span>
                             <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff8ec;border:1.5px solid #ffc107;display:inline-block"></span> <span class="text-muted">Quá gần</span></span>
-                            <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã đặt</span></span>
+                            <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã hết</span></span>
                           </div>
                         </div>
 
@@ -428,7 +428,7 @@
                                   <i v-if="bookForm.appointmentDate === slot.slotStr" class="bi bi-check-circle-fill ms-1"></i>
                                   <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
                                   <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
-                                  <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                                  <span v-else-if="slot.isBooked" class="slot-badge-label">Đã hết</span>
                                 </button>
                               </div>
                             </div>
@@ -457,7 +457,7 @@
                                   <i v-if="bookForm.appointmentDate === slot.slotStr" class="bi bi-check-circle-fill ms-1"></i>
                                   <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
                                   <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
-                                  <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                                  <span v-else-if="slot.isBooked" class="slot-badge-label">Đã hết</span>
                                 </button>
                               </div>
                             </div>

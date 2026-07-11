@@ -35,6 +35,7 @@ namespace MyPetClinic.Application.Helpers
         public static List<DateTime> GetAvailableSlots(
             DoctorSchedule schedule,
             IEnumerable<Appointment> existingAppointments,
+            IEnumerable<BlockTime> blockTimes = null,
             int slotDurationMinutes = 30)
         {
             if (schedule == null || !schedule.IsAvailable)
@@ -50,10 +51,14 @@ namespace MyPetClinic.Application.Helpers
                 .Where(a => a.Status != "cancelled")
                 .ToList();
 
+            var activeBlocks = blockTimes?.ToList() ?? new List<BlockTime>();
+
             var availableSlots = new List<DateTime>();
 
             foreach (var slot in allSlots)
             {
+                var slotEndTime = slot.AddMinutes(slotDurationMinutes);
+
                 // Kiểm tra xem có lịch hẹn nào trùng hoặc cách slot dưới slotDurationMinutes không (giãn cách cứng)
                 var hasConflict = activeAppointments.Any(appt =>
                 {
@@ -62,7 +67,18 @@ namespace MyPetClinic.Application.Helpers
                     return diffMinutes < slotDurationMinutes;
                 });
 
-                if (!hasConflict)
+                // Kiểm tra xem slot có bị đè bởi BlockTime nào không
+                var isBlocked = activeBlocks.Any(b =>
+                {
+                    // BlockTime dùng DateTimeOffset, chuyển về DateTime Local để so sánh
+                    var blockStart = b.StartTime.LocalDateTime;
+                    var blockEnd = b.EndTime.LocalDateTime;
+
+                    // Nếu slot bắt đầu trước khi block kết thúc VÀ slot kết thúc sau khi block bắt đầu -> Chồng lấp
+                    return slot < blockEnd && slotEndTime > blockStart;
+                });
+
+                if (!hasConflict && !isBlocked)
                 {
                     availableSlots.Add(slot);
                 }

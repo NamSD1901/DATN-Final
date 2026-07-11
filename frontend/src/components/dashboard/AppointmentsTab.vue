@@ -503,7 +503,7 @@
                             <i v-if="formPayload.timeOnly === slot.time" class="bi bi-check-circle-fill text-white ms-1 position-absolute top-0 start-100 translate-middle" style="font-size: 1.1rem; background: #0d6efd; border-radius: 50%;"></i>
                             <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
                             <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
-                            <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                            <span v-else-if="slot.isBooked" class="slot-badge-label">Đã hết</span>
                           </button>
                         </div>
                       </div>
@@ -534,7 +534,7 @@
                             <i v-if="formPayload.timeOnly === slot.time" class="bi bi-check-circle-fill text-white ms-1 position-absolute top-0 start-100 translate-middle" style="font-size: 1.1rem; background: #0d6efd; border-radius: 50%;"></i>
                             <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
                             <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
-                            <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                            <span v-else-if="slot.isBooked" class="slot-badge-label">Đã hết</span>
                           </button>
                         </div>
                       </div>
@@ -544,7 +544,7 @@
                           <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
                           <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#f8f9fa;border:1.5px solid #e9ecef;display:inline-block"></span> <span class="text-muted">Đã qua</span></span>
                           <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#fff8ec;border:1.5px solid #ffc107;display:inline-block"></span> <span class="text-muted">Quá gần</span></span>
-                          <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã đặt</span></span>
+                          <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã hết</span></span>
                         </div>
                       </div>
                     </div>
@@ -733,43 +733,15 @@
     </Teleport>
 
     <!-- Change Doctor Modal -->
-    <Teleport to="body">
-      <div v-if="showChangeDoctorModal" class="modal-backdrop fade show"></div>
-      <div v-if="showChangeDoctorModal" class="modal fade show d-block" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content border-0 rounded-4 shadow-lg">
-            <div class="modal-header border-0 pb-0">
-              <h5 class="fw-bold"><i class="bi bi-person-hearts text-info me-2"></i>Điều phối Bác sĩ</h5>
-              <button type="button" class="btn-close" @click="showChangeDoctorModal = false"></button>
-            </div>
-            <div class="modal-body pt-3">
-              <p class="text-muted mb-3">Ca khám: <strong>{{ formatTimeOnly(changeDoctorTarget?.appointmentTime || changeDoctorTarget?.start) }}</strong> - <strong>{{ changeDoctorTarget?.petName }}</strong></p>
-              <p class="text-muted mb-3">Bác sĩ hiện tại: <strong>Bs. {{ getLastWord(changeDoctorTarget?.doctorName) }}</strong></p>
-              
-              <div class="mb-3">
-                <label class="form-label fw-bold small text-muted">Chọn bác sĩ thay thế <span v-if="fetchingSuitableDocs" class="spinner-border spinner-border-sm text-info ms-2" role="status"></span></label>
-                <select v-model="selectedNewDoctorId" class="form-select rounded-3" :disabled="fetchingSuitableDocs">
-                  <option value="" disabled>-- Chọn bác sĩ --</option>
-                  <option v-for="doc in suitableDoctorsList.filter(d => d.id !== changeDoctorTarget?.extendedProps?.doctorId && d.id !== changeDoctorTarget?.doctorId)" :key="doc.id" :value="doc.id">
-                    Bs. {{ doc.fullName }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="form-check form-switch mt-3">
-                <input class="form-check-input" type="checkbox" role="switch" id="forceChangeDoctor" v-model="forceChangeDoctor">
-                <label class="form-check-label text-muted small" for="forceChangeDoctor">Ép buộc chuyển ca (Bypass trùng lịch - chỉ dùng khi khẩn cấp)</label>
-              </div>
-
-            </div>
-            <div class="modal-footer border-0 pt-0">
-              <button type="button" class="btn btn-light rounded-pill px-4" @click="showChangeDoctorModal = false">Đóng</button>
-              <button type="button" class="btn btn-info text-white rounded-pill px-4 fw-bold" @click="confirmChangeDoctor" :disabled="!selectedNewDoctorId">Xác nhận chuyển</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <ChangeDoctorModal 
+      v-model:show="showChangeDoctorModal"
+      :appointment-id="changeDoctorTarget?.id || 0"
+      :time="formatTimeOnly(changeDoctorTarget?.appointmentTime || changeDoctorTarget?.start)"
+      :pet-name="changeDoctorTarget?.petName || ''"
+      :current-doctor-name="changeDoctorTarget?.doctorName || ''"
+      :current-doctor-id="changeDoctorTarget?.doctorId || changeDoctorTarget?.extendedProps?.doctorId || ''"
+      @success="handleChangeDoctorSuccess"
+    />
 
     <!-- Reschedule Modal -->
     <div v-if="showRescheduleModal" class="zalo-modal-overlay" @click.self="showRescheduleModal = false">
@@ -831,7 +803,7 @@
                           <i v-if="rescheduleTime === slot.time" class="bi bi-check-circle-fill ms-1"></i>
                           <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
                           <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
-                          <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                          <span v-else-if="slot.isBooked" class="slot-badge-label">Đã hết</span>
                         </button>
                       </div>
                     </div>
@@ -860,7 +832,7 @@
                           <i v-if="rescheduleTime === slot.time" class="bi bi-check-circle-fill ms-1"></i>
                           <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
                           <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
-                          <span v-else-if="slot.isBooked" class="slot-badge-label">Đã đặt</span>
+                          <span v-else-if="slot.isBooked" class="slot-badge-label">Đã hết</span>
                         </button>
                       </div>
                     </div>
@@ -871,7 +843,7 @@
                         <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
                         <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#f8f9fa;border:1.5px solid #e9ecef;display:inline-block"></span> <span class="text-muted">Đã qua</span></span>
                         <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff8ec;border:1.5px solid #ffc107;display:inline-block"></span> <span class="text-muted">Quá gần</span></span>
-                        <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã đặt/Nghỉ</span></span>
+                        <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã hết/Nghỉ</span></span>
                       </div>
                     </div>
                   </div>
@@ -1020,6 +992,7 @@
 import { ref, onMounted, nextTick, computed, watch } from 'vue';
 import api from '../../services/api';
 import { Html5Qrcode } from 'html5-qrcode';
+import ChangeDoctorModal from './ChangeDoctorModal.vue';
 
 // Tab states
 const activeSubTab = ref<'calendar' | 'pending'>('calendar');
@@ -1067,6 +1040,12 @@ const showCreateModal = ref(false);
 const showCustomerModal = ref(false);
 const showQrModal = ref(false);
 const previewAppointment = ref<any>(null);
+const showChangeDoctorModal = ref(false);
+const changeDoctorTarget = ref<any>(null);
+const handleChangeDoctorSuccess = () => {
+  loadEvents();
+  loadPending();
+};
 const qrManualCode = ref('');
 const selectedDetail = ref<any>(null);
 
@@ -1109,13 +1088,6 @@ const confirmRejectAction = async () => {
   rejectTarget.value = null;
 };
 
-// Change Doctor Modal
-const showChangeDoctorModal = ref(false);
-const changeDoctorTarget = ref<any>(null);
-const selectedNewDoctorId = ref('');
-const forceChangeDoctor = ref(false);
-const suitableDoctorsList = ref<any[]>([]);
-const fetchingSuitableDocs = ref(false);
 
 // Reschedule Modal
 const showRescheduleModal = ref(false);
@@ -1982,41 +1954,9 @@ const confirmReschedule = async () => {
   }
 };
 
-const openChangeDoctorModal = async (evt: any) => {
+const openChangeDoctorModal = (evt: any) => {
   changeDoctorTarget.value = evt;
-  selectedNewDoctorId.value = '';
-  forceChangeDoctor.value = false;
   showChangeDoctorModal.value = true;
-  
-  fetchingSuitableDocs.value = true;
-  try {
-    const res = await api.get(`/appointment/${evt.id}/suitable-doctors`);
-    suitableDoctorsList.value = res.data;
-  } catch (err: any) {
-    showToast('Lỗi khi tải danh sách bác sĩ chuyên môn', 'danger');
-    suitableDoctorsList.value = [];
-  } finally {
-    fetchingSuitableDocs.value = false;
-  }
-};
-
-const confirmChangeDoctor = async () => {
-  if (!changeDoctorTarget.value || !selectedNewDoctorId.value) return;
-  try {
-    const res = await api.put(`/appointment/${changeDoctorTarget.value.id}/doctor`, {
-      doctorId: selectedNewDoctorId.value,
-      force: forceChangeDoctor.value
-    });
-    if (res.data.success) {
-      showToast('Đã chuyển bác sĩ phụ trách!', 'success');
-      showChangeDoctorModal.value = false;
-      loadEvents();
-      loadPending();
-    }
-  } catch (err: any) {
-    const msg = err.response?.data?.message || 'Lỗi khi chuyển đổi bác sĩ';
-    showToast(msg, 'danger');
-  }
 };
 
 onMounted(async () => {

@@ -61,12 +61,12 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpPut("{id}/doctor")]
-        public async Task<IActionResult> UpdateDoctor(long id, [FromBody] AppointmentUpdateDoctorRequestDto req)
+        [HttpPut("{id}/change-doctor")]
+        public async Task<IActionResult> UpdateDoctor(long id, [FromBody] ChangeDoctorRequestDto req)
         {
             try
             {
-                var success = await _appointmentService.UpdateAppointmentDoctorAsync(id, req.DoctorId, req.Force);
+                var success = await _appointmentService.UpdateAppointmentDoctorAsync(id, req);
                 return Ok(new { success });
             }
             catch (InvalidOperationException ex)
@@ -175,8 +175,8 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpGet("{id}/suitable-doctors")]
-        public async Task<IActionResult> GetSuitableDoctors(long id)
+        [HttpGet("{id}/eligible-doctors")]
+        public async Task<IActionResult> GetEligibleDoctors(long id)
         {
             try
             {

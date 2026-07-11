@@ -36,6 +36,7 @@ namespace MyPetClinic.Infrastructure.Persistence
         public DbSet<ServiceCategory> ServiceCategories { get; set; }
         public DbSet<Service> Services { get; set; }
         public DbSet<DoctorSchedule> DoctorSchedules { get; set; }
+        public DbSet<BlockTime> BlockTimes { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<MedicalRecord> MedicalRecords { get; set; }
         public DbSet<MedicineCategory> MedicineCategories { get; set; }
@@ -218,6 +219,24 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.EndTime).HasColumnName("end_time");
                 entity.Property(e => e.MaxAppointments).HasColumnName("max_appointments").HasDefaultValue(10);
                 entity.Property(e => e.IsAvailable).HasColumnName("is_available").HasDefaultValue(true);
+                entity.Property(e => e.RecurringGroupId).HasColumnName("recurring_group_id");
+                entity.Property(e => e.Notes).HasColumnName("notes");
+
+                entity.HasOne(d => d.Doctor).WithMany().HasForeignKey(d => d.DoctorId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // block_times
+            modelBuilder.Entity<BlockTime>(entity =>
+            {
+                entity.ToTable("block_times");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+                entity.Property(e => e.DoctorId).HasColumnName("doctor_id");
+                entity.Property(e => e.StartTime).HasColumnName("start_time");
+                entity.Property(e => e.EndTime).HasColumnName("end_time");
+                entity.Property(e => e.BlockType).HasColumnName("block_type").HasConversion<string>();
+                entity.Property(e => e.Reason).HasColumnName("reason");
+                entity.Property(e => e.BackgroundColor).HasColumnName("background_color");
 
                 entity.HasOne(d => d.Doctor).WithMany().HasForeignKey(d => d.DoctorId).OnDelete(DeleteBehavior.Cascade);
             });

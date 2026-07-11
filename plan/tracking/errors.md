@@ -116,3 +116,27 @@ Sua doi appointment.Status = "ready_to_pay" trong MedicalRecordService.cs khi kh
   2. Chuyển Frontend gọi API /appointment/available-slots và cấp quyền truy cập cho clinical_doctor.
   3. Xóa lệnh .toISOString() bên Frontend để gửi giờ dạng Local.
 - **Status:** Resolved (Đã push lên nhánh fix/follow-up-timezone-and-fallback)
+
+### Error: Race condition and invalid double-booking logic in Appointment Rescheduling
+- **Symptom:** Lễ tân dời lịch hoặc đổi bác sĩ thì lọt qua kiểm tra trùng giờ, khách khác cùng lúc đặt lịch cũng lọt qua dẫn tới 2 người cùng 1 slot.
+- **Root Cause:** 
+  1. AppointmentDate trong DB chỉ lưu Ngày, nhưng logic cũ ở RescheduleAppointmentAsync so sánh AppointmentDate > targetDate.AddMinutes(-30) (có lẫn giờ) dẫn tới luôn False.
+  2. Cả RescheduleAppointmentAsync và UpdateAppointmentDoctorAsync đều không bọc Transaction Serializable dẫn tới lọt qua khi Race Condition.
+- **Solution:** 
+  1. Cập nhật logic so sánh AppointmentDate == targetDate.Date và sau đó so sánh StartTime.
+  2. Bọc toàn bộ block code bằng _unitOfWork.BeginTransactionAsync(IsolationLevel.Serializable) kèm cơ chế retry loop và IsTransientConflict(ex).
+- **Status:** Resolved
+
+### Error: Double-booking allowed during Appointment Creation (Race condition bypass)
+- **Symptom:** Khách hàng đặt lịch song song hoặc lễ tân đặt liên tục cùng 1 lúc có thể khiến 2 người vào cùng 1 bác sĩ ở cùng 1 giờ.
+- **Root Cause:** 
+  1. Lỗi dịch múi giờ ở \ResolveAndValidateDoctorId\: biến \ppointmentDate.Date\ mang kind \Unspecified\, khi EF Core so sánh với \AppointmentDate\ (timestamp with time zone) trong CSDL sẽ bị lùi 7 tiếng (VD 00:00 ngày 11/7 thành 17:00 ngày 10/7). Do đó, hàm check trùng lịch trả về 0 kết quả.
+  2. Trả về 0 kết quả khiến vòng bảo vệ \IsolationLevel.Serializable\ không nhận diện được xung đột Read-Write (SSI) của PostgreSQL, làm cho cả 2 luồng đều lọt qua được và cùng tạo ra 2 lịch mới.
+- **Solution:** Sửa lại \	argetDateStart\ bằng \DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc)\ và sử dụng cho toàn bộ các truy vấn LINQ bên trong \ResolveAndValidateDoctorId\.
+- **Status:** Resolved
+
+### Error: UI shows 'ĐÃ ĐẶT' (Booked) when only 1 doctor is booked while others are available
+- **Symptom:** In the 'Auto assign' mode (Tự động phân công), if one doctor is booked for a slot, the slot shows as fully booked, preventing users from booking with other available doctors.
+- **Root Cause:** In \AppointmentService.cs\, the API \GetAvailableSlotsAsync\ was using a hardcoded list of \llowedDoctorEmails\ (e.g., only bacsituantran@gmail.com) for certain services. This caused the system to completely ignore other active doctors like Bs. Long. When Bs. Tuấn was booked, the slot appeared fully booked because no other doctors were considered.
+- **Solution:** Removed the hardcoded \llowedDoctorEmails\ filtering entirely from \GetAvailableSlotsAsync\ and \ResolveAndValidateDoctorId\. The system now dynamically relies on the doctor's active schedules (\DoctorSchedules\) and roles to determine availability.
+- **Status:** Resolved
