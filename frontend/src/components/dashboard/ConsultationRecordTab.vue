@@ -73,6 +73,16 @@
 
             <!-- Alerts Area (Dịch vụ) -->
           <div class="row g-3 mb-4">
+            <div class="col-md-12" v-if="activePatient.allergies">
+              <div class="alert bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-4 d-flex align-items-center p-3 mb-0 shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                <div>
+                  <h6 class="fw-bold mb-1 text-danger" style="letter-spacing: 0.5px;">CẢNH BÁO DỊ ỨNG</h6>
+                  <p class="mb-0 small text-danger fw-semibold">{{ activePatient.allergies }}</p>
+                </div>
+              </div>
+            </div>
+
             <div class="col-md-12">
               <div class="alert bg-primary bg-opacity-10 text-primary border-0 rounded-4 d-flex align-items-center p-3 mb-0">
                 <i class="bi bi-info-circle-fill fs-4 me-3"></i>
@@ -453,7 +463,7 @@
 
             <div v-else class="medical-history-timeline pe-2 overflow-auto mt-2" style="max-height: 650px;">
               <div class="timeline-container accordion" id="doctorHistoryAccordion">
-                <div v-for="record in medicalHistory" :key="record.recordId" class="timeline-item position-relative ps-4 pb-4">
+                <div v-for="record in paginatedHistory" :key="record.recordId" class="timeline-item position-relative ps-4 pb-4">
                   <!-- Timeline dot -->
                   <div class="timeline-line"></div>
                   <div class="timeline-circle shadow-sm" :class="record.recordType === 'Vaccination' ? 'bg-success border-success' : 'bg-primary border-primary'"></div>
@@ -609,6 +619,20 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Pagination Controls -->
+              <div v-if="totalPages > 1" class="d-flex justify-content-center align-items-center mt-4 gap-3 pb-3 pt-3 border-top border-light">
+                <button class="btn btn-sm btn-light border rounded-pill px-3 shadow-sm" :class="{'disabled text-muted': currentPage === 1}" @click="prevPage">
+                  <i class="bi bi-chevron-left me-1"></i> Trước
+                </button>
+                <div class="small fw-bold text-dark px-3 py-1 bg-light rounded-pill border">
+                  Trang {{ currentPage }} / {{ totalPages }}
+                </div>
+                <button class="btn btn-sm btn-light border rounded-pill px-3 shadow-sm" :class="{'disabled text-muted': currentPage === totalPages}" @click="nextPage">
+                  Tiếp <i class="bi bi-chevron-right ms-1"></i>
+                </button>
+              </div>
+
             </div>
 
           </div>
@@ -640,11 +664,13 @@ const activePatient = ref<{
   gender?: string;
   age?: number;
   weight?: number;
+  allergies?: string;
 }>({
   appointmentId: '',
   petId: '',
   petName: '',
-  customerName: ''
+  customerName: '',
+  allergies: ''
 });
 
 const expandedRecords = ref<number[]>([]);
@@ -747,6 +773,31 @@ const soapActiveTab = ref('subjective'); // subjective, objective, assessment, p
 const medicineOptions = ref<any[]>([]);
 const medicalHistory = ref<any[]>([]);
 
+const currentPage = ref(1);
+const recordsPerPage = 5;
+
+const totalPages = computed(() => {
+  return Math.ceil(medicalHistory.value.length / recordsPerPage);
+});
+
+const paginatedHistory = computed(() => {
+  const start = (currentPage.value - 1) * recordsPerPage;
+  const end = start + recordsPerPage;
+  return medicalHistory.value.slice(start, end);
+});
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
 const loadingHistory = ref(false);
 const submitting = ref(false);
 const errorMessage = ref('');
@@ -825,6 +876,7 @@ onMounted(async () => {
         if (apptData && apptData.petName) {
           activePatient.value.species = apptData.petSpecies;
           activePatient.value.breed = apptData.petBreed;
+          activePatient.value.allergies = apptData.petAllergies || apptData.allergies || 'Không ghi nhận';
         }
       } catch(err) {
         console.error('Không thể lấy thêm thông tin pet từ appointment:', err);
@@ -848,6 +900,7 @@ onMounted(async () => {
            activePatient.value.petName = apptData.petName;
            activePatient.value.species = apptData.petSpecies;
            activePatient.value.breed = apptData.petBreed;
+           activePatient.value.allergies = apptData.petAllergies || apptData.allergies || 'Không ghi nhận';
         }
       } catch (err) {
         console.error('Không thể resolve petId từ appointment:', err);
@@ -901,6 +954,7 @@ const fetchPetHistory = async (petId: number) => {
   try {
     const res = await api.get(`/medical-records/pet/${petId}`);
     medicalHistory.value = res.data || [];
+    currentPage.value = 1;
   } catch (err) {
     console.error('Lỗi tải bệnh sử:', err);
   } finally {

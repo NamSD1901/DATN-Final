@@ -79,27 +79,29 @@
                        :class="[getBorderClass(evt.extendedProps?.status), { 'emergency-pulse': evt.extendedProps?.isEmergency }]">
                     
                     <div class="d-flex justify-content-between align-items-start mb-1">
-                      <strong class="text-dark small d-block text-truncate fw-bold">{{ evt.extendedProps?.petName || 'Thú cưng' }}</strong>
-                      <span v-if="evt.extendedProps?.isEmergency" class="badge bg-danger shadow-sm rounded-pill px-2 py-1 ms-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">CẤP CỨU</span>
+                      <strong class="text-primary d-block text-truncate fw-bolder fs-6" style="letter-spacing: -0.2px;">
+                        <i class="bi bi-heptagon-fill text-warning me-1 small" style="font-size: 0.7rem;"></i>{{ evt.extendedProps?.petName || 'Thú cưng' }}
+                      </strong>
+                      <div class="d-flex gap-1">
+                        <span v-if="evt.extendedProps?.isEmergency" class="badge bg-danger shadow-sm rounded-pill px-2 py-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">CẤP CỨU</span>
+                        <span v-if="['completed', 'ready_to_pay'].includes(evt.extendedProps?.status)" class="badge bg-success bg-opacity-10 text-success border border-success shadow-sm rounded-pill px-2 py-1" style="font-size: 0.6rem; letter-spacing: 0.5px;"><i class="bi bi-check2-circle me-1"></i>Đã hoàn tất</span>
+                      </div>
                     </div>
                     
-                    <div class="text-muted text-truncate" style="font-size: 0.7rem;">
-                      {{ evt.extendedProps?.serviceName || evt.title }}
+                    <div class="text-dark fw-semibold text-truncate mb-1" style="font-size: 0.75rem;">
+                      <i class="bi bi-person-fill text-secondary me-1"></i>{{ evt.extendedProps?.customerName || 'Khách vãng lai' }}
+                    </div>
+
+                    <div class="text-dark fw-medium text-truncate" style="font-size: 0.75rem;">
+                      <i class="bi bi-clipboard2-pulse text-secondary me-1"></i>{{ evt.extendedProps?.serviceName || evt.title }}
                     </div>
 
                     <!-- Action Button -->
-                    <div class="mt-2" v-if="isToday(day.date) && isWaitingOrInProgress(evt.extendedProps?.status)">
-                      <button v-if="evt.extendedProps?.status === 'waiting'" 
-                              class="btn btn-sm btn-premium-neon w-100 rounded-pill py-1 d-flex justify-content-center align-items-center fw-bold" 
-                              style="font-size: 0.75rem;"
+                    <div class="mt-2" v-if="isToday(day.date) && evt.extendedProps?.status === 'in_progress'">
+                      <button class="btn btn-sm btn-outline-primary w-100 rounded-pill py-1 d-flex justify-content-center align-items-center fw-bold shadow-sm" 
+                              style="font-size: 0.75rem; background-color: #f8fbff;"
                               @click.stop="startTreatment(evt)">
-                        <i class="bi bi-play-fill me-1 fs-6"></i> Khám ngay
-                      </button>
-                      <button v-if="evt.extendedProps?.status === 'in_progress'" 
-                              class="btn btn-sm btn-outline-glass w-100 rounded-pill py-1 d-flex justify-content-center align-items-center fw-bold" 
-                              style="font-size: 0.75rem;"
-                              @click.stop="continueTreatment(evt)">
-                        <i class="bi bi-pencil-square me-1"></i> Khám tiếp
+                        <i class="bi bi-play-circle-fill me-1 fs-6"></i> Tiến hành khám
                       </button>
                     </div>
 
@@ -190,7 +192,7 @@ const getBorderClass = (status: string) => {
     case 'waiting': return 'status-waiting border-warning';
     case 'in_progress': return 'status-in-progress border-primary';
     case 'ready_to_pay': return 'status-ready border-success opacity-75';
-    case 'completed': return 'status-completed border-secondary opacity-50';
+    case 'completed': return 'status-completed border-success bg-success bg-opacity-10';
     case 'cancelled': return 'status-cancelled border-danger opacity-50 text-decoration-line-through';
     default: return 'status-default border-info';
   }

@@ -10,7 +10,10 @@ import AiChatbotWidget from './components/shared/AiChatbotWidget.vue';
 
 const route = useRoute();
 const showChatbot = computed(() => {
-  return !route.path.startsWith('/dashboard') && !route.path.startsWith('/login') && !route.path.startsWith('/register');
+  return !route.path.startsWith('/dashboard') && 
+         !route.path.startsWith('/login') && 
+         !route.path.startsWith('/register') &&
+         !route.path.startsWith('/qr-checkin');
 });
 </script>
 

@@ -1,8 +1,8 @@
 <template>
-  <div class="qr-checkin-page min-vh-100 d-flex flex-column" style="background-color: #f8fafc;">
+  <div class="qr-checkin-page min-vh-100 d-flex flex-column bg-light-mesh">
     <!-- Loading State -->
     <div v-if="loading" class="d-flex justify-content-center align-items-center flex-grow-1">
-      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+      <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
@@ -13,7 +13,7 @@
         <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
       </div>
       <div class="mt-3">
-        <button class="btn btn-outline-secondary" @click="goBack">
+        <button class="btn btn-outline-secondary rounded-pill" @click="goBack">
           <i class="bi bi-arrow-left me-2"></i>Quay lại Lịch hẹn
         </button>
       </div>
@@ -23,20 +23,22 @@
     <div v-else-if="appointment" class="container py-4 flex-grow-1 d-flex flex-column justify-content-center">
       
       <!-- Top Actions (Hide when printing) -->
-      <div class="d-flex justify-content-center align-items-center mb-5 no-print position-relative">
-        <h4 class="fw-bold text-dark mb-0">Chi tiết QR Check-in</h4>
+      <div class="d-flex justify-content-center align-items-center mb-4 no-print position-relative">
+        <h3 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+          <i class="bi bi-qr-code-scan text-warning"></i> Thẻ Check-in Thông Minh
+        </h3>
       </div>
 
       <div class="row g-4 align-items-stretch justify-content-center">
         
         <!-- Left Column: Info -->
         <div class="col-lg-3 col-md-6 order-2 order-lg-1 d-flex flex-column gap-3">
-          <div class="card border rounded-4 flex-grow-1 info-card" style="border-color: #e2e8f0 !important;">
+          <div class="card glass-panel border-glass rounded-4 flex-grow-1 info-card shadow-sm">
             <div class="card-body p-4">
               <h6 class="text-muted small fw-bold mb-4 text-uppercase tracking-wider">Thông tin buổi khám</h6>
               
               <div class="info-item mb-4 d-flex">
-                <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                <div class="icon-box bg-warning bg-opacity-10 text-warning rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
                   <i class="bi bi-heptagon-fill"></i>
                 </div>
                 <div>
@@ -56,7 +58,7 @@
               </div>
 
               <div class="info-item mb-4 d-flex">
-                <div class="icon-box bg-warning bg-opacity-10 text-warning rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                <div class="icon-box bg-danger bg-opacity-10 text-danger rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
                   <i class="bi bi-clock-fill"></i>
                 </div>
                 <div>
@@ -78,31 +80,33 @@
             </div>
           </div>
           
-          <button class="btn btn-link text-decoration-none fw-bold text-dark d-flex align-items-center" @click="goBack">
-            <i class="bi bi-arrow-left me-2"></i> Về Lịch Hẹn
+          <button class="btn btn-outline-glass rounded-pill fw-bold text-dark d-flex align-items-center justify-content-center w-100" @click="goBack">
+            <i class="bi bi-arrow-left me-2"></i> Trở Về Lịch Hẹn
           </button>
         </div>
 
-        <!-- Middle Column: Phone Mockup & Actions -->
+        <!-- Middle Column: QR Code & Actions -->
         <div class="col-lg-5 col-md-8 order-1 order-lg-2">
-          <div class="card border rounded-4 h-100 qr-center-card" style="border-color: #e2e8f0 !important;">
-            <div class="card-body p-5 d-flex flex-column align-items-center text-center justify-content-center">
+          <div class="card glass-panel border-glass rounded-4 h-100 qr-center-card shadow-sm position-relative overflow-hidden">
+            <!-- Decorative gradient element -->
+            <div class="position-absolute top-0 start-50 translate-middle-x rounded-circle" style="width: 250px; height: 250px; background: radial-gradient(circle, rgba(245,158,11,0.15) 0%, rgba(255,255,255,0) 70%); z-index: 0;"></div>
+            
+            <div class="card-body p-5 d-flex flex-column align-items-center text-center justify-content-center position-relative z-1">
               
               <div class="mb-4" id="qr-export-area">
-                <div v-if="appointment.qrToken" class="qr-container bg-white p-3 rounded-4 shadow-sm border" style="display: inline-block;">
-                  <qrcode-vue :value="appointment.qrToken" :size="200" level="M" :margin="3" />
+                <div v-if="appointment.qrToken" class="qr-container bg-white p-3 rounded-4 shadow border-warning-subtle border" style="display: inline-block;">
+                  <qrcode-vue :value="appointment.qrToken" :size="220" level="M" :margin="2" />
                 </div>
                 <div v-else class="text-danger">Lỗi: Không tìm thấy mã QR.</div>
               </div>
 
-              <div class="text-muted small fw-bold mb-1 text-uppercase">Mã định danh buổi khám</div>
-              <div class="fs-4 fw-bolder text-primary font-monospace mb-4">{{ appointment.qrToken }}</div>
+              <div class="text-muted small fw-bold mb-1 text-uppercase tracking-wider">Mã định danh buổi khám</div>
+              <div class="fs-4 fw-bolder text-warning font-monospace mb-4 d-inline-block px-3 py-1 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25">{{ appointment.qrToken }}</div>
 
-              <div class="w-100 px-4 no-print d-flex flex-column gap-2">
-                <button class="btn btn-primary w-100 rounded-3 fw-bold py-2 shadow-sm" style="background-color: #034694; border: none;" @click="downloadQr">
+              <div class="w-100 px-4 no-print d-flex flex-column gap-2 mt-auto">
+                <button class="btn btn-premium-neon w-100 rounded-pill fw-bold py-2 shadow-sm" @click="downloadQr">
                   <i class="bi bi-download me-2"></i> Tải xuống mã QR
                 </button>
-
               </div>
 
             </div>
@@ -113,12 +117,12 @@
         <div class="col-lg-4 col-md-12 order-3 order-lg-3">
           <div class="d-flex flex-column h-100 gap-3">
             
-            <div class="card border rounded-4 flex-grow-1 guide-card" style="border-color: #e2e8f0 !important;">
+            <div class="card glass-panel border-glass rounded-4 flex-grow-1 guide-card shadow-sm">
               <div class="card-body p-4">
                 <h6 class="text-muted small fw-bold mb-4 text-uppercase tracking-wider">Hướng dẫn sử dụng</h6>
                 
                 <div class="d-flex mb-4 position-relative step-item">
-                  <div class="step-number text-white rounded-circle fw-bold d-flex align-items-center justify-content-center me-3 z-1" style="background-color: #1e40af;">1</div>
+                  <div class="step-number text-white rounded-circle fw-bold d-flex align-items-center justify-content-center me-3 z-1 shadow-sm" style="background: linear-gradient(135deg, #f59e0b, #d97706);">1</div>
                   <div>
                     <div class="fw-bold text-dark mb-1">Đến phòng khám</div>
                     <div class="text-muted small">Vui lòng có mặt tại sảnh MyPet Clinic ít nhất 10 phút trước giờ hẹn.</div>
@@ -126,7 +130,7 @@
                 </div>
 
                 <div class="d-flex mb-4 position-relative step-item">
-                  <div class="step-number text-white rounded-circle fw-bold d-flex align-items-center justify-content-center me-3 z-1" style="background-color: #1e40af;">2</div>
+                  <div class="step-number text-white rounded-circle fw-bold d-flex align-items-center justify-content-center me-3 z-1 shadow-sm" style="background: linear-gradient(135deg, #f59e0b, #d97706);">2</div>
                   <div>
                     <div class="fw-bold text-dark mb-1">Quét mã tại Kiosk</div>
                     <div class="text-muted small">Đưa mã QR này vào vùng nhận diện của máy Kiosk tự động hoặc cho Lễ tân xem.</div>
@@ -134,15 +138,15 @@
                 </div>
 
                 <div class="d-flex mb-4 position-relative step-item">
-                  <div class="step-number text-white rounded-circle fw-bold d-flex align-items-center justify-content-center me-3 z-1" style="background-color: #1e40af;">3</div>
+                  <div class="step-number text-white rounded-circle fw-bold d-flex align-items-center justify-content-center me-3 z-1 shadow-sm" style="background: linear-gradient(135deg, #f59e0b, #d97706);">3</div>
                   <div>
                     <div class="fw-bold text-dark mb-1">Nhận số thứ tự</div>
                     <div class="text-muted small">Hệ thống sẽ ghi nhận và thông báo cho bác sĩ phụ trách ngay lập tức.</div>
                   </div>
                 </div>
 
-                <div class="alert border-0 rounded-3 d-flex align-items-center p-3 mt-4 mb-0 no-print" style="background-color: #fef3c7;">
-                  <i class="bi bi-info-circle-fill fs-5 me-3" style="color: #d97706;"></i>
+                <div class="alert border border-warning border-opacity-25 rounded-3 d-flex align-items-center p-3 mt-4 mb-0 no-print bg-warning bg-opacity-10">
+                  <i class="bi bi-info-circle-fill fs-5 me-3 text-warning"></i>
                   <div class="small text-dark">
                     <strong>Cần hỗ trợ?</strong><br>Vui lòng liên hệ quầy lễ tân hoặc gọi Hotline <strong>1900-PETS</strong>.
                   </div>
@@ -150,10 +154,10 @@
               </div>
             </div>
 
-            <div class="card border rounded-4 clinic-banner overflow-hidden position-relative no-print" style="min-height: 140px; border-color: #e2e8f0 !important;">
-              <img src="/clinic-banner.png" class="w-100 h-100 object-fit-cover position-absolute top-0 start-0" alt="Clinic" style="opacity: 0.9;" />
-              <div class="position-absolute bottom-0 w-100 p-3 bg-gradient-dark text-white">
-                <div class="fw-bold small shadow-text">Chi nhánh: MyPet Clinic Quận 1</div>
+            <div class="card border rounded-4 clinic-banner overflow-hidden position-relative no-print shadow-sm" style="min-height: 120px; border-color: rgba(245, 158, 11, 0.2) !important;">
+              <img src="/clinic-banner.png" class="w-100 h-100 object-fit-cover position-absolute top-0 start-0" alt="Clinic" style="opacity: 0.85;" />
+              <div class="position-absolute bottom-0 w-100 p-2 text-white" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
+                <div class="fw-bold small shadow-text ms-2"><i class="bi bi-geo-alt-fill text-warning me-1"></i> Chi nhánh MyPet Clinic Quận 1</div>
               </div>
             </div>
 
@@ -211,7 +215,6 @@ const goBack = () => {
   router.push('/dashboard');
 };
 
-
 const downloadQr = () => {
   const canvas = document.querySelector('.qr-container canvas') as HTMLCanvasElement;
   if (canvas) {
@@ -243,13 +246,54 @@ const formatTime = (dateString: string) => {
   font-family: 'Inter', sans-serif;
 }
 
+.bg-light-mesh {
+  background-color: #f8fafc;
+  background-image: radial-gradient(rgba(245, 158, 11, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
 
+/* Glassmorphism Classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.border-glass { 
+  border: 1px solid rgba(245, 158, 11, 0.15) !important; 
+}
+
+/* Premium Buttons */
+.btn-premium-neon {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-premium-neon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+  color: white;
+}
+
+.btn-outline-glass {
+  background: rgba(255, 255, 255, 0.6);
+  color: #1e293b;
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  transition: all 0.3s ease;
+}
+.btn-outline-glass:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #f59e0b;
+  color: #d97706;
+}
 
 .qr-container {
-  transition: transform 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .qr-container:hover {
-  transform: scale(1.02);
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.2) !important;
 }
 
 /* Icons and Steps */
@@ -267,15 +311,8 @@ const formatTime = (dateString: string) => {
   flex-shrink: 0;
 }
 
-.step-line {
-  background-color: #e2e8f0 !important;
-}
-
-.bg-gradient-dark {
-  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
-}
 .shadow-text {
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
 }
 
 /* Tracking */
@@ -290,6 +327,7 @@ const formatTime = (dateString: string) => {
   }
   .qr-checkin-page {
     background-color: white !important;
+    background-image: none !important;
   }
   .qr-center-card, .qr-center-card * {
     visibility: visible;
@@ -303,11 +341,11 @@ const formatTime = (dateString: string) => {
     max-width: 500px;
     box-shadow: none !important;
     border: none !important;
+    background: transparent !important;
   }
-  .no-print, .phone-mockup {
+  .no-print {
     display: none !important;
   }
-  /* Show just the QR outside the mockup when printing */
   .qr-center-card .card-body::before {
     content: '';
     display: block;

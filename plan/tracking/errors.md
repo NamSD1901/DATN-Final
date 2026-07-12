@@ -1,4 +1,4 @@
-﻿
+
 ## [24/06/2026] L?i d?t l?ch khám cho h? so Walk-in du?c d?ng b?
 - **Tr?ng thái:** Ðã kh?c ph?c (? FIXED)
 - **Tri?u ch?ng:** Ngu?i dùng d?ng b? h? so Walk-in g?p l?i không d?t l?ch du?c, API báo l?i 400 Bad Request ho?c An error occurred while saving the entity changes (Foreign key constraint violation). Ngoài ra còn dính l?i l?ch múi gi? (d?t tru?c 2 ti?ng).
@@ -131,12 +131,23 @@ Sua doi appointment.Status = "ready_to_pay" trong MedicalRecordService.cs khi kh
 - **Symptom:** Khách hàng đặt lịch song song hoặc lễ tân đặt liên tục cùng 1 lúc có thể khiến 2 người vào cùng 1 bác sĩ ở cùng 1 giờ.
 - **Root Cause:** 
   1. Lỗi dịch múi giờ ở \ResolveAndValidateDoctorId\: biến \ppointmentDate.Date\ mang kind \Unspecified\, khi EF Core so sánh với \AppointmentDate\ (timestamp with time zone) trong CSDL sẽ bị lùi 7 tiếng (VD 00:00 ngày 11/7 thành 17:00 ngày 10/7). Do đó, hàm check trùng lịch trả về 0 kết quả.
+  1. Lỗi dịch múi giờ ở \ResolveAndValidateDoctorId\: biến \ ppointmentDate.Date\ mang kind \Unspecified\, khi EF Core so sánh với \AppointmentDate\ (timestamp with time zone) trong CSDL sẽ bị lùi 7 tiếng (VD 00:00 ngày 11/7 thành 17:00 ngày 10/7). Do đó, hàm check trùng lịch trả về 0 kết quả.
   2. Trả về 0 kết quả khiến vòng bảo vệ \IsolationLevel.Serializable\ không nhận diện được xung đột Read-Write (SSI) của PostgreSQL, làm cho cả 2 luồng đều lọt qua được và cùng tạo ra 2 lịch mới.
 - **Solution:** Sửa lại \	argetDateStart\ bằng \DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc)\ và sử dụng cho toàn bộ các truy vấn LINQ bên trong \ResolveAndValidateDoctorId\.
 - **Status:** Resolved
 
 ### Error: UI shows 'ĐÃ ĐẶT' (Booked) when only 1 doctor is booked while others are available
 - **Symptom:** In the 'Auto assign' mode (Tự động phân công), if one doctor is booked for a slot, the slot shows as fully booked, preventing users from booking with other available doctors.
-- **Root Cause:** In \AppointmentService.cs\, the API \GetAvailableSlotsAsync\ was using a hardcoded list of \llowedDoctorEmails\ (e.g., only bacsituantran@gmail.com) for certain services. This caused the system to completely ignore other active doctors like Bs. Long. When Bs. Tuấn was booked, the slot appeared fully booked because no other doctors were considered.
-- **Solution:** Removed the hardcoded \llowedDoctorEmails\ filtering entirely from \GetAvailableSlotsAsync\ and \ResolveAndValidateDoctorId\. The system now dynamically relies on the doctor's active schedules (\DoctorSchedules\) and roles to determine availability.
+- **Root Cause:** In \AppointmentService.cs\, the API \GetAvailableSlotsAsync\ was using a hardcoded list of \ llowedDoctorEmails\ (e.g., only bacsituantran@gmail.com) for certain services. This caused the system to completely ignore other active doctors like Bs. Long. When Bs. Tuấn was booked, the slot appeared fully booked because no other doctors were considered.
+- **Solution:** Removed the hardcoded \ llowedDoctorEmails\ filtering entirely from \GetAvailableSlotsAsync\ and \ResolveAndValidateDoctorId\. The system now dynamically relies on the doctor's active schedules (\DoctorSchedules\) and roles to determine availability.
+- **Status:** Resolved
+
+### Error: Crash and white screen in Doctor Schedules Tab (SchedulesAdminTab.vue)
+- **Symptom:** Màn hình quản lý lịch trực bác sĩ bị crash và hiển thị trắng tinh (white screen) khi load hoặc cập nhật dữ liệu.
+- **Root Cause:** 
+  1. Trong Vue 3, việc gán trực tiếp một mảng động (reactive proxy hoặc computed object) vào `calendarOptions.value.events` với watcher `deep: true` tạo ra vòng lặp vô hạn (infinite loop) khi thư viện FullCalendar cố gắng duyệt và thay đổi (mutate) mảng sự kiện bên trong, gây tràn bộ nhớ stack (stack overflow).
+  2. Bỏ sót kiểm tra an toàn (null-check) đối với `workDate`, `startTime`, và `endTime` trong trường hợp dữ liệu bị thiếu.
+- **Solution:** 
+  1. Tách mảng `events` ra khỏi `calendarOptions` và truyền trực tiếp vào component thông qua prop `:events="calendarEvents"`. Xóa bỏ watcher `deep: true`.
+  2. Bổ sung các câu lệnh `if (!s.workDate || !s.startTime || !s.endTime) return;` trước khi thực hiện `.split('T')`.
 - **Status:** Resolved
