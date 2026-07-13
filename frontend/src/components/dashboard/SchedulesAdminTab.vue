@@ -10,8 +10,17 @@
         <button class="btn btn-premium px-4 py-2.5 rounded-pill shadow-sm" @click="openCreateScheduleModal">
           <i class="bi bi-calendar-plus-fill me-2"></i> Phân Ca Trực
         </button>
+        <button class="btn btn-outline-warning px-4 py-2.5 rounded-pill shadow-sm" @click="showCreateException = true">
+          <i class="bi bi-person-lines-fill me-2"></i> Xin Nghỉ / Đổi Ca
+        </button>
         <button class="btn btn-danger px-4 py-2.5 rounded-pill shadow-sm" @click="openCreateBlockModal">
           <i class="bi bi-calendar-x-fill me-2"></i> Thêm Lịch Nghỉ
+        </button>
+        <button class="btn btn-outline-primary px-4 py-2.5 rounded-pill shadow-sm" @click="showProfileBuilder = true">
+          <i class="bi bi-diagram-3-fill me-2"></i> Tạo Mẫu Lịch
+        </button>
+        <button class="btn btn-outline-info px-4 py-2.5 rounded-pill shadow-sm" @click="showAssignProfile = true">
+          <i class="bi bi-people-fill me-2"></i> Gán Profile
         </button>
       </div>
     </div>
@@ -237,6 +246,20 @@
         </div>
       </div>
     </div>
+    <!-- Template Modals -->
+    <div v-if="showProfileBuilder" class="zalo-modal-overlay">
+      <div class="max-w-2xl w-full mx-4">
+        <ScheduleProfileBuilder @cancel="showProfileBuilder = false" @saved="handleProfileSaved" />
+      </div>
+    </div>
+    
+    <AssignProfileDialog v-if="showAssignProfile" @close="showAssignProfile = false" @assigned="handleProfileAssigned" />
+    <CreateExceptionDialog v-if="showCreateException" currentDoctorId="test-doc-id" @close="showCreateException = false" @submitted="handleExceptionSubmitted" />
+
+    <!-- Pending Exceptions List (For Admin) -->
+    <div class="mt-8">
+      <PendingExceptionsTab />
+    </div>
 
   </div>
 </template>
@@ -244,6 +267,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import api from '../../services/api';
+import ScheduleProfileBuilder from './ScheduleProfileBuilder.vue';
+import AssignProfileDialog from './AssignProfileDialog.vue';
+import CreateExceptionDialog from './CreateExceptionDialog.vue';
+import PendingExceptionsTab from './PendingExceptionsTab.vue';
 
 // --- STATE ---
 const loading = ref(false);
@@ -251,6 +278,24 @@ const schedulesList = ref<any[]>([]);
 const blockTimesList = ref<any[]>([]);
 const doctorUsers = ref<any[]>([]);
 const filterDoctorId = ref('all');
+
+const showProfileBuilder = ref(false);
+const showAssignProfile = ref(false);
+const showCreateException = ref(false);
+
+const handleProfileSaved = () => {
+  showProfileBuilder.value = false;
+};
+
+const handleProfileAssigned = () => {
+  showAssignProfile.value = false;
+  loadData();
+};
+
+const handleExceptionSubmitted = () => {
+  showCreateException.value = false;
+  // Could trigger a reload of pending exceptions here if needed
+};
 
 // --- WEEK MANAGEMENT ---
 const currentDate = ref(new Date());

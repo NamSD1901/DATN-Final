@@ -49,6 +49,8 @@ namespace MyPetClinic.Infrastructure
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IDoctorScheduleService, DoctorScheduleService>();
             services.AddScoped<IBlockTimeService, BlockTimeService>();
+            services.AddScoped<IScheduleProfileService, ScheduleProfileService>();
+            services.AddScoped<IScheduleExceptionService, ScheduleExceptionService>();
             
             // Nếu muốn để logic Service ở Application Layer, ta chỉ cần đăng ký tại đây
             // Hoặc có thể tạo AddApplicationServices riêng biệt bên Application, 
@@ -75,6 +77,7 @@ namespace MyPetClinic.Infrastructure
             // Đăng ký Background Service nhắc lịch tiêm phòng và lịch tái khám tự động
             services.AddHostedService<Workers.VaccineReminderWorker>();
             services.AddHostedService<Workers.AppointmentReminderWorker>();
+            services.AddHostedService<Workers.ScheduleGeneratorWorker>();
 
             // Đăng ký Background Email Queue
             services.AddSingleton<IEmailQueue, EmailQueue>();

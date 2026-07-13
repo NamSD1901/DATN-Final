@@ -60,6 +60,10 @@ namespace MyPetClinic.Infrastructure.Persistence
         public DbSet<ClinicOperatingDay> ClinicOperatingDays { get; set; }
         public DbSet<ClinicOperatingShift> ClinicOperatingShifts { get; set; }
         public DbSet<ClinicHoliday> ClinicHolidays { get; set; }
+        public DbSet<ScheduleProfile> ScheduleProfiles { get; set; }
+        public DbSet<ScheduleProfileShift> ScheduleProfileShifts { get; set; }
+        public DbSet<DoctorScheduleProfile> DoctorScheduleProfiles { get; set; }
+        public DbSet<ScheduleException> ScheduleExceptions { get; set; }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder builder)
         {
@@ -727,6 +731,67 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.CreatedBy).HasColumnName("created_by");
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             });
+
+            // schedule_profiles
+            modelBuilder.Entity<ScheduleProfile>(entity =>
+            {
+                entity.ToTable("schedule_profiles");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.Name).HasColumnName("name").IsRequired().HasMaxLength(255);
+                entity.Property(e => e.Description).HasColumnName("description");
+                entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            });
+
+            // schedule_profile_shifts
+            modelBuilder.Entity<ScheduleProfileShift>(entity =>
+            {
+                entity.ToTable("schedule_profile_shifts");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.ProfileId).HasColumnName("profile_id");
+                entity.Property(e => e.DayOfWeek).HasColumnName("day_of_week");
+                entity.Property(e => e.StartTime).HasColumnName("start_time");
+                entity.Property(e => e.EndTime).HasColumnName("end_time");
+                entity.Property(e => e.IsDayOff).HasColumnName("is_day_off").HasDefaultValue(false);
+
+                entity.HasOne(d => d.Profile).WithMany(p => p.Shifts).HasForeignKey(d => d.ProfileId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // doctor_schedule_profiles
+            modelBuilder.Entity<DoctorScheduleProfile>(entity =>
+            {
+                entity.ToTable("doctor_schedule_profiles");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.DoctorId).HasColumnName("doctor_id");
+                entity.Property(e => e.ProfileId).HasColumnName("profile_id");
+                entity.Property(e => e.EffectiveDate).HasColumnName("effective_date");
+                entity.Property(e => e.EndDate).HasColumnName("end_date");
+
+                entity.HasOne(d => d.Doctor).WithMany().HasForeignKey(d => d.DoctorId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(d => d.Profile).WithMany(p => p.DoctorProfiles).HasForeignKey(d => d.ProfileId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // schedule_exceptions
+            modelBuilder.Entity<ScheduleException>(entity =>
+            {
+                entity.ToTable("schedule_exceptions");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
+                entity.Property(e => e.DoctorId).HasColumnName("doctor_id");
+                entity.Property(e => e.Type).HasColumnName("type").IsRequired().HasMaxLength(50);
+                entity.Property(e => e.StartDate).HasColumnName("start_date");
+                entity.Property(e => e.EndDate).HasColumnName("end_date");
+                entity.Property(e => e.SubstituteDoctorId).HasColumnName("substitute_doctor_id");
+                entity.Property(e => e.Reason).HasColumnName("reason").HasMaxLength(500);
+                entity.Property(e => e.Status).HasColumnName("status").HasDefaultValue("Approved").HasMaxLength(50);
+
+                entity.HasOne(d => d.Doctor).WithMany().HasForeignKey(d => d.DoctorId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(d => d.SubstituteDoctor).WithMany().HasForeignKey(d => d.SubstituteDoctorId).OnDelete(DeleteBehavior.SetNull);
+            });
+
         }
     }
 }

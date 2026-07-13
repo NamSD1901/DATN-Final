@@ -80,16 +80,32 @@ namespace MyPetClinic.Infrastructure.Workers
                     if (!string.IsNullOrEmpty(email))
                     {
                         var subject = $"🔔 Nhắc lịch {typeLabel} cho bé {appointment.Pet.Name}";
-                        var body = $"<div style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" +
-                                   $"<h2>Nhắc Lịch Hẹn {typeLabel}</h2>" +
-                                   $"Chào bạn <b>{appointment.Customer.FullName}</b>,<br/><br/>" +
-                                   $"MyPetClinic xin nhắc bạn về lịch hẹn {typeLabel} cho bé <b>{appointment.Pet.Name}</b>.<br/>" +
-                                   $"Thời gian: <b>{appointment.AppointmentDate.Add(appointment.StartTime):HH:mm dd/MM/yyyy}</b>.<br/>" +
-                                   $"Bác sĩ phụ trách: <b>{appointment.Doctor?.FullName ?? "Đang cập nhật"}</b>.<br/><br/>" +
-                                   $"Ghi chú: {appointment.Note}<br/><br/>" +
-                                   $"Vui lòng phản hồi tin nhắn hoặc truy cập ứng dụng để xác nhận hoặc dời lịch nếu bạn không thể đến đúng hẹn.<br/>" +
-                                   $"<br/>Trân trọng,<br/>Đội ngũ MyPetClinic." +
-                                   $"</div>";
+                        var body = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Nhắc Lịch Hẹn</title>
+</head>
+<body style='font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 20px; margin: 0;'>
+    <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 10px; border-top: 5px solid #f1c40f; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+        <div style='text-align: center; margin-bottom: 20px;'>
+            <h2 style='color: #2c3e50; margin: 0; font-size: 28px;'>MyPet<span style='color: #f1c40f;'>Clinic</span></h2>
+        </div>
+        <h3 style='color: #2c3e50; font-size: 18px; text-align: center; text-transform: uppercase;'>Nhắc Lịch Hẹn {typeLabel}</h3>
+        <h3 style='color: #2c3e50; font-size: 16px;'>Xin chào {appointment.Customer.FullName},</h3>
+        <p style='color: #555; line-height: 1.6; font-size: 15px;'>
+            MyPetClinic xin nhắc bạn về lịch hẹn {typeLabel} cho bé <b>{appointment.Pet.Name}</b>.<br><br>
+            Thời gian: <strong style='color: #e74c3c;'>{appointment.AppointmentDate.Add(appointment.StartTime):HH:mm dd/MM/yyyy}</strong>.<br>
+            Bác sĩ phụ trách: <strong style='color: #2980b9;'>{appointment.Doctor?.FullName ?? "Đang cập nhật"}</strong>.<br><br>
+            Ghi chú: <i>{appointment.Note}</i><br><br>
+            Vui lòng phản hồi tin nhắn hoặc truy cập ứng dụng để xác nhận hoặc dời lịch nếu bạn không thể đến đúng hẹn.
+        </p>
+        <hr style='border: none; border-top: 1px solid #eeeeee; margin: 30px 0 20px 0;'>
+        <p style='color: #95a5a6; font-size: 13px; text-align: center; margin: 0;'>Email này được gửi tự động từ hệ thống MyPetClinic.<br>Vui lòng không trả lời thư này.</p>
+    </div>
+</body>
+</html>";
 
                         try
                         {
