@@ -30,6 +30,9 @@
       </div>
 
       <div class="d-flex gap-2">
+        <button v-if="!isAdmin" class="btn btn-outline-warning rounded-pill px-4 fw-bold shadow-sm bg-white me-2" @click="showCreateException = true">
+          <i class="bi bi-person-lines-fill me-1"></i> Nghỉ / Đổi Ca
+        </button>
         <select v-if="isAdmin" v-model="selectedDoctor" @change="fetchWeeklySchedule" class="form-select border-glass bg-white bg-opacity-75 rounded-pill px-3 py-1 shadow-sm fw-medium" style="width: 180px;">
           <option value="ALL">Tất cả bác sĩ</option>
           <option v-for="doc in doctors" :key="doc.id" :value="doc.id">Bs. {{ doc.fullName }}</option>
@@ -114,12 +117,16 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Create Exception Modal -->
+    <CreateExceptionDialog v-if="showCreateException" :currentDoctorId="currentDoctorId" @close="showCreateException = false" @submitted="handleExceptionSubmitted" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import api from '../../services/api';
+import CreateExceptionDialog from './CreateExceptionDialog.vue';
 
 const emit = defineEmits(['switch-tab']);
 
@@ -134,6 +141,13 @@ const isAdmin = computed(() => {
 
 const doctors = ref<any[]>([]);
 const selectedDoctor = ref('ALL');
+const showCreateException = ref(false);
+const currentDoctorId = ref('');
+
+const handleExceptionSubmitted = () => {
+  showCreateException.value = false;
+  fetchWeeklySchedule();
+};
 
 // Constants
 const timeSlots = [
@@ -319,7 +333,17 @@ const loadDoctors = async () => {
   }
 };
 
+const loadCurrentUser = async () => {
+  try {
+    const res = await api.get('/dashboard');
+    currentDoctorId.value = res.data.userId || '';
+  } catch (e) {
+    console.error('Lỗi lấy thông tin user:', e);
+  }
+};
+
 onMounted(() => {
+  loadCurrentUser();
   loadDoctors();
   fetchWeeklySchedule();
 });

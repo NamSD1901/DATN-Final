@@ -21,8 +21,28 @@ export interface AssignProfileDto {
 }
 
 export const scheduleProfileService = {
+  getProfiles: async () => {
+    const response = await api.get('/ScheduleProfile');
+    return response.data;
+  },
+
+  getProfile: async (id: number) => {
+    const response = await api.get(`/ScheduleProfile/${id}`);
+    return response.data;
+  },
+
   createProfile: async (dto: CreateScheduleProfileDto) => {
     const response = await api.post('/ScheduleProfile', dto);
+    return response.data;
+  },
+
+  updateProfile: async (id: number, dto: CreateScheduleProfileDto) => {
+    const response = await api.put(`/ScheduleProfile/${id}`, dto);
+    return response.data;
+  },
+
+  deleteProfile: async (id: number) => {
+    const response = await api.delete(`/ScheduleProfile/${id}`);
     return response.data;
   },
 

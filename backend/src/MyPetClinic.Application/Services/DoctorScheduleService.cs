@@ -24,12 +24,14 @@ namespace MyPetClinic.Application.Services
 
             if (startDate.HasValue)
             {
-                query = query.Where(s => s.WorkDate >= startDate.Value.Date);
+                var startUtc = DateTime.SpecifyKind(startDate.Value.Date, DateTimeKind.Utc);
+                query = query.Where(s => s.WorkDate >= startUtc);
             }
 
             if (endDate.HasValue)
             {
-                query = query.Where(s => s.WorkDate <= endDate.Value.Date);
+                var endUtc = DateTime.SpecifyKind(endDate.Value.Date, DateTimeKind.Utc);
+                query = query.Where(s => s.WorkDate <= endUtc);
             }
 
             if (doctorId.HasValue)

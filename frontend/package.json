@@ -19,6 +19,7 @@
     "html2pdf.js": "^0.14.0",
     "html5-qrcode": "^2.3.8",
     "lucide-vue-next": "^1.0.0",
+    "pg": "^8.22.0",
     "pinia": "^3.0.4",
     "qrcode.vue": "^3.10.0",
     "sweetalert2": "^11.26.25",

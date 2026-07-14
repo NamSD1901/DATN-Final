@@ -20,6 +20,14 @@ namespace MyPetClinic.Application.DTOs
         public List<ScheduleProfileShiftDto> Shifts { get; set; } = new();
     }
 
+    public class UpdateScheduleProfileDto
+    {
+        [Required]
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public List<ScheduleProfileShiftDto> Shifts { get; set; } = new();
+    }
+
     public class ScheduleProfileDto
     {
         public long Id { get; set; }

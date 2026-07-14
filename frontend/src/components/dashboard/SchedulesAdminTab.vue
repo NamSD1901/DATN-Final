@@ -1,26 +1,23 @@
 <template>
-  <div class="schedules-admin-tab container-fluid p-0 animate-fade-in">
+  <div class="schedules-admin-tab container-fluid p-0 animate-fade-in" style="min-width: 0; max-width: 100%; overflow-x: hidden;">
     <!-- Header -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
       <div>
         <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-calendar-event-fill text-warning me-2"></i>Quản lý Lịch Làm Việc & Nghỉ</h4>
         <p class="text-muted small mb-0">Thiết lập ca trực với giao diện Timeline Grid Glassmorphism Độc Bản</p>
       </div>
-      <div class="d-flex gap-2">
-        <button class="btn btn-premium px-4 py-2.5 rounded-pill shadow-sm" @click="openCreateScheduleModal">
-          <i class="bi bi-calendar-plus-fill me-2"></i> Phân Ca Trực
+      <div class="d-flex flex-wrap justify-content-end gap-2">
+        <button class="btn btn-premium px-3 py-2 rounded-pill shadow-sm" @click="openCreateScheduleModal">
+          <i class="bi bi-calendar-plus-fill me-1"></i> Phân Ca
         </button>
-        <button class="btn btn-outline-warning px-4 py-2.5 rounded-pill shadow-sm" @click="showCreateException = true">
-          <i class="bi bi-person-lines-fill me-2"></i> Xin Nghỉ / Đổi Ca
+        <button class="btn btn-danger px-3 py-2 rounded-pill shadow-sm" @click="openCreateBlockModal">
+          <i class="bi bi-calendar-x-fill me-1"></i> Khóa Lịch
         </button>
-        <button class="btn btn-danger px-4 py-2.5 rounded-pill shadow-sm" @click="openCreateBlockModal">
-          <i class="bi bi-calendar-x-fill me-2"></i> Thêm Lịch Nghỉ
+        <button class="btn btn-outline-primary px-3 py-2 rounded-pill shadow-sm" @click="showProfileManager = true">
+          <i class="bi bi-diagram-3-fill me-1"></i> Quản lý Mẫu Lịch
         </button>
-        <button class="btn btn-outline-primary px-4 py-2.5 rounded-pill shadow-sm" @click="showProfileBuilder = true">
-          <i class="bi bi-diagram-3-fill me-2"></i> Tạo Mẫu Lịch
-        </button>
-        <button class="btn btn-outline-info px-4 py-2.5 rounded-pill shadow-sm" @click="showAssignProfile = true">
-          <i class="bi bi-people-fill me-2"></i> Gán Profile
+        <button class="btn btn-outline-info px-3 py-2 rounded-pill shadow-sm" @click="showAssignProfile = true">
+          <i class="bi bi-people-fill me-1"></i> Gán Profile
         </button>
       </div>
     </div>
@@ -108,10 +105,11 @@
                 <div v-for="block in getBlockTimes(doc.id, day)" :key="'b'+block.id"
                      class="block-card p-2 rounded shadow-sm pointer border-0 position-relative overflow-hidden"
                      style="background-color: #dc3545; color: white;"
-                     @click="openEditBlockModal(block)">
+                     @click="!block.id.toString().startsWith('unavail_') ? openEditBlockModal(block) : null"
+                     :title="block.reason">
                   <div class="striped-bg"></div>
                   <div class="fw-bold position-relative z-1 d-flex align-items-center gap-1" style="font-size: 0.8rem">
-                    <i class="bi bi-slash-circle"></i> Lịch Nghỉ
+                    <i class="bi bi-slash-circle"></i> {{ block.id.toString().startsWith('unavail_') ? 'Nghỉ Phép/Đổi Ca' : 'Lịch Nghỉ' }}
                   </div>
                   <div class="position-relative z-1 mt-1 text-white-50" style="font-size: 0.7rem">
                     {{ formatTime(block.startTime) }} - {{ formatTime(block.endTime) }}
@@ -217,14 +215,67 @@
                 <option :value="9">Lý do khác</option>
               </select>
             </div>
-            <div class="row g-2 mb-3">
+            <!-- Date Range Picker -->
+            <div class="row g-3 mb-3">
               <div class="col-6">
-                <label class="form-label text-muted small fw-bold">Bắt đầu *</label>
-                <input type="datetime-local" v-model="blockForm.startTime" class="form-control glass-input fw-bold" required :disabled="isBlockEdit" />
+                <label class="form-label text-muted small fw-bold">
+                  <i class="bi bi-calendar-event text-danger me-1"></i> Từ ngày *
+                </label>
+                <input type="date" v-model="blockForm.startDate" class="form-control glass-input fw-bold text-dark" required :disabled="isBlockEdit" :min="minDate" @change="validateDateRange" />
               </div>
               <div class="col-6">
-                <label class="form-label text-muted small fw-bold">Kết thúc *</label>
-                <input type="datetime-local" v-model="blockForm.endTime" class="form-control glass-input fw-bold" required :disabled="isBlockEdit" />
+                <label class="form-label text-muted small fw-bold">
+                  <i class="bi bi-calendar-check text-danger me-1"></i> Đến ngày *
+                </label>
+                <input type="date" v-model="blockForm.endDate" class="form-control glass-input fw-bold text-dark" required :disabled="isBlockEdit" :min="blockForm.startDate || minDate" />
+              </div>
+            </div>
+
+            <!-- Days summary badge -->
+            <div v-if="blockForm.startDate && blockForm.endDate && !isBlockEdit" class="mb-3">
+              <div v-if="selectedDaysCount > 0" class="date-range-summary d-flex align-items-center gap-2 px-3 py-2 rounded-3">
+                <i class="bi bi-calendar-range text-danger"></i>
+                <span class="small fw-bold text-dark">
+                  <strong class="text-danger">{{ selectedDaysCount }} ngày</strong>
+                  <span class="text-muted ms-1">( {{ formatDisplayDate(blockForm.startDate) }} — {{ formatDisplayDate(blockForm.endDate) }} )</span>
+                </span>
+              </div>
+              <div v-else class="date-range-summary date-range-invalid d-flex align-items-center gap-2 px-3 py-2 rounded-3">
+                <i class="bi bi-exclamation-triangle text-danger"></i>
+                <span class="small fw-bold text-danger">Ngày kết thúc phải sau ngày bắt đầu!</span>
+              </div>
+            </div>
+
+            <!-- Time Range Picker -->
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label text-muted small fw-bold">
+                  <i class="bi bi-play-circle-fill text-success me-1"></i> Giờ bắt đầu *
+                </label>
+                <TimePicker
+                  v-model="blockForm.startHour"
+                  :slots="timeSlotOptions"
+                  :disabled="isBlockEdit"
+                  @change="validateEndTime"
+                />
+              </div>
+              <div class="col-6">
+                <label class="form-label text-muted small fw-bold">
+                  <i class="bi bi-stop-circle-fill text-danger me-1"></i> Giờ kết thúc *
+                </label>
+                <TimePicker
+                  v-model="blockForm.endHour"
+                  :slots="endTimeSlotOptions"
+                  :disabled="isBlockEdit"
+                />
+              </div>
+            </div>
+
+            <!-- Duration Badge -->
+            <div v-if="blockForm.startHour && blockForm.endHour && !isBlockEdit" class="mb-3">
+              <div class="duration-badge d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill">
+                <i class="bi bi-hourglass-split text-danger"></i>
+                <span class="fw-bold small text-dark">Mỗi ngày: <strong class="text-danger">{{ blockDuration }}</strong></span>
               </div>
             </div>
             <div class="mb-3">
@@ -247,14 +298,9 @@
       </div>
     </div>
     <!-- Template Modals -->
-    <div v-if="showProfileBuilder" class="zalo-modal-overlay">
-      <div class="max-w-2xl w-full mx-4">
-        <ScheduleProfileBuilder @cancel="showProfileBuilder = false" @saved="handleProfileSaved" />
-      </div>
-    </div>
+    <ScheduleProfileManager v-if="showProfileManager" @close="showProfileManager = false" @changed="loadData" />
     
     <AssignProfileDialog v-if="showAssignProfile" @close="showAssignProfile = false" @assigned="handleProfileAssigned" />
-    <CreateExceptionDialog v-if="showCreateException" currentDoctorId="test-doc-id" @close="showCreateException = false" @submitted="handleExceptionSubmitted" />
 
     <!-- Pending Exceptions List (For Admin) -->
     <div class="mt-8">
@@ -267,10 +313,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import api from '../../services/api';
-import ScheduleProfileBuilder from './ScheduleProfileBuilder.vue';
+import ScheduleProfileManager from './ScheduleProfileManager.vue';
 import AssignProfileDialog from './AssignProfileDialog.vue';
-import CreateExceptionDialog from './CreateExceptionDialog.vue';
 import PendingExceptionsTab from './PendingExceptionsTab.vue';
+import TimePicker from '../shared/TimePicker.vue';
 
 // --- STATE ---
 const loading = ref(false);
@@ -279,22 +325,12 @@ const blockTimesList = ref<any[]>([]);
 const doctorUsers = ref<any[]>([]);
 const filterDoctorId = ref('all');
 
-const showProfileBuilder = ref(false);
+const showProfileManager = ref(false);
 const showAssignProfile = ref(false);
-const showCreateException = ref(false);
-
-const handleProfileSaved = () => {
-  showProfileBuilder.value = false;
-};
 
 const handleProfileAssigned = () => {
   showAssignProfile.value = false;
   loadData();
-};
-
-const handleExceptionSubmitted = () => {
-  showCreateException.value = false;
-  // Could trigger a reload of pending exceptions here if needed
 };
 
 // --- WEEK MANAGEMENT ---
@@ -338,19 +374,24 @@ const filteredDoctors = computed(() => {
   return doctorUsers.value.filter(u => u.id === filterDoctorId.value);
 });
 
+const toLocalDateStr = (d: Date) => {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+};
+
 const loadData = async () => {
   loading.value = true;
   try {
-    const startStr = currentWeekDays.value[0].toISOString().split('T')[0];
-    const endStr = currentWeekDays.value[6].toISOString().split('T')[0];
+    const startStr = toLocalDateStr(currentWeekDays.value[0]);
+    const endStr = toLocalDateStr(currentWeekDays.value[6]);
     
-    const [schedRes, blockRes] = await Promise.all([
-      api.get(`/admin/schedules?startDate=${startStr}&endDate=${endStr}`).catch(() => ({ data: [] })),
-      api.get(`/admin/block-times?startDate=${startStr}&endDate=${endStr}`).catch(() => ({ data: [] }))
+    const [schedulesRes, blocksRes] = await Promise.all([
+      api.get(`/doctor-schedules?startDate=${startStr}&endDate=${endStr}`).catch(() => ({ data: [] })),
+      api.get(`/block-times?startDate=${startStr}&endDate=${endStr}`).catch(() => ({ data: [] }))
     ]);
     
-    schedulesList.value = schedRes.data || [];
-    blockTimesList.value = blockRes.data || [];
+    schedulesList.value = schedulesRes.data || [];
+    blockTimesList.value = blocksRes.data || [];
   } catch (err) {
     console.error('Lỗi tải dữ liệu lịch:', err);
   } finally {
@@ -373,19 +414,41 @@ const loadDoctors = async () => {
 
 // --- GRID HELPERS ---
 const getSchedules = (doctorId: string, day: Date) => {
-  const dateStr = day.toISOString().split('T')[0];
+  const dateStr = toLocalDateStr(day);
   return schedulesList.value.filter(s => {
-    if (!s.workDate) return false;
-    return s.doctorId === doctorId && s.workDate.split('T')[0] === dateStr;
+    if (!s.workDate || !s.isAvailable) return false;
+    // API có thể trả về UTC (VD: 2026-07-18T17:00:00) nhưng thiếu chữ Z.
+    // Thêm Z vào để đảm bảo trình duyệt hiểu đây là giờ UTC, sau đó Date sẽ tự quy đổi về giờ Local.
+    const utcWorkDate = s.workDate.endsWith('Z') ? s.workDate : `${s.workDate}Z`;
+    const localD = new Date(utcWorkDate);
+    const wStr = toLocalDateStr(localD);
+    return s.doctorId === doctorId && wStr === dateStr;
   }).sort((a,b) => (a.startTime || '').localeCompare(b.startTime || ''));
 };
 
 const getBlockTimes = (doctorId: string, day: Date) => {
-  const dateStr = day.toISOString().split('T')[0];
-  return blockTimesList.value.filter(b => {
+  const dateStr = toLocalDateStr(day);
+  const blocks = blockTimesList.value.filter(b => {
     if (!b.startTime) return false;
-    return b.doctorId === doctorId && b.startTime.split('T')[0] === dateStr;
+    const utcStartTime = b.startTime.endsWith('Z') ? b.startTime : `${b.startTime}Z`;
+    const localD = new Date(utcStartTime);
+    return b.doctorId === doctorId && toLocalDateStr(localD) === dateStr;
   });
+
+  const unavailableSchedules = schedulesList.value.filter(s => {
+    if (!s.workDate || s.isAvailable !== false) return false;
+    const utcWorkDate = s.workDate.endsWith('Z') ? s.workDate : `${s.workDate}Z`;
+    const localD = new Date(utcWorkDate);
+    return s.doctorId === doctorId && toLocalDateStr(localD) === dateStr;
+  }).map(s => ({
+    id: 'unavail_' + s.id,
+    doctorId: s.doctorId,
+    startTime: s.workDate.split('T')[0] + 'T' + s.startTime,
+    endTime: s.workDate.split('T')[0] + 'T' + s.endTime,
+    reason: s.notes || 'Nghỉ / Đổi ca (Exception)'
+  }));
+
+  return [...blocks, ...unavailableSchedules];
 };
 
 const getDoctorColor = (doctorId: string | undefined, opacity: number = 1) => {
@@ -440,6 +503,31 @@ const isToday = (d: Date) => {
 const minDate = computed(() => {
   const today = new Date();
   return today.toISOString().split('T')[0];
+});
+
+// --- TIME SLOT OPTIONS ---
+const timeSlotOptions = computed(() => {
+  const slots: string[] = [];
+  for (let h = 8; h <= 20; h++) {
+    slots.push(`${String(h).padStart(2, '0')}:00`);
+    if (h < 20) slots.push(`${String(h).padStart(2, '0')}:30`);
+  }
+  return slots;
+});
+
+const endTimeSlotOptions = computed(() => {
+  return timeSlotOptions.value.filter(s => s > blockForm.value.startHour);
+});
+
+const blockDuration = computed(() => {
+  if (!blockForm.value.startHour || !blockForm.value.endHour) return '';
+  const [sh, sm] = blockForm.value.startHour.split(':').map(Number);
+  const [eh, em] = blockForm.value.endHour.split(':').map(Number);
+  const totalMin = (eh * 60 + em) - (sh * 60 + sm);
+  if (totalMin <= 0) return 'Không hợp lệ';
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return h > 0 ? (m > 0 ? `${h} giờ ${m} phút` : `${h} giờ`) : `${m} phút`;
 });
 
 // --- MODALS STATE & LOGIC ---
@@ -541,19 +629,51 @@ const currentBlockId = ref<string | null>(null);
 
 const blockForm = ref({
   doctorId: '',
-  startTime: '',
-  endTime: '',
+  startDate: '',
+  endDate: '',
+  startHour: '08:00',
+  endHour: '12:00',
   blockType: 0,
   reason: ''
 });
+
+const selectedDaysCount = computed(() => {
+  if (!blockForm.value.startDate || !blockForm.value.endDate) return 0;
+  const s = new Date(blockForm.value.startDate);
+  const e = new Date(blockForm.value.endDate);
+  const diff = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  return diff > 0 ? diff : 0;
+});
+
+const formatDisplayDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+};
+
+const validateDateRange = () => {
+  if (blockForm.value.endDate && blockForm.value.endDate < blockForm.value.startDate) {
+    blockForm.value.endDate = blockForm.value.startDate;
+  }
+};
+
+const validateEndTime = () => {
+  // Ensure endHour is always after startHour
+  if (blockForm.value.endHour <= blockForm.value.startHour) {
+    const idx = endTimeSlotOptions.value.findIndex(s => s > blockForm.value.startHour);
+    blockForm.value.endHour = endTimeSlotOptions.value[idx >= 0 ? idx : 0] || '12:00';
+  }
+};
 
 const openCreateBlockModal = () => {
   isBlockEdit.value = false;
   currentBlockId.value = null;
   blockForm.value = {
     doctorId: filterDoctorId.value !== 'all' ? filterDoctorId.value : (doctorUsers.value[0]?.id || ''),
-    startTime: '',
-    endTime: '',
+    startDate: minDate.value,
+    endDate: minDate.value,
+    startHour: '08:00',
+    endHour: '12:00',
     blockType: 0,
     reason: ''
   };
@@ -563,15 +683,28 @@ const openCreateBlockModal = () => {
 const openEditBlockModal = (block: any) => {
   isBlockEdit.value = true;
   currentBlockId.value = block.id;
-  const toLocalDT = (dtString: string) => {
-      const d = new Date(dtString);
-      const pad = (n: number) => n.toString().padStart(2, '0');
-      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const pad = (n: number) => n.toString().padStart(2, '0');
+
+  const parseDt = (dtString: string) => {
+    if (!dtString) return { date: '', hour: '08:00' };
+    // Handle both 'Z' suffix and no suffix
+    const safe = dtString.endsWith('Z') ? dtString : `${dtString}Z`;
+    const d = new Date(safe);
+    return {
+      date: `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,
+      hour: `${pad(d.getHours())}:${pad(d.getMinutes())}`
+    };
   };
+
+  const start = parseDt(block.startTime);
+  const end = parseDt(block.endTime);
+
   blockForm.value = {
     doctorId: block.doctorId,
-    startTime: block.startTime ? toLocalDT(block.startTime) : '',
-    endTime: block.endTime ? toLocalDT(block.endTime) : '',
+    startDate: start.date,
+    endDate: start.date,
+    startHour: start.hour,
+    endHour: end.hour,
     blockType: block.blockType || 0,
     reason: block.reason || ''
   };
@@ -579,19 +712,48 @@ const openEditBlockModal = (block: any) => {
 };
 
 const submitBlockForm = async () => {
+  if (!blockForm.value.startDate || !blockForm.value.endDate || !blockForm.value.startHour || !blockForm.value.endHour) {
+    alert('Vui lòng chọn đầy đủ ngày và giờ.');
+    return;
+  }
+  if (blockForm.value.endHour <= blockForm.value.startHour) {
+    alert('Giờ kết thúc phải sau giờ bắt đầu.');
+    return;
+  }
+  if (blockForm.value.endDate < blockForm.value.startDate) {
+    alert('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.');
+    return;
+  }
+
+  if (isBlockEdit.value) {
+    alert('Chỉnh sửa trực tiếp chưa hỗ trợ, vui lòng xóa và tạo mới!');
+    return;
+  }
+
   try {
-    const payload = {
-      ...blockForm.value,
-      startTime: new Date(blockForm.value.startTime).toISOString(),
-      endTime: new Date(blockForm.value.endTime).toISOString()
-    };
-    
-    // Fallback to simple create/delete if put is not available
-    if (isBlockEdit.value) {
-      alert("Chỉnh sửa trực tiếp chưa hỗ trợ, vui lòng xóa và tạo mới!");
-    } else {
-      await api.post('/admin/block-times', payload);
+    // Build list of dates in the range
+    const dateList: string[] = [];
+    const cur = new Date(blockForm.value.startDate);
+    const end = new Date(blockForm.value.endDate);
+    while (cur <= end) {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      dateList.push(`${cur.getFullYear()}-${pad(cur.getMonth()+1)}-${pad(cur.getDate())}`);
+      cur.setDate(cur.getDate() + 1);
     }
+
+    // Create one block per day in parallel
+    await Promise.all(dateList.map(date => {
+      const startDt = new Date(`${date}T${blockForm.value.startHour}:00`);
+      const endDt   = new Date(`${date}T${blockForm.value.endHour}:00`);
+      return api.post('/admin/block-times', {
+        doctorId:  blockForm.value.doctorId,
+        startTime: startDt.toISOString(),
+        endTime:   endDt.toISOString(),
+        blockType: blockForm.value.blockType,
+        reason:    blockForm.value.reason
+      });
+    }));
+
     showBlockModal.value = false;
     await loadData();
   } catch (err: any) {
@@ -758,4 +920,63 @@ onMounted(() => {
 .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- Time Picker (Direction A) --- */
+.time-select-wrapper {
+  position: relative;
+}
+.time-select-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 0.85rem;
+  z-index: 2;
+  pointer-events: none;
+  transition: color 0.2s;
+}
+.time-select {
+  padding-left: 2.4rem !important;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%236b7280' d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  padding-right: 2rem !important;
+  border-radius: 10px !important;
+  transition: all 0.25s ease !important;
+}
+.time-select:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15) !important;
+}
+.time-select:focus + .time-select-icon,
+.time-select-wrapper:focus-within .time-select-icon {
+  color: #dc3545;
+}
+.time-select:not(:disabled):hover {
+  border-color: rgba(220, 53, 69, 0.4) !important;
+  background-color: rgba(255,255,255,0.9) !important;
+}
+
+/* Duration Badge */
+.duration-badge {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.06), rgba(220, 53, 69, 0.12));
+  border: 1px dashed rgba(220, 53, 69, 0.3);
+  animation: fadeIn 0.3s ease;
+}
+
+/* Date Range Summary */
+.date-range-summary {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.05), rgba(220, 53, 69, 0.10));
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  animation: fadeIn 0.3s ease;
+}
+.date-range-invalid {
+  background: rgba(220, 53, 69, 0.05);
+  border-color: rgba(220, 53, 69, 0.35);
+  border-style: dashed;
+}
 </style>

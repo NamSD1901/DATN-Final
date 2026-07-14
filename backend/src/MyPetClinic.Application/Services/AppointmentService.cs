@@ -1250,85 +1250,6 @@ namespace MyPetClinic.Application.Services
                     });
                 }
             }
-            else
-            {
-                // Fallback: Nếu hoàn toàn chưa được cấu hình ca trực trong DB cho ngày này, 
-                // ta tự động lấy toàn bộ các bác sĩ đang hoạt động và tạo ca trực in-memory dựa trên cấu hình slot_config.json
-                var doctors = await _unitOfWork.Users.FindAsync(
-                    u => u.Role != null && u.IsActive == true && (string.IsNullOrEmpty(targetRole) ? u.Role.Name.ToLower().Contains("doctor") : u.Role.Name.ToLower() == targetRole)
-                );
-
-                if (doctors.Any())
-                {
-                    string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "slot_config.json");
-                    string startTimeStr = "08:00:00";
-                    string endTimeStr = "20:00:00";
-                    int durationMinutes = 30;
-
-                    if (File.Exists(configPath))
-                    {
-                        try
-                        {
-                            var json = File.ReadAllText(configPath);
-                            using (var doc = System.Text.Json.JsonDocument.Parse(json))
-                            {
-                                var root = doc.RootElement;
-                                if (root.TryGetProperty("StartTime", out var sProp)) startTimeStr = sProp.GetString() ?? startTimeStr;
-                                if (root.TryGetProperty("EndTime", out var eProp)) endTimeStr = eProp.GetString() ?? endTimeStr;
-                                if (root.TryGetProperty("DurationMinutes", out var dProp)) durationMinutes = dProp.GetInt32();
-                            }
-                        }
-                        catch {}
-                    }
-
-                    var startTime = TimeSpan.Parse(startTimeStr);
-                    var endTime = TimeSpan.Parse(endTimeStr);
-
-                    foreach (var doctor in doctors)
-                    {
-                        var mockSchedule = new DoctorSchedule
-                        {
-                            DoctorId = doctor.Id,
-                            WorkDate = targetDate,
-                            StartTime = startTime,
-                            EndTime = endTime,
-                            IsAvailable = true,
-                            Doctor = doctor
-                        };
-
-                        var nextDay = targetDate.AddDays(1);
-                        var appointments = await _unitOfWork.Appointments.FindAsync(
-                            a => a.DoctorId == doctor.Id 
-                              && a.AppointmentDate >= targetDate 
-                              && a.AppointmentDate < nextDay
-                              && a.Status != "cancelled"
-                        );
-
-                        var blockTimes = await _unitOfWork.BlockTimes.FindAsync(
-                            b => b.DoctorId == doctor.Id
-                              && b.StartTime < new DateTimeOffset(nextDay)
-                              && b.EndTime > new DateTimeOffset(targetDate)
-                        );
-
-                        var availableTimes = MyPetClinic.Application.Helpers.SlotCalculationHelper.GetAvailableSlots(mockSchedule, appointments, blockTimes, durationMinutes);
-
-                        // Filter by ClinicOperatingShifts if available
-                        if (clinicShifts.Any())
-                        {
-                            availableTimes = availableTimes.Where(t => 
-                                clinicShifts.Any(s => s.StartTime <= t.TimeOfDay && s.EndTime >= t.TimeOfDay.Add(TimeSpan.FromMinutes(durationMinutes)))
-                            ).ToList();
-                        }
-
-                        result.Add(new DoctorAvailableSlotsDto
-                        {
-                            DoctorId = doctor.Id,
-                            DoctorName = doctor.FullName ?? string.Empty,
-                            AvailableSlots = availableTimes.Select(t => t.ToString("HH:mm")).ToList()
-                        });
-                    }
-                }
-            }
 
             return result;
         }
@@ -1553,7 +1474,7 @@ namespace MyPetClinic.Application.Services
                                 && (string.IsNullOrEmpty(targetRole) || (s.Doctor.Role != null && s.Doctor.Role.Name.ToLower() == targetRole)))
                     .ToList();
 
-                List<Guid> doctorsList;
+                List<Guid> doctorsList = new List<Guid>();
                 if (doctorsWithSchedules.Any())
                 {
                     // Lọc bác sĩ nằm trong khung giờ ca trực
@@ -1572,18 +1493,10 @@ namespace MyPetClinic.Application.Services
                             .ToList();
                     }
                 }
-                else
-                {
-                    // Fallback nếu không có cấu hình lịch trực cho ngày đó
-                    doctorsList = _unitOfWork.Users.Query()
-                        .Where(u => u.Role != null && u.IsActive == true && (string.IsNullOrEmpty(targetRole) ? (u.Role.Name.ToLower() == "clinical_doctor" || u.Role.Name.ToLower() == "vaccination_doctor") : u.Role.Name.ToLower() == targetRole))
-                        .Select(u => u.Id)
-                        .ToList();
-                }
 
                 if (!doctorsList.Any())
                 {
-                    throw new InvalidOperationException("Hệ thống hiện không có bác sĩ nào đang trực vào khung giờ này cho dịch vụ bạn chọn!");
+                    throw new InvalidOperationException("Hệ thống hiện không có bác sĩ nào được phân lịch trực vào khung giờ này cho dịch vụ bạn chọn!");
                 }
 
                 // 2. Lọc ra danh sách các bác sĩ THỰC SỰ RẢNH (không trùng lịch trong khoảng +/- 30 phút)

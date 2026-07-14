@@ -161,8 +161,16 @@
                 <div class="spinner-border text-primary" role="status"></div>
               </div>
               <div v-else class="slots-container">
+                <div v-if="morningSlots.length === 0 && afternoonSlots.length === 0" class="text-center py-5 px-3">
+                  <div class="mb-3">
+                    <CalendarX size="48" class="text-muted opacity-50" />
+                  </div>
+                  <h6 class="fw-bold text-dark mb-1">Không có bác sĩ trực</h6>
+                  <p class="text-muted small mb-0">Rất tiếc, ngày này phòng khám không có ca trực hoặc bác sĩ đã kín lịch. Vui lòng chọn một ngày khác.</p>
+                </div>
                 
-                <h6 class="slot-section-title"><Sun size="16" /> BUỔI SÁNG</h6>
+                <template v-else>
+                  <h6 class="slot-section-title"><Sun size="16" /> BUỔI SÁNG</h6>
                 <div class="slots-grid">
                   <button 
                     v-for="slot in morningSlots" 
@@ -192,6 +200,8 @@
                     <CheckCircle2 v-if="selectedTime === slot.time" size="14" class="ms-1" />
                   </button>
                 </div>
+
+                </template>
 
               </div>
             </div>
@@ -353,7 +363,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { 
   X, Check, PlusCircle, Clock, ChevronLeft, ChevronRight, Info, 
-  Calendar, Sun, Sunset, CheckCircle2, ArrowRight, ArrowLeft,
+  Calendar, CalendarX, Sun, Sunset, CheckCircle2, ArrowRight, ArrowLeft,
   Stethoscope, ClipboardList, AlignLeft, ShieldCheck, CalendarCheck,
   Syringe, FlaskConical, Bath
 } from 'lucide-vue-next';

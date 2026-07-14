@@ -151,3 +151,13 @@ Sua doi appointment.Status = "ready_to_pay" trong MedicalRecordService.cs khi kh
   1. Tách mảng `events` ra khỏi `calendarOptions` và truyền trực tiếp vào component thông qua prop `:events="calendarEvents"`. Xóa bỏ watcher `deep: true`.
   2. Bổ sung các câu lệnh `if (!s.workDate || !s.startTime || !s.endTime) return;` trước khi thực hiện `.split('T')`.
 - **Status:** Resolved
+
+### Error: Missing Sunday Schedules on the User Interface (Timezone/Boundary Bug)
+- **Symptom:** Khi táº¡o máº«u lá»‹ch trá»±c (Profile) cÃ³ bao gá»“m ngÃ y Chá»§ Nháº­t (Sunday) vÃ  gÃ¡n cho bÃ¡c sÄ©, giao diá»‡n LÆ°á»›i Thá» i Gian khÃ´ng hiá»ƒn thá»‹ lá»‹ch cá»§a ngÃ y Chá»§ Nháº­t. CÃ¡c ngÃ y tÆ° thá»© 2 Ä‘áº¿n thá»© 7 vÃ¢n hiá»ƒn thá»‹ Ä‘áº§y Ä‘á»§.
+- **Root Cause:** 
+  1. API `/doctor-schedules?startDate=...&endDate=...` nháº­n tham sá»‘ `endDate` dÆ°á»›i dáº¡ng chuá»—i (vd: 2026-07-19) vÃ  parse thÃ nh `DateTime` vá»›i `Kind = Unspecified`.
+  2. BÃªn trong `ApplicationDbContext.cs`, EF Core sá»± dá»¥ng `DateTimeUtcConverter` Ä‘á»ƒ chÆ°yá»ƒn Ä‘á»•i DateTime sang UTC trÆ°á»›c khi truy váº¥n. PhÆ°Æ¡ng thá»©c `.ToUniversalTime()` Ä‘Æ°á»£c Ã¡p dá»¥ng lÃªn `Unspecified DateTime` sáº½ hiá»ƒu ngáº§m Ä‘Ã³ lÃ  Local Time, vÃ  bá»‹ lÃ¹i 7 tiáº¿ng (vÃ­ dá»¥: `2026-07-19 00:00:00` sáº½ biáº¿n thÃ nh `2026-07-18 17:00:00 UTC`).
+  3. Giá»›i háº¡n trÃªn (endDate) bá»‹ lÃ¹i láº¡i, nÃªn lÃ m rá»›t máº¥t lá»‹ch cá»§a Chá»§ Nháº­t Ä‘Æ°á»£c lÆ°u nhÆ° lÃ  `2026-07-19 00:00:00 UTC` trong CSDL.
+- **Solution:** 
+  1. SÆ°a `DoctorScheduleService.cs`: SÆ° dá»¥ng `DateTime.SpecifyKind(startDate.Value.Date, DateTimeKind.Utc)` vÃ  `DateTime.SpecifyKind(endDate.Value.Date, DateTimeKind.Utc)` trÆ°á»›c khi tiáº¿n hÃ nh so sÃ¡nh LINQ. Viá»‡c áº¥n Ä‘á»‹nh rÃµ UTC kind sáº½ ngÄƒn ngá»«a EF Core láº·p láº¡i thao tÃ¡c lÃ¹i giá»  sai lá»‡ch.
+- **Status:** Resolved
