@@ -7,12 +7,12 @@
         <div>
           <h3 class="fw-bold gradient-text-gold mb-1">
             <i class="bi bi-heptagon-fill me-2 pulse-gold-icon"></i>
-            Thú cưng của tôi
+            {{ $t('pets.title') }}
           </h3>
-          <p class="text-secondary-muted mb-0 small">Quản lý hồ sơ sức khoẻ cho các thành viên nhỏ của gia đình bạn với tiêu chuẩn y khoa.</p>
+          <p class="text-secondary-muted mb-0 small">{{ $t('pets.subtitle') }}</p>
         </div>
         <button class="btn btn-premium-neon" @click="openAddModal">
-          <i class="bi bi-plus-circle-fill me-2"></i> Thêm thú cưng mới
+          <i class="bi bi-plus-circle-fill me-2"></i> {{ $t('pets.addNew') }}
         </button>
       </div>
     </div>
@@ -42,11 +42,11 @@
 
     <!-- Empty State -->
     <div v-else-if="pets.length === 0" class="empty-state-glass glass-panel p-5 text-center">
-      <div class="empty-state-icon">🐾</div>
-      <h5 class="fw-bold text-dark mt-3 mb-2">Chưa có thú cưng nào</h5>
-      <p class="text-secondary-muted small mb-4">Hãy thêm thú cưng đầu tiên của bạn để bắt đầu theo dõi sức khoẻ của bé nhé!</p>
+      <div class="empty-state-icon">🐶</div>
+      <h5 class="fw-bold text-dark mt-3 mb-2">{{ $t('pets.noPetTitle') }}</h5>
+      <p class="text-secondary-muted small mb-4">{{ $t('pets.noPetDesc') }}</p>
       <button class="btn btn-premium-neon" @click="openAddModal">
-        <i class="bi bi-plus-circle-fill me-2"></i> Thêm ngay
+        <i class="bi bi-plus-circle-fill me-2"></i> {{ $t('pets.addNow') }}
       </button>
     </div>
 
@@ -393,10 +393,13 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import api from '../../services/api';
+import { translateApiError } from '../../utils/errorTranslator';
 
 const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5150';
 const router = useRouter();
+const { t } = useI18n();
 const emit = defineEmits(['switch-tab', 'view-pet']);
 
 // ===== Types =====
@@ -567,7 +570,7 @@ const submitForm = async () => {
     await fetchPets();
     setTimeout(() => closeModal(), 1200);
   } catch (err: any) {
-    formError.value = err?.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.';
+    formError.value = translateApiError(err, t, 'DEFAULT');
     triggerValidationError();
   } finally {
     formLoading.value = false;
@@ -582,7 +585,7 @@ const deletePet = async () => {
     await fetchPets();
     showDeleteModal.value = false;
   } catch (err: any) {
-    alert(err?.response?.data?.message || 'Xoá thất bại. Vui lòng thử lại.');
+    alert(translateApiError(err, t, 'DEFAULT'));
   } finally {
     deleteLoading.value = false;
   }

@@ -84,9 +84,9 @@ namespace MyPetClinic.Application.Services
                 throw new InvalidOperationException("Giờ kết thúc phải lớn hơn giờ bắt đầu.");
             }
 
-            if (dto.StartTime < DateTimeOffset.UtcNow)
+            if (dto.StartTime.Date < DateTimeOffset.UtcNow.Date)
             {
-                throw new InvalidOperationException("Không được tạo Block Time trong quá khứ.");
+                throw new InvalidOperationException("Không được tạo Block Time trong ngày quá khứ.");
             }
 
             var block = new BlockTime
@@ -115,9 +115,9 @@ namespace MyPetClinic.Application.Services
             var block = await _unitOfWork.BlockTimes.GetByIdAsync(id);
             if (block == null) return false;
 
-            if (block.StartTime < DateTimeOffset.UtcNow)
+            if (block.StartTime.Date < DateTimeOffset.UtcNow.Date)
             {
-                throw new InvalidOperationException("Không được cập nhật Block Time trong quá khứ.");
+                throw new InvalidOperationException("Không được cập nhật Block Time trong ngày quá khứ.");
             }
 
             block.StartTime = dto.StartTime;

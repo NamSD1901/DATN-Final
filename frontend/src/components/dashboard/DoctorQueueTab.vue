@@ -31,7 +31,7 @@
 
       <div class="d-flex gap-2">
         <button v-if="!isAdmin" class="btn btn-outline-warning rounded-pill px-4 fw-bold shadow-sm bg-white me-2" @click="showCreateException = true">
-          <i class="bi bi-person-lines-fill me-1"></i> Nghỉ / Đổi Ca
+          <i class="bi bi-person-lines-fill me-1"></i> Đăng ký nghỉ phép
         </button>
         <select v-if="isAdmin" v-model="selectedDoctor" @change="fetchWeeklySchedule" class="form-select border-glass bg-white bg-opacity-75 rounded-pill px-3 py-1 shadow-sm fw-medium" style="width: 180px;">
           <option value="ALL">Tất cả bác sĩ</option>

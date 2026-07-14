@@ -12,12 +12,12 @@
       <ul class="list-unstyled components px-2 py-3">
         <li v-if="role === 'customer'" :class="{ 'active': activeTab === 'overview' }">
           <a href="#" @click.prevent="activeTab = 'overview'">
-            <i class="bi bi-grid-1x2-fill text-warning"></i> Tổng quan
+            <i class="bi bi-grid-1x2-fill text-warning"></i> {{ $t('sidebar.overview') }}
           </a>
         </li>
         <li v-if="role !== 'receptionist' && role !== 'doctor'" :class="{ 'active': activeTab === 'profile' }">
           <a href="#" @click.prevent="activeTab = 'profile'">
-            <i class="bi bi-person-lines-fill text-warning"></i> Hồ sơ của tôi
+            <i class="bi bi-person-lines-fill text-warning"></i> {{ role === 'customer' ? $t('sidebar.profile') : 'Hồ sơ của tôi' }}
           </a>
         </li>
 
@@ -97,18 +97,18 @@
 
         <!-- Customer specific routes -->
         <template v-if="role === 'customer'">
-          <li class="mt-4 mb-2 px-3 text-muted sidebar-section-title">Dịch vụ của tôi</li>
+          <li class="mt-4 mb-2 px-3 text-muted sidebar-section-title">{{ $t('sidebar.myServices') }}</li>
           <li :class="{ 'active': activeTab === 'my-pets' }">
-            <a href="#" @click.prevent="activeTab = 'my-pets'"><i class="bi bi-heptagon-fill text-warning opacity-75"></i> Thú cưng của tôi</a>
+            <a href="#" @click.prevent="activeTab = 'my-pets'"><i class="bi bi-heptagon-fill text-warning opacity-75"></i> {{ $t('sidebar.myPets') }}</a>
           </li>
           <li :class="{ 'active': activeTab === 'my-appointments' }">
-            <a href="#" @click.prevent="activeTab = 'my-appointments'"><i class="bi bi-calendar-check-fill text-warning opacity-75"></i> Lịch hẹn của tôi</a>
+            <a href="#" @click.prevent="activeTab = 'my-appointments'"><i class="bi bi-calendar-check-fill text-warning opacity-75"></i> {{ $t('sidebar.myAppointments') }}</a>
           </li>
           <li :class="{ 'active': activeTab === 'my-history' }">
-            <a href="#" @click.prevent="activeTab = 'my-history'"><i class="bi bi-clock-history text-warning opacity-75"></i> Lịch sử y tế</a>
+            <a href="#" @click.prevent="activeTab = 'my-history'"><i class="bi bi-clock-history text-warning opacity-75"></i> {{ $t('sidebar.myHistory') }}</a>
           </li>
           <li :class="{ 'active': activeTab === 'my-services-invoices' }">
-            <a href="#" @click.prevent="activeTab = 'my-services-invoices'"><i class="bi bi-receipt text-warning opacity-75"></i> Dịch vụ & Hóa đơn</a>
+            <a href="#" @click.prevent="activeTab = 'my-services-invoices'"><i class="bi bi-receipt text-warning opacity-75"></i> {{ $t('sidebar.myInvoices') }}</a>
           </li>
         </template>
       </ul>
@@ -116,13 +116,18 @@
       <!-- Sidebar Footer Actions -->
       <div class="sidebar-footer p-3 border-top mt-auto">
         <button v-if="role !== 'doctor'" class="btn btn-premium w-100 mb-3 py-2 fw-bold shadow-sm rounded-4" @click="handleSidebarBookNew">
-          <i class="bi bi-plus-circle-fill me-1"></i> Đặt Lịch Mới
+          <i class="bi bi-plus-circle-fill me-1"></i> {{ role === 'customer' ? $t('sidebar.bookNew') : 'Đặt Lịch Mới' }}
         </button>
+
+        <button v-if="role === 'customer'" @click="activeTab = 'settings'" class="btn btn-outline-secondary w-100 mb-2 border-0 text-start ps-4 rounded-4 hover-text-warning py-2 fw-bold" :class="{'bg-light text-warning': activeTab === 'settings'}" style="font-size: 0.95em;">
+          <i class="bi bi-gear-fill text-warning opacity-75 me-2 fs-5 align-middle"></i> {{ $t('common.settings') }}
+        </button>
+
         <router-link to="/" class="btn btn-outline-secondary w-100 mb-2 border-0 text-start ps-4 rounded-4 hover-text-warning py-2 fw-bold" style="font-size: 0.95em;">
-          <i class="bi bi-house-door-fill text-warning opacity-75 me-2 fs-5 align-middle"></i> Trang chủ
+          <i class="bi bi-house-door-fill text-warning opacity-75 me-2 fs-5 align-middle"></i> {{ role === 'customer' ? $t('sidebar.home') : 'Trang chủ' }}
         </router-link>
         <button @click="handleLogout" class="btn btn-outline-danger w-100 border-0 text-start ps-4 rounded-4 py-2 fw-bold" style="font-size: 0.95em;">
-          <i class="bi bi-door-closed-fill text-danger opacity-75 me-2 fs-5 align-middle"></i> Đăng xuất
+          <i class="bi bi-door-closed-fill text-danger opacity-75 me-2 fs-5 align-middle"></i> {{ role === 'customer' ? $t('sidebar.logout') : 'Đăng xuất' }}
         </button>
       </div>
     </nav>
@@ -266,6 +271,11 @@
           <!-- tab: Profile Details Tab -->
           <div v-else-if="activeTab === 'profile'" class="container-fluid p-0">
             <ProfileTab @profile-updated="fetchDashboardData" />
+          </div>
+
+          <!-- tab: Settings Tab (Customer) -->
+          <div v-else-if="activeTab === 'settings'" class="container-fluid p-0">
+            <SettingsTab />
           </div>
 
           <!-- tab: Queue Tab -->
@@ -427,6 +437,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import api from '../services/api';
 import BookingModal from '../components/shared/BookingModal.vue';
 import ReviewModal from '../components/shared/ReviewModal.vue';
@@ -457,9 +468,18 @@ import CategoriesAdminTab from '../components/dashboard/CategoriesAdminTab.vue';
 import BannersAdminTab from '../components/dashboard/BannersAdminTab.vue';
 import ReviewsAdminTab from '../components/dashboard/ReviewsAdminTab.vue';
 import ProfileTab from '../components/dashboard/ProfileTab.vue';
+import SettingsTab from '../components/dashboard/SettingsTab.vue';
 
 const router = useRouter();
 const route = useRoute();
+
+const { t, locale } = useI18n();
+const currentLocale = computed(() => locale.value);
+
+const switchLanguage = (lang: string) => {
+  locale.value = lang;
+  localStorage.setItem('user_locale', lang);
+};
 
 // Tab state: 'overview' | 'profile' | 'queue' | 'customers' | 'appointments' | 'invoices'
 const activeTab = ref<string>('overview');
@@ -515,17 +535,24 @@ const address = ref('');
 const avatarUrl = ref('');
 
 const getTitle = computed(() => {
-  if (activeTab.value === 'overview') return 'Tổng quan hệ thống';
-  if (activeTab.value === 'profile') return 'Thông tin cá nhân';
+  if (role.value === 'customer') {
+    if (activeTab.value === 'overview') return t('pageTitle.overview');
+    if (activeTab.value === 'profile') return t('pageTitle.profile');
+    if (activeTab.value === 'my-pets') return t('pageTitle.myPets');
+    if (activeTab.value === 'pet-profile') return t('pageTitle.petProfile');
+    if (activeTab.value === 'my-appointments') return t('pageTitle.myAppointments');
+    if (activeTab.value === 'my-history') return t('pageTitle.myHistory');
+    if (activeTab.value === 'my-services-invoices') return t('pageTitle.myServicesInvoices');
+    if (activeTab.value === 'settings') return t('common.settings');
+  } else {
+    if (activeTab.value === 'overview') return 'Tổng quan hệ thống';
+    if (activeTab.value === 'profile') return 'Thông tin cá nhân';
+  }
+
   if (activeTab.value === 'queue') return 'Hàng khám - Digital Whiteboard';
   if (activeTab.value === 'customers') return 'Quản lý Khách hàng & Thú cưng';
   if (activeTab.value === 'appointments') return 'Quản lý Lịch hẹn & Điều phối';
   if (activeTab.value === 'invoices') return 'Quản lý Hóa đơn & Thu ngân';
-  if (activeTab.value === 'my-pets') return 'Thú cưng của tôi';
-  if (activeTab.value === 'pet-profile') return 'Hồ sơ thú cưng chi tiết';
-  if (activeTab.value === 'my-appointments') return 'Lịch hẹn của tôi';
-  if (activeTab.value === 'my-history') return 'Lịch sử y tế';
-  if (activeTab.value === 'my-services-invoices') return 'Dịch vụ & Hóa đơn';
   if (activeTab.value === 'doctor-cases') return 'Hàng khám của tôi';
   if (activeTab.value === 'medical-records') return 'Hồ sơ bệnh án & Khám bệnh';
   if (activeTab.value === 'staff') return 'Quản lý Nhân sự';
@@ -537,7 +564,7 @@ const getTitle = computed(() => {
   if (activeTab.value === 'reports-admin') return 'Báo cáo Doanh thu & Hiệu suất';
   if (activeTab.value === 'reviews-admin') return 'Quản lý Đánh giá';
   if (activeTab.value === 'blog-admin') return 'Quản trị Bài viết & Tin tức';
-  return 'Bảng điều khiển';
+  return role.value === 'customer' ? t('pageTitle.dashboard') : 'Bảng điều khiển';
 });
 
 const getRoleLabel = computed(() => {
@@ -545,7 +572,7 @@ const getRoleLabel = computed(() => {
   if (currentRole === 'admin') return 'Quản trị viên';
   if (currentRole === 'doctor') return 'Bác sĩ thú y';
   if (currentRole === 'receptionist') return 'Lễ tân';
-  return 'Khách hàng';
+  return t('role.customer');
 });
 
 const fetchDashboardData = async () => {

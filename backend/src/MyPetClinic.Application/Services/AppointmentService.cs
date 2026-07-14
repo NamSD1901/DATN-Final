@@ -1216,38 +1216,57 @@ namespace MyPetClinic.Application.Services
 
             if (schedulesList.Any())
             {
-                foreach (var schedule in schedulesList)
+                // Group schedules by Doctor to handle multiple shifts per day
+                var groupedSchedules = schedulesList.GroupBy(s => s.DoctorId).ToList();
+
+                foreach (var group in groupedSchedules)
                 {
+                    var doctorId = group.Key;
+                    var doctorName = group.First().Doctor?.FullName ?? "Bác sĩ thú y";
                     var nextDay = targetDate.AddDays(1);
+                    
                     var appointments = await _unitOfWork.Appointments.FindAsync(
-                        a => a.DoctorId == schedule.DoctorId 
+                        a => a.DoctorId == doctorId 
                           && a.AppointmentDate >= targetDate 
                           && a.AppointmentDate < nextDay
                           && a.Status != "cancelled"
                     );
 
                     var blockTimes = await _unitOfWork.BlockTimes.FindAsync(
-                        b => b.DoctorId == schedule.DoctorId
+                        b => b.DoctorId == doctorId
                           && b.StartTime < new DateTimeOffset(nextDay)
                           && b.EndTime > new DateTimeOffset(targetDate)
                     );
 
-                    var availableTimes = MyPetClinic.Application.Helpers.SlotCalculationHelper.GetAvailableSlots(schedule, appointments, blockTimes, 30);
+                    var allAvailableTimesForDoctor = new List<DateTime>();
 
-                    // Filter by ClinicOperatingShifts if available
-                    if (clinicShifts.Any())
+                    foreach (var schedule in group)
                     {
-                        availableTimes = availableTimes.Where(t => 
-                            clinicShifts.Any(s => s.StartTime <= t.TimeOfDay && s.EndTime >= t.TimeOfDay.Add(TimeSpan.FromMinutes(30)))
-                        ).ToList();
+                        var availableTimes = MyPetClinic.Application.Helpers.SlotCalculationHelper.GetAvailableSlots(schedule, appointments, blockTimes, 30);
+
+                        // Filter by ClinicOperatingShifts if available
+                        if (clinicShifts.Any())
+                        {
+                            availableTimes = availableTimes.Where(t => 
+                                clinicShifts.Any(s => s.StartTime <= t.TimeOfDay && s.EndTime >= t.TimeOfDay.Add(TimeSpan.FromMinutes(30)))
+                            ).ToList();
+                        }
+                        
+                        allAvailableTimesForDoctor.AddRange(availableTimes);
                     }
 
-                    result.Add(new DoctorAvailableSlotsDto
+                    // Remove any accidental duplicates across shifts and sort chronologically
+                    allAvailableTimesForDoctor = allAvailableTimesForDoctor.Distinct().OrderBy(t => t).ToList();
+
+                    if (allAvailableTimesForDoctor.Any())
                     {
-                        DoctorId = schedule.DoctorId,
-                        DoctorName = schedule.Doctor?.FullName ?? "Bác sĩ thú y",
-                        AvailableSlots = availableTimes.Select(t => t.ToString("HH:mm")).ToList()
-                    });
+                        result.Add(new DoctorAvailableSlotsDto
+                        {
+                            DoctorId = doctorId,
+                            DoctorName = doctorName,
+                            AvailableSlots = allAvailableTimesForDoctor.Select(t => t.ToString("HH:mm")).ToList()
+                        });
+                    }
                 }
             }
 
@@ -1341,7 +1360,7 @@ namespace MyPetClinic.Application.Services
             var startOfDayOffset = new DateTimeOffset(targetDate, TimeSpan.Zero);
             var endOfDayOffset = startOfDayOffset.AddDays(1);
             var allBlockTimes = await _unitOfWork.BlockTimes.Query()
-                .Where(b => b.StartTime >= startOfDayOffset && b.StartTime < endOfDayOffset)
+                .Where(b => b.StartTime < endOfDayOffset && b.EndTime > startOfDayOffset)
                 .ToListAsync();
 
             // Lấy tất cả lịch hẹn trong ngày để check trùng
@@ -1484,14 +1503,7 @@ namespace MyPetClinic.Application.Services
                         .Distinct()
                         .ToList();
                     
-                    // Nếu không có bác sĩ nào trong khung giờ, fallback sang tất cả bác sĩ có ca trực ngày đó
-                    if (!doctorsList.Any())
-                    {
-                        doctorsList = doctorsWithSchedules
-                            .Select(s => s.DoctorId)
-                            .Distinct()
-                            .ToList();
-                    }
+                    // Đã loại bỏ fallback. Nếu không có ai trong khung giờ thì sẽ văng exception ở dưới.
                 }
 
                 if (!doctorsList.Any())
@@ -1525,11 +1537,10 @@ namespace MyPetClinic.Application.Services
 
                 var blockedDoctorIds = blockTimesForDoctors
                     .Where(b => {
-                        var blockStart = b.StartTime.LocalDateTime.TimeOfDay;
-                        var blockEnd = b.EndTime.LocalDateTime.TimeOfDay;
-                        var apptStart = appointmentDate.TimeOfDay;
-                        var apptEnd = apptStart + TimeSpan.FromMinutes(30);
-                        return apptStart < blockEnd && apptEnd > blockStart;
+                        var blockStart = b.StartTime.LocalDateTime;
+                        var blockEnd = b.EndTime.LocalDateTime;
+                        var apptEnd = appointmentDate.AddMinutes(30);
+                        return appointmentDate < blockEnd && apptEnd > blockStart;
                     })
                     .Select(b => b.DoctorId)
                     .Distinct()
@@ -1559,18 +1570,22 @@ namespace MyPetClinic.Application.Services
             else
             {
                 // Kiểm tra xem bác sĩ được chọn có ca trực trong ngày hẹn không
-                var schedule = _unitOfWork.DoctorSchedules.Query()
-                    .FirstOrDefault(s => s.DoctorId == finalDoctorId && s.WorkDate == targetDateStart && s.IsAvailable);
+                var schedules = _unitOfWork.DoctorSchedules.Query()
+                    .Where(s => s.DoctorId == finalDoctorId && s.WorkDate == targetDateStart && s.IsAvailable)
+                    .ToList();
                 
-                if (schedule == null)
+                if (!schedules.Any())
                 {
                     throw new InvalidOperationException("Bác sĩ không có lịch trực trong ngày này.");
                 }
 
                 var appointmentTime = appointmentDate.TimeOfDay;
-                if (appointmentTime < schedule.StartTime || appointmentTime + TimeSpan.FromMinutes(30) > schedule.EndTime)
+                var fitsAnyShift = schedules.Any(s => appointmentTime >= s.StartTime && appointmentTime + TimeSpan.FromMinutes(30) <= s.EndTime);
+                
+                if (!fitsAnyShift)
                 {
-                    throw new InvalidOperationException($"Thời gian hẹn phải nằm trong ca trực của bác sĩ ({schedule.StartTime:hh\\:mm} - {schedule.EndTime:hh\\:mm}).");
+                    var shiftsText = string.Join(", ", schedules.Select(s => $"{s.StartTime:hh\\:mm}-{s.EndTime:hh\\:mm}"));
+                    throw new InvalidOperationException($"Thời gian hẹn phải nằm trong ca trực của bác sĩ ({shiftsText}).");
                 }
             }
 

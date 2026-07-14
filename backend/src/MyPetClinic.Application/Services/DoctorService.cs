@@ -29,7 +29,8 @@ namespace MyPetClinic.Application.Services
                 FullName = d.FullName ?? string.Empty,
                 Email = d.Email,
                 Phone = d.Phone,
-                Avatar = d.Avatar
+                Avatar = d.Avatar,
+                Role = d.Role?.Name ?? string.Empty
             });
         }
     }

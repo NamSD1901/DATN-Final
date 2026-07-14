@@ -1,7 +1,7 @@
 <template>
   <div class="pending-exceptions-tab bg-white border rounded p-4 mb-4">
     <h5 class="fw-bold text-dark mb-4 border-bottom pb-2">
-      <i class="bi bi-inbox text-warning me-2"></i> Yêu Cầu Chờ Duyệt (Xin Nghỉ / Đổi Ca)
+      <i class="bi bi-inbox text-warning me-2"></i> Yêu Cầu Chờ Duyệt
     </h5>
 
     <div v-if="loading" class="text-center py-5">

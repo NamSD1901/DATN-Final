@@ -6,7 +6,7 @@
         <div class="summary-card bg-warning text-dark p-4 h-100 rounded-4 shadow-sm position-relative overflow-hidden">
           <div class="d-flex align-items-center mb-2 position-relative z-1">
             <i class="bi bi-wallet2 me-2 fs-5 opacity-75"></i>
-            <span class="fs-6 fw-medium opacity-75">Tổng chi tiêu</span>
+            <span class="fs-6 fw-medium opacity-75">{{ $t('invoices.totalSpent') }}</span>
           </div>
           <h2 class="fw-bold mb-0 position-relative z-1">{{ formatCurrency(totalSpent) }}</h2>
           <div class="position-absolute" style="right: -20px; bottom: -20px; opacity: 0.1; transform: scale(3);">
@@ -18,7 +18,7 @@
         <div class="summary-card bg-white p-4 h-100 rounded-4 shadow-sm border border-light">
           <div class="d-flex align-items-center mb-2 text-muted">
             <i class="bi bi-receipt me-2 fs-5"></i>
-            <span class="fs-6 fw-medium">Số hóa đơn</span>
+            <span class="fs-6 fw-medium">{{ $t('invoices.invoiceCount') }}</span>
           </div>
           <h2 class="fw-bold text-dark mb-0">{{ invoiceCount }}</h2>
         </div>
@@ -27,7 +27,7 @@
         <div class="summary-card bg-white p-4 h-100 rounded-4 shadow-sm border border-light">
           <div class="d-flex align-items-center mb-2 text-muted">
             <i class="bi bi-heptagon me-2 fs-5"></i>
-            <span class="fs-6 fw-medium">Thú cưng</span>
+            <span class="fs-6 fw-medium">{{ $t('invoices.petCount') }}</span>
           </div>
           <h2 class="fw-bold text-dark mb-0">{{ String(petCount).padStart(2, '0') }}</h2>
         </div>
@@ -37,23 +37,23 @@
     <!-- Main List Section -->
     <div class="card border-0 rounded-4 shadow-sm overflow-hidden bg-white">
       <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
-        <h6 class="fw-bold text-dark mb-0 text-uppercase" style="letter-spacing: 0.5px; font-size: 0.85rem;">Danh sách hóa đơn</h6>
+        <h6 class="fw-bold text-dark mb-0 text-uppercase" style="letter-spacing: 0.5px; font-size: 0.85rem;">{{ $t('invoices.invoiceList') }}</h6>
         <div class="d-flex gap-2">
           <button 
             class="btn btn-sm rounded-pill px-3 fw-medium" 
             :class="filterStatus === 'all' ? 'btn-warning text-dark fw-bold' : 'btn-light text-muted'"
             @click="filterStatus = 'all'"
-          >Tất cả</button>
+          >{{ $t('invoices.all') }}</button>
           <button 
             class="btn btn-sm rounded-pill px-3 fw-medium" 
             :class="filterStatus === 'paid' ? 'btn-warning text-dark fw-bold' : 'btn-light text-muted'"
             @click="filterStatus = 'paid'"
-          >Đã thanh toán</button>
+          >{{ $t('invoices.paid') }}</button>
           <button 
             class="btn btn-sm rounded-pill px-3 fw-medium" 
             :class="filterStatus === 'cancelled' ? 'btn-warning text-dark fw-bold' : 'btn-light text-muted'"
             @click="filterStatus = 'cancelled'"
-          >Đã hủy</button>
+          >{{ $t('invoices.cancelled') }}</button>
         </div>
       </div>
       <div class="card-body p-0">
@@ -61,11 +61,11 @@
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead class="bg-light">
               <tr>
-                <th class="text-muted fw-semibold py-3 px-4" style="font-size: 0.75rem; letter-spacing: 0.5px;">DỊCH VỤ</th>
-                <th class="text-muted fw-semibold py-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">NGÀY THỰC HIỆN</th>
-                <th class="text-muted fw-semibold py-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">THÚ CƯNG</th>
-                <th class="text-muted fw-semibold py-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">TRẠNG THÁI</th>
-                <th class="text-muted fw-semibold py-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">TỔNG TIỀN</th>
+                <th class="text-muted fw-semibold py-3 px-4" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('invoices.colService') }}</th>
+                <th class="text-muted fw-semibold py-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('invoices.colDate') }}</th>
+                <th class="text-muted fw-semibold py-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('invoices.colPet') }}</th>
+                <th class="text-muted fw-semibold py-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('invoices.colStatus') }}</th>
+                <th class="text-muted fw-semibold py-3" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('invoices.colTotal') }}</th>
                 <th class="py-3 px-4"></th>
               </tr>
             </thead>
@@ -108,7 +108,7 @@
               <tr v-if="paginatedInvoices.length === 0">
                 <td colspan="6" class="text-center py-5 text-muted">
                   <div class="mb-3"><i class="bi bi-inbox fs-1 opacity-50"></i></div>
-                  Không tìm thấy hóa đơn nào.
+                  {{ $t('invoices.noInvoices') }}
                 </td>
               </tr>
             </tbody>
@@ -118,17 +118,17 @@
         <!-- Pagination -->
         <div class="d-flex justify-content-between align-items-center p-3 border-top" v-if="totalPages > 1">
           <span class="text-muted small">
-            Hiển thị {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, filteredInvoices.length) }} trong số {{ filteredInvoices.length }}
+            {{ $t('invoices.pageDisplay').replace('{start}', ((currentPage - 1) * itemsPerPage + 1).toString()).replace('{end}', Math.min(currentPage * itemsPerPage, filteredInvoices.length).toString()).replace('{total}', filteredInvoices.length.toString()) }}
           </span>
           <ul class="pagination pagination-sm mb-0">
             <li class="page-item" :class="{ disabled: currentPage === 1 }">
-              <a class="page-link text-dark" href="#" @click.prevent="prevPage">Trước</a>
+              <a class="page-link text-dark" href="#" @click.prevent="prevPage">{{ $t('invoices.prev') }}</a>
             </li>
             <li class="page-item" v-for="page in totalPages" :key="page" :class="{ active: currentPage === page }">
               <a class="page-link" :class="currentPage === page ? 'bg-warning border-warning text-dark fw-bold' : 'text-dark'" href="#" @click.prevent="goToPage(page)">{{ page }}</a>
             </li>
             <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-              <a class="page-link text-dark" href="#" @click.prevent="nextPage">Sau</a>
+              <a class="page-link text-dark" href="#" @click.prevent="nextPage">{{ $t('invoices.next') }}</a>
             </li>
           </ul>
         </div>
@@ -288,7 +288,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import api from '../../services/api';
+
+const { t, locale } = useI18n();
 
 // --- Types ---
 interface InvoiceMock {
@@ -428,15 +431,19 @@ const goToPage = (page: number) => { currentPage.value = page; };
 
 // --- Methods ---
 const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  const loc = locale.value === 'en' ? 'en-US' : 'vi-VN';
+  return new Intl.NumberFormat(loc, { style: 'currency', currency: 'VND' }).format(amount);
 };
 
 const formatDate = (dateStr: string): string => {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
-  const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  const loc = locale.value === 'en' ? 'en-US' : 'vi-VN';
+  const time = d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
   const day = d.getDate().toString().padStart(2, '0');
-  const monthNames = ["Th01", "Th02", "Th03", "Th04", "Th05", "Th06", "Th07", "Th08", "Th09", "Th10", "Th11", "Th12"];
+  const monthNames = locale.value === 'en' 
+    ? ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    : ["Th01", "Th02", "Th03", "Th04", "Th05", "Th06", "Th07", "Th08", "Th09", "Th10", "Th11", "Th12"];
   const month = monthNames[d.getMonth()];
   const year = d.getFullYear();
   return `${time} • ${day} ${month}, ${year}`;

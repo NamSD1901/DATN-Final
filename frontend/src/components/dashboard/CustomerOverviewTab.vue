@@ -8,16 +8,16 @@
             <i class="bi bi-calendar-event-fill"></i>
           </div>
           <div class="stat-details">
-            <h6 class="stat-title text-secondary-muted">Lịch hẹn sắp tới</h6>
+            <h6 class="stat-title text-secondary-muted">{{ $t('overview.upcomingAppt') }}</h6>
             <h4 class="stat-value text-dark fw-bold mb-0">
               <span v-if="loadingAppointments">...</span>
               <span v-else-if="nextAppointment">
                 {{ formatDateTimeShort(nextAppointment.appointmentDate) }}
               </span>
-              <span v-else class="fs-6 fw-normal">Chưa có lịch</span>
+              <span v-else class="fs-6 fw-normal">{{ $t('overview.noAppt') }}</span>
             </h4>
             <p v-if="nextAppointment" class="stat-subtitle small text-muted mb-0 mt-1 truncate-text">
-              Cho bé: <strong>{{ nextAppointment.petName }}</strong>
+              {{ $t('overview.forPet') }} <strong>{{ nextAppointment.petName }}</strong>
             </p>
           </div>
         </div>
@@ -29,12 +29,12 @@
             <i class="bi bi-heptagon-fill"></i>
           </div>
           <div class="stat-details">
-            <h6 class="stat-title text-secondary-muted">Thú cưng đang quản lý</h6>
+            <h6 class="stat-title text-secondary-muted">{{ $t('overview.managedPets') }}</h6>
             <h4 class="stat-value text-dark fw-bold mb-0">
               <span v-if="loadingPets">...</span>
-              <span v-else>{{ pets.length }} <span class="fs-6 fw-normal">bé</span></span>
+              <span v-else>{{ pets.length }} <span class="fs-6 fw-normal">{{ $t('overview.petsCount') }}</span></span>
             </h4>
-            <p class="stat-subtitle small text-muted mb-0 mt-1">Đã đăng ký trong hệ thống</p>
+            <p class="stat-subtitle small text-muted mb-0 mt-1">{{ $t('overview.registeredInSystem') }}</p>
           </div>
         </div>
       </div>
@@ -45,12 +45,12 @@
             <i class="bi bi-heart-pulse-fill"></i>
           </div>
           <div class="stat-details">
-            <h6 class="stat-title text-secondary-muted">Hoạt động y tế</h6>
+            <h6 class="stat-title text-secondary-muted">{{ $t('overview.medicalActivities') }}</h6>
             <h4 class="stat-value text-dark fw-bold mb-0">
               <span v-if="loadingAppointments">...</span>
-              <span v-else>{{ totalAppointments }} <span class="fs-6 fw-normal">lần khám</span></span>
+              <span v-else>{{ totalAppointments }} <span class="fs-6 fw-normal">{{ $t('overview.visitCount') }}</span></span>
             </h4>
-            <p class="stat-subtitle small text-muted mb-0 mt-1">Lịch sử thăm khám</p>
+            <p class="stat-subtitle small text-muted mb-0 mt-1">{{ $t('overview.visitHistory') }}</p>
           </div>
         </div>
       </div>

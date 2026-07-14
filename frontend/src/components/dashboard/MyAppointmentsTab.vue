@@ -201,24 +201,24 @@
               <div class="step-content-wrapper px-5 pb-4" style="flex-grow: 1; overflow-y: auto;">
                 <div v-if="bookingSuccess" class="text-center py-5">
                   <div style="font-size: 5rem;">🎉</div>
-                  <h4 class="fw-bold text-success mt-4 mb-2">Đặt lịch thành công!</h4>
-                  <p class="text-muted">Chúng tôi sẽ xác nhận lịch hẹn của bạn sớm nhất có thể.</p>
+                  <h4 class="fw-bold text-success mt-4 mb-2">{{ $t('booking.success') }}</h4>
+                  <p class="text-muted">{{ $t('booking.successDesc') }}</p>
                 </div>
 
                 <form v-else @submit.prevent="submitBooking" class="h-100">
                   <!-- Step 0: Choose Pet -->
                   <div v-if="currentStep === 0" class="step-content animate-fade-in">
-                    <h3 class="fw-bold text-dark mb-1">Chọn thú cưng</h3>
-                    <p class="text-muted mb-4">Chọn thú cưng cho lần khám này.</p>
+                    <h3 class="fw-bold text-dark mb-1">{{ $t('booking.step1') }}</h3>
+                    <p class="text-muted mb-4">{{ $t('booking.step1Desc') }}</p>
 
                     <div class="d-flex justify-content-end mb-4">
                       <button class="btn btn-outline-primary rounded-pill fw-bold" @click.prevent="$emit('switch-tab', 'my-pets')">
-                        <i class="bi bi-plus-circle me-1"></i> Thêm thú cưng mới
+                        <i class="bi bi-plus-circle me-1"></i> {{ $t('booking.addNewPet') }}
                       </button>
                     </div>
 
                     <div v-if="myPets.length === 0" class="text-center py-5 text-muted">
-                      Bạn chưa có thú cưng nào. Hãy thêm mới để tiếp tục.
+                      {{ $t('booking.noPet') }}
                     </div>
                     <div v-else class="row g-4">
                       <div v-for="pet in myPets" :key="pet.id" class="col-md-6">
@@ -291,8 +291,8 @@
 
                   <!-- Step 1: Choose Service -->
                   <div v-else-if="currentStep === 1" class="step-content animate-fade-in">
-                    <h3 class="fw-bold text-dark mb-1">Chọn dịch vụ</h3>
-                    <p class="text-muted mb-4">Chọn dịch vụ khám chữa bệnh cho thú cưng.</p>
+                    <h3 class="fw-bold text-dark mb-1">{{ $t('booking.step2') }}</h3>
+                    <p class="text-muted mb-4">{{ $t('booking.step2Desc') }}</p>
 
                     <div class="row g-4">
                       <div class="col-md-6" v-for="svc in services" :key="svc.id">
@@ -327,7 +327,7 @@
                       <div class="col-md-5 border-end pe-4 h-100 overflow-auto">
                         
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                          <h5 class="fw-bold text-dark mb-0">Tháng {{ currentMonth + 1 }}, {{ currentYear }}</h5>
+                          <h5 class="fw-bold text-dark mb-0">{{ $t('booking.month') }} {{ currentMonth + 1 }}, {{ currentYear }}</h5>
                           <div class="d-flex gap-2">
                             <button type="button" class="btn btn-sm btn-light rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" @click.prevent="prevMonth">
                               <i class="bi bi-chevron-left"></i>
@@ -381,7 +381,7 @@
                           </div>
                           <div>
                             <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2" style="font-size: 0.85rem;">
-                              ✨ Tự động phân công
+                              ✨ {{ $t('booking.autoAssign') }}
                             </span>
                           </div>
                         </div>
@@ -406,7 +406,7 @@
                             <div v-else>
                               <!-- Morning Slots -->
                               <div v-if="displayMorningSlots.length > 0" class="mb-4">
-                              <h6 class="text-muted fw-bold mb-3 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-high me-1"></i> BUỔI SÁNG</h6>
+                              <h6 class="text-muted fw-bold mb-3 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-high me-1"></i> {{ $t('booking.morning') }}</h6>
                               <div class="d-flex flex-wrap gap-2">
                                 <button
                                   v-for="slot in displayMorningSlots"
@@ -435,7 +435,7 @@
 
                             <!-- Afternoon Slots -->
                             <div v-if="displayAfternoonSlots.length > 0" class="mb-4">
-                              <h6 class="text-muted fw-bold mb-3 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-low me-1"></i> BUỔI CHIỀU</h6>
+                              <h6 class="text-muted fw-bold mb-3 small" style="letter-spacing: 1px;"><i class="bi bi-brightness-alt-low me-1"></i> {{ $t('booking.afternoon') }}</h6>
                               <div class="d-flex flex-wrap gap-2">
                                 <button
                                   v-for="slot in displayAfternoonSlots"
@@ -500,8 +500,8 @@
                         <!-- Patient Info -->
                         <div class="booking-confirm-card">
                           <div class="card-header-flex border-bottom pb-2 mb-3">
-                            <h6 class="mb-0 fw-bold" style="color: #1e293b;"><i class="bi bi-person-vcard text-primary me-2"></i> Thông tin bệnh nhân</h6>
-                            <span class="edit-link text-primary fw-bold" style="font-size: 0.75rem; cursor: pointer;" @click="currentStep = 0">SỬA</span>
+                            <h6 class="mb-0 fw-bold" style="color: #1e293b;"><i class="bi bi-person-vcard text-primary me-2"></i> {{ $t('booking.patientInfo') }}</h6>
+                            <span class="edit-link text-primary fw-bold" style="font-size: 0.75rem; cursor: pointer;" @click="currentStep = 0">{{ $t('booking.edit') }}</span>
                           </div>
                           <div class="d-flex align-items-center">
                             <img v-if="getSelectedPetObj()?.imageUrl" :src="getSelectedPetObj()?.imageUrl" alt="Pet" class="rounded-circle" style="width: 65px; height: 65px; object-fit: cover;">
@@ -515,11 +515,11 @@
                               </div>
                               <div class="row gx-2 mt-2">
                                 <div class="col-6">
-                                  <small class="text-muted d-block" style="font-size: 0.7rem;">Tuổi</small>
+                                  <small class="text-muted d-block" style="font-size: 0.7rem;">{{ $t('booking.age') }}</small>
                                   <strong class="text-dark small" style="font-size: 0.85rem;">{{ getSelectedPetObj()?.birthDate ? calculateAge(getSelectedPetObj()?.birthDate || '') : '--' }}</strong>
                                 </div>
                                 <div class="col-6">
-                                  <small class="text-muted d-block" style="font-size: 0.7rem;">Cân nặng</small>
+                                  <small class="text-muted d-block" style="font-size: 0.7rem;">{{ $t('booking.weight') }}</small>
                                   <strong class="text-dark small" style="font-size: 0.85rem;">{{ getSelectedPetObj()?.weight || '--' }} kg</strong>
                                 </div>
                               </div>
@@ -530,8 +530,8 @@
                         <!-- Service Info -->
                         <div class="booking-confirm-card mt-3" style="border-left: 4px solid #198754; padding-top: 15px; padding-bottom: 15px;">
                           <div class="card-header-flex pb-2 mb-2">
-                            <h6 class="mb-0 fw-bold" style="color: #1e293b;"><i class="bi bi-medical-mac text-success me-2"></i> Dịch vụ đăng ký</h6>
-                            <span class="edit-link text-primary fw-bold" style="font-size: 0.75rem; cursor: pointer;" @click="currentStep = 1">SỬA</span>
+                            <h6 class="mb-0 fw-bold" style="color: #1e293b;"><i class="bi bi-medical-mac text-success me-2"></i> {{ $t('booking.registeredService') }}</h6>
+                            <span class="edit-link text-primary fw-bold" style="font-size: 0.75rem; cursor: pointer;" @click="currentStep = 1">{{ $t('booking.edit') }}</span>
                           </div>
                           <div class="border rounded-3 p-3 d-flex align-items-center" style="border-color: #e2e8f0 !important;">
                             <div class="bg-success bg-opacity-25 text-success rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; flex-shrink: 0;">
@@ -555,7 +555,7 @@
                         <!-- Notes -->
                         <div class="booking-confirm-card mt-3">
                           <div class="card-header-flex border-0 pb-0 mb-2">
-                            <h6 class="mb-0 fw-bold" style="color: #1e293b;"><i class="bi bi-justify-left text-muted me-2"></i> Lý do khám bệnh</h6>
+                            <h6 class="mb-0 fw-bold" style="color: #1e293b;"><i class="bi bi-justify-left text-muted me-2"></i> {{ $t('booking.reason') }}</h6>
                           </div>
                           <div class="p-0">
                             <textarea 
@@ -563,7 +563,7 @@
                               class="form-control bg-light border-0 rounded-3" 
                               rows="2" 
                               style="min-height: 50px; font-size: 0.85rem;" 
-                              placeholder="Nhập các triệu chứng, thói quen đặc biệt hoặc yêu cầu khác..."
+                              :placeholder="$t('booking.reasonPlaceholder')"
                             ></textarea>
                           </div>
                         </div>
@@ -573,8 +573,8 @@
                         <div class="receipt-card">
                           <div class="receipt-header">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                              <span class="text-uppercase fw-bold text-muted small tracking-wide">LỊCH HẸN</span>
-                              <span class="edit-link text-white opacity-75" @click="currentStep = 2">Thay đổi</span>
+                              <span class="text-uppercase fw-bold text-muted small tracking-wide">{{ $t('booking.apptSchedule') }}</span>
+                              <span class="edit-link text-white opacity-75" @click="currentStep = 2">{{ $t('booking.change') }}</span>
                             </div>
                             <h3 class="fw-bold text-white mb-1">
                               {{ formatTimeOnly(bookForm.appointmentDate) }}
@@ -590,23 +590,23 @@
                                 <i class="bi bi-person-fill"></i>
                               </div>
                               <div>
-                                <small class="text-muted d-block" style="font-size: 0.7rem;">Bác sĩ phụ trách</small>
-                                <strong class="text-dark small">{{ selectedDoctorFilter !== 'auto' && doctorAvailableSlots.find(d => d.doctorId === selectedDoctorFilter) ? doctorAvailableSlots.find(d => d.doctorId === selectedDoctorFilter)?.doctorName : 'Hệ thống tự phân công' }}</strong>
+                                <small class="text-muted d-block" style="font-size: 0.7rem;">{{ $t('booking.doctorInCharge') }}</small>
+                                <strong class="text-dark small">{{ selectedDoctorFilter !== 'auto' && doctorAvailableSlots.find(d => d.doctorId === selectedDoctorFilter) ? doctorAvailableSlots.find(d => d.doctorId === selectedDoctorFilter)?.doctorName : $t('booking.autoAssign') }}</strong>
                               </div>
                             </div>
                           </div>
 
                           <div class="receipt-body p-3 pt-2">
-                            <h6 class="text-muted small fw-bold mb-1 tracking-wide" style="font-size: 0.75rem;">CHI TIẾT DỊCH VỤ</h6>
+                            <h6 class="text-muted small fw-bold mb-1 tracking-wide" style="font-size: 0.75rem;">{{ $t('booking.serviceDetails') }}</h6>
                             <div class="d-flex justify-content-between mb-2">
                               <span class="text-dark fw-medium" style="font-size: 0.85rem;">{{ getSelectedServiceName() }}<template v-if="bookForm.vaccineId"><br/><small class="text-muted">+ {{ getSelectedVaccineName() }}</small></template></span>
-                              <span class="edit-link" @click="currentStep = 1">SỬA</span>
+                              <span class="edit-link" @click="currentStep = 1">{{ $t('booking.edit') }}</span>
                             </div>
 
-                            <h6 class="text-muted small fw-bold mb-1 tracking-wide" style="font-size: 0.75rem;">CHI TIẾT CHI PHÍ</h6>
+                            <h6 class="text-muted small fw-bold mb-1 tracking-wide" style="font-size: 0.75rem;">{{ $t('booking.costDetails') }}</h6>
                             <div class="d-flex justify-content-between mb-1">
                               <span class="text-muted" style="font-size: 0.8rem;">{{ getSelectedServiceName().toLowerCase().includes('tiêm') ? 'Tiền công tiêm' : 'Phí khám dịch vụ' }}</span>
-                              <strong class="text-success" style="font-size: 0.85rem;">{{ getSelectedServiceName().toLowerCase().includes('tiêm') ? 'Miễn phí' : (getSelectedServicePrice() ? formatCurrency(getSelectedServicePrice()) : '0 ₫') }}</strong>
+                              <strong class="text-success" style="font-size: 0.85rem;">{{ getSelectedServiceName().toLowerCase().includes('tiêm') ? $t('booking.free') : (getSelectedServicePrice() ? formatCurrency(getSelectedServicePrice()) : '0 ₫') }}</strong>
                             </div>
                             <div v-if="getSelectedServiceName().toLowerCase().includes('tiêm')" class="d-flex justify-content-between mb-1">
                               <span class="text-muted" style="font-size: 0.8rem;">Giá Vắc-xin</span>
@@ -617,10 +617,10 @@
                               <strong class="text-dark" style="font-size: 0.85rem;">0 ₫</strong>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                              <span class="fw-bold text-dark" style="font-size: 0.9rem;">Tổng cộng</span>
+                              <span class="fw-bold text-dark" style="font-size: 0.9rem;">{{ $t('booking.total') }}</span>
                               <strong class="text-primary fs-5">{{ getSelectedServicePrice() ? formatCurrency(getSelectedServicePrice()) : '0 ₫' }}</strong>
                             </div>
-                            <p class="text-center text-muted mb-0" style="font-size: 0.65rem;">Thanh toán tại phòng khám</p>
+                            <p class="text-center text-muted mb-0" style="font-size: 0.65rem;">{{ $t('booking.payAtClinic') }}</p>
                           </div>
                         </div>
 
@@ -636,16 +636,16 @@
               <!-- Footer Buttons -->
               <div v-if="!bookingSuccess" class="border-top bg-white p-4 d-flex justify-content-between align-items-center" style="z-index: 10;">
                 <button v-if="currentStep > 0" type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" @click="currentStep--" :disabled="bookingLoading">
-                  <i class="bi bi-arrow-left me-2"></i> Quay lại
+                  <i class="bi bi-arrow-left me-2"></i> {{ $t('booking.back') }}
                 </button>
-                <button v-else type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" @click="closeBookModal">Hủy</button>
+                <button v-else type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" @click="closeBookModal">{{ $t('booking.cancel') }}</button>
 
                 <button v-if="currentStep < maxSteps" type="button" class="btn btn-primary px-4 py-2 rounded-pill fw-bold" @click="nextStep" :disabled="!canProceed">
-                  Tiếp theo <i class="bi bi-arrow-right ms-2"></i>
+                  {{ $t('booking.next') }} <i class="bi bi-arrow-right ms-2"></i>
                 </button>
                 <button v-else type="button" class="btn btn-primary px-5 py-2 rounded-pill fw-bold d-flex align-items-center" @click="submitBooking" :disabled="bookingLoading">
                   <span v-if="bookingLoading" class="spinner-border spinner-border-sm me-2"></span>
-                  <span v-else><i class="bi bi-check2-circle me-2"></i>Xác nhận đặt lịch</span>
+                  <span v-else><i class="bi bi-check2-circle me-2"></i>{{ $t('booking.confirmBook') }}</span>
                 </button>
               </div>
             </div>
@@ -905,7 +905,10 @@ import api from '../../services/api';
 import QrcodeVue from 'qrcode.vue';
 import ReviewModal from '../shared/ReviewModal.vue';
 import { useReviewStore } from '../../stores/review.store';
+import { useI18n } from 'vue-i18n';
+import { translateApiError } from '../../utils/errorTranslator';
 
+const { t, locale } = useI18n();
 const router = useRouter();
 
 // ===== Emits =====
@@ -1079,7 +1082,7 @@ const computedAvailableSlots = computed(() => {
 // Bỏ bước chọn Vaccine: luôn trả về false để wizard chỉ có 4 bước (không có bước Vaccine)
 const isVaccinationService = computed(() => false);
 
-const bookingSteps = computed(() => ['Thú cưng', 'Dịch vụ', 'Thời gian', 'Xác nhận']);
+const bookingSteps = computed(() => [t('booking.step1'), t('booking.step2'), t('booking.step3'), t('booking.step4')]);
 
 const maxSteps = computed(() => 3);
 
@@ -1425,9 +1428,9 @@ const submitBooking = async () => {
     bookingSuccess.value = true;
     await fetchAppointments();
   } catch (err: any) {
-    const apiError = err?.response?.data?.message || 'Đặt lịch thất bại. Vui lòng thử lại.';
-    if (apiError.startsWith('MISSING_PHONE:')) {
-      alert(apiError.replace('MISSING_PHONE: ', ''));
+    const apiError = translateApiError(err, t, 'BOOKING_FAILED');
+    if (err?.response?.data?.message?.startsWith('MISSING_PHONE')) {
+      alert(t('errors.MISSING_PHONE'));
       closeBookModal();
       router.push('/profile');
     } else {
@@ -1458,7 +1461,7 @@ const onBookingDateChange = async () => {
     });
     doctorAvailableSlots.value = res.data;
   } catch (err: any) {
-    slotFetchError.value = err?.response?.data?.message || 'Không thể tải danh sách khung giờ trống.';
+    slotFetchError.value = translateApiError(err, t, 'LOAD_SLOTS_FAILED');
     doctorAvailableSlots.value = [];
   } finally {
     fetchingSlots.value = false;
@@ -1484,7 +1487,7 @@ const cancelAppointment = async () => {
     showCancelModal.value = false;
     showDetailModal.value = false;
   } catch (err: any) {
-    alert(err?.response?.data?.message || 'Huỷ lịch thất bại. Vui lòng thử lại.');
+    alert(translateApiError(err, t, 'CANCEL_FAILED'));
   } finally {
     cancelLoading.value = false;
   }
@@ -1693,7 +1696,7 @@ const validateVaccineChoice = async () => {
   } catch (err: any) {
     vaccineValidation.value = {
       isValid: false,
-      warningMessage: err?.response?.data?.message || 'Không thể kiểm tra phác đồ tiêm chủng.',
+      warningMessage: translateApiError(err, t, 'VACCINE_CHECK_FAILED'),
       requiresDoctorOverride: false,
       nextAvailableDate: null
     };
@@ -1710,19 +1713,22 @@ const formatDay = (dateStr: string): string => {
 const formatMonthYear = (dateStr: string): string => {
   if (!dateStr) return '';
   const d = new Date(dateStr);
+  if (locale.value === 'en') return `${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
   return `Th${d.getMonth() + 1}/${d.getFullYear()}`;
 };
 
 const formatTime = (dateStr: string): string => {
   if (!dateStr) return '';
-  const time = new Date(dateStr).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-  if (time === '00:00' || time === '24:00') return 'Chưa có thông tin giờ';
+  const loc = locale.value === 'en' ? 'en-US' : 'vi-VN';
+  const time = new Date(dateStr).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
+  if (time === '00:00' || time === '24:00') return locale.value === 'en' ? 'No time info' : 'Chưa có thông tin giờ';
   return time;
 };
 
 const formatDateFull = (dateStr: string): string => {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('vi-VN', {
+  const loc = locale.value === 'en' ? 'en-US' : 'vi-VN';
+  return new Date(dateStr).toLocaleString(loc, {
     weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
@@ -1743,15 +1749,14 @@ const formatDateOnly = (dateStr: string): string => {
   if (!dateStr) return '';
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return dateStr;
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
+  const loc = locale.value === 'en' ? 'en-US' : 'vi-VN';
+  return date.toLocaleDateString(loc, { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
 const formatCurrency = (amount: number | null | undefined): string => {
   if (!amount) return '';
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  const loc = locale.value === 'en' ? 'en-US' : 'vi-VN';
+  return new Intl.NumberFormat(loc, { style: 'currency', currency: 'VND' }).format(amount);
 };
 
 // ===== Lifecycle =====

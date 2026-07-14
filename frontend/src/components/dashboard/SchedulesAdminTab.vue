@@ -231,23 +231,22 @@
               </div>
             </div>
 
-            <!-- Days summary badge -->
-            <div v-if="blockForm.startDate && blockForm.endDate && !isBlockEdit" class="mb-3">
-              <div v-if="selectedDaysCount > 0" class="date-range-summary d-flex align-items-center gap-2 px-3 py-2 rounded-3">
-                <i class="bi bi-calendar-range text-danger"></i>
-                <span class="small fw-bold text-dark">
-                  <strong class="text-danger">{{ selectedDaysCount }} ngày</strong>
-                  <span class="text-muted ms-1">( {{ formatDisplayDate(blockForm.startDate) }} — {{ formatDisplayDate(blockForm.endDate) }} )</span>
-                </span>
+
+
+            <!-- Time Range Picker -->
+            <div class="mb-3 bg-white bg-opacity-50 p-3 rounded-3 border border-light shadow-sm">
+              <div class="form-check form-switch mb-2 d-flex align-items-center gap-2">
+                <input class="form-check-input" type="checkbox" role="switch" id="allDaySwitch" v-model="blockForm.isAllDay" :disabled="isBlockEdit" style="transform: scale(1.2); cursor: pointer;">
+                <label class="form-check-label text-dark fw-bold small" for="allDaySwitch" style="cursor: pointer;">
+                  <i class="bi bi-clock-history text-primary me-1"></i> Nghỉ cả ngày (All day)
+                </label>
               </div>
-              <div v-else class="date-range-summary date-range-invalid d-flex align-items-center gap-2 px-3 py-2 rounded-3">
-                <i class="bi bi-exclamation-triangle text-danger"></i>
-                <span class="small fw-bold text-danger">Ngày kết thúc phải sau ngày bắt đầu!</span>
+              <div class="text-muted small ms-4" style="font-size: 0.75rem" v-if="blockForm.isAllDay">
+                Hệ thống sẽ tự động gán thời gian nghỉ cả ngày (00:00 - 23:59).
               </div>
             </div>
 
-            <!-- Time Range Picker -->
-            <div class="row g-3 mb-3">
+            <div class="row g-3 mb-3" v-if="!blockForm.isAllDay">
               <div class="col-6">
                 <label class="form-label text-muted small fw-bold">
                   <i class="bi bi-play-circle-fill text-success me-1"></i> Giờ bắt đầu *
@@ -272,10 +271,10 @@
             </div>
 
             <!-- Duration Badge -->
-            <div v-if="blockForm.startHour && blockForm.endHour && !isBlockEdit" class="mb-3">
+            <div v-if="(blockForm.isAllDay || (blockForm.startHour && blockForm.endHour)) && !isBlockEdit" class="mb-3">
               <div class="duration-badge d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill">
                 <i class="bi bi-hourglass-split text-danger"></i>
-                <span class="fw-bold small text-dark">Mỗi ngày: <strong class="text-danger">{{ blockDuration }}</strong></span>
+                <span class="fw-bold small text-dark">Tổng thời gian: <strong class="text-danger">{{ blockDuration }}</strong></span>
               </div>
             </div>
             <div class="mb-3">
@@ -428,11 +427,17 @@ const getSchedules = (doctorId: string, day: Date) => {
 
 const getBlockTimes = (doctorId: string, day: Date) => {
   const dateStr = toLocalDateStr(day);
+  const dayStart = new Date(`${dateStr}T00:00:00`);
+  const dayEnd = new Date(`${dateStr}T23:59:59`);
+  
   const blocks = blockTimesList.value.filter(b => {
-    if (!b.startTime) return false;
+    if (!b.startTime || !b.endTime) return false;
     const utcStartTime = b.startTime.endsWith('Z') ? b.startTime : `${b.startTime}Z`;
-    const localD = new Date(utcStartTime);
-    return b.doctorId === doctorId && toLocalDateStr(localD) === dateStr;
+    const utcEndTime = b.endTime.endsWith('Z') ? b.endTime : `${b.endTime}Z`;
+    const sD = new Date(utcStartTime);
+    const eD = new Date(utcEndTime);
+    
+    return b.doctorId === doctorId && (sD <= dayEnd && eD >= dayStart);
   });
 
   const unavailableSchedules = schedulesList.value.filter(s => {
@@ -516,17 +521,42 @@ const timeSlotOptions = computed(() => {
 });
 
 const endTimeSlotOptions = computed(() => {
+  if (blockForm.value.startDate < blockForm.value.endDate) {
+    return timeSlotOptions.value;
+  }
   return timeSlotOptions.value.filter(s => s > blockForm.value.startHour);
 });
 
 const blockDuration = computed(() => {
-  if (!blockForm.value.startHour || !blockForm.value.endHour) return '';
-  const [sh, sm] = blockForm.value.startHour.split(':').map(Number);
-  const [eh, em] = blockForm.value.endHour.split(':').map(Number);
-  const totalMin = (eh * 60 + em) - (sh * 60 + sm);
+  if (!blockForm.value.startDate || !blockForm.value.endDate) return '';
+  
+  let startStr = `${blockForm.value.startDate}T${blockForm.value.isAllDay ? '00:00' : blockForm.value.startHour}:00`;
+  let endStr = `${blockForm.value.endDate}T${blockForm.value.isAllDay ? '23:59' : blockForm.value.endHour}:00`;
+  
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  
+  const totalMin = Math.round((end - start) / 60000);
+  
   if (totalMin <= 0) return 'Không hợp lệ';
+  
+  if (blockForm.value.isAllDay) {
+    const days = Math.round(totalMin / (24 * 60));
+    return days > 1 ? `${days} ngày` : '1 ngày (Cả ngày)';
+  }
+
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
+  
+  if (h >= 24) {
+    const d = Math.floor(h / 24);
+    const remH = h % 24;
+    let res = `${d} ngày`;
+    if (remH > 0) res += ` ${remH} giờ`;
+    if (m > 0) res += ` ${m} phút`;
+    return res;
+  }
+  
   return h > 0 ? (m > 0 ? `${h} giờ ${m} phút` : `${h} giờ`) : `${m} phút`;
 });
 
@@ -600,9 +630,9 @@ const submitForm = async () => {
     };
 
     if (isEdit.value && currentScheduleId.value) {
-      await api.put(`/admin/schedules/${currentScheduleId.value}`, payload);
+      await api.put(`/doctor-schedules/${currentScheduleId.value}`, payload);
     } else {
-      await api.post('/admin/schedules', payload);
+      await api.post('/doctor-schedules', payload);
     }
     showModal.value = false;
     await loadData(); // Reload both schedules & blocks
@@ -614,7 +644,7 @@ const submitForm = async () => {
 const handleDelete = async (id: number) => {
   if (!confirm('Bạn có chắc chắn muốn xoá ca trực này không?')) return;
   try {
-    await api.delete(`/admin/schedules/${id}`);
+    await api.delete(`/doctor-schedules/${id}`);
     showModal.value = false;
     await loadData();
   } catch (err: any) {
@@ -631,6 +661,7 @@ const blockForm = ref({
   doctorId: '',
   startDate: '',
   endDate: '',
+  isAllDay: true,
   startHour: '08:00',
   endHour: '12:00',
   blockType: 0,
@@ -658,8 +689,7 @@ const validateDateRange = () => {
 };
 
 const validateEndTime = () => {
-  // Ensure endHour is always after startHour
-  if (blockForm.value.endHour <= blockForm.value.startHour) {
+  if (blockForm.value.startDate === blockForm.value.endDate && blockForm.value.endHour <= blockForm.value.startHour) {
     const idx = endTimeSlotOptions.value.findIndex(s => s > blockForm.value.startHour);
     blockForm.value.endHour = endTimeSlotOptions.value[idx >= 0 ? idx : 0] || '12:00';
   }
@@ -672,6 +702,7 @@ const openCreateBlockModal = () => {
     doctorId: filterDoctorId.value !== 'all' ? filterDoctorId.value : (doctorUsers.value[0]?.id || ''),
     startDate: minDate.value,
     endDate: minDate.value,
+    isAllDay: true,
     startHour: '08:00',
     endHour: '12:00',
     blockType: 0,
@@ -698,13 +729,15 @@ const openEditBlockModal = (block: any) => {
 
   const start = parseDt(block.startTime);
   const end = parseDt(block.endTime);
+  const isAll = (start.hour === '00:00' && end.hour === '23:59') || (start.hour === '00:00' && end.hour === '00:00');
 
   blockForm.value = {
     doctorId: block.doctorId,
     startDate: start.date,
     endDate: start.date,
-    startHour: start.hour,
-    endHour: end.hour,
+    isAllDay: isAll,
+    startHour: isAll ? '08:00' : start.hour,
+    endHour: isAll ? '12:00' : end.hour,
     blockType: block.blockType || 0,
     reason: block.reason || ''
   };
@@ -712,6 +745,11 @@ const openEditBlockModal = (block: any) => {
 };
 
 const submitBlockForm = async () => {
+  if (blockForm.value.isAllDay) {
+    blockForm.value.startHour = '00:00';
+    blockForm.value.endHour = '23:59';
+  }
+
   if (!blockForm.value.startDate || !blockForm.value.endDate || !blockForm.value.startHour || !blockForm.value.endHour) {
     alert('Vui lòng chọn đầy đủ ngày và giờ.');
     return;
@@ -731,28 +769,19 @@ const submitBlockForm = async () => {
   }
 
   try {
-    // Build list of dates in the range
-    const dateList: string[] = [];
-    const cur = new Date(blockForm.value.startDate);
-    const end = new Date(blockForm.value.endDate);
-    while (cur <= end) {
-      const pad = (n: number) => n.toString().padStart(2, '0');
-      dateList.push(`${cur.getFullYear()}-${pad(cur.getMonth()+1)}-${pad(cur.getDate())}`);
-      cur.setDate(cur.getDate() + 1);
-    }
+    let startStr = `${blockForm.value.startDate}T${blockForm.value.isAllDay ? '00:00' : blockForm.value.startHour}:00`;
+    let endStr = `${blockForm.value.endDate}T${blockForm.value.isAllDay ? '23:59' : blockForm.value.endHour}:00`;
+    
+    const startDt = new Date(startStr);
+    const endDt = new Date(endStr);
 
-    // Create one block per day in parallel
-    await Promise.all(dateList.map(date => {
-      const startDt = new Date(`${date}T${blockForm.value.startHour}:00`);
-      const endDt   = new Date(`${date}T${blockForm.value.endHour}:00`);
-      return api.post('/admin/block-times', {
-        doctorId:  blockForm.value.doctorId,
-        startTime: startDt.toISOString(),
-        endTime:   endDt.toISOString(),
-        blockType: blockForm.value.blockType,
-        reason:    blockForm.value.reason
-      });
-    }));
+    await api.post('/block-times', {
+      doctorId:  blockForm.value.doctorId,
+      startTime: startDt.toISOString(),
+      endTime:   endDt.toISOString(),
+      blockType: blockForm.value.blockType,
+      reason:    blockForm.value.reason
+    });
 
     showBlockModal.value = false;
     await loadData();
@@ -764,7 +793,7 @@ const submitBlockForm = async () => {
 const handleDeleteBlock = async (id: string) => {
   if (!confirm('Bạn có chắc chắn muốn hủy lịch nghỉ này?')) return;
   try {
-    await api.delete(`/admin/block-times/${id}`);
+    await api.delete(`/block-times/${id}`);
     showBlockModal.value = false;
     await loadData();
   } catch (err: any) {

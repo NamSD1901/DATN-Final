@@ -282,3 +282,126 @@ i[class^="bi-"], span[class^="bi-"] {
   display: inline-block;
   line-height: 1;
 }
+
+/* ════════════════════════════════════════════════════════════
+   DARK MODE — [data-theme="dark"]
+   Chiến lược: Chỉ override CSS variables. Layout & animation
+   giữ nguyên hoàn toàn — không phá vỡ bất kỳ component cũ nào.
+════════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  /* ── Nền & Background ──────────────────────────────────── */
+  --bg-light:   #0f172a;  /* Slate 900 — nền tổng thể */
+  --bg-pure:    #1e293b;  /* Slate 800 — nền card / panel */
+  --bg-subtle:  #334155;  /* Slate 700 — nền hover / input */
+
+  /* ── Chữ ────────────────────────────────────────────────── */
+  --text-dark:  #f1f5f9;  /* Slate 100 — chữ chính */
+  --text-muted: #94a3b8;  /* Slate 400 — chữ phụ */
+
+  /* ── Viền & Đường kẻ ────────────────────────────────────── */
+  --border-color: rgba(148, 163, 184, 0.12); /* Slate 400/12% */
+
+  /* ── Shadows ────────────────────────────────────────────── */
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Override cho html, body khi dark ──────────────────────── */
+[data-theme="dark"] html,
+[data-theme="dark"] body,
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+}
+
+/* ── Override Bootstrap components cho dark mode ────────────── */
+[data-theme="dark"] .bg-white,
+html[data-theme="dark"] .bg-white {
+  background-color: var(--bg-pure) !important;
+  color: var(--text-dark) !important;
+}
+
+[data-theme="dark"] .text-dark,
+html[data-theme="dark"] .text-dark {
+  color: var(--text-dark) !important;
+}
+
+[data-theme="dark"] .text-muted,
+html[data-theme="dark"] .text-muted {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .border,
+html[data-theme="dark"] .border,
+[data-theme="dark"] .border-top,
+html[data-theme="dark"] .border-top,
+[data-theme="dark"] .border-bottom,
+html[data-theme="dark"] .border-bottom {
+  border-color: var(--border-color) !important;
+}
+
+/* ── Cards, Panels ──────────────────────────────────────────── */
+[data-theme="dark"] .card,
+html[data-theme="dark"] .card {
+  background-color: var(--bg-pure) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-dark) !important;
+}
+
+/* Glassmorphic cards — override màu nền cho dark */
+[data-theme="dark"] .glass-card,
+html[data-theme="dark"] .glass-card {
+  background: rgba(30, 41, 59, 0.85) !important;
+  border-color: rgba(148, 163, 184, 0.1) !important;
+}
+
+/* ── Dashboard Topbar & Sidebar ──────────────────────────────── */
+[data-theme="dark"] .topbar,
+html[data-theme="dark"] .topbar {
+  background-color: var(--bg-pure) !important;
+  color: var(--text-dark) !important;
+}
+
+[data-theme="dark"] #sidebar,
+html[data-theme="dark"] #sidebar {
+  background-color: var(--bg-pure) !important;
+  color: var(--text-dark) !important;
+}
+
+[data-theme="dark"] #sidebar .sidebar-footer,
+html[data-theme="dark"] #sidebar .sidebar-footer {
+  border-top-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] #sidebar ul li a,
+html[data-theme="dark"] #sidebar ul li a {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] #sidebar ul li.active a,
+html[data-theme="dark"] #sidebar ul li.active a {
+  color: var(--text-dark) !important;
+}
+
+/* ── Input Fields ────────────────────────────────────────────── */
+[data-theme="dark"] .form-control,
+html[data-theme="dark"] .form-control,
+[data-theme="dark"] .input-premium,
+html[data-theme="dark"] .input-premium {
+  background-color: var(--bg-subtle) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-dark) !important;
+}
+
+[data-theme="dark"] .form-control::placeholder,
+html[data-theme="dark"] .form-control::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* ── Smooth transition khi chuyển theme ─────────────────────── */
+html {
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+

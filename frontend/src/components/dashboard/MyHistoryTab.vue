@@ -7,9 +7,9 @@
         <div>
           <h3 class="fw-bold text-dark mb-1">
             <i class="bi bi-journal-medical me-2" style="color: var(--primary-gold);"></i>
-            Lịch sử y tế
+            {{ $t('history.title') }}
           </h3>
-          <p class="text-muted mb-0 small">Báo cáo y tế toàn diện, đơn thuốc chi tiết và xu hướng sinh hiệu của thú cưng.</p>
+          <p class="text-muted mb-0 small">{{ $t('history.subtitle') }}</p>
         </div>
       </div>
     </div>
@@ -17,7 +17,7 @@
     <!-- Pet Selection Pills -->
     <div class="pet-selector-container mb-4">
       <h5 class="fw-semibold text-dark mb-3">
-        <i class="bi bi-tag-fill me-2 text-warning"></i>Thú cưng của bạn:
+        <i class="bi bi-tag-fill me-2 text-warning"></i>{{ $t('history.yourPets') }}
       </h5>
       <div class="d-flex gap-3 flex-wrap">
         <button
@@ -36,7 +36,7 @@
     <!-- Loading state -->
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;"></div>
-      <p class="text-muted mt-3">Đang đồng bộ dữ liệu hồ sơ...</p>
+      <p class="text-muted mt-3">{{ $t('history.syncing') }}</p>
     </div>
 
     <!-- Error state -->
@@ -46,16 +46,16 @@
 
     <!-- No Pet Selected -->
     <div v-else-if="selectedPetId === null" class="empty-history text-center py-5">
-      <div class="empty-icon">🐾</div>
-      <h5 class="fw-bold text-dark mt-3 mb-2">Chưa chọn thú cưng</h5>
-      <p class="text-muted small mb-0">Vui lòng chọn một thú cưng ở trên để xem lịch sử khám và hồ sơ bệnh án.</p>
+      <div class="empty-icon">🐶</div>
+      <h5 class="fw-bold text-dark mt-3 mb-2">{{ $t('history.noPetSelectedTitle') }}</h5>
+      <p class="text-muted small mb-0">{{ $t('history.noPetSelectedDesc') }}</p>
     </div>
 
     <!-- Empty history for selected pet -->
     <div v-else-if="records.length === 0" class="empty-history text-center py-5">
-      <div class="empty-icon">🔍</div>
-      <h5 class="fw-bold text-dark mt-3 mb-2">Chưa có lịch sử bệnh án</h5>
-      <p class="text-muted small mb-0">Thú cưng này chưa hoàn thành đợt điều trị hay khám bệnh nào có bệnh án được lưu lại.</p>
+      <div class="empty-icon">📁</div>
+      <h5 class="fw-bold text-dark mt-3 mb-2">{{ $t('history.noHistoryTitle') }}</h5>
+      <p class="text-muted small mb-0">{{ $t('history.noHistoryDesc') }}</p>
     </div>
 
     <div v-else>
