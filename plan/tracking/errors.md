@@ -161,3 +161,31 @@ Sua doi appointment.Status = "ready_to_pay" trong MedicalRecordService.cs khi kh
 - **Solution:** 
   1. SÆ°a `DoctorScheduleService.cs`: SÆ° dá»¥ng `DateTime.SpecifyKind(startDate.Value.Date, DateTimeKind.Utc)` vÃ  `DateTime.SpecifyKind(endDate.Value.Date, DateTimeKind.Utc)` trÆ°á»›c khi tiáº¿n hÃ nh so sÃ¡nh LINQ. Viá»‡c áº¥n Ä‘á»‹nh rÃµ UTC kind sáº½ ngÄƒn ngá»«a EF Core láº·p láº¡i thao tÃ¡c lÃ¹i giá»  sai lá»‡ch.
 - **Status:** Resolved
+
+### Error: Walk-in and Appointment Creation allows wrong doctor role assignment
+- **Symptom:** Lễ tân có thể phân công bác sĩ sai chuyên khoa (ví dụ: chọn bác sĩ Khám bệnh cho ca Tiêm phòng).
+- **Root Cause:** Logic lấy `targetRole` (như "clinical_doctor" hoặc "vaccination_doctor") dựa trên CategoryName của dịch vụ chỉ được thực thi bên trong khối lệnh `if (finalDoctorId == Guid.Empty)` (khi tự động phân công). Khi lễ tân chọn đích danh bác sĩ (`finalDoctorId != Guid.Empty`), biến `targetRole` không được tính toán, dẫn đến việc bỏ qua bước xác thực role của bác sĩ.
+- **Solution:** Đưa logic lấy `targetRole` ra ngoài khối lệnh `if`, sau đó bổ sung bước lấy RoleName của bác sĩ được chọn và kiểm tra sự trùng khớp với `targetRole` trong nhánh `else`. Quăng lỗi `InvalidOperationException` nếu không khớp.
+- **Status:** Resolved
+
+### Error: Walk-in appointments do not show up on Doctor's Calendar
+- **Symptom:** Các ca khám Walk-in được tạo lẻ giờ (VD: 17:19) không hiển thị trên lưới lịch làm việc của bác sĩ. Lưới chỉ hiện các ca khám Online (được chốt chẵn giờ như 17:00, 17:30).
+- **Root Cause:** Ở Frontend (`DoctorQueueTab.vue`), hàm `getEventsForCell` rà soát tuyệt đối giờ của ca khám so với mốc giờ cứng trên table. Giờ 17:19 không khớp với mốc 17:00 hay 17:30 nên bị bỏ qua hoàn toàn.
+- **Solution:** Thêm logic vào `getEventsForCell` để làm tròn xuống giờ khám lẻ về mốc 30 phút gần nhất (Ví dụ 17:19 làm tròn về 17:00). Đồng thời tạo hàm `getActualTime` để render giờ thực tế lên trực tiếp trên Card UI hiển thị cho bác sĩ (Ví dụ: `[17:19] Tên thú cưng`).
+- **Status:** Resolved
+
+### Error: Walk-in auto assignment picks wrong doctor roles and distributes unfairly
+- **Symptom:** Đặt lịch khám walk-in ở lễ tân (khi để trống bác sĩ để hệ thống tự động phân công) phân công sai chuyên khoa (ví dụ dịch vụ Tiêm chủng lại chọn bác sĩ bên Khám bệnh). Hơn nữa, nó chỉ phân công toàn bộ khách cho 1 bác sĩ duy nhất.
+- **Root Cause:** 
+  1. Trong `ReceptionistService.CreateWalkInAsync`, khi `request.DoctorId` trống, logic query bác sĩ lấy danh sách tất cả bác sĩ đang active mà không lọc theo danh mục của dịch vụ (Service Category).
+  2. Bác sĩ được chọn luôn luôn là `doctors.FirstOrDefault()` - người đầu tiên xuất hiện trong kết quả truy vấn Database, dẫn đến dồn hết lịch cho 1 người.
+- **Solution:** 
+  1. Áp dụng logic lọc tương tự như `AppointmentService`, truy vấn `ServiceCategory` trước để lấy `targetRole` (Khám bệnh -> clinical_doctor, Tiêm phòng -> vaccination_doctor). 
+  2. Thay vì dùng `FirstOrDefault()`, query `Appointments` để đếm số lượng ca khám đang chờ/đang xử lý (`waiting`, `in_progress`, `pending`, `ready_to_pay`, `confirmed`) của từng bác sĩ trong ngày. Dùng `.OrderBy(d => count)` để tự động chọn bác sĩ đang rảnh nhất.
+- **Status:** Resolved
+
+### Error: Wait time display stuck at 0 minutes in Queue Tab
+- **Symptom:** Bộ đếm thời gian chờ của bệnh nhi trên Hàng Khám của Lễ Tân luôn hiển thị "0 phút" dù bệnh nhi đã chờ từ lâu (VD: Check-in từ 19:09 nhưng lúc 19:20 vẫn báo 0 phút).
+- **Root Cause:** Trong CSDL, biến `vnTime` (chứa Local Time) được lưu thẳng vào cột `AppointmentDate` và `CheckInTime`. Khi dữ liệu được gọi qua API, EF Core's `DateTimeUtcConverter` mặc định gắn cờ UTC nên trả về định dạng `yyyy-MM-ddTHH:mm:00Z`. Frontend lấy chuỗi này bỏ vào `new Date()` sẽ bị hiểu nhầm là giờ UTC, tự động cộng thêm 7 tiếng. Do đó, `refTime` luôn nằm ở thì tương lai, khiến phép trừ thời gian `nowRef - refTime` bị âm và quy về 0.
+- **Solution:** Tạo hàm `fixTimezone` ở `QueueTab.vue` để loại bỏ ký tự `Z` ở đuôi chuỗi thời gian trả về (`timeStr.slice(0, -1)`) trước khi parse `new Date()`. Việc này ép trình duyệt phân tích cú pháp thời gian thành Local Time, giúp bộ đếm hiển thị chính xác số phút đã trôi qua.
+- **Status:** Resolved

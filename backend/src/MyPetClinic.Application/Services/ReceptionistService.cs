@@ -280,17 +280,63 @@ namespace MyPetClinic.Application.Services
                     var finalDoctorId = request.DoctorId ?? Guid.Empty;
                     if (finalDoctorId == Guid.Empty)
                     {
-                        var doctors = _unitOfWork.Users.Query()
-                            .Where(u => u.Role != null && 
-                                        (u.Role.Name.ToLower() == "clinical_doctor" || u.Role.Name.ToLower() == "vaccination_doctor" || u.Role.Name.ToLower() == "doctor") && 
-                                        u.IsActive == true && u.DeletedAt == null)
-                            .ToList();
-                        var doctor = doctors.FirstOrDefault();
+                        var targetRole = "";
+                        var serviceEntity = _unitOfWork.Services.Query()
+                            .Where(s => s.Id == request.ServiceId)
+                            .Select(s => new { CategoryName = s.Category != null ? s.Category.Name : null })
+                            .FirstOrDefault();
+
+                        if (serviceEntity != null && serviceEntity.CategoryName != null)
+                        {
+                            if (serviceEntity.CategoryName.Equals("Khám bệnh", StringComparison.OrdinalIgnoreCase))
+                            {
+                                targetRole = "clinical_doctor";
+                            }
+                            else if (serviceEntity.CategoryName.Equals("Tiêm phòng", StringComparison.OrdinalIgnoreCase))
+                            {
+                                targetRole = "vaccination_doctor";
+                            }
+                        }
+
+                        var doctorsQuery = _unitOfWork.Users.Query()
+                            .Where(u => u.Role != null && u.IsActive == true && u.DeletedAt == null);
+
+                        if (!string.IsNullOrEmpty(targetRole))
+                        {
+                            doctorsQuery = doctorsQuery.Where(u => u.Role!.Name.ToLower() == targetRole);
+                        }
+                        else 
+                        {
+                            doctorsQuery = doctorsQuery.Where(u => 
+                                u.Role!.Name.ToLower() == "clinical_doctor" || 
+                                u.Role.Name.ToLower() == "vaccination_doctor" || 
+                                u.Role.Name.ToLower() == "doctor");
+                        }
+
+                        var doctors = doctorsQuery.ToList();
+                        if (doctors.Any())
+                        {
+                            var doctorIds = doctors.Select(d => d.Id).ToList();
+                            var (apptStartUtc, apptEndUtc) = GetVietnamTodayUtcRange();
+
+                            // Đếm số lượng ca khám đang chờ hoặc đang xử lý trong ngày của từng bác sĩ
+                            var appointmentCounts = _unitOfWork.Appointments.Query()
+                                .Where(a => doctorIds.Contains(a.DoctorId) && 
+                                            a.AppointmentDate >= apptStartUtc && 
+                                            a.AppointmentDate < apptEndUtc &&
+                                            (a.Status == "waiting" || a.Status == "in_progress" || a.Status == "pending" || a.Status == "ready_to_pay" || a.Status == "confirmed"))
+                                .GroupBy(a => a.DoctorId)
+                                .Select(g => new { DoctorId = g.Key, Count = g.Count() })
+                                .ToList();
+
+                            // Chọn bác sĩ có số lượng ca khám ít nhất (phân công công bằng)
+                            var doctor = doctors
+                                .OrderBy(d => appointmentCounts.FirstOrDefault(ac => ac.DoctorId == d.Id)?.Count ?? 0)
+                                .FirstOrDefault();
                             
-                        if (doctor != null) {
-                            finalDoctorId = doctor.Id;
+                            finalDoctorId = doctor!.Id;
                         } else {
-                            throw new Exception("Hệ thống hiện không có bác sĩ nào đang trực để phân công!");
+                            throw new Exception("Hệ thống hiện không có bác sĩ nào đang trực phù hợp để phân công cho dịch vụ này!");
                         }
                     }
 

@@ -483,11 +483,16 @@ const filteredReadyToPay = computed(() => {
 const nowRef = ref(new Date());
 let timeUpdater: any = null;
 
+const fixTimezone = (dateStr: string) => {
+  if (!dateStr) return '';
+  return dateStr.endsWith('Z') ? dateStr.slice(0, -1) : dateStr;
+};
+
 const getWaitingTimeText = (card: any) => {
   // Ưu tiên dùng checkInTime, fallback về appointmentDate
   const timeStr = card.checkInTime || card.appointmentDate;
   if (!timeStr) return '---';
-  const refTime = new Date(timeStr);
+  const refTime = new Date(fixTimezone(timeStr));
   const diffMs = nowRef.value.getTime() - refTime.getTime();
   const diffMins = Math.max(0, Math.floor(diffMs / 60000));
   return `${diffMins} phút`;
@@ -497,7 +502,7 @@ const getSlaClass = (card: any) => {
   if (card.status !== 'waiting') return '';
   const timeStr = card.checkInTime || card.appointmentDate;
   if (!timeStr) return '';
-  const diffMins = Math.floor((nowRef.value.getTime() - new Date(timeStr).getTime()) / 60000);
+  const diffMins = Math.floor((nowRef.value.getTime() - new Date(fixTimezone(timeStr)).getTime()) / 60000);
   if (diffMins >= 30) return 'sla-danger';
   if (diffMins >= 15) return 'sla-warning';
   return '';
@@ -507,7 +512,7 @@ const getSlaTextClass = (card: any) => {
   if (card.status !== 'waiting') return 'text-muted';
   const timeStr = card.checkInTime || card.appointmentDate;
   if (!timeStr) return 'text-muted';
-  const diffMins = Math.floor((nowRef.value.getTime() - new Date(timeStr).getTime()) / 60000);
+  const diffMins = Math.floor((nowRef.value.getTime() - new Date(fixTimezone(timeStr)).getTime()) / 60000);
   if (diffMins >= 30) return 'text-danger';
   if (diffMins >= 15) return 'text-warning';
   return 'text-success';
