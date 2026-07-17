@@ -109,75 +109,6 @@ namespace MyPetClinic.Application.Services
             };
         }
 
-        public async Task<bool> CheckInAsync(CheckInRequestDto request)
-        {
-            Appointment? appointment = null;
-            if (!string.IsNullOrEmpty(request.QrToken))
-            {
-                appointment = await _unitOfWork.Appointments.GetFirstOrDefaultWithIncludesAsync(
-                    a => a.QrToken == request.QrToken, 
-                    a => a.Pet!
-                );
-            }
-            else if (request.AppointmentId.HasValue)
-            {
-                appointment = await _unitOfWork.Appointments.GetFirstOrDefaultWithIncludesAsync(
-                    a => a.Id == request.AppointmentId.Value,
-                    a => a.Pet!
-                );
-            }
-
-            if (appointment == null)
-                throw new InvalidOperationException("Không tìm thấy Lịch hẹn.");
-
-            if (appointment.Status == "cancelled")
-                throw new InvalidOperationException("Lịch hẹn này đã bị hủy, không thể Check-in.");
-
-            if (appointment.Status == "completed")
-                throw new InvalidOperationException("Lịch hẹn này đã hoàn thành.");
-
-            if (appointment.Status == "waiting" || appointment.Status == "in_progress" || appointment.Status == "ready_to_pay")
-                throw new InvalidOperationException("Khách hàng này đã nằm trong hàng đợi rồi.");
-
-            // Kiểm tra ngày khám
-            var (todayStartUtc, todayEndUtc) = GetVietnamTodayUtcRange();
-            if (appointment.AppointmentDate < todayStartUtc || appointment.AppointmentDate >= todayEndUtc)
-            {
-                var localApptDate = appointment.AppointmentDate.AddHours(7).Date;
-                throw new InvalidOperationException($"Lịch hẹn này dành cho ngày {localApptDate:dd/MM/yyyy}. Không thể Check-in hôm nay.");
-            }
-
-            // 1. Nếu có cân nặng mới thì cập nhật luôn cho Pet
-            if (request.CurrentWeight.HasValue && appointment.Pet != null)
-            {
-                appointment.Pet.Weight = request.CurrentWeight.Value;
-            }
-
-            await _queueSemaphore.WaitAsync();
-            try
-            {
-                // 2. Tự động tính toán Queue Number an toàn bằng Semaphore
-                var todayAppointments = await _unitOfWork.Appointments.FindAsync(a => 
-                    a.AppointmentDate >= todayStartUtc && a.AppointmentDate < todayEndUtc && a.QueueNumber > 0);
-                var maxQueueToday = todayAppointments.Any() ? todayAppointments.Max(a => (int?)a.QueueNumber) ?? 0 : 0;
-
-                // 3. Cập nhật các trường Workflow
-                appointment.Status = "waiting";
-                appointment.CheckInTime = DateTime.UtcNow;
-                appointment.QueueNumber = maxQueueToday + 1;
-                appointment.IsEmergency = request.IsEmergency;
-
-                _unitOfWork.Appointments.Update(appointment);
-                await _unitOfWork.SaveChangesAsync();
-            }
-            finally
-            {
-                _queueSemaphore.Release();
-            }
-
-            return true;
-        }
-
         public async Task<List<QueueItemDto>> GetTodayQueueAsync()
         {
             var (todayStartUtc, todayEndUtc) = GetVietnamTodayUtcRange();
@@ -194,11 +125,11 @@ namespace MyPetClinic.Application.Services
                 a => a.Pet!, a => a.Customer!, a => a.Doctor!
             );
 
-            var appointments = appointmentsList
-                .OrderByDescending(a => a.IsEmergency) // Ưu tiên ca cấp cứu lên đầu
-                .ThenBy(a => a.QueueNumber > 0 ? a.QueueNumber : int.MaxValue) // Sắp xếp theo số thứ tự, ca chưa có số để cuối
-                .ThenBy(a => a.CheckInTime)            // Trong cùng nhóm, theo thời gian check-in
-                .ToList();
+                var appointments = appointmentsList
+                    .OrderByDescending(a => a.IsEmergency) // Ưu tiên ca cấp cứu lên đầu
+                    .ThenBy(a => a.QueueNumber > 0 ? a.QueueNumber : int.MaxValue) // Sắp xếp theo số thứ tự, ca chưa có số để cuối
+                    .ThenBy(a => a.CheckInTime)            // Trong cùng nhóm, theo thời gian check-in
+                    .ToList();
 
             return appointments.Select(a => new QueueItemDto
             {
@@ -497,16 +428,15 @@ namespace MyPetClinic.Application.Services
             if (string.IsNullOrWhiteSpace(phone))
                 return null;
 
-            var users = await _unitOfWork.Users.FindWithIncludesAsync(
-                u => u.Phone == phone.Trim() && u.IsActive == true,
-                u => u.Role!
+            var customers = await _unitOfWork.Customers.FindAsync(
+                c => c.Phone == phone.Trim() && c.DeletedAt == null
             );
-            var user = users.FirstOrDefault();
+            var customer = customers.FirstOrDefault();
 
-            if (user == null)
+            if (customer == null)
                 return null;
 
-            var userPets = await _unitOfWork.Pets.FindAsync(p => p.CustomerId == user.Id && !p.IsDeceased);
+            var userPets = await _unitOfWork.Pets.FindAsync(p => p.CustomerId == customer.Id && !p.IsDeceased);
             var pets = userPets.Select(p => new PetBasicDto
                 {
                     Id = p.Id,
@@ -520,10 +450,10 @@ namespace MyPetClinic.Application.Services
             return new CustomerWithPetsDto
             {
                 Found = true,
-                CustomerId = user.Id,
-                FullName = user.FullName,
-                Phone = user.Phone,
-                Email = user.Email,
+                CustomerId = customer.Id,
+                FullName = customer.FullName,
+                Phone = customer.Phone,
+                Email = customer.Email,
                 Pets = pets
             };
         }

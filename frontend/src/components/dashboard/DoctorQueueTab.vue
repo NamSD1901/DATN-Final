@@ -82,8 +82,8 @@
                        :class="[getBorderClass(evt.extendedProps?.status), { 'emergency-pulse': evt.extendedProps?.isEmergency }]">
                     
                     <div class="d-flex justify-content-between align-items-start mb-1">
-                      <strong class="text-primary d-block text-truncate fw-bolder fs-6" style="letter-spacing: -0.2px;">
-                        <i class="bi bi-heptagon-fill text-warning me-1 small" style="font-size: 0.7rem;"></i>{{ evt.extendedProps?.petName || 'Thú cưng' }}
+                      <strong class="text-primary d-block text-truncate fw-bolder fs-6" style="letter-spacing: -0.2px;" :title="'Giờ thực tế: ' + getActualTime(evt.start)">
+                        <i class="bi bi-heptagon-fill text-warning me-1 small" style="font-size: 0.7rem;"></i><span class="text-danger opacity-75 small">[{{ getActualTime(evt.start) }}]</span> {{ evt.extendedProps?.petName || 'Thú cưng' }}
                       </strong>
                       <div class="d-flex gap-1">
                         <span v-if="evt.extendedProps?.isEmergency" class="badge bg-danger shadow-sm rounded-pill px-2 py-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">CẤP CỨU</span>
@@ -227,10 +227,23 @@ const getEventsForCell = (date: Date, timeStr: string) => {
     const [hourStr, minStr] = timePart.split(':');
     
     const evtDateStr = datePart;
-    const evtTimeStr = `${hourStr}:${minStr}`;
+    let evtTimeStr = `${hourStr}:${minStr}`;
     
+    // Làm tròn giờ khám lẻ xuống khe 30 phút gần nhất (ví dụ: 17:19 -> 17:00, 17:45 -> 17:30)
+    if (!timeSlots.includes(evtTimeStr)) {
+      const min = parseInt(minStr);
+      const roundedMin = min >= 30 ? '30' : '00';
+      evtTimeStr = `${hourStr}:${roundedMin}`;
+    }
+
     return evtDateStr === dateStr && evtTimeStr === timeStr;
   });
+};
+
+const getActualTime = (isoString: string) => {
+  if (!isoString || !isoString.includes('T')) return '';
+  const timePart = isoString.split('T')[1];
+  return timePart.substring(0, 5); // "HH:mm"
 };
 
 // Actions

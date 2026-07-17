@@ -192,12 +192,12 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("check-in")]
-        public async Task<IActionResult> CheckIn([FromBody] CheckInRequestDto request)
+        public async Task<IActionResult> CheckIn([FromBody] CheckInRequestDto request, [FromServices] IReceptionistAppointmentService receptionistAppointmentService)
         {
             try
             {
-                var success = await _receptionistService.CheckInAsync(request);
-                if (success)
+                var appointment = await receptionistAppointmentService.CheckInAsync(request);
+                if (appointment != null)
                     return Ok(new { success = true, message = "Check-in thành công. Đã xếp vào hàng đợi." });
                 return BadRequest(new { success = false, message = "Check-in thất bại. Lỗi không xác định." });
             }

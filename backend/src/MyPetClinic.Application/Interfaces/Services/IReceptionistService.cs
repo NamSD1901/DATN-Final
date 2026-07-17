@@ -10,8 +10,6 @@ namespace MyPetClinic.Application.Interfaces.Services
         // Lấy thông tin xem trước của Lịch hẹn thông qua QR Token
         Task<AppointmentPreviewDto> GetAppointmentPreviewByQrAsync(string qrToken);
 
-        // Check-in một ca khám đã đặt trước
-        Task<bool> CheckInAsync(CheckInRequestDto request);
 
         // Trả về danh sách thú cưng đang có mặt tại phòng khám (Waiting, InProgress, ReadyToPay)
         Task<List<QueueItemDto>> GetTodayQueueAsync();

@@ -12,9 +12,9 @@ namespace WebApi.Controllers
     [Route("api/[controller]")]
     public class AppointmentController : ControllerBase
     {
-        private readonly IAppointmentService _appointmentService;
+        private readonly IReceptionistAppointmentService _appointmentService;
 
-        public AppointmentController(IAppointmentService appointmentService)
+        public AppointmentController(IReceptionistAppointmentService appointmentService)
         {
             _appointmentService = appointmentService;
         }
@@ -161,7 +161,7 @@ namespace WebApi.Controllers
                     return BadRequest(new { success = false, message = "Mã QR không hợp lệ." });
                 }
 
-                var appt = await _appointmentService.CheckInByQrAsync(req.QrToken);
+                var appt = await _appointmentService.CheckInAsync(new CheckInRequestDto { QrToken = req.QrToken });
                 if (appt == null)
                 {
                     return NotFound(new { success = false, message = "Không tìm thấy lịch hẹn với mã QR này." });

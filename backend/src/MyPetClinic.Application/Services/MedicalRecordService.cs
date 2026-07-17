@@ -149,6 +149,64 @@ namespace MyPetClinic.Application.Services
                         ReminderStatus = "Pending"
                     };
 
+                    // ---- VALIDATION: CHECK IF DOCTOR IS AVAILABLE FOR FOLLOW-UP ----
+                    var targetDateStart = followUpApt.AppointmentDate.Date;
+                    var targetDateUtc = DateTime.SpecifyKind(targetDateStart, DateTimeKind.Utc);
+                    var appointmentTimeCheck = followUpApt.StartTime;
+
+                    // 1. Kiểm tra ngày nghỉ lễ và khung giờ hoạt động chung
+                    var isHoliday = _unitOfWork.ClinicHolidays.Query().Any(h => h.IsActive && h.StartDate <= targetDateStart && h.EndDate >= targetDateStart);
+                    if (isHoliday) throw new InvalidOperationException("Phòng khám đóng cửa vào ngày nghỉ lễ này. Vui lòng chọn ngày khác.");
+
+                    var fullAppointmentTime = targetDateStart.Add(appointmentTimeCheck);
+                    if (fullAppointmentTime < DateTime.Now.AddMinutes(5))
+                    {
+                        throw new InvalidOperationException("Thời gian tái khám không thể nằm trong quá khứ hoặc quá sát giờ hiện tại. Vui lòng chọn khung giờ khác.");
+                    }
+
+                    var clinicDay = _unitOfWork.ClinicOperatingDays.Query().FirstOrDefault(d => d.DayOfWeek == targetDateStart.DayOfWeek);
+                    if (clinicDay != null && !clinicDay.IsOpen) throw new InvalidOperationException($"Phòng khám không hoạt động vào {targetDateStart.DayOfWeek}.");
+
+                    if (clinicDay != null && clinicDay.IsOpen)
+                    {
+                        var shifts = _unitOfWork.ClinicOperatingShifts.Query().Where(s => s.ClinicOperatingDayId == clinicDay.Id).ToList();
+                        if (shifts.Any())
+                        {
+                            var isInShift = shifts.Any(s => s.StartTime <= appointmentTimeCheck && s.EndTime >= appointmentTimeCheck.Add(TimeSpan.FromMinutes(30)));
+                            if (!isInShift) throw new InvalidOperationException("Thời gian hẹn không nằm trong khung giờ hoạt động của phòng khám.");
+                        }
+                    }
+
+                    // 2. Kiểm tra bác sĩ có lịch trực không
+                    var docSchedule = _unitOfWork.DoctorSchedules.Query()
+                        .Where(s => s.DoctorId == followUpApt.DoctorId && s.WorkDate == targetDateUtc && s.IsAvailable)
+                        .ToList();
+                    
+                    if (!docSchedule.Any()) throw new InvalidOperationException("Bác sĩ không có lịch trực vào ngày này. Vui lòng chọn giờ khác.");
+
+                    // 3. Kiểm tra xem bác sĩ đã bị đặt lịch trùng giờ chưa
+                    var doctorApts = _unitOfWork.Appointments.Query()
+                        .Where(a => a.DoctorId == followUpApt.DoctorId
+                                    && a.Status != "cancelled"
+                                    && a.AppointmentDate == targetDateUtc)
+                        .Select(a => a.StartTime)
+                        .ToList();
+
+                    var isDoctorDoubleBooked = doctorApts.Any(startTime => Math.Abs((startTime - appointmentTimeCheck).TotalMinutes) < 30);
+                    if (isDoctorDoubleBooked) throw new InvalidOperationException("Khung giờ tái khám này đã có khách hàng khác đặt. Vui lòng chọn giờ trống khác.");
+
+                    // 4. Kiểm tra khách hàng có bị trùng lịch không
+                    var customerSameDayApts = _unitOfWork.Appointments.Query()
+                        .Where(a => a.CustomerId == followUpApt.CustomerId
+                                    && a.Status != "cancelled"
+                                    && a.AppointmentDate == targetDateUtc)
+                        .Select(a => a.StartTime)
+                        .ToList();
+
+                    var isCustomerDoubleBooked = customerSameDayApts.Any(startTime => Math.Abs((startTime - appointmentTimeCheck).TotalMinutes) < 30);
+                    if (isCustomerDoubleBooked) throw new InvalidOperationException("Khách hàng đã có một lịch hẹn khác trong khung giờ này.");
+                    // -----------------------------------------------------------------
+
                     await _unitOfWork.Appointments.AddAsync(followUpApt);
                 }
 
@@ -549,6 +607,64 @@ namespace MyPetClinic.Application.Services
                         ReferenceRecordId = medicalRecord.Id,
                         ReminderStatus = "Pending"
                     };
+
+                    // ---- VALIDATION: CHECK IF DOCTOR IS AVAILABLE FOR FOLLOW-UP ----
+                    var targetDateStart = followUpApt.AppointmentDate.Date;
+                    var targetDateUtc = DateTime.SpecifyKind(targetDateStart, DateTimeKind.Utc);
+                    var appointmentTimeCheck = followUpApt.StartTime;
+
+                    // 1. Kiểm tra ngày nghỉ lễ và khung giờ hoạt động chung
+                    var isHoliday = _unitOfWork.ClinicHolidays.Query().Any(h => h.IsActive && h.StartDate <= targetDateStart && h.EndDate >= targetDateStart);
+                    if (isHoliday) throw new InvalidOperationException("Phòng khám đóng cửa vào ngày nghỉ lễ này. Vui lòng chọn ngày khác.");
+
+                    var fullAppointmentTime = targetDateStart.Add(appointmentTimeCheck);
+                    if (fullAppointmentTime < DateTime.Now.AddMinutes(5))
+                    {
+                        throw new InvalidOperationException("Thời gian tái khám không thể nằm trong quá khứ hoặc quá sát giờ hiện tại. Vui lòng chọn khung giờ khác.");
+                    }
+
+                    var clinicDay = _unitOfWork.ClinicOperatingDays.Query().FirstOrDefault(d => d.DayOfWeek == targetDateStart.DayOfWeek);
+                    if (clinicDay != null && !clinicDay.IsOpen) throw new InvalidOperationException($"Phòng khám không hoạt động vào {targetDateStart.DayOfWeek}.");
+
+                    if (clinicDay != null && clinicDay.IsOpen)
+                    {
+                        var shifts = _unitOfWork.ClinicOperatingShifts.Query().Where(s => s.ClinicOperatingDayId == clinicDay.Id).ToList();
+                        if (shifts.Any())
+                        {
+                            var isInShift = shifts.Any(s => s.StartTime <= appointmentTimeCheck && s.EndTime >= appointmentTimeCheck.Add(TimeSpan.FromMinutes(30)));
+                            if (!isInShift) throw new InvalidOperationException("Thời gian hẹn không nằm trong khung giờ hoạt động của phòng khám.");
+                        }
+                    }
+
+                    // 2. Kiểm tra bác sĩ có lịch trực không
+                    var docSchedule = _unitOfWork.DoctorSchedules.Query()
+                        .Where(s => s.DoctorId == followUpApt.DoctorId && s.WorkDate == targetDateUtc && s.IsAvailable)
+                        .ToList();
+                    
+                    if (!docSchedule.Any()) throw new InvalidOperationException("Bác sĩ không có lịch trực vào ngày này. Vui lòng chọn giờ khác.");
+
+                    // 3. Kiểm tra xem bác sĩ đã bị đặt lịch trùng giờ chưa
+                    var doctorApts = _unitOfWork.Appointments.Query()
+                        .Where(a => a.DoctorId == followUpApt.DoctorId
+                                    && a.Status != "cancelled"
+                                    && a.AppointmentDate == targetDateUtc)
+                        .Select(a => a.StartTime)
+                        .ToList();
+
+                    var isDoctorDoubleBooked = doctorApts.Any(startTime => Math.Abs((startTime - appointmentTimeCheck).TotalMinutes) < 30);
+                    if (isDoctorDoubleBooked) throw new InvalidOperationException("Khung giờ tái khám này đã có khách hàng khác đặt. Vui lòng chọn giờ trống khác.");
+
+                    // 4. Kiểm tra khách hàng có bị trùng lịch không
+                    var customerSameDayApts = _unitOfWork.Appointments.Query()
+                        .Where(a => a.CustomerId == followUpApt.CustomerId
+                                    && a.Status != "cancelled"
+                                    && a.AppointmentDate == targetDateUtc)
+                        .Select(a => a.StartTime)
+                        .ToList();
+
+                    var isCustomerDoubleBooked = customerSameDayApts.Any(startTime => Math.Abs((startTime - appointmentTimeCheck).TotalMinutes) < 30);
+                    if (isCustomerDoubleBooked) throw new InvalidOperationException("Khách hàng đã có một lịch hẹn khác trong khung giờ này.");
+                    // -----------------------------------------------------------------
 
                     await _unitOfWork.Appointments.AddAsync(followUpApt);
                 }

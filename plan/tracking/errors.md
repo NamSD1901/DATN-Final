@@ -189,3 +189,21 @@ Sua doi appointment.Status = "ready_to_pay" trong MedicalRecordService.cs khi kh
 - **Root Cause:** Trong CSDL, biến `vnTime` (chứa Local Time) được lưu thẳng vào cột `AppointmentDate` và `CheckInTime`. Khi dữ liệu được gọi qua API, EF Core's `DateTimeUtcConverter` mặc định gắn cờ UTC nên trả về định dạng `yyyy-MM-ddTHH:mm:00Z`. Frontend lấy chuỗi này bỏ vào `new Date()` sẽ bị hiểu nhầm là giờ UTC, tự động cộng thêm 7 tiếng. Do đó, `refTime` luôn nằm ở thì tương lai, khiến phép trừ thời gian `nowRef - refTime` bị âm và quy về 0.
 - **Solution:** Tạo hàm `fixTimezone` ở `QueueTab.vue` để loại bỏ ký tự `Z` ở đuôi chuỗi thời gian trả về (`timeStr.slice(0, -1)`) trước khi parse `new Date()`. Việc này ép trình duyệt phân tích cú pháp thời gian thành Local Time, giúp bộ đếm hiển thị chính xác số phút đã trôi qua.
 - **Status:** Resolved
+
+## [BUG-APPT-006] Lịch khám do lễ tân đặt không hiển thị trên Customer Portal
+- **Trạng thái:** FIXED
+- **Thời gian:** 17-07-2026
+### Nguyên nhân
+Khi Lễ tân tìm kiếm số điện thoại khách hàng bằng API `QuickSearch` hoặc tạo lịch hẹn, backend gọi hàm `GetCustomerWithPetsByPhoneAsync` trong `ReceptionistService.cs`. Hàm này trước đây query sai từ bảng `Users` thay vì `Customers`, và trả về `user.Id` thay vì `user.CustomerId`. Do đó, `Appointment` được gán `CustomerId` bằng ID của User. 
+Tuy nhiên, khi khách hàng đăng nhập, `CustomerAppointmentController` chỉ trả về lịch hẹn lọc theo `CustomerId` thật của khách hàng, nên lịch hẹn bị gán nhầm ID không hiển thị.
+### Giải pháp
+Sửa lại hàm `GetCustomerWithPetsByPhoneAsync` để query trực tiếp từ bảng `Customers` (bỏ qua bảng `Users`). Trả về đúng `customer.Id`, đảm bảo Lễ tân gán đúng hồ sơ cho lịch hẹn, và lúc đó Customer Portal sẽ hiển thị được lịch hẹn đồng bộ với Lễ tân.
+
+## [BUG-APPT-007] Thiếu backend validation khi đặt lịch tái khám từ giao diện Bác sĩ
+- **Trạng thái:** FIXED
+- **Thời gian:** 17-07-2026
+### Nguyên nhân
+Khi bác sĩ sử dụng `ConsultationRecordTab.vue` hoặc `MedicalRecordsTab.vue` để đặt lịch tái khám, Frontend lấy danh sách tất cả giờ trống của **toàn bộ** bác sĩ thay vì chỉ lọc giờ trống của chính bác sĩ đó. Nguy hiểm hơn, tại phía Backend, `MedicalRecordService` khi gọi `CreateSoapMedicalRecordAsync` đã bỏ qua mọi bước kiểm tra validation (không kiểm tra bác sĩ có lịch trực không, phòng khám có đóng cửa không, có bị trùng 2 lịch cùng lúc không). Điều này dẫn tới việc nếu 2 bệnh nhân cùng lúc đặt lịch tái khám, bác sĩ có thể bị dồn lịch trùng giờ nhau (Double-booking) hoặc lịch rơi vào ngày nghỉ của phòng khám.
+### Giải pháp
+1. **Phía Frontend:** Cập nhật `ConsultationRecordTab.vue`, bổ sung biến lưu trữ `currentDoctorId` lấy từ thông tin cuộc hẹn đang khám. Khi hiển thị danh sách các khung giờ trống, tiến hành lọc mảng `res.data` chỉ giữ lại các giờ trống thuộc về `doctorId` của bác sĩ đang đăng nhập.
+2. **Phía Backend:** Cập nhật `CreateSoapMedicalRecordAsync` và `CreateMedicalRecordAsync` trong `MedicalRecordService.cs`. Đưa toàn bộ module kiểm tra validation của `AppointmentService` (kiểm tra Clinic Holidays, Clinic Operating Shifts, Doctor Schedules, Duplicate Customer/Doctor appointments) vào luồng tạo lịch tái khám. Báo lỗi `InvalidOperationException` lập tức nếu phát hiện khung giờ không hợp lệ.

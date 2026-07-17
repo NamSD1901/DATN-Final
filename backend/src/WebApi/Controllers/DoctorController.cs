@@ -11,9 +11,9 @@ namespace WebApi.Controllers
     public class DoctorController : ControllerBase
     {
         private readonly IReceptionistService _receptionistService;
-        private readonly IAppointmentService _appointmentService;
+        private readonly IDoctorAppointmentService _appointmentService;
 
-        public DoctorController(IReceptionistService receptionistService, IAppointmentService appointmentService)
+        public DoctorController(IReceptionistService receptionistService, IDoctorAppointmentService appointmentService)
         {
             _receptionistService = receptionistService;
             _appointmentService = appointmentService;

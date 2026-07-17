@@ -270,9 +270,24 @@
                   </div>
                 </div>
 
+                <!-- Print Options -->
+                <div class="mb-4">
+                  <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;">Tùy chọn in ấn</h6>
+                  <div class="d-flex flex-column gap-2">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="printInvoiceCb" v-model="printInvoiceOpt">
+                      <label class="form-check-label small fw-bold text-dark cursor-pointer" for="printInvoiceCb">In Hóa đơn thanh toán</label>
+                    </div>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="printMedicalCb" v-model="printMedicalRecordOpt">
+                      <label class="form-check-label small fw-bold text-dark cursor-pointer" for="printMedicalCb">In Bệnh án & Đơn thuốc (Premium)</label>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Action Button -->
-                <button class="btn btn-premium btn-lg w-100 rounded-pill py-2.5 fw-bold shadow-sm" @click="confirmPayment">
-                  <i class="bi bi-printer-fill me-2"></i> Thanh Toán & In Hóa Đơn
+                <button class="btn btn-premium btn-lg w-100 rounded-pill py-2.5 fw-bold shadow-sm" @click="confirmPayment" :disabled="!printInvoiceOpt && !printMedicalRecordOpt">
+                  <i class="bi bi-printer-fill me-2"></i> Thanh Toán & In Tài Liệu
                 </button>
               </div>
             </div>
@@ -307,6 +322,9 @@ const catalogResult = ref<any[]>([]);
 const discountAmount = ref<number>(0);
 const paymentMethod = ref<'cash' | 'qr' | 'pos'>('cash');
 const cashReceived = ref<number>(0);
+
+const printInvoiceOpt = ref<boolean>(true);
+const printMedicalRecordOpt = ref<boolean>(false);
 
 // Computed properties
 const finalTotal = computed(() => {
@@ -467,8 +485,27 @@ const confirmPayment = async () => {
     });
     
     if (res.data.success) {
-      printInvoiceWindow();
-      Swal.fire({ icon: 'success', title: 'Thanh toán thành công!', text: 'Hóa đơn đang được in.', timer: 2000, showConfirmButton: false });
+      // Lấy dữ liệu bệnh án nếu người dùng có chọn in bệnh án
+      let apptData = null;
+      let soapData = null;
+      if (printMedicalRecordOpt.value && selectedAppointmentId.value) {
+        try {
+          const apptRes = await api.get(`/appointment/${selectedAppointmentId.value}`);
+          apptData = apptRes.data;
+        } catch (err) {
+          console.error('Không thể lấy chi tiết bệnh án', err);
+        }
+        try {
+          const soapRes = await api.get(`/medical-records/soap/appointment/${selectedAppointmentId.value}`);
+          soapData = soapRes.data;
+        } catch (err) {
+          console.error('Không thể lấy chi tiết SOAP', err);
+        }
+      }
+
+      printInvoiceWindow(invoice.value, apptData, soapData, printInvoiceOpt.value, printMedicalRecordOpt.value);
+      
+      Swal.fire({ icon: 'success', title: 'Thanh toán thành công!', text: 'Đang xử lý in tài liệu.', timer: 2000, showConfirmButton: false });
       selectedAppointmentId.value = null;
       invoice.value = null;
       await loadPendingCheckouts();
@@ -480,10 +517,9 @@ const confirmPayment = async () => {
   }
 };
 
-// ─── Print: open isolated window with full invoice HTML ───────────────────
-const printInvoiceWindow = () => {
-  if (!invoice.value) return;
-  const inv = invoice.value;
+// ─── Print: open isolated window with full HTML ───────────────────
+const printInvoiceWindow = (inv: any, appt: any, soap: any, optInvoice: boolean, optMedical: boolean) => {
+  if (!inv) return;
   const discount = discountAmount.value;
   const total = Math.max(0, inv.subtotal - discount);
   const payLabel = paymentMethod.value === 'cash' ? 'Tiền mặt' : (paymentMethod.value === 'qr' ? 'Chuyển khoản VietQR' : 'POS / Thẻ ngân hàng');
@@ -504,15 +540,226 @@ const printInvoiceWindow = () => {
 
   const discountRow = discount > 0 ? `<tr style="border-bottom:1px dashed #e2e8f0"><td style="padding:5px 0;font-size:0.82rem;color:#475569">Giảm giá</td><td style="padding:5px 0;text-align:right;color:#ef4444">- ${fmtCur(discount)}</td></tr>` : '';
 
+  // Generate Medical Record Section HTML
+  let medicalRecordHtml = '';
+  if (optMedical && appt) {
+    const medicines = (inv.items || []).filter((i: any) => i.itemType === 'medicine');
+    const services = (inv.items || []).filter((i: any) => i.itemType === 'service');
+    
+    const prescriptionsHtml = medicines.map((m: any, idx: number) => `
+      <div class="rx-item">
+        <div class="rx-name">${idx + 1}. ${m.itemName}</div>
+        <div class="rx-qty">Số lượng: <strong>${m.quantity}</strong></div>
+      </div>`).join('');
+
+    const servicesHtml = services.map((s: any, idx: number) => `
+      <div style="font-size: 0.85rem; color: #334155; margin-bottom: 4px;">
+        <i class="bi bi-check2-circle text-success me-1"></i> ${s.itemName}
+      </div>`).join('');
+
+    medicalRecordHtml = `
+    <div class="medical-record-page" style="${optInvoice ? 'page-break-after: always;' : ''}">
+      <div class="header">
+        <div class="logo-block">
+          <div class="logo-circle">🐾</div>
+          <div>
+            <div class="clinic-name">MYPET CLINIC</div>
+            <div class="clinic-sub">Hệ thống phòng khám thú y cao cấp</div>
+          </div>
+        </div>
+        <div>
+          <div class="inv-title">HỒ SƠ BỆNH ÁN</div>
+          <div class="inv-meta">Ngày khám: ${now}</div>
+        </div>
+      </div>
+
+      <div class="premium-box patient-info-box">
+        <div style="flex:1;">
+          <div class="info-label">THÔNG TIN BỆNH NHÂN</div>
+          <div class="info-value text-xl">${inv.petName || '—'} <span class="species-badge">${inv.petSpecies || 'Khác'}</span></div>
+          <div style="display:flex; gap: 20px; font-size: 0.85rem; color: #475569; margin-top: 6px;">
+            <div>Giống: <strong>${appt?.breed || '—'}</strong></div>
+            <div>Cân nặng: <strong>${soap?.objective?.weight || appt?.weight ? (soap?.objective?.weight || appt?.weight) + ' kg' : '—'}</strong></div>
+            ${soap?.objective?.temperature ? `<div>Nhiệt độ: <strong>${soap.objective.temperature}°C</strong></div>` : ''}
+          </div>
+          <div class="info-meta" style="margin-top: 8px;">Chủ nuôi: <strong>${inv.customerName || '—'}</strong> (${inv.customerPhone || 'N/A'})</div>
+        </div>
+        <div style="text-align:right; border-left: 1px dashed #bfdbfe; padding-left: 20px;">
+          <div class="info-label">BÁC SĨ ĐIỀU TRỊ</div>
+          <div class="info-value text-lg" style="color:#2563eb; margin-bottom: 8px;">BS. ${inv.doctorName || '—'}</div>
+          ${appt?.serviceName ? `<div style="font-size: 0.75rem; background: white; padding: 4px 8px; border-radius: 6px; display: inline-block; color: #0f172a; border: 1px solid #e2e8f0;">Dịch vụ: <strong>${appt.serviceName}</strong></div>` : ''}
+        </div>
+      </div>
+
+      <div class="premium-box clinical-box">
+        <div class="section-title"><i class="bi bi-clipboard-pulse"></i> 1. KẾT QUẢ KHÁM LÂM SÀNG (SOAP)</div>
+        
+        <div class="clinical-grid">
+          ${soap ? `
+          <div class="clinical-item">
+            <div class="clinical-label">S - Chủ quan (Triệu chứng & Lý do khám):</div>
+            <div class="clinical-text">${soap.subjective?.chiefComplaint || 'Không ghi nhận'}</div>
+            ${soap.subjective?.petOwnerNotes ? `<div class="clinical-text" style="font-size: 0.8rem; color:#64748b; margin-top: 4px; font-style:italic;">* Ghi chú từ chủ: ${soap.subjective.petOwnerNotes}</div>` : ''}
+          </div>
+          <div class="clinical-item" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
+            <div class="clinical-label">O - Khách quan (Khám thực thể):</div>
+            <div class="clinical-text" style="font-size: 0.85rem;">
+              Thể trạng: ${soap.objective?.bodyConditionScore || 5}/9 | Tri giác: ${soap.objective?.mentation || 'Bình thường'} | Lượng giá nước: ${soap.objective?.hydration || 'Bình thường'}
+            </div>
+            ${services.length > 0 ? `
+            <div style="margin-top: 8px;">
+              <div class="clinical-label" style="font-size: 0.75rem; margin-bottom: 4px;">Chỉ định cận lâm sàng:</div>
+              ${servicesHtml}
+            </div>` : ''}
+          </div>
+          <div class="clinical-item" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
+            <div class="clinical-label">A - Chẩn đoán:</div>
+            <div class="clinical-text" style="font-weight:600; color:#b91c1c; font-size: 1rem;">${soap.assessment?.definitiveDiagnosis || soap.assessment?.tentativeDiagnosis || 'Chưa có chẩn đoán cuối cùng'}</div>
+            <div class="clinical-text" style="font-size: 0.8rem; color:#64748b; margin-top: 4px;">Tiên lượng: <strong>${soap.assessment?.prognosis || 'Tốt'}</strong> | Mức độ bệnh: <strong>${soap.assessment?.diseaseSeverity || 'Nhẹ'}</strong></div>
+          </div>
+          ` : `
+          <div class="clinical-item">
+            <div class="clinical-label">Lý do khám & Triệu chứng:</div>
+            <div class="clinical-text">${appt?.symptom || '<span style="color:#94a3b8;font-style:italic;">Không ghi nhận triệu chứng bất thường</span>'}</div>
+          </div>
+          
+          ${services.length > 0 ? `
+          <div class="clinical-item" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
+            <div class="clinical-label" style="margin-bottom: 6px;">Chỉ định cận lâm sàng:</div>
+            <div>${servicesHtml}</div>
+          </div>` : ''}
+
+          <div class="clinical-item" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
+            <div class="clinical-label">Kết luận chẩn đoán:</div>
+            <div class="clinical-text" style="font-weight:600; color:#b91c1c; font-size: 1rem;">${appt?.note || '<span style="color:#94a3b8;font-weight:400;font-style:italic;">Đang theo dõi thêm</span>'}</div>
+          </div>
+          `}
+        </div>
+      </div>
+
+      <div class="premium-box rx-box">
+        <div class="section-title"><i class="bi bi-capsule"></i> 2. ĐƠN THUỐC & ĐIỀU TRỊ</div>
+        ${medicines.length > 0 ? `<div class="rx-list">${prescriptionsHtml}</div>` : '<div style="color:#64748b; font-style:italic; padding: 10px 0;">Không có chỉ định sử dụng thuốc tại nhà.</div>'}
+      </div>
+
+      <div class="footer sign-area">
+        <div style="flex:1;">
+          <div style="font-weight:700;margin-bottom:4px">P - Kế hoạch & Dặn dò (Plan):</div>
+          <div style="color:#334155; line-height: 1.8;">
+            ${soap?.plan?.careInstructions ? soap.plan.careInstructions.replace(/\\n/g, '<br>') : `
+            - Vui lòng cho thú cưng uống thuốc đúng liều lượng.<br>
+            - Tái khám ngay nếu thú cưng có biểu hiện bất thường (nôn mửa, bỏ ăn).<br>
+            - Đảm bảo môi trường sống sạch sẽ, thoáng mát.`}
+            ${soap?.plan?.followUpDate ? `<br><br><span style="background-color: #fef3c7; padding: 2px 6px; border-radius: 4px; border: 1px solid #f59e0b; color: #b45309;"><i class="bi bi-calendar-event me-1"></i> Lịch tái khám: <strong>${new Date(soap.plan.followUpDate).toLocaleDateString('vi-VN')}</strong> ${soap.plan.followUpNote ? `(${soap.plan.followUpNote})` : ''}</span>` : ''}
+          </div>
+        </div>
+        <div style="width:200px;text-align:center">
+          <div style="font-weight:700;margin-bottom:4px">Chữ ký Bác sĩ</div>
+          <div class="sign-line"></div>
+          <div style="font-size:0.85rem;color:#0f172a;font-weight:700;">BS. ${inv.doctorName || ''}</div>
+        </div>
+      </div>
+      
+      <div style="text-align:center; font-size: 0.7rem; color: #94a3b8; margin-top: 40px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+        * Tài liệu được trích xuất tự động từ hệ thống quản lý MyPetClinic. Mã hồ sơ: #${String(appt?.id || inv.id).padStart(5, '0')} *
+      </div>
+    </div>
+    `;
+  }
+
+  // Generate Invoice Section HTML
+  let invoiceHtml = '';
+  if (optInvoice) {
+    invoiceHtml = `
+    <div class="invoice-page">
+      <div class="header">
+        <div class="logo-block">
+          <div class="logo-circle">🐾</div>
+          <div>
+            <div class="clinic-name">MYPET CLINIC</div>
+            <div class="clinic-sub">Hệ thống phòng khám thú y cao cấp</div>
+          </div>
+        </div>
+        <div>
+          <div class="inv-title">HÓA ĐƠN DỊCH VỤ</div>
+          <div class="inv-meta">Số: <strong>#INV-${String(inv.id).padStart(5,'0')}</strong></div>
+          <div class="inv-meta">Ngày: ${now}</div>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-box">
+          <div class="info-label">THÔNG TIN KHÁCH HÀNG</div>
+          <div class="info-line"><strong>${inv.customerName || '—'}</strong></div>
+          <div class="info-line">Điện thoại: ${inv.customerPhone || 'N/A'}</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">THÔNG TIN BỆNH NHÂN</div>
+          <div class="info-line"><strong>${inv.petName || '—'}</strong> (${inv.petSpecies || 'Thú cưng'})</div>
+          <div class="info-line">Bác sĩ phụ trách: ${inv.doctorName || '—'}</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">PHÒNG KHÁM</div>
+          <div class="info-line">MyPet Clinic - 124A Xuân Thủy</div>
+          <div class="info-line">P. An Khánh, TP. HCM | Hotline: 0905 090 629</div>
+        </div>
+      </div>
+
+      <table class="items">
+        <thead><tr>
+          <th style="width:40px">STT</th>
+          <th>Mô tả dịch vụ / sản phẩm</th>
+          <th style="text-align:center;width:55px">SL</th>
+          <th style="text-align:right;width:110px">Đơn giá</th>
+          <th style="text-align:right;width:120px">Thành tiền</th>
+        </tr></thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
+
+      <div class="totals">
+        <table>
+          <tr style="border-bottom:1px dashed #e2e8f0"><td style="padding:5px 0;font-size:0.82rem;color:#475569">Tạm tính</td><td style="padding:5px 0;text-align:right;font-size:0.82rem">${fmtCur(inv.subtotal)}</td></tr>
+          ${discountRow}
+          <tr class="total-final"><td style="padding:5px 0">TỔNG CỘNG</td><td style="text-align:right;padding:5px 0">${fmtCur(total)}</td></tr>
+          <tr><td style="padding:4px 0;font-size:0.75rem;color:#64748b" colspan="2">Hình thức: ${payLabel}</td></tr>
+        </table>
+      </div>
+
+      <div class="footer">
+        <div style="flex:1;font-size:0.78rem;color:#475569">
+          <div style="font-weight:700;margin-bottom:4px">Ghi chú:</div>
+          <div>Hóa đơn này là bằng chứng thanh toán hợp lệ tại MyPet Clinic.</div>
+          <div>Cảm ơn quý khách đã tin tưởng sử dụng dịch vụ!</div>
+        </div>
+        <div style="width:160px;text-align:center">
+          <div style="font-weight:700;margin-bottom:4px">Xác nhận của phòng khám</div>
+          <div class="sign-line"></div>
+          <div style="font-size:0.75rem;color:#64748b">Thu ngân</div>
+        </div>
+      </div>
+    </div>
+    `;
+  }
+
   const html = `<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Hóa đơn #INV-${String(inv.id).padStart(5,'0')}</title>
+  <title>In Tài Liệu - MyPetClinic</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Be Vietnam Pro', sans-serif; color: #0f172a; font-size: 13px; line-height: 1.5; padding: 20mm 18mm; background: white; }
+    body { font-family: 'Be Vietnam Pro', sans-serif; color: #0f172a; font-size: 13px; line-height: 1.5; padding: 0; background: #e2e8f0; }
+    
+    .medical-record-page, .invoice-page { 
+      background: white; 
+      margin: 0 auto 20px auto; 
+      padding: 20mm 18mm; 
+      width: 210mm;
+      min-height: 297mm;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
     .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14px; border-bottom: 3px solid #f59e0b; margin-bottom: 18px; }
     .logo-block { display: flex; align-items: center; gap: 14px; }
     .logo-circle { width: 54px; height: 54px; background: linear-gradient(135deg,#fef08a,#f59e0b); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
@@ -520,6 +767,8 @@ const printInvoiceWindow = () => {
     .clinic-sub { font-size: 0.72rem; color: #64748b; margin-top: 3px; }
     .inv-title { font-size: 1.05rem; font-weight: 800; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px; text-align: right; }
     .inv-meta { font-size: 0.78rem; color: #64748b; text-align: right; margin-top: 4px; }
+    
+    /* Invoice Specific */
     .info-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
     .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; }
     .info-label { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; margin-bottom: 5px; }
@@ -532,83 +781,43 @@ const printInvoiceWindow = () => {
     .totals { margin-left: auto; width: 280px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; background: #f8fafc; margin-bottom: 24px; }
     .totals table { width: 100%; }
     .total-final td { font-weight: 800; font-size: 1rem; color: #0f172a; border-top: 2px solid #0f172a; padding-top: 8px !important; }
+    
+    /* Medical Record Specific (Premium) */
+    .premium-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+    .patient-info-box { display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #3b82f6; background: #eff6ff; border-color: #bfdbfe; }
+    .info-value.text-xl { font-size: 1.25rem; font-weight: 700; color: #1e3a8a; margin: 4px 0; }
+    .info-value.text-lg { font-size: 1.1rem; font-weight: 700; }
+    .species-badge { background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; vertical-align: middle; }
+    .section-title { font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; }
+    .clinical-grid { display: flex; flex-direction: column; gap: 12px; }
+    .clinical-label { font-size: 0.75rem; font-weight: 600; color: #64748b; }
+    .clinical-text { font-size: 0.9rem; color: #0f172a; margin-top: 2px; }
+    .rx-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .rx-item { background: white; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .rx-name { font-weight: 700; color: #0f172a; font-size: 0.85rem; }
+    .rx-qty { font-size: 0.75rem; color: #475569; margin-top: 4px; }
+    .sign-area { margin-top: 30px; }
+    
     .footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px dashed #cbd5e1; padding-top: 16px; margin-top: 8px; }
-    .sign-line { border-bottom: 1px solid #0f172a; height: 40px; margin: 8px 0; }
-    @page { size: A4 portrait; margin: 0; }
+    .sign-line { border-bottom: 1px solid #0f172a; height: 60px; margin: 8px 0; }
+    
+    @media print {
+      body { background: white; }
+      .medical-record-page, .invoice-page { 
+        margin: 0; padding: 0; box-shadow: none; width: 100%; min-height: auto;
+      }
+      @page { size: A4 portrait; margin: 15mm; }
+    }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="logo-block">
-      <div class="logo-circle">🐾</div>
-      <div>
-        <div class="clinic-name">MYPET CLINIC</div>
-        <div class="clinic-sub">Hệ thống phòng khám thú y cao cấp</div>
-      </div>
-    </div>
-    <div>
-      <div class="inv-title">HÓA ĐƠN DỊCH VỤ</div>
-      <div class="inv-meta">Số: <strong>#INV-${String(inv.id).padStart(5,'0')}</strong></div>
-      <div class="inv-meta">Ngày: ${now}</div>
-    </div>
-  </div>
-
-  <div class="info-row">
-    <div class="info-box">
-      <div class="info-label">THÔNG TIN KHÁCH HÀNG</div>
-      <div class="info-line"><strong>${inv.customerName || '—'}</strong></div>
-      <div class="info-line">Điện thoại: ${inv.customerPhone || 'N/A'}</div>
-    </div>
-    <div class="info-box">
-      <div class="info-label">THÔNG TIN BỆNH NHÂN</div>
-      <div class="info-line"><strong>${inv.petName || '—'}</strong> (${inv.petSpecies || 'Thú cưng'})</div>
-      <div class="info-line">Bác sĩ phụ trách: ${inv.doctorName || '—'}</div>
-    </div>
-    <div class="info-box">
-      <div class="info-label">PHÒNG KHÁM</div>
-      <div class="info-line">MyPet Clinic - 124A Xuân Thủy</div>
-      <div class="info-line">P. An Khánh, TP. HCM | Hotline: 0905 090 629</div>
-    </div>
-  </div>
-
-  <table class="items">
-    <thead><tr>
-      <th style="width:40px">STT</th>
-      <th>Mô tả dịch vụ / sản phẩm</th>
-      <th style="text-align:center;width:55px">SL</th>
-      <th style="text-align:right;width:110px">Đơn giá</th>
-      <th style="text-align:right;width:120px">Thành tiền</th>
-    </tr></thead>
-    <tbody>${itemsHtml}</tbody>
-  </table>
-
-  <div class="totals">
-    <table>
-      <tr style="border-bottom:1px dashed #e2e8f0"><td style="padding:5px 0;font-size:0.82rem;color:#475569">Tạm tính</td><td style="padding:5px 0;text-align:right;font-size:0.82rem">${fmtCur(inv.subtotal)}</td></tr>
-      ${discountRow}
-      <tr class="total-final"><td style="padding:5px 0">TỔNG CỘNG</td><td style="text-align:right;padding:5px 0">${fmtCur(total)}</td></tr>
-      <tr><td style="padding:4px 0;font-size:0.75rem;color:#64748b" colspan="2">Hình thức: ${payLabel}</td></tr>
-    </table>
-  </div>
-
-  <div class="footer">
-    <div style="flex:1;font-size:0.78rem;color:#475569">
-      <div style="font-weight:700;margin-bottom:4px">Ghi chú:</div>
-      <div>Hóa đơn này là bằng chứng thanh toán hợp lệ tại MyPet Clinic.</div>
-      <div>Cảm ơn quý khách đã tin tưởng sử dụng dịch vụ!</div>
-    </div>
-    <div style="width:160px;text-align:center">
-      <div style="font-weight:700;margin-bottom:4px">Xác nhận của phòng khám</div>
-      <div class="sign-line"></div>
-      <div style="font-size:0.75rem;color:#64748b">Thu ngân</div>
-    </div>
-  </div>
-
-  <script>window.onload = function(){ window.print(); window.onafterprint = function(){ window.close(); }; }<\/script>
+  ${medicalRecordHtml}
+  ${invoiceHtml}
+  <script>window.onload = function(){ setTimeout(() => { window.print(); window.onafterprint = function(){ window.close(); }; }, 500); }<\/script>
 </body>
 </html>`;
 
-  const pw = window.open('', '_blank', 'width=900,height=650');
+  const pw = window.open('', '_blank', 'width=950,height=800');
   if (pw) {
     pw.document.write(html);
     pw.document.close();

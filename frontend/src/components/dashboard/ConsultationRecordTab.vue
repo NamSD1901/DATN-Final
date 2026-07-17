@@ -361,27 +361,59 @@
                     <div v-if="fetchingFollowUpSlots" class="text-primary small mb-2"><span class="spinner-border spinner-border-sm me-1"></span> Đang tải khung giờ...</div>
                     <div v-else-if="availableFollowUpSlots.length === 0" class="alert alert-warning small py-2 mb-0 d-flex align-items-center"><i class="bi bi-exclamation-triangle-fill me-2"></i> Không có khung giờ làm việc nào trống trong ngày này.</div>
                     <div v-else>
-                       <div class="mb-2 d-flex flex-wrap gap-2">
-                         <span class="small fw-bold text-muted d-flex align-items-center w-100"><i class="bi bi-brightness-alt-high me-1"></i> Buổi Sáng:</span>
-                         <button type="button" v-for="time in masterMorningTimes" :key="time" 
-                            class="btn btn-sm rounded-pill px-3"
-                            :class="followUpTimeOnly === time ? 'btn-primary shadow-sm fw-bold' : (availableFollowUpSlots.includes(time) ? 'btn-outline-primary' : 'btn-light text-muted border')"
-                            :disabled="!availableFollowUpSlots.includes(time)"
-                            @click="followUpTimeOnly = time">
-                           {{ time }} <i v-if="followUpTimeOnly === time" class="bi bi-check2 ms-1"></i>
-                         </button>
-                       </div>
-                       <div class="d-flex flex-wrap gap-2 mt-2">
-                         <span class="small fw-bold text-muted d-flex align-items-center w-100"><i class="bi bi-brightness-alt-low me-1"></i> Buổi Chiều:</span>
-                         <button type="button" v-for="time in masterAfternoonTimes" :key="time" 
-                            class="btn btn-sm rounded-pill px-3"
-                            :class="followUpTimeOnly === time ? 'btn-primary shadow-sm fw-bold' : (availableFollowUpSlots.includes(time) ? 'btn-outline-primary' : 'btn-light text-muted border')"
-                            :disabled="!availableFollowUpSlots.includes(time)"
-                            @click="followUpTimeOnly = time">
-                           {{ time }} <i v-if="followUpTimeOnly === time" class="bi bi-check2 ms-1"></i>
-                         </button>
-                       </div>
-                    </div>
+                        <div class="mb-3">
+                          <span class="small fw-bold text-muted d-flex align-items-center mb-2"><i class="bi bi-brightness-alt-high me-1"></i> Buổi Sáng:</span>
+                          <div class="d-flex flex-wrap gap-2">
+                            <button type="button" v-for="slot in displayFollowUpMorningSlots" :key="slot.time" 
+                               class="time-slot-btn"
+                               :class="{
+                                 'slot-selected': followUpTimeOnly === slot.time,
+                                 'slot-past': slot.isPast,
+                                 'slot-too-soon': slot.isTooSoon,
+                                 'slot-booked': slot.isBooked,
+                                 'slot-available': slot.isAvailable
+                               }"
+                               :disabled="!slot.isAvailable"
+                               @click="slot.isAvailable && (followUpTimeOnly = slot.time)">
+                              <span class="slot-time-text">{{ slot.time }}</span>
+                              <i v-if="followUpTimeOnly === slot.time" class="bi bi-check-circle-fill text-white ms-1 position-absolute top-0 start-100 translate-middle" style="font-size: 1.1rem; background: #0d6efd; border-radius: 50%;"></i>
+                              <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                              <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                              <span v-else-if="slot.isBooked" class="slot-badge-label">Đã hết</span>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="mb-3">
+                          <span class="small fw-bold text-muted d-flex align-items-center mb-2"><i class="bi bi-brightness-alt-low me-1"></i> Buổi Chiều:</span>
+                          <div class="d-flex flex-wrap gap-2">
+                            <button type="button" v-for="slot in displayFollowUpAfternoonSlots" :key="slot.time" 
+                               class="time-slot-btn"
+                               :class="{
+                                 'slot-selected': followUpTimeOnly === slot.time,
+                                 'slot-past': slot.isPast,
+                                 'slot-too-soon': slot.isTooSoon,
+                                 'slot-booked': slot.isBooked,
+                                 'slot-available': slot.isAvailable
+                               }"
+                               :disabled="!slot.isAvailable"
+                               @click="slot.isAvailable && (followUpTimeOnly = slot.time)">
+                              <span class="slot-time-text">{{ slot.time }}</span>
+                              <i v-if="followUpTimeOnly === slot.time" class="bi bi-check-circle-fill text-white ms-1 position-absolute top-0 start-100 translate-middle" style="font-size: 1.1rem; background: #0d6efd; border-radius: 50%;"></i>
+                              <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                              <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                              <span v-else-if="slot.isBooked" class="slot-badge-label">Đã hết</span>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-top">
+                          <div class="d-flex flex-wrap gap-3 justify-content-center">
+                            <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
+                            <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#f8f9fa;border:1.5px solid #e9ecef;display:inline-block"></span> <span class="text-muted">Đã qua</span></span>
+                            <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#fff8ec;border:1.5px solid #ffc107;display:inline-block"></span> <span class="text-muted">Quá gần</span></span>
+                            <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#fff5f5;border:1.5px solid #fca5a5;display:inline-block"></span> <span class="text-muted">Đã hết</span></span>
+                          </div>
+                        </div>
+                     </div>
                   </div>
                 </div>
                 <div v-else class="alert alert-light py-2 px-3 mb-0 rounded-pill small w-100 border-0 shadow-sm d-flex align-items-center">
@@ -806,6 +838,7 @@ const followUpDateOnly = ref('');
 const followUpTimeOnly = ref('');
 const fetchingFollowUpSlots = ref(false);
 const availableFollowUpSlots = ref<string[]>([]);
+const currentDoctorId = ref<string>('');
 const masterMorningTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
 const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
 
@@ -827,6 +860,9 @@ const onFollowUpDateChange = async () => {
     });
     const allSlots = new Set<string>();
     res.data.forEach((doc: any) => {
+      if (currentDoctorId.value && doc.doctorId !== currentDoctorId.value) {
+        return; // Filter to show only the current doctor's slots
+      }
       if (doc.availableSlots) {
         doc.availableSlots.forEach((slot: string) => allSlots.add(slot));
       }
@@ -839,6 +875,43 @@ const onFollowUpDateChange = async () => {
     fetchingFollowUpSlots.value = false;
   }
 };
+
+const BOOKING_BUFFER_MS = 15 * 60 * 1000;
+
+interface SlotDisplay {
+  time: string;
+  slotStr: string;
+  isAvailable: boolean;
+  isPast: boolean;
+  isBooked: boolean;
+  isTooSoon: boolean;
+}
+
+const buildFollowUpSlots = (times: string[]): SlotDisplay[] => {
+  if (!followUpDateOnly.value) return [];
+  const now = Date.now();
+  const cutoff = now + BOOKING_BUFFER_MS;
+  const [year, month, day] = followUpDateOnly.value.split('-');
+  
+  return times.map(time => {
+    const slotStr = `${followUpDateOnly.value}T${time}:00`;
+    const [hour, minute] = time.split(':');
+    const slotDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0);
+    const slotMs = slotDate.getTime();
+    
+    const isPast = slotMs < now;
+    const isTooSoon = !isPast && slotMs < cutoff;
+    const isAvailableFromApi = availableFollowUpSlots.value.includes(time);
+    
+    const isBooked = !isPast && !isTooSoon && !isAvailableFromApi;
+    const isAvailable = !isPast && !isTooSoon && isAvailableFromApi;
+    
+    return { time, slotStr, isAvailable, isPast, isBooked, isTooSoon };
+  });
+};
+
+const displayFollowUpMorningSlots = computed<SlotDisplay[]>(() => buildFollowUpSlots(masterMorningTimes));
+const displayFollowUpAfternoonSlots = computed<SlotDisplay[]>(() => buildFollowUpSlots(masterAfternoonTimes));
 
 // Computed: Check if any medicine does not have enough stock
 const hasStockDeficit = computed(() => {
@@ -878,6 +951,9 @@ onMounted(async () => {
           activePatient.value.breed = apptData.petBreed;
           activePatient.value.allergies = apptData.petAllergies || apptData.allergies || 'Không ghi nhận';
         }
+        if (apptData && apptData.doctorId) {
+          currentDoctorId.value = apptData.doctorId;
+        }
       } catch(err) {
         console.error('Không thể lấy thêm thông tin pet từ appointment:', err);
       }
@@ -901,6 +977,9 @@ onMounted(async () => {
            activePatient.value.species = apptData.petSpecies;
            activePatient.value.breed = apptData.petBreed;
            activePatient.value.allergies = apptData.petAllergies || apptData.allergies || 'Không ghi nhận';
+        }
+        if (apptData && apptData.doctorId) {
+          currentDoctorId.value = apptData.doctorId;
         }
       } catch (err) {
         console.error('Không thể resolve petId từ appointment:', err);
@@ -1088,6 +1167,87 @@ const formatDate = (dateStr: string): string => {
 </script>
 
 <style scoped>
+/* ===== Time Slot Buttons ===== */
+.time-slot-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 calc(25% - 0.5rem);
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  gap: 2px;
+  min-width: 72px;
+  line-height: 1.2;
+}
+
+/* Available slot */
+.time-slot-btn.slot-available {
+  background: #fff;
+  border-color: #dee2e6;
+  color: #495057;
+}
+.time-slot-btn.slot-available:hover {
+  border-color: #0d6efd;
+  color: #0d6efd;
+  background: #f0f6ff;
+  box-shadow: 0 2px 8px rgba(13,110,253,0.12);
+}
+
+/* Selected slot */
+.time-slot-btn.slot-selected {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+  box-shadow: 0 4px 12px rgba(13,110,253,0.3);
+}
+
+/* Past slot — grey, italic, strikethrough */
+.time-slot-btn.slot-past {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+  color: #adb5bd;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.time-slot-btn.slot-past .slot-time-text {
+  text-decoration: line-through;
+  font-style: italic;
+}
+
+/* Too soon — amber/orange warning */
+.time-slot-btn.slot-too-soon {
+  background: #fff8ec;
+  border-color: #ffc107;
+  color: #b45309;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Booked by someone else — red/rose */
+.time-slot-btn.slot-booked {
+  background: #fff5f5;
+  border-color: #fca5a5;
+  color: #dc3545;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Small label badge below the time text */
+.slot-badge-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
 .medical-records-tab {
   padding: 0;
 }

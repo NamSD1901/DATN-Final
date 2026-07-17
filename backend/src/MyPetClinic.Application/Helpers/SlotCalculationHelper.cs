@@ -55,8 +55,16 @@ namespace MyPetClinic.Application.Helpers
 
             var availableSlots = new List<DateTime>();
 
+            var now = DateTime.Now;
+
             foreach (var slot in allSlots)
             {
+                // Bỏ qua các slot trong quá khứ (cộng thêm 15 phút buffer để tránh book quá sát giờ)
+                if (slot < now.AddMinutes(15))
+                {
+                    continue;
+                }
+
                 var slotEndTime = slot.AddMinutes(slotDurationMinutes);
 
                 // Kiểm tra xem có lịch hẹn nào trùng hoặc cách slot dưới slotDurationMinutes không (giãn cách cứng)
