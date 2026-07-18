@@ -397,7 +397,7 @@
                         <div v-else class="d-flex flex-column flex-grow-1 overflow-hidden">
                           <div class="slots-scroll-area flex-grow-1 overflow-auto" style="padding-right: 10px; margin-right: -10px;">
                             
-                            <div v-if="displayMorningSlots.length === 0 && displayAfternoonSlots.length === 0" class="empty-state-appt p-4 mt-3 text-center rounded-3 bg-light border border-warning border-opacity-25 mx-2">
+                            <div v-if="displayMorningSlots.length === 0 && displayAfternoonSlots.length === 0 && displayEveningSlots.length === 0" class="empty-state-appt p-4 mt-3 text-center rounded-3 bg-light border border-warning border-opacity-25 mx-2">
                               <i class="bi bi-calendar-x text-warning fs-1 mb-2"></i>
                               <h6 class="fw-bold text-dark mt-3">Phòng khám nghỉ lễ / đóng cửa</h6>
                               <p class="small text-muted mb-0 mt-2">Không có khung giờ làm việc nào trong ngày này. Vui lòng chọn một ngày khác.</p>
@@ -439,6 +439,35 @@
                               <div class="d-flex flex-wrap gap-2">
                                 <button
                                   v-for="slot in displayAfternoonSlots"
+                                  :key="slot.time"
+                                  type="button"
+                                  class="time-slot-btn"
+                                  :class="{
+                                    'slot-selected': bookForm.appointmentDate === slot.slotStr,
+                                    'slot-past': slot.isPast,
+                                    'slot-too-soon': slot.isTooSoon,
+                                    'slot-booked': slot.isBooked,
+                                    'slot-available': slot.isAvailable
+                                  }"
+                                  :disabled="!slot.isAvailable"
+                                  :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần đặt trước ít nhất 1 tiếng' : (slot.isBooked ? 'Khung giờ này đã được đặt' : ''))"
+                                  @click="slot.isAvailable && selectTimeSlot(selectedDoctorFilter === 'auto' ? null : selectedDoctorFilter, slot.slotStr)"
+                                >
+                                  <span class="slot-time-text">{{ slot.time }}</span>
+                                  <i v-if="bookForm.appointmentDate === slot.slotStr" class="bi bi-check-circle-fill ms-1"></i>
+                                  <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                                  <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                                  <span v-else-if="slot.isBooked" class="slot-badge-label">Đã hết</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            <!-- Evening Slots -->
+                            <div v-if="displayEveningSlots.length > 0" class="mb-4">
+                              <h6 class="text-muted fw-bold mb-3 small" style="letter-spacing: 1px;"><i class="bi bi-moon-stars-fill me-1"></i> BUỔI TỐI</h6>
+                              <div class="d-flex flex-wrap gap-2">
+                                <button
+                                  v-for="slot in displayEveningSlots"
                                   :key="slot.time"
                                   type="button"
                                   class="time-slot-btn"
@@ -573,13 +602,13 @@
                         <div class="receipt-card">
                           <div class="receipt-header">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                              <span class="text-uppercase fw-bold text-muted small tracking-wide">{{ $t('booking.apptSchedule') }}</span>
-                              <span class="edit-link text-white opacity-75" @click="currentStep = 2">{{ $t('booking.change') }}</span>
+                              <span class="text-uppercase fw-bold text-primary opacity-75 small tracking-wide">{{ $t('booking.apptSchedule') }}</span>
+                              <span class="edit-link fw-bold text-primary" style="cursor: pointer" @click="currentStep = 2">{{ $t('booking.change') }}</span>
                             </div>
-                            <h3 class="fw-bold text-white mb-1">
+                            <h3 class="fw-bold text-primary mb-1">
                               {{ formatTimeOnly(bookForm.appointmentDate) }}
                             </h3>
-                            <div class="text-white d-flex align-items-center gap-2 opacity-90 small mt-2">
+                            <div class="text-primary fw-semibold d-flex align-items-center justify-content-center gap-2 opacity-75 small mt-1">
                               <i class="bi bi-calendar-event"></i> {{ formatDateFull(bookForm.appointmentDate) }}
                             </div>
                           </div>
@@ -1204,7 +1233,8 @@ const onCalendarDateSelect = (dateStr: string) => {
 
 
 const masterMorningTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
-const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
+const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'];
+const masterEveningTimes = ['18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30'];
 
 interface SlotDisplay {
   time: string;
@@ -1268,6 +1298,7 @@ const buildSlots = (times: string[]): SlotDisplay[] => {
 
 const displayMorningSlots = computed<SlotDisplay[]>(() => buildSlots(masterMorningTimes));
 const displayAfternoonSlots = computed<SlotDisplay[]>(() => buildSlots(masterAfternoonTimes));
+const displayEveningSlots = computed<SlotDisplay[]>(() => buildSlots(masterEveningTimes));
 
 // ===== End Calendar State =====
 

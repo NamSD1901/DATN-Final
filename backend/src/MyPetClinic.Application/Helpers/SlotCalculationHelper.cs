@@ -17,7 +17,8 @@ namespace MyPetClinic.Application.Helpers
 
             // Xác định thời gian bắt đầu và kết thúc cụ thể của ca trực
             var startDateTime = workDate.Date.Add(startTime);
-            var endDateTime = workDate.Date.Add(endTime);
+            var effectiveEndTime = endTime == new TimeSpan(23, 59, 59) ? TimeSpan.FromDays(1) : endTime;
+            var endDateTime = workDate.Date.Add(effectiveEndTime);
 
             var current = startDateTime;
             while (current + TimeSpan.FromMinutes(slotDurationMinutes) <= endDateTime)

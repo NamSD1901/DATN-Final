@@ -15,11 +15,6 @@
             <i class="bi bi-grid-1x2-fill text-warning"></i> {{ $t('sidebar.overview') }}
           </a>
         </li>
-        <li v-if="role !== 'receptionist' && role !== 'doctor'" :class="{ 'active': activeTab === 'profile' }">
-          <a href="#" @click.prevent="activeTab = 'profile'">
-            <i class="bi bi-person-lines-fill text-warning"></i> {{ role === 'customer' ? $t('sidebar.profile') : 'Hồ sơ của tôi' }}
-          </a>
-        </li>
 
         <!-- Staff/Admin specific routes -->
         <template v-if="role === 'receptionist'">
@@ -119,7 +114,7 @@
           <i class="bi bi-plus-circle-fill me-1"></i> {{ role === 'customer' ? $t('sidebar.bookNew') : 'Đặt Lịch Mới' }}
         </button>
 
-        <button v-if="role === 'customer'" @click="activeTab = 'settings'" class="btn btn-outline-secondary w-100 mb-2 border-0 text-start ps-4 rounded-4 hover-text-warning py-2 fw-bold" :class="{'bg-light text-warning': activeTab === 'settings'}" style="font-size: 0.95em;">
+        <button @click="activeTab = 'settings'" class="btn btn-outline-secondary w-100 mb-2 border-0 text-start ps-4 rounded-4 hover-text-warning py-2 fw-bold" :class="{'bg-light text-warning': activeTab === 'settings'}" style="font-size: 0.95em;">
           <i class="bi bi-gear-fill text-warning opacity-75 me-2 fs-5 align-middle"></i> {{ $t('common.settings') }}
         </button>
 
@@ -268,14 +263,11 @@
             </template>
           </div>
 
-          <!-- tab: Profile Details Tab -->
-          <div v-else-if="activeTab === 'profile'" class="container-fluid p-0">
-            <ProfileTab @profile-updated="fetchDashboardData" />
-          </div>
+
 
           <!-- tab: Settings Tab (Customer) -->
           <div v-else-if="activeTab === 'settings'" class="container-fluid p-0">
-            <SettingsTab />
+            <SettingsTab @profile-updated="fetchDashboardData" />
           </div>
 
           <!-- tab: Queue Tab -->
@@ -599,7 +591,7 @@ const fetchDashboardData = async () => {
     } else if (role.value === 'doctor' && activeTab.value === 'overview') {
       activeTab.value = 'doctor-cases';
     } else if (role.value === 'admin' && activeTab.value === 'overview') {
-      activeTab.value = 'profile';
+      activeTab.value = 'staff';
     }
 
     // Fetch details to get avatar, phone, address

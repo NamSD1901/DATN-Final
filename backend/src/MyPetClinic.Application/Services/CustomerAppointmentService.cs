@@ -80,11 +80,11 @@ namespace MyPetClinic.Application.Services
                 throw new InvalidOperationException("Vui lòng đặt lịch trước ít nhất 15 phút để chúng tôi có sự chuẩn bị tốt nhất.");
             }
 
-            // 3. Operating Hours Check (08:00 - 20:00) & Giờ nghỉ trưa (12:00 - 13:30)
+            // 3. Operating Hours Check (08:00 - 24:00) & Giờ nghỉ trưa (12:00 - 13:30)
             var hour = appointmentDate.Hour;
-            if (hour < 8 || hour >= 20)
+            if (hour < 8)
             {
-                throw new InvalidOperationException("Phòng khám đóng cửa vào thời gian này. Vui lòng chọn khung giờ trong giờ hành chính (08:00 - 20:00).");
+                throw new InvalidOperationException("Phòng khám đóng cửa vào thời gian này. Vui lòng chọn khung giờ trong giờ hành chính (08:00 - 24:00).");
             }
             if (hour == 12 || (hour == 13 && appointmentDate.Minute < 30))
             {

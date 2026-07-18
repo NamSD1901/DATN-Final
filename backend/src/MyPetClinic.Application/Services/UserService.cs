@@ -9,10 +9,12 @@ namespace MyPetClinic.Application.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<UserProfileDto?> GetUserProfileAsync(Guid userId)
@@ -54,7 +56,20 @@ namespace MyPetClinic.Application.Services
                 user.DateOfBirth = null;
             }
 
-            if (user.CustomerProfile != null)
+            if (user.CustomerId.HasValue)
+            {
+                var customer = await _unitOfWork.Customers.GetByIdAsync(user.CustomerId.Value);
+                if (customer != null)
+                {
+                    customer.FullName = dto.FullName;
+                    customer.Phone = dto.Phone;
+                    customer.Address = dto.Address;
+                    customer.Gender = dto.Gender;
+                    customer.DateOfBirth = user.DateOfBirth;
+                    _unitOfWork.Customers.Update(customer);
+                }
+            }
+            else if (user.CustomerProfile != null)
             {
                 user.CustomerProfile.FullName = dto.FullName;
                 user.CustomerProfile.Phone = dto.Phone;

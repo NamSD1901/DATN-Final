@@ -397,14 +397,36 @@
                                }"
                                :disabled="!slot.isAvailable"
                                @click="slot.isAvailable && (followUpTimeOnly = slot.time)">
-                              <span class="slot-time-text">{{ slot.time }}</span>
+                      <span class="slot-time-text">{{ slot.time }}</span>
                               <i v-if="followUpTimeOnly === slot.time" class="bi bi-check-circle-fill text-white ms-1 position-absolute top-0 start-100 translate-middle" style="font-size: 1.1rem; background: #0d6efd; border-radius: 50%;"></i>
                               <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
                               <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
                               <span v-else-if="slot.isBooked" class="slot-badge-label">Đã hết</span>
-                            </button>
+                              </button>
+                            </div>
                           </div>
-                        </div>
+                          <div class="mb-3">
+                            <span class="small fw-bold text-muted d-flex align-items-center mb-2"><i class="bi bi-moon-stars-fill me-1"></i> Buổi Tối:</span>
+                            <div class="d-flex flex-wrap gap-2">
+                              <button type="button" v-for="slot in displayFollowUpEveningSlots" :key="slot.time" 
+                                 class="time-slot-btn"
+                                 :class="{
+                                   'slot-selected': followUpTimeOnly === slot.time,
+                                   'slot-past': slot.isPast,
+                                   'slot-too-soon': slot.isTooSoon,
+                                   'slot-booked': slot.isBooked,
+                                   'slot-available': slot.isAvailable
+                                 }"
+                                 :disabled="!slot.isAvailable"
+                                 @click="slot.isAvailable && (followUpTimeOnly = slot.time)">
+                                <span class="slot-time-text">{{ slot.time }}</span>
+                                <i v-if="followUpTimeOnly === slot.time" class="bi bi-check-circle-fill text-white ms-1 position-absolute top-0 start-100 translate-middle" style="font-size: 1.1rem; background: #0d6efd; border-radius: 50%;"></i>
+                                <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                                <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                                <span v-else-if="slot.isBooked" class="slot-badge-label">Đã hết</span>
+                              </button>
+                            </div>
+                          </div>
                         <div class="mt-3 pt-3 border-top">
                           <div class="d-flex flex-wrap gap-3 justify-content-center">
                             <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
@@ -840,7 +862,8 @@ const fetchingFollowUpSlots = ref(false);
 const availableFollowUpSlots = ref<string[]>([]);
 const currentDoctorId = ref<string>('');
 const masterMorningTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
-const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
+const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'];
+const masterEveningTimes = ['18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30'];
 
 const minDateOnlyStr = computed(() => {
   const now = new Date();
@@ -912,6 +935,7 @@ const buildFollowUpSlots = (times: string[]): SlotDisplay[] => {
 
 const displayFollowUpMorningSlots = computed<SlotDisplay[]>(() => buildFollowUpSlots(masterMorningTimes));
 const displayFollowUpAfternoonSlots = computed<SlotDisplay[]>(() => buildFollowUpSlots(masterAfternoonTimes));
+const displayFollowUpEveningSlots = computed<SlotDisplay[]>(() => buildFollowUpSlots(masterEveningTimes));
 
 // Computed: Check if any medicine does not have enough stock
 const hasStockDeficit = computed(() => {

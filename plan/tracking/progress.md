@@ -82,6 +82,8 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 ### 🎯 Sprint 6: Ca Làm Việc & Khung Giờ Bác Sĩ
 *   **Mục tiêu:** Thiết lập cấu trúc ca trực bác sĩ và tính toán slot trống.
 *   **Trạng thái chung:** `✅ CODE DONE` (T18).
+*   **Chi tiết & Cải tiến triển khai:**
+    *   Tích hợp tính năng đồng bộ hiển thị Ngày nghỉ lễ (Clinic Holidays) lên Lịch trực bác sĩ. Sử dụng phương pháp hiển thị Soft Override, che phủ ca trực bằng thẻ "Nghỉ lễ/Đóng cửa" trên UI, đảm bảo toàn vẹn dữ liệu ca trực thật.
 
 ---
 

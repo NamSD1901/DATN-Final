@@ -89,41 +89,50 @@
                  :class="{'bg-warning bg-opacity-10': isToday(day)}">
               <div class="cell-content h-100 rounded p-1 position-relative d-flex flex-column gap-1">
                 
-                <!-- Render Schedules -->
-                <div v-for="sched in getSchedules(doc.id, day)" :key="'s'+sched.id" 
-                     class="schedule-card p-2 rounded shadow-sm pointer"
-                     :style="{ backgroundColor: getDoctorColor(doc.id, 0.1), borderLeft: `4px solid ${getDoctorColor(doc.id, 1)}` }"
-                     @click="openEditModal(sched)">
-                  <div class="fw-bold d-flex align-items-center gap-1" :style="{ color: getDoctorColor(doc.id, 1), fontSize: '0.8rem' }">
-                    <i class="bi bi-clock-history"></i>
-                    {{ formatTime(sched.startTime) }} - {{ formatTime(sched.endTime) }}
-                  </div>
-                  <div class="text-muted mt-1 text-truncate" style="font-size: 0.7rem" v-if="sched.notes" :title="sched.notes">{{ sched.notes }}</div>
-                </div>
-                
-                <!-- Render Block Times -->
-                <div v-for="block in getBlockTimes(doc.id, day)" :key="'b'+block.id"
-                     class="block-card p-2 rounded shadow-sm pointer border-0 position-relative overflow-hidden"
-                     style="background-color: #dc3545; color: white;"
-                     @click="!block.id.toString().startsWith('unavail_') ? openEditBlockModal(block) : null"
-                     :title="block.reason">
-                  <div class="striped-bg"></div>
-                  <div class="fw-bold position-relative z-1 d-flex align-items-center gap-1" style="font-size: 0.8rem">
-                    <i class="bi bi-slash-circle"></i> {{ block.id.toString().startsWith('unavail_') ? 'Nghỉ Phép/Đổi Ca' : 'Lịch Nghỉ' }}
-                  </div>
-                  <div class="position-relative z-1 mt-1 text-white-50" style="font-size: 0.7rem">
-                    {{ formatTime(block.startTime) }} - {{ formatTime(block.endTime) }}
-                  </div>
+                <!-- Render Holiday Overlay -->
+                <div v-if="getHolidayForDay(day)" class="holiday-card p-2 rounded shadow-sm d-flex flex-column justify-content-center align-items-center text-center w-100 h-100 position-absolute top-0 start-0" style="background: rgba(220, 53, 69, 0.1); border: 1px dashed #dc3545; z-index: 5; backdrop-filter: blur(2px);">
+                  <i class="bi bi-calendar-x text-danger fs-4 mb-1"></i>
+                  <span class="fw-bold text-danger small" style="font-size: 0.75rem;">Nghỉ lễ/Đóng cửa</span>
+                  <span class="text-danger mt-1 fw-medium" style="font-size: 0.65rem; word-break: break-word;" :title="getHolidayForDay(day).name">{{ getHolidayForDay(day).name }}</span>
                 </div>
 
-                <!-- Add Button Overlay -->
-                <div class="add-btn-small text-center mt-auto pt-2 pb-1">
-                  <button class="btn btn-sm btn-light rounded-circle shadow-sm text-warning add-btn-hover" 
-                          style="width: 28px; height: 28px; padding: 0"
-                          @click="openCreateModalFor(doc.id, day)" title="Thêm ca trực">
-                    <i class="bi bi-plus fs-5" style="line-height: 0;"></i>
-                  </button>
-                </div>
+                <template v-else>
+                  <!-- Render Schedules -->
+                  <div v-for="sched in getSchedules(doc.id, day)" :key="'s'+sched.id" 
+                       class="schedule-card p-2 rounded shadow-sm pointer"
+                       :style="{ backgroundColor: getDoctorColor(doc.id, 0.1), borderLeft: `4px solid ${getDoctorColor(doc.id, 1)}` }"
+                       @click="openEditModal(sched)">
+                    <div class="fw-bold d-flex align-items-center gap-1" :style="{ color: getDoctorColor(doc.id, 1), fontSize: '0.8rem' }">
+                      <i class="bi bi-clock-history"></i>
+                      {{ formatTime(sched.startTime) }} - {{ formatTime(sched.endTime) }}
+                    </div>
+                    <div class="text-muted mt-1 text-truncate" style="font-size: 0.7rem" v-if="sched.notes" :title="sched.notes">{{ sched.notes }}</div>
+                  </div>
+                  
+                  <!-- Render Block Times -->
+                  <div v-for="block in getBlockTimes(doc.id, day)" :key="'b'+block.id"
+                       class="block-card p-2 rounded shadow-sm pointer border-0 position-relative overflow-hidden"
+                       style="background-color: #dc3545; color: white;"
+                       @click="!block.id.toString().startsWith('unavail_') ? openEditBlockModal(block) : null"
+                       :title="block.reason">
+                    <div class="striped-bg"></div>
+                    <div class="fw-bold position-relative z-1 d-flex align-items-center gap-1" style="font-size: 0.8rem">
+                      <i class="bi bi-slash-circle"></i> {{ block.id.toString().startsWith('unavail_') ? 'Nghỉ Phép/Đổi Ca' : 'Lịch Nghỉ' }}
+                    </div>
+                    <div class="position-relative z-1 mt-1 text-white-50" style="font-size: 0.7rem">
+                      {{ formatTime(block.startTime) }} - {{ formatTime(block.endTime) }}
+                    </div>
+                  </div>
+
+                  <!-- Add Button Overlay -->
+                  <div class="add-btn-small text-center mt-auto pt-2 pb-1">
+                    <button class="btn btn-sm btn-light rounded-circle shadow-sm text-warning add-btn-hover" 
+                            style="width: 28px; height: 28px; padding: 0"
+                            @click="openCreateModalFor(doc.id, day)" title="Thêm ca trực">
+                      <i class="bi bi-plus fs-5" style="line-height: 0;"></i>
+                    </button>
+                  </div>
+                </template>
 
               </div>
             </div>
@@ -321,6 +330,7 @@ import TimePicker from '../shared/TimePicker.vue';
 const loading = ref(false);
 const schedulesList = ref<any[]>([]);
 const blockTimesList = ref<any[]>([]);
+const clinicHolidaysList = ref<any[]>([]);
 const doctorUsers = ref<any[]>([]);
 const filterDoctorId = ref('all');
 
@@ -384,13 +394,15 @@ const loadData = async () => {
     const startStr = toLocalDateStr(currentWeekDays.value[0]);
     const endStr = toLocalDateStr(currentWeekDays.value[6]);
     
-    const [schedulesRes, blocksRes] = await Promise.all([
+    const [schedulesRes, blocksRes, holidaysRes] = await Promise.all([
       api.get(`/doctor-schedules?startDate=${startStr}&endDate=${endStr}`).catch(() => ({ data: [] })),
-      api.get(`/block-times?startDate=${startStr}&endDate=${endStr}`).catch(() => ({ data: [] }))
+      api.get(`/block-times?startDate=${startStr}&endDate=${endStr}`).catch(() => ({ data: [] })),
+      api.get(`/OperatingHours/holidays`).catch(() => ({ data: [] }))
     ]);
     
     schedulesList.value = schedulesRes.data || [];
     blockTimesList.value = blocksRes.data || [];
+    clinicHolidaysList.value = holidaysRes.data?.data || (Array.isArray(holidaysRes.data) ? holidaysRes.data : []);
   } catch (err) {
     console.error('Lỗi tải dữ liệu lịch:', err);
   } finally {
@@ -412,6 +424,16 @@ const loadDoctors = async () => {
 };
 
 // --- GRID HELPERS ---
+const getHolidayForDay = (day: Date) => {
+  const dateStr = toLocalDateStr(day);
+  return clinicHolidaysList.value.find(h => {
+    if (!h.isActive || !h.startDate || !h.endDate) return false;
+    const startStrH = h.startDate.split('T')[0];
+    const endStrH = h.endDate.split('T')[0];
+    return dateStr >= startStrH && dateStr <= endStrH;
+  });
+};
+
 const getSchedules = (doctorId: string, day: Date) => {
   const dateStr = toLocalDateStr(day);
   return schedulesList.value.filter(s => {

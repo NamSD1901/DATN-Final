@@ -15,9 +15,12 @@
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="loading-screen">
-      <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
-      <p class="mt-3 text-muted">Đang tải hồ sơ thú cưng...</p>
+    <div v-if="loading" class="d-flex flex-column align-items-center justify-content-center min-vh-100" style="background: linear-gradient(135deg, #f0f4f8 0%, #e0eaf5 100%);">
+      <div class="spinner-grow text-primary" style="width: 4rem; height: 4rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <h5 class="mt-4 fw-bold text-primary">Đang tải hồ sơ...</h5>
+      <p class="text-muted">Vui lòng đợi trong giây lát</p>
     </div>
 
     <!-- Error -->
@@ -1431,7 +1434,7 @@ onMounted(() => {
 
 .pet-profile-page {
   min-height: 100vh;
-  background: #f8fafc; /* light gray bg like mockup */
+  background: linear-gradient(135deg, #f0f4f8 0%, #e0eaf5 100%);
   font-family: 'Inter', sans-serif;
   padding-bottom: 3rem;
 }
@@ -1441,12 +1444,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem 2rem;
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
-  position: sticky;
-  top: 0;
+  padding: 1.5rem 2rem 0.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  background: transparent;
+  border-bottom: none;
+  position: relative;
   z-index: 100;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .back-btn {
@@ -1494,16 +1500,22 @@ onMounted(() => {
 
 /* AVATAR CARD */
 .avatar-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 1.75rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  border: 1px solid #f1f5f9;
+  gap: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
   flex: 1;
   min-width: 320px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.avatar-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08);
 }
 
 .avatar-wrapper {
@@ -1571,15 +1583,21 @@ onMounted(() => {
 }
 
 .info-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 1.5rem;
   flex: 1;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid #f1f5f9;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   display: flex;
   flex-direction: column;
   justify-content: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.info-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08);
 }
 
 .allergy-card-top {
@@ -1610,15 +1628,21 @@ onMounted(() => {
 
 /* NEXT APPT CARD */
 .next-appt-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 1.5rem;
   width: 280px;
-  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.08);
-  border: 1px solid #ffedd5;
-  border-top: 4px solid #f59e0b; /* Orange top border */
+  box-shadow: 0 8px 32px rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-top: 4px solid #f59e0b;
   display: flex;
   flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.next-appt-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(245, 158, 11, 0.12);
 }
 
 .nac-header {
@@ -1842,10 +1866,11 @@ onMounted(() => {
 
 /* PANELS */
 .dashboard-panel {
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
   overflow: hidden;
 }
 
@@ -2648,5 +2673,18 @@ onMounted(() => {
 .qr-modal-enter-from .qr-modal-card,
 .qr-modal-leave-to .qr-modal-card {
   transform: scale(0.9) translateY(20px);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-glow:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08);
 }
 </style>

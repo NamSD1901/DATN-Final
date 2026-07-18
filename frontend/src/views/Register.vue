@@ -10,7 +10,7 @@
 
     <div class="login-split-layout">
       <!-- ===== LEFT HERO PANEL ===== -->
-      <div class="hero-panel" style="background-image: url('https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&q=80&w=1200');">
+      <div class="hero-panel" style="background-image: url('https://images.unsplash.com/photo-1576201836106-db1758fd1c97?auto=format&fit=crop&q=80&w=1200');">
         <div class="hero-overlay"></div>
         <div class="hero-panel-inner">
           <router-link to="/" class="hero-brand-white">
@@ -375,7 +375,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.92) 100%);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.65) 0%, rgba(2, 6, 23, 0.85) 100%);
   z-index: 1;
 }
 

@@ -96,7 +96,7 @@
                         {{ formatDateFull(record.visitDate) }}
                       </span>
                       <span class="badge rounded-pill" :class="record.recordType === 'Vaccination' ? 'bg-success' : 'bg-primary'">
-                        {{ record.recordType === 'Vaccination' ? 'Tiêm phòng' : 'Khám bệnh' }}
+                        {{ record.serviceName || (record.recordType === 'Vaccination' ? 'Tiêm phòng' : 'Khám bệnh') }}
                       </span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center w-100">
@@ -104,7 +104,7 @@
                         <i class="bi bi-person-badge me-1"></i>BS: <span class="fw-semibold text-dark">{{ record.doctorName || 'Chưa rõ' }}</span>
                       </span>
                       <span v-if="record.diagnosis" class="text-truncate text-muted small ms-2" style="max-width: 200px;">
-                        {{ getShortDiagnosis(record.diagnosis) }}
+                        {{ record.diagnosis }}
                       </span>
                     </div>
                   </div>
@@ -152,59 +152,16 @@
                     </div>
                   </div>
 
-                  <!-- Medical History (Subjective) -->
+                  <!-- Simplified Medical Details -->
                   <div class="medical-details mb-4">
-                    <div class="detail-block mb-3" v-if="record.medicalHistory">
-                      <span class="detail-label"><i class="bi bi-person-lines-fill text-info me-1"></i>Bệnh sử & Lý do khám (S):</span>
-                      <div v-if="safeParseJSON(record.medicalHistory)" class="mt-2 p-3 bg-info bg-opacity-10 rounded-3 small">
-                        <div class="row g-2">
-                          <div class="col-12" v-if="safeParseJSON(record.medicalHistory).chiefComplaint"><span class="text-muted fw-semibold">Lý do khám:</span> {{safeParseJSON(record.medicalHistory).chiefComplaint}}</div>
-                          <div class="col-6" v-if="safeParseJSON(record.medicalHistory).appetite"><span class="text-muted">Ăn uống:</span> {{safeParseJSON(record.medicalHistory).appetite}}</div>
-                          <div class="col-6" v-if="safeParseJSON(record.medicalHistory).urinationIssues"><span class="text-muted">Tiêu tiểu:</span> {{safeParseJSON(record.medicalHistory).urinationIssues}}</div>
-                          <div class="col-6" v-if="safeParseJSON(record.medicalHistory).activityLevel"><span class="text-muted">Hoạt động:</span> {{safeParseJSON(record.medicalHistory).activityLevel}}</div>
-                        </div>
-                      </div>
-                      <p v-else class="detail-content">{{ record.medicalHistory }}</p>
-                    </div>
-
-                    <!-- Clinical Signs (Objective) -->
-                    <div class="detail-block mb-3">
-                      <span class="detail-label"><i class="bi bi-chat-left-dots-fill text-warning me-1"></i>Khám lâm sàng (O):</span>
-                      <div v-if="safeParseJSON(record.clinicalSigns)" class="mt-2 bg-warning bg-opacity-10 p-3 rounded-3 small">
-                        <div class="row g-2">
-                          <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).heartRate"><span class="text-muted">Nhịp tim:</span> {{safeParseJSON(record.clinicalSigns).heartRate}} bpm</div>
-                          <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).respiratoryRate"><span class="text-muted">Nhịp thở:</span> {{safeParseJSON(record.clinicalSigns).respiratoryRate}} l/p</div>
-                          <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).mentation"><span class="text-muted">Tinh thần:</span> {{safeParseJSON(record.clinicalSigns).mentation}}</div>
-                          <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).hydration"><span class="text-muted">Mất nước:</span> {{safeParseJSON(record.clinicalSigns).hydration}}</div>
-                          <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).bodyConditionScore"><span class="text-muted">BCS:</span> {{safeParseJSON(record.clinicalSigns).bodyConditionScore}}/9</div>
-                        </div>
-                      </div>
-                      <p v-else class="detail-content">{{ record.clinicalSigns || 'Không ghi nhận' }}</p>
+                    <div class="mb-4">
+                      <div class="small fw-bold text-muted mb-2 text-uppercase" style="letter-spacing: 0.5px;">Chẩn đoán của bác sĩ:</div>
+                      <div class="text-dark fw-bold p-3 bg-light rounded-3 border" style="font-size: 1.1rem;">{{ record.diagnosis || 'Chưa có chẩn đoán' }}</div>
                     </div>
                     
-                    <!-- Diagnosis (Assessment) -->
-                    <div class="detail-block diagnosis-block mb-3">
-                      <span class="detail-label"><i class="bi bi-activity text-danger me-1"></i>Chẩn đoán y khoa (A):</span>
-                      <div v-if="safeParseJSON(record.diagnosis)" class="mt-2 p-3 bg-danger bg-opacity-10 rounded-3 small">
-                        <div v-if="safeParseJSON(record.diagnosis).tentativeDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ sơ bộ:</span> {{safeParseJSON(record.diagnosis).tentativeDiagnosis}}</div>
-                        <div v-if="safeParseJSON(record.diagnosis).definitiveDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ xác định:</span> <span class="fw-bold text-danger">{{safeParseJSON(record.diagnosis).definitiveDiagnosis}}</span></div>
-                        <div v-if="safeParseJSON(record.diagnosis).differentialDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ phân biệt:</span> {{safeParseJSON(record.diagnosis).differentialDiagnosis}}</div>
-                        <div class="d-flex gap-3 mt-2">
-                          <span v-if="safeParseJSON(record.diagnosis).diseaseSeverity" class="badge bg-white text-dark border">Mức độ: {{safeParseJSON(record.diagnosis).diseaseSeverity}}</span>
-                          <span v-if="safeParseJSON(record.diagnosis).prognosis" class="badge bg-white text-dark border">Tiên lượng: {{safeParseJSON(record.diagnosis).prognosis}}</span>
-                        </div>
-                      </div>
-                      <p v-else class="detail-content fw-bold text-dark">{{ record.diagnosis || 'Chưa ghi nhận' }}</p>
-                    </div>
-
-                    <!-- Treatment Plan (Plan) -->
-                    <div class="detail-block treatment-block mb-3">
-                      <span class="detail-label"><i class="bi bi-file-earmark-medical-fill text-success me-1"></i>Phác đồ & Kế hoạch điều trị (P):</span>
-                      <ul v-if="Array.isArray(safeParseJSON(record.treatmentPlan)) && safeParseJSON(record.treatmentPlan).length > 0" class="mt-2 mb-0 ps-3 bg-success bg-opacity-10 p-3 rounded-3">
-                        <li v-for="(step, idx) in safeParseJSON(record.treatmentPlan)" :key="idx" class="text-dark small mb-1">{{ step }}</li>
-                      </ul>
-                      <p v-else-if="!safeParseJSON(record.treatmentPlan)" class="detail-content text-dark">{{ record.treatmentPlan || 'Chưa ghi nhận' }}</p>
-                      <p v-else class="detail-content text-dark">Chưa ghi nhận</p>
+                    <div v-if="record.careInstructions || record.doctorNotes" class="mt-4 p-3 bg-warning bg-opacity-10 rounded-3 border-start border-warning border-3">
+                      <div class="small fw-bold text-warning-emphasis mb-2"><i class="bi bi-info-circle-fill me-1"></i>Lời dặn dò chăm sóc:</div>
+                      <div class="text-dark fw-medium" style="line-height: 1.6;">{{ record.careInstructions || record.doctorNotes }}</div>
                     </div>
                   </div>
 
@@ -298,19 +255,15 @@ interface PrescribedMedicine {
 interface MedicalRecord {
   recordId: number;
   appointmentId: number;
-  petId: number;
-  petName: string;
-  visitDate: string;
+  serviceName: string;
   recordType: string;
-  medicalHistory?: string;
-  diagnosis: string;
-  treatmentPlan: string;
+  visitDate: string;
   doctorName: string;
-  doctorId: string;
   weight?: number;
   temperature?: number;
-  clinicalSigns: string;
-  doctorNotes: string;
+  diagnosis: string;
+  careInstructions: string;
+  doctorNotes?: string;
   followUpDate?: string;
   prescribedMedicines: PrescribedMedicine[];
   invoiceId?: number;
@@ -335,21 +288,27 @@ const toggleRecord = (recordId: number) => {
   }
 };
 
-const safeParseJSON = (jsonStr: string | undefined | null): any => {
-  if (!jsonStr) return null;
-  try {
-    return JSON.parse(jsonStr);
-  } catch (e) {
-    return null;
-  }
-};
 
-const getShortDiagnosis = (diagnosisStr: string): string => {
-  const parsed = safeParseJSON(diagnosisStr);
-  if (parsed) {
-    return parsed.definitiveDiagnosis || parsed.tentativeDiagnosis || 'Hoàn thành khám';
+
+const formatDiagnosis = (diag: string) => {
+  if (!diag) return 'Không';
+  try {
+    if (diag.trim().startsWith('{')) {
+      const parsed = JSON.parse(diag);
+      const mainDiag = parsed.definitiveDiagnosis || parsed.tentativeDiagnosis;
+      let result = mainDiag ? mainDiag : '';
+      if (parsed.differentialDiagnosis && parsed.differentialDiagnosis !== 'Không') {
+        result += result ? ` | Phân biệt: ${parsed.differentialDiagnosis}` : `Phân biệt: ${parsed.differentialDiagnosis}`;
+      }
+      if (parsed.diseaseSeverity && parsed.diseaseSeverity !== 'Nhẹ') {
+        result += result ? ` | Mức độ: ${parsed.diseaseSeverity}` : `Mức độ: ${parsed.diseaseSeverity}`;
+      }
+      return result || 'Không';
+    }
+  } catch (e) {
+    // Ignore error
   }
-  return diagnosisStr || '';
+  return diag;
 };
 
 // ===== API =====

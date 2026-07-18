@@ -742,7 +742,10 @@ namespace MyPetClinic.Application.Services
                         if (clinicShifts.Any())
                         {
                             availableTimes = availableTimes.Where(t => 
-                                clinicShifts.Any(s => s.StartTime <= t.TimeOfDay && s.EndTime >= t.TimeOfDay.Add(TimeSpan.FromMinutes(30)))
+                                clinicShifts.Any(s => {
+                                    var effEnd = s.EndTime == new TimeSpan(23, 59, 59) ? TimeSpan.FromDays(1) : s.EndTime;
+                                    return s.StartTime <= t.TimeOfDay && effEnd >= t.TimeOfDay.Add(TimeSpan.FromMinutes(30));
+                                })
                             ).ToList();
                         }
                         

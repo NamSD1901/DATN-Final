@@ -85,6 +85,11 @@ namespace MyPetClinic.Application.Services
 
         public async Task<long> CreateScheduleAsync(DoctorScheduleCreateDto dto)
         {
+            if (dto.EndTime == TimeSpan.Zero && dto.StartTime > TimeSpan.Zero)
+            {
+                dto.EndTime = new TimeSpan(23, 59, 59);
+            }
+
             if (dto.StartTime >= dto.EndTime)
             {
                 throw new InvalidOperationException("Giờ kết thúc phải lớn hơn giờ bắt đầu.");
@@ -133,6 +138,11 @@ namespace MyPetClinic.Application.Services
 
         public async Task<bool> UpdateScheduleAsync(long id, DoctorScheduleUpdateDto dto)
         {
+            if (dto.EndTime == TimeSpan.Zero && dto.StartTime > TimeSpan.Zero)
+            {
+                dto.EndTime = new TimeSpan(23, 59, 59);
+            }
+
             if (dto.StartTime >= dto.EndTime)
             {
                 throw new InvalidOperationException("Giờ kết thúc phải lớn hơn giờ bắt đầu.");

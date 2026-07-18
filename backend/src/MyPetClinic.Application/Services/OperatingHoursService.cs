@@ -83,6 +83,12 @@ namespace MyPetClinic.Application.Services
                     {
                         var shift = sortedShifts[i];
 
+                        // Xử lý trường hợp người dùng chọn giờ kết thúc là 12:00 AM (00:00:00) -> Ý nghĩa là 23:59:59 cuối ngày
+                        if (shift.EndTime == TimeSpan.Zero && shift.StartTime > TimeSpan.Zero)
+                        {
+                            shift.EndTime = new TimeSpan(23, 59, 59);
+                        }
+
                         if (shift.StartTime >= shift.EndTime)
                         {
                             throw new InvalidOperationException($"Giờ bắt đầu phải nhỏ hơn giờ kết thúc ({day.DayOfWeek})."); // VR-01

@@ -161,7 +161,7 @@
                 <div class="spinner-border text-primary" role="status"></div>
               </div>
               <div v-else class="slots-container">
-                <div v-if="morningSlots.length === 0 && afternoonSlots.length === 0" class="text-center py-5 px-3">
+                <div v-if="morningSlots.length === 0 && afternoonSlots.length === 0 && eveningSlots.length === 0" class="text-center py-5 px-3">
                   <div class="mb-3">
                     <CalendarX size="48" class="text-muted opacity-50" />
                   </div>
@@ -200,6 +200,23 @@
                     <CheckCircle2 v-if="selectedTime === slot.time" size="14" class="ms-1" />
                   </button>
                 </div>
+
+                <template v-if="eveningSlots.length > 0">
+                  <h6 class="slot-section-title mt-4"><Moon size="16" /> BUỔI TỐI</h6>
+                  <div class="slots-grid">
+                    <button 
+                      v-for="slot in eveningSlots" 
+                      :key="slot.time"
+                      class="slot-btn"
+                      :class="{ 'selected': selectedTime === slot.time, 'disabled': !slot.available }"
+                      :disabled="!slot.available"
+                      @click="selectedTime = slot.time"
+                    >
+                      {{ slot.time }}
+                      <CheckCircle2 v-if="selectedTime === slot.time" size="14" class="ms-1" />
+                    </button>
+                  </div>
+                </template>
 
                 </template>
 
@@ -283,11 +300,11 @@
               <div class="receipt-card">
                 <div class="receipt-header">
                   <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-uppercase fw-bold text-muted small tracking-wide">LỊCH HẸN</span>
-                    <span class="edit-link text-white opacity-75" @click="step = 3">Thay đổi</span>
+                    <span class="text-uppercase fw-bold text-primary opacity-75 small tracking-wide">LỊCH HẸN</span>
+                    <span class="edit-link fw-bold text-primary" style="cursor: pointer" @click="step = 3">Thay đổi</span>
                   </div>
-                  <h3 class="fw-bold text-white mb-1">{{ selectedTime }} {{ selectedTime && parseInt(selectedTime) < 12 ? 'Sáng' : 'Chiều' }}</h3>
-                  <div class="text-white d-flex align-items-center gap-2 opacity-90">
+                  <h3 class="fw-bold text-primary mb-1">{{ selectedTime }} {{ selectedTime && parseInt(selectedTime) < 12 ? 'Sáng' : 'Chiều' }}</h3>
+                  <div class="text-primary fw-semibold d-flex align-items-center justify-content-center gap-2 opacity-75 mt-1">
                     <Calendar size="14" /> {{ formattedSelectedDate }}
                   </div>
                 </div>
@@ -363,7 +380,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { 
   X, Check, PlusCircle, Clock, ChevronLeft, ChevronRight, Info, 
-  Calendar, CalendarX, Sun, Sunset, CheckCircle2, ArrowRight, ArrowLeft,
+  Calendar, CalendarX, Sun, Sunset, Moon, CheckCircle2, ArrowRight, ArrowLeft,
   Stethoscope, ClipboardList, AlignLeft, ShieldCheck, CalendarCheck,
   Syringe, FlaskConical, Bath
 } from 'lucide-vue-next';
@@ -527,6 +544,7 @@ const formattedSelectedDate = computed(() => {
 // Mock slots generator
 const morningSlots = ref<any[]>([]);
 const afternoonSlots = ref<any[]>([]);
+const eveningSlots = ref<any[]>([]);
 
 const fetchTimeSlots = async () => {
   if (!selectedDate.value) return;
@@ -548,24 +566,28 @@ const fetchTimeSlots = async () => {
 
     morningSlots.value = [];
     afternoonSlots.value = [];
+    eveningSlots.value = [];
 
     sortedSlots.forEach((time: string) => {
       const hour = parseInt(time.split(':')[0], 10);
       if (hour < 12) {
         morningSlots.value.push({ time, available: true });
-      } else {
+      } else if (hour < 18) {
         afternoonSlots.value.push({ time, available: true, fast: hour >= 15 });
+      } else {
+        eveningSlots.value.push({ time, available: true });
       }
     });
 
     // Nếu không có slot nào từ server, fallback hiển thị thông báo hoặc mảng rỗng
-    if (morningSlots.value.length === 0 && afternoonSlots.value.length === 0) {
+    if (morningSlots.value.length === 0 && afternoonSlots.value.length === 0 && eveningSlots.value.length === 0) {
       console.warn('Không có ca trực nào khả dụng cho ngày này.');
     }
   } catch (error) {
     console.error('Lỗi khi lấy danh sách slot thời gian:', error);
     morningSlots.value = [];
     afternoonSlots.value = [];
+    eveningSlots.value = [];
   } finally {
     loadingSlots.value = false;
   }

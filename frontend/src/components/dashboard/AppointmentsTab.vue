@@ -180,7 +180,7 @@
                       </td>
                       <td>
                         <div class="fw-semibold">{{ evt.customerName }}</div>
-                        <small class="text-muted">{{ evt.customerPhone }}</small>
+                        <small class="text-muted">{{ evt.customerPhone || 'Chưa cung cấp SĐT' }}</small>
                       </td>
                       <td>Bs. {{ getLastWord(evt.doctorName) }}</td>
                       <td><span class="badge bg-success bg-opacity-10 text-success rounded px-2.5 py-1 fw-bold">{{ evt.serviceName }}</span></td>
@@ -274,7 +274,7 @@
                 </td>
                 <td>
                   <div class="fw-bold">{{ item.customerName }}</div>
-                  <div class="text-muted small">{{ item.customerPhone }}</div>
+                  <div class="text-muted small">{{ item.customerPhone || 'Chưa cung cấp SĐT' }}</div>
                 </td>
                 <td><span class="badge bg-success bg-opacity-10 text-success fw-bold">{{ item.serviceName }}</span></td>
                 <td>Bs. {{ getLastWord(item.doctorName) }}</td>
@@ -539,6 +539,37 @@
                         </div>
                       </div>
 
+                      <!-- Evening Slots -->
+                      <div v-if="displayEveningSlots.length > 0">
+                        <h6 class="text-muted fw-bold mb-3 small d-flex align-items-center gap-2 mt-2">
+                          <span class="badge bg-dark bg-opacity-75 text-white rounded-pill px-3 py-1.5"><i class="bi bi-moon-stars-fill me-1"></i> BUỔI TỐI</span>
+                        </h6>
+                        <div class="d-flex flex-wrap gap-2">
+                          <button
+                            v-for="slot in displayEveningSlots"
+                            :key="slot.time"
+                            type="button"
+                            class="time-slot-btn"
+                            :class="{
+                              'slot-selected': formPayload.timeOnly === slot.time,
+                              'slot-past': slot.isPast,
+                              'slot-too-soon': slot.isTooSoon,
+                              'slot-booked': slot.isBooked,
+                              'slot-available': slot.isAvailable
+                            }"
+                            :disabled="!slot.isAvailable"
+                            :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần đặt trước ít nhất 1 tiếng' : (slot.isBooked ? 'Khung giờ này đã được đặt' : ''))"
+                            @click="slot.isAvailable && (formPayload.timeOnly = slot.time)"
+                          >
+                            <span class="slot-time-text">{{ slot.time }}</span>
+                            <i v-if="formPayload.timeOnly === slot.time" class="bi bi-check-circle-fill text-white ms-1 position-absolute top-0 start-100 translate-middle" style="font-size: 1.1rem; background: #0d6efd; border-radius: 50%;"></i>
+                            <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                            <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                            <span v-else-if="slot.isBooked" class="slot-badge-label">Đã hết</span>
+                          </button>
+                        </div>
+                      </div>
+
                       <div class="mt-3 pt-3 border-top">
                         <div class="d-flex flex-wrap gap-3 justify-content-center">
                           <span class="d-flex align-items-center gap-2 small fw-semibold"><span style="width:14px;height:14px;border-radius:4px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
@@ -607,7 +638,7 @@
                   </div>
                   <div class="mb-0">
                     <small class="text-muted d-block">Số điện thoại liên hệ</small>
-                    <strong class="text-dark"><i class="bi bi-telephone-fill text-primary me-1"></i>{{ selectedDetail.customerPhone }}</strong>
+                    <strong class="text-dark"><i class="bi bi-telephone-fill text-primary me-1"></i>{{ selectedDetail.customerPhone || 'Chưa cung cấp' }}</strong>
                   </div>
                 </div>
               </div>
@@ -837,7 +868,7 @@
                       </div>
                     </div>
 
-                    <div class="mt-2 pt-2 border-top" v-if="displayRescheduleMorningSlots.length > 0 || displayRescheduleAfternoonSlots.length > 0">
+                    <div class="mt-2 pt-2 border-top" v-if="displayRescheduleMorningSlots.length > 0 || displayRescheduleAfternoonSlots.length > 0 || displayRescheduleEveningSlots.length > 0">
                       <p class="small text-muted mb-2 fw-semibold"><i class="bi bi-info-circle me-1"></i> Chú giải màu khung giờ:</p>
                       <div class="d-flex flex-wrap gap-2">
                         <span class="d-flex align-items-center gap-1 small"><span style="width:12px;height:12px;border-radius:3px;background:#fff;border:1.5px solid #dee2e6;display:inline-block"></span> <span class="text-muted">Trống</span></span>
@@ -1158,6 +1189,7 @@ const buildRescheduleSlots = (times: string[]): SlotDisplay[] => {
 
 const displayRescheduleMorningSlots = computed<SlotDisplay[]>(() => buildRescheduleSlots(masterMorningTimes));
 const displayRescheduleAfternoonSlots = computed<SlotDisplay[]>(() => buildRescheduleSlots(masterAfternoonTimes));
+const displayRescheduleEveningSlots = computed<SlotDisplay[]>(() => buildRescheduleSlots(masterEveningTimes));
 
 // Toast
 const toastInfo = ref({
@@ -1222,7 +1254,7 @@ const formPayload = ref({
 
 const workingHours = [
   "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30"
+  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30"
 ];
 
 const fetchingSlots = ref(false);
@@ -1290,7 +1322,8 @@ interface SlotDisplay {
 }
 
 const masterMorningTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
-const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
+const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'];
+const masterEveningTimes = ['18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30'];
 
 const BOOKING_BUFFER_MS = 15 * 60 * 1000; // 15 phút
 
@@ -1348,6 +1381,7 @@ const buildSlots = (times: string[]): SlotDisplay[] => {
 
 const displayMorningSlots = computed<SlotDisplay[]>(() => buildSlots(masterMorningTimes));
 const displayAfternoonSlots = computed<SlotDisplay[]>(() => buildSlots(masterAfternoonTimes));
+const displayEveningSlots = computed<SlotDisplay[]>(() => buildSlots(masterEveningTimes));
 
 
 

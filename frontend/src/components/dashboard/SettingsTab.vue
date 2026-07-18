@@ -1,24 +1,7 @@
 <template>
   <div class="settings-tab-container p-0 p-md-3">
 
-    <!-- ═══════════════════════════════════════════
-         PAGE HEADER - Hero Section Glassmorphic
-    ══════════════════════════════════════════════ -->
-    <div class="settings-hero mb-4 p-4 p-md-5">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <div class="settings-hero-icon">
-              <i class="bi bi-gear-fill"></i>
-            </div>
-            <h3 class="fw-bold gradient-text-gold mb-0">
-              {{ $t('common.settings') }}
-            </h3>
-          </div>
-          <p class="text-muted mb-0 small ms-1">{{ $t('settings.subtitle') }}</p>
-        </div>
-      </div>
-    </div>
+
 
     <!-- ═══════════════════════════════════════════
          MAIN LAYOUT: Sidebar (Nav) + Content
@@ -236,6 +219,11 @@
             </Transition>
           </div>
 
+          <!-- ACCOUNT SECTION -->
+          <div v-else-if="activeSection === 'account'" class="section-account p-0">
+            <ProfileTab @profile-updated="emit('profile-updated')" />
+          </div>
+
           <!-- PLACEHOLDER cho các section chưa implement (Phase 5-6) -->
           <div v-else class="settings-section-placeholder">
             <div class="placeholder-icon">
@@ -258,9 +246,12 @@ import { useI18n } from 'vue-i18n';
 import { useTheme } from '../../utils/useTheme';
 import SettingListItem from '../shared/SettingListItem.vue';
 import UiSwitch from '../shared/UiSwitch.vue';
+import ProfileTab from './ProfileTab.vue';
 
 const { t, locale } = useI18n();
 const { currentTheme, setTheme } = useTheme();
+
+const emit = defineEmits(['profile-updated']);
 
 // ─── Trạng thái: Section nào đang active ────────────────────────────────────
 const activeSection = ref<string>('language');

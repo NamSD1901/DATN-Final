@@ -222,7 +222,7 @@ namespace MyPetClinic.Application.Services
             }
         }
 
-        private string ExtractReadableSoap(string? jsonStr, string fieldType)
+        public string ExtractReadableSoap(string? jsonStr, string fieldType)
         {
             if (string.IsNullOrWhiteSpace(jsonStr)) return string.Empty;
             if (!jsonStr.TrimStart().StartsWith("{") && !jsonStr.TrimStart().StartsWith("[")) return jsonStr; // It's plain text
@@ -297,9 +297,14 @@ namespace MyPetClinic.Application.Services
                     var diagnosis = !string.IsNullOrEmpty(obj.DefinitiveDiagnosis) ? obj.DefinitiveDiagnosis : obj.TentativeDiagnosis;
                     if (!string.IsNullOrEmpty(diagnosis)) parts.Add(diagnosis);
                     
-                    if (!string.IsNullOrEmpty(obj.DifferentialDiagnosis)) parts.Add($"Phân biệt: {obj.DifferentialDiagnosis}");
-                    if (!string.IsNullOrEmpty(obj.DiseaseSeverity) && obj.DiseaseSeverity != "Nhẹ") parts.Add($"Mức độ: {obj.DiseaseSeverity}");
-                    if (!string.IsNullOrEmpty(obj.Prognosis) && obj.Prognosis != "Tốt") parts.Add($"Tiên lượng: {obj.Prognosis}");
+                    if (!string.IsNullOrEmpty(obj.DifferentialDiagnosis) && !obj.DifferentialDiagnosis.Equals("Không", StringComparison.OrdinalIgnoreCase)) 
+                        parts.Add($"Phân biệt: {obj.DifferentialDiagnosis}");
+                    
+                    if (!string.IsNullOrEmpty(obj.DiseaseSeverity) && obj.DiseaseSeverity != "Nhẹ") 
+                        parts.Add($"Mức độ: {obj.DiseaseSeverity}");
+                    
+                    if (!string.IsNullOrEmpty(obj.Prognosis) && obj.Prognosis != "Tốt") 
+                        parts.Add($"Tiên lượng: {obj.Prognosis}");
                     
                     return parts.Any() ? string.Join(" | ", parts) : string.Empty;
                 }

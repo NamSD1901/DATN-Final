@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Services;
+using System.Linq;
 
 namespace WebApi.Controllers
 {
@@ -228,7 +229,25 @@ namespace WebApi.Controllers
                 if (pet == null) return NotFound(new { message = "Không tìm thấy thú cưng." });
 
                 var records = await _medicalRecordService.GetPetMedicalHistoryAsync(id);
-                return Ok(records);
+                var customerRecords = records.Select(r => new MedicalRecordCustomerViewDto
+                {
+                    RecordId = r.RecordId,
+                    AppointmentId = r.AppointmentId,
+                    ServiceName = "Khám bệnh", // Có thể mở rộng để lấy từ Appointment nếu cần
+                    RecordType = r.RecordType,
+                    VisitDate = r.VisitDate,
+                    DoctorName = r.DoctorName,
+                    Weight = r.Weight,
+                    Temperature = r.Temperature,
+                    Diagnosis = r.Diagnosis,
+                    CareInstructions = r.DoctorNotes,
+                    FollowUpDate = r.FollowUpDate,
+                    Prescriptions = r.PrescribedMedicines,
+                    InvoiceId = r.InvoiceId,
+                    InvoiceStatus = r.InvoiceStatus,
+                    InvoiceTotalAmount = r.InvoiceTotalAmount
+                }).ToList();
+                return Ok(customerRecords);
             }
             catch (Exception ex)
             {

@@ -72,4 +72,26 @@ namespace MyPetClinic.Application.DTOs
         public string? DoctorNotes { get; set; }
         public DateTime? FollowUpDate { get; set; }
     }
+
+    public class MedicalRecordCustomerViewDto
+    {
+        public long RecordId { get; set; }
+        public long AppointmentId { get; set; }
+        public string ServiceName { get; set; } = string.Empty;
+        public string RecordType { get; set; } = string.Empty;
+        public DateTime VisitDate { get; set; }
+        public string DoctorName { get; set; } = string.Empty;
+        public decimal Weight { get; set; }
+        public decimal Temperature { get; set; }
+        
+        public string Diagnosis { get; set; } = string.Empty;
+        public string CareInstructions { get; set; } = string.Empty;
+        public DateTime? FollowUpDate { get; set; }
+        
+        public List<PrescribedMedicineDto> Prescriptions { get; set; } = new();
+
+        public long? InvoiceId { get; set; }
+        public string? InvoiceStatus { get; set; }
+        public decimal? InvoiceTotalAmount { get; set; }
+    }
 }

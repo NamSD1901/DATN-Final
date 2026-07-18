@@ -15,5 +15,6 @@ namespace MyPetClinic.Application.Interfaces.Services
         // SOAP APIs
         Task<long> CreateSoapMedicalRecordAsync(MedicalRecordSoapRequestDto dto, Guid doctorId);
         Task<MedicalRecordSoapResponseDto?> GetSoapMedicalRecordByAppointmentAsync(long appointmentId);
+        string ExtractReadableSoap(string? jsonStr, string fieldType);
     }
 }

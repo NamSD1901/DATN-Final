@@ -5,6 +5,8 @@ using MyPetClinic.Application.Interfaces.Services;
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace WebApi.Controllers
 {
@@ -20,6 +22,7 @@ namespace WebApi.Controllers
         private readonly IPetService _petService;
         private readonly ICustomerAppointmentService _customerAppointmentService;
         private readonly IInvoiceService _invoiceService;
+        private readonly IMedicalRecordService _medicalRecordService;
         private readonly MyPetClinic.Application.Interfaces.Repositories.IUserRepository _userRepository;
         private readonly MyPetClinic.Application.Interfaces.Repositories.IUnitOfWork _unitOfWork;
 
@@ -28,6 +31,7 @@ namespace WebApi.Controllers
             IPetService petService,
             ICustomerAppointmentService customerAppointmentService,
             IInvoiceService invoiceService,
+            IMedicalRecordService medicalRecordService,
             MyPetClinic.Application.Interfaces.Repositories.IUserRepository userRepository,
             MyPetClinic.Application.Interfaces.Repositories.IUnitOfWork unitOfWork)
         {
@@ -35,6 +39,7 @@ namespace WebApi.Controllers
             _petService = petService;
             _customerAppointmentService = customerAppointmentService;
             _invoiceService = invoiceService;
+            _medicalRecordService = medicalRecordService;
             _userRepository = userRepository;
             _unitOfWork = unitOfWork;
         }
@@ -240,7 +245,25 @@ namespace WebApi.Controllers
             {
                 var customerId = await GetCurrentCustomerIdAsync();
                 var history = await _appointmentService.GetPetMedicalHistoryAsync(petId, customerId);
-                return Ok(history);
+                var customerRecords = history.Select(r => new MedicalRecordCustomerViewDto
+                {
+                    RecordId = r.RecordId,
+                    AppointmentId = r.AppointmentId,
+                    ServiceName = "Khám bệnh", // Có thể mở rộng để lấy từ Appointment nếu cần
+                    RecordType = r.RecordType,
+                    VisitDate = r.VisitDate,
+                    DoctorName = r.DoctorName,
+                    Weight = r.Weight,
+                    Temperature = r.Temperature,
+                    Diagnosis = _medicalRecordService.ExtractReadableSoap(r.Diagnosis, "A"),
+                    CareInstructions = r.DoctorNotes,
+                    FollowUpDate = r.FollowUpDate,
+                    Prescriptions = r.PrescribedMedicines,
+                    InvoiceId = r.InvoiceId,
+                    InvoiceStatus = r.InvoiceStatus,
+                    InvoiceTotalAmount = r.InvoiceTotalAmount
+                }).ToList();
+                return Ok(customerRecords);
             }
             catch (UnauthorizedAccessException)
             {
