@@ -38,9 +38,11 @@ namespace MyPetClinic.Application.Utils
 </html>";
         }
 
-        public static string BuildAppointmentConfirmedEmail(string customerName, string petName, DateTime appointmentDate, string doctorName, string timeSlot)
+        public static string BuildAppointmentConfirmedEmail(string customerName, string petName, DateTime appointmentDate, string doctorName, string timeSlot, string qrToken = "")
         {
             var title = "Xác Nhận Lịch Hẹn Thành Công";
+            var qrHtml = string.IsNullOrEmpty(qrToken) ? "" : $"<tr><th>Mã đặt lịch</th><td><b style='color: #0d6efd; font-size: 16px;'>{qrToken}</b> <small>(Vui lòng đưa mã này cho Lễ tân khi đến)</small></td></tr>";
+            
             var content = $@"
                 <p>Chào <b>{customerName}</b>,</p>
                 <p>Phòng khám MyPetClinic đã nhận và xác nhận lịch hẹn của bạn cho thú cưng <b>{petName}</b>. Dưới đây là thông tin chi tiết:</p>
@@ -50,6 +52,7 @@ namespace MyPetClinic.Application.Utils
                     <tr><th>Bác sĩ phụ trách</th><td>{doctorName}</td></tr>
                     <tr><th>Ngày khám</th><td>{appointmentDate:dd/MM/yyyy}</td></tr>
                     <tr><th>Giờ khám</th><td>{timeSlot}</td></tr>
+                    {qrHtml}
                 </table>
                 <p>Vui lòng đến đúng giờ để phòng khám phục vụ bạn tốt nhất. Nếu có thay đổi, vui lòng đăng nhập vào hệ thống để thao tác hoặc liên hệ hotline của chúng tôi.</p>
                 <p>Trân trọng cảm ơn!</p>

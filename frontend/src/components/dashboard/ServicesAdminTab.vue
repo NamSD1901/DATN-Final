@@ -131,6 +131,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import api from '../../services/api';
+import Swal from 'sweetalert2';
 
 const loading = ref(false);
 const servicesList = ref<any[]>([]);
@@ -197,26 +198,38 @@ const submitForm = async () => {
   try {
     if (isEdit.value && currentServiceId.value) {
       await api.put(`/admin/services/${currentServiceId.value}`, form.value);
-      alert('Cập nhật dịch vụ thành công!');
+      Swal.fire({ icon: 'success', title: 'Thành công', text: 'Cập nhật dịch vụ thành công!', timer: 2000, showConfirmButton: false });
     } else {
       await api.post('/admin/services', form.value);
-      alert('Tạo dịch vụ thành công!');
+      Swal.fire({ icon: 'success', title: 'Thành công', text: 'Tạo dịch vụ thành công!', timer: 2000, showConfirmButton: false });
     }
     showModal.value = false;
     await loadServices();
   } catch (err: any) {
-    alert(err.response?.data?.message || 'Lỗi khi lưu thông tin dịch vụ.');
+    Swal.fire({ icon: 'error', title: 'Lỗi', text: err.response?.data?.message || 'Lỗi khi lưu thông tin dịch vụ.' });
   }
 };
 
 const handleDelete = async (id: number) => {
-  if (!confirm('Bạn có chắc muốn ngừng kích hoạt dịch vụ này?')) return;
+  const result = await Swal.fire({
+    title: 'Xác nhận xóa?',
+    text: 'Bạn có chắc muốn ngừng kích hoạt dịch vụ này?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Đồng ý',
+    cancelButtonText: 'Hủy'
+  });
+  
+  if (!result.isConfirmed) return;
+  
   try {
     await api.delete(`/admin/services/${id}`);
-    alert('Ngừng kích hoạt thành công!');
+    Swal.fire({ icon: 'success', title: 'Thành công', text: 'Ngừng kích hoạt thành công!', timer: 2000, showConfirmButton: false });
     await loadServices();
   } catch (err: any) {
-    alert(err.response?.data?.message || 'Lỗi khi xóa dịch vụ.');
+    Swal.fire({ icon: 'error', title: 'Lỗi', text: err.response?.data?.message || 'Lỗi khi xóa dịch vụ.' });
   }
 };
 

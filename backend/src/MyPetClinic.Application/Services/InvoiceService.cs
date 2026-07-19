@@ -180,6 +180,9 @@ namespace MyPetClinic.Application.Services
             string itemName = "";
             decimal unitPrice = 0;
 
+            var existingItem = invoice.InvoiceItems
+                .FirstOrDefault(ii => ii.ItemType == itemType && ii.ItemId == itemId);
+
             if (itemType == "service")
             {
                 var service = await _unitOfWork.Services.GetByIdAsync(itemId);
@@ -191,6 +194,15 @@ namespace MyPetClinic.Application.Services
             {
                 var medicine = await _unitOfWork.Medicines.GetByIdAsync(itemId);
                 if (medicine == null) throw new InvalidOperationException("Không tìm thấy thuốc.");
+                
+                var currentQty = existingItem != null ? existingItem.Quantity : 0;
+                if (currentQty + quantity > medicine.StockQuantity)
+                {
+                    throw new InvalidOperationException(medicine.StockQuantity == 0 
+                        ? "Sản phẩm này đã hết hàng." 
+                        : $"Chỉ có thể thêm tối đa {medicine.StockQuantity - currentQty} sản phẩm nữa (trong kho còn {medicine.StockQuantity}).");
+                }
+                
                 itemName = medicine.Name;
                 unitPrice = medicine.SellPrice;
             }
@@ -198,10 +210,6 @@ namespace MyPetClinic.Application.Services
             {
                 throw new InvalidOperationException("Loại mặt hàng không hợp lệ.");
             }
-
-            // Check if item already exists
-            var existingItem = invoice.InvoiceItems
-                .FirstOrDefault(ii => ii.ItemType == itemType && ii.ItemId == itemId);
 
             if (existingItem != null)
             {
@@ -290,6 +298,15 @@ namespace MyPetClinic.Application.Services
             if (invoice.PaymentStatus == "paid")
             {
                 throw new InvalidOperationException("Không thể chỉnh sửa hóa đơn đã thanh toán.");
+            }
+
+            if (item.ItemType == "medicine" && item.ItemId.HasValue)
+            {
+                var medicine = await _unitOfWork.Medicines.GetByIdAsync(item.ItemId.Value);
+                if (medicine != null && quantity > medicine.StockQuantity)
+                {
+                    throw new InvalidOperationException($"Chỉ còn {medicine.StockQuantity} sản phẩm trong kho.");
+                }
             }
 
             item.Quantity = quantity;
@@ -400,8 +417,12 @@ namespace MyPetClinic.Application.Services
             var list = new List<InvoiceCatalogItemDto>();
             var lowerQuery = (query ?? "").ToLower();
 
-            var servicesList = await _unitOfWork.Services.FindAsync(s => s.IsActive && (string.IsNullOrEmpty(lowerQuery) || s.Name.ToLower().Contains(lowerQuery)));
-            var services = servicesList.OrderBy(s => s.Name).Take(10).ToList();
+            var servicesQuery = _unitOfWork.Services.Query().Where(s => s.IsActive);
+            if (!string.IsNullOrEmpty(lowerQuery))
+            {
+                servicesQuery = servicesQuery.Where(s => s.Name.ToLower().Contains(lowerQuery));
+            }
+            var services = servicesQuery.OrderBy(s => s.Name).Take(10).ToList();
 
             list.AddRange(services.Select(s => new InvoiceCatalogItemDto
             {
@@ -412,8 +433,12 @@ namespace MyPetClinic.Application.Services
                 StockQuantity = 999
             }));
 
-            var medicinesList = await _unitOfWork.Medicines.FindAsync(m => string.IsNullOrEmpty(lowerQuery) || m.Name.ToLower().Contains(lowerQuery));
-            var medicines = medicinesList.OrderBy(m => m.Name).Take(10).ToList();
+            var medicinesQuery = _unitOfWork.Medicines.Query();
+            if (!string.IsNullOrEmpty(lowerQuery))
+            {
+                medicinesQuery = medicinesQuery.Where(m => m.Name.ToLower().Contains(lowerQuery));
+            }
+            var medicines = medicinesQuery.OrderBy(m => m.Name).Take(10).ToList();
 
             list.AddRange(medicines.Select(m => new InvoiceCatalogItemDto
             {

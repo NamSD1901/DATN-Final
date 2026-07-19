@@ -138,6 +138,30 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination -->
+    <div v-if="totalPages > 1" class="d-flex justify-content-between align-items-center mt-3">
+      <span class="text-muted small">
+        Hiển thị {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalCustomers) }} trong số {{ totalCustomers }} khách hàng
+      </span>
+      <div class="btn-group shadow-sm">
+        <button class="btn btn-sm btn-outline-secondary" :disabled="currentPage === 1" @click="changePage(currentPage - 1)">
+          <i class="bi bi-chevron-left"></i> Trước
+        </button>
+        <button 
+          v-for="page in totalPages" 
+          :key="page" 
+          class="btn btn-sm" 
+          :class="page === currentPage ? 'btn-secondary text-white' : 'btn-outline-secondary'"
+          @click="changePage(page)"
+        >
+          {{ page }}
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" :disabled="currentPage === totalPages" @click="changePage(currentPage + 1)">
+          Sau <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -151,6 +175,9 @@ const loading = ref(false);
 const customersList = ref<any[]>([]);
 const totalCustomers = ref(0);
 const searchKeyword = ref('');
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalPages = ref(1);
 
 const quickPhoneQuery = ref('');
 const quickSearchResult = ref<any>(null);
@@ -158,9 +185,10 @@ const quickSearchResult = ref<any>(null);
 const loadCustomers = async () => {
   loading.value = true;
   try {
-    const res = await api.get(`/receptionist/customers?search=${encodeURIComponent(searchKeyword.value)}`);
-    customersList.value = res.data || [];
-    totalCustomers.value = customersList.value.length;
+    const res = await api.get(`/receptionist/customers?search=${encodeURIComponent(searchKeyword.value)}&pageIndex=${currentPage.value}&pageSize=${pageSize.value}`);
+    customersList.value = res.data.items || [];
+    totalCustomers.value = res.data.totalCount || 0;
+    totalPages.value = res.data.totalPages || 1;
   } catch (err) {
     console.error('Lỗi tải danh sách khách hàng:', err);
   } finally {
@@ -168,10 +196,18 @@ const loadCustomers = async () => {
   }
 };
 
+const changePage = (page: number) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+    loadCustomers();
+  }
+};
+
 let searchTimer: any = null;
 const debouncedSearch = () => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
+    currentPage.value = 1;
     loadCustomers();
   }, 400);
 };

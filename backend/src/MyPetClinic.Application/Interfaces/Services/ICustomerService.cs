@@ -8,8 +8,7 @@ namespace MyPetClinic.Application.Interfaces.Services
 {
     public interface ICustomerService
     {
-        Task<IEnumerable<UserProfileDto>> SearchCustomersAsync(string keyword);
-        Task<IEnumerable<UserProfileDto>> GetAllCustomersAsync();
+        Task<PaginatedResultDto<UserProfileDto>> GetCustomersPaginatedAsync(string? keyword, int pageIndex, int pageSize);
         Task<UserProfileDto?> GetCustomerDetailAsync(Guid id);
         Task<IEnumerable<PetDto>> GetPetsByCustomerAsync(Guid customerId);
         

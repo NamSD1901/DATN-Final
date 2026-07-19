@@ -247,12 +247,23 @@ namespace MyPetClinic.Application.Services
 
                     if (customer == null)
                     {
+                        var requestedEmail = !string.IsNullOrWhiteSpace(dto.CustomerEmail) ? dto.CustomerEmail.Trim().ToLower() : null;
+                        if (requestedEmail != null)
+                        {
+                            var isEmailTaken = _unitOfWork.Customers.Query().Any(c => c.Email == requestedEmail);
+                            if (isEmailTaken)
+                            {
+                                throw new InvalidOperationException("Email này đã tồn tại trong hệ thống. Vui lòng sử dụng tính năng tìm kiếm thay vì đăng ký mới.");
+                            }
+                        }
+
                         customer = new Customer
                         {
                             Id = Guid.NewGuid(),
                             CustomerCode = "CUS-" + DateTime.UtcNow.ToString("yyyyMMdd") + new Random().Next(100, 999).ToString(),
                             FullName = dto.CustomerName,
                             Phone = dto.CustomerPhone,
+                            Email = !string.IsNullOrWhiteSpace(dto.CustomerEmail) ? dto.CustomerEmail.Trim().ToLower() : null,
                             HasAccount = false,
                             Status = "Active",
                             CreatedAt = DateTime.UtcNow
@@ -332,7 +343,7 @@ namespace MyPetClinic.Application.Services
                         DoctorId = finalDoctorId,
                         Symptom = dto.Symptom?.Trim(),
                         Note = dto.Note?.Trim(),
-                        Status = "waiting", // Khám ngay / Chờ khám
+                        Status = "confirmed", // Khách đặt lịch trước luôn gán là confirmed
                         CreatedBy = createdBy,
                         CreatedAt = DateTime.UtcNow,
                         AppointmentDate = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc),   // Chỉ lưu ngày (với Utc kind)
@@ -340,13 +351,29 @@ namespace MyPetClinic.Application.Services
                         QrToken = qrToken
                     };
 
-                    if (appointmentDate > DateTime.Now.AddHours(1))
-                    {
-                        appointment.Status = "pending"; 
-                    }
-
                     await _unitOfWork.Appointments.AddAsync(appointment);
                     await _unitOfWork.SaveChangesAsync(); // <-- ONE single save
+
+                    // Gửi email vé điện tử nếu có email
+                    if (!string.IsNullOrEmpty(customer.Email))
+                    {
+                        var doctorName = _unitOfWork.Users.Query().FirstOrDefault(u => u.Id == finalDoctorId)?.FullName ?? "Bác sĩ";
+                        
+                        var emailHtml = MyPetClinic.Application.Utils.EmailTemplateBuilder.BuildAppointmentConfirmedEmail(
+                            customerName: customer.FullName ?? "Khách hàng",
+                            petName: pet.Name ?? "thú cưng",
+                            appointmentDate: appointment.AppointmentDate,
+                            doctorName: doctorName,
+                            timeSlot: appointment.StartTime.ToString(@"hh\:mm"),
+                            qrToken: appointment.QrToken
+                        );
+                        await _emailQueue.QueueEmailAsync(new MyPetClinic.Application.DTOs.Notification.EmailMessageDto
+                        {
+                            ToEmail = customer.Email,
+                            Subject = "MyPetClinic - Xác nhận đặt lịch khám thành công",
+                            BodyHtml = emailHtml
+                        });
+                    }
 
                     await _unitOfWork.CommitTransactionAsync();
                     return appointment.Id;
@@ -507,7 +534,8 @@ namespace MyPetClinic.Application.Services
                                 petName: appointment.Pet?.Name ?? "thú cưng",
                                 appointmentDate: appointment.AppointmentDate,
                                 doctorName: appointment.Doctor?.FullName ?? "Bác sĩ",
-                                timeSlot: appointment.StartTime.ToString(@"hh\:mm")
+                                timeSlot: appointment.StartTime.ToString(@"hh\:mm"),
+                                qrToken: appointment.QrToken
                             );
                             await _emailQueue.QueueEmailAsync(new MyPetClinic.Application.DTOs.Notification.EmailMessageDto
                             {

@@ -7,6 +7,7 @@ namespace MyPetClinic.Application.DTOs
         // Customer Info
         public string CustomerName { get; set; } = null!;
         public string CustomerPhone { get; set; } = null!;
+        public string? CustomerEmail { get; set; }
 
         // Pet Info
         public string PetName { get; set; } = null!;

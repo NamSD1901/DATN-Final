@@ -314,9 +314,13 @@
     <!-- 4. QR Checkin Dialog -->
     <div v-if="showQrModal" class="zalo-modal-overlay d-flex align-items-center justify-content-center" @click.self="closeQrModal">
       <div class="zalo-modal-card border-0 shadow-lg" style="max-width: 420px; width: 100%; margin: 0 auto; border-radius: 16px; overflow: hidden;">
-        <div class="zalo-modal-header bg-success bg-gradient text-white p-3 border-0 d-flex justify-content-between align-items-center">
-          <h5 class="modal-title fw-bold mb-0"><i class="bi bi-qr-code-scan me-2"></i> Quét Mã Check-in</h5>
-          <button class="modal-close text-white border-0 bg-transparent ms-auto" @click="closeQrModal"><i class="bi bi-x-lg fs-5"></i></button>
+        <div class="zalo-modal-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+          <h5 class="modal-title fw-bold text-dark mb-0">
+            <div class="d-flex align-items-center bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">
+              <i class="bi bi-qr-code-scan me-2 fs-5"></i> Quét Mã Check-in
+            </div>
+          </h5>
+          <button class="modal-close text-muted border-0 bg-light rounded-circle shadow-sm d-flex align-items-center justify-content-center hover-lift" style="width: 36px; height: 36px;" @click="closeQrModal"><i class="bi bi-x-lg fs-6"></i></button>
         </div>
         <div class="zalo-modal-body p-4 bg-white">
           
@@ -370,25 +374,54 @@
             </div>
           </div>
 
-          <div v-else class="text-center">
+          <div v-else class="px-2 py-1">
             <!-- Camera Scanner Area -->
-            <div id="qr-reader" class="mb-3 rounded-4 overflow-hidden border border-success border-opacity-25" style="width: 100%; min-height: 250px; background: #f8f9fa;"></div>
+            <div class="position-relative mb-4 rounded-4 overflow-hidden border shadow-sm mx-auto d-flex align-items-center justify-content-center" 
+                 style="width: 100%; min-height: 260px; background: #f0f2f5;">
+                 
+              <!-- Actual QR Reader -->
+              <div v-show="isCameraActive" id="qr-reader" class="w-100 h-100"></div>
+              
+              <!-- Placeholder when camera is off -->
+              <div v-if="!isCameraActive" class="text-center p-4">
+                 <div class="bg-white rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center mb-3 text-success" style="width: 70px; height: 70px;">
+                   <i class="bi bi-camera-video fs-1"></i>
+                 </div>
+                 <h6 class="fw-bold text-dark mb-1">Camera Đang Tắt</h6>
+                 <p class="text-muted small mb-3">Bật camera để ứng dụng tự động nhận diện mã QR của khách hàng.</p>
+                 <button class="btn rounded-pill px-4 py-2.5 fw-bold shadow-sm hover-lift d-flex align-items-center justify-content-center mx-auto btn-success text-white" 
+                   @click="toggleCamera">
+                   <i class="bi bi-camera-video-fill me-2 fs-5"></i> Kích Hoạt Camera
+                 </button>
+              </div>
+
+              <!-- Floating Stop button when camera is on -->
+              <button v-if="isCameraActive" class="btn btn-sm btn-danger rounded-pill shadow-lg position-absolute bottom-0 start-50 translate-middle-x mb-3 px-3 py-1.5 fw-bold border border-white border-opacity-50" style="z-index: 10;" @click="toggleCamera">
+                 <i class="bi bi-camera-video-off-fill me-1"></i> Tắt Camera
+              </button>
+            </div>
             
-            <p class="text-muted small mb-3">Đưa mã QR của khách vào khung hình để quét tự động, hoặc nhập tay mã check-in bên dưới.</p>
+            <div class="position-relative d-flex align-items-center justify-content-center mb-4 mt-2">
+               <hr class="w-100 text-muted opacity-25 m-0">
+               <span class="position-absolute bg-white px-3 text-muted fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 1.5px;">Hoặc Nhập Tay</span>
+            </div>
             
-            <div class="mb-4">
-              <input 
-                type="text" 
-                v-model="qrManualCode" 
-                class="form-control text-center fw-bold fs-4 border-success border-2 rounded-3 py-2" 
-                style="letter-spacing: 2px;"
-                placeholder="Nhập mã..."
-                @keyup.enter="previewCheckIn"
-              />
+            <div class="mb-4 text-start">
+              <div class="input-group input-group-lg shadow-sm rounded-4 overflow-hidden border border-success border-opacity-25 bg-white">
+                <span class="input-group-text bg-transparent border-0 text-success ps-4 pe-2"><i class="bi bi-keyboard fs-4"></i></span>
+                <input 
+                  type="text" 
+                  v-model="qrManualCode" 
+                  class="form-control border-0 fw-bold fs-5 shadow-none ps-2 bg-transparent" 
+                  style="letter-spacing: 2px;"
+                  placeholder="Nhập mã check-in..."
+                  @keyup.enter="previewCheckIn"
+                />
+              </div>
             </div>
 
-            <button class="btn btn-success w-100 rounded-pill py-2.5 fw-bold shadow-sm" @click="previewCheckIn">
-              Kiểm Tra Mã
+            <button class="btn btn-success w-100 rounded-pill py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" @click="previewCheckIn">
+              <i class="bi bi-check2-circle fs-5"></i> Kiểm Tra Mã
             </button>
           </div>
         </div>
@@ -437,6 +470,7 @@ const showEmergencyModal = ref(false);
 const showLinkCustomerModal = ref(false);
 const showQrModal = ref(false);
 const previewAppointment = ref<any>(null);
+const isCameraActive = ref(false);
 
 let html5QrCode: Html5Qrcode | null = null;
 
@@ -844,9 +878,20 @@ const stopScanner = async () => {
   }
 };
 
+const toggleCamera = async () => {
+  if (isCameraActive.value) {
+    isCameraActive.value = false;
+    await stopScanner();
+  } else {
+    isCameraActive.value = true;
+    await startScanner();
+  }
+};
+
 const closeQrModal = () => {
   showQrModal.value = false;
   previewAppointment.value = null;
+  isCameraActive.value = false;
   stopScanner();
 };
 
@@ -854,24 +899,24 @@ const previewCheckIn = async () => {
   const token = qrManualCode.value.trim();
   if (!token) return;
   try {
-    await stopScanner();
+    if (isCameraActive.value) await stopScanner();
     const res = await api.get(`/receptionist/appointment-preview?qrToken=${token}`);
     if (res.data.success) {
       previewAppointment.value = res.data.data;
     } else {
       alert(res.data.message);
-      startScanner();
+      if (isCameraActive.value) startScanner();
     }
   } catch (err: any) {
     alert(err.response?.data?.message || 'Không thể kiểm tra mã. Vui lòng thử lại.');
-    startScanner();
+    if (isCameraActive.value) startScanner();
   }
 };
 
 const cancelPreview = () => {
   previewAppointment.value = null;
   qrManualCode.value = '';
-  startScanner();
+  if (isCameraActive.value) startScanner();
 };
 
 const confirmCheckIn = async () => {
@@ -904,8 +949,8 @@ const goToInvoiceTab = (appointmentId: number) => {
 const openQrScanModal = () => {
   qrManualCode.value = '';
   previewAppointment.value = null;
+  isCameraActive.value = false;
   showQrModal.value = true;
-  startScanner();
 };
 
 const openEmergencyModal = () => {

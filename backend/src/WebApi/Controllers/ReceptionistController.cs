@@ -22,11 +22,9 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("customers")]
-        public async Task<IActionResult> Customers([FromQuery] string? search)
+        public async Task<IActionResult> Customers([FromQuery] string? search, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
         {
-            var customers = string.IsNullOrWhiteSpace(search) 
-                ? await _receptionistService.GetAllCustomersAsync() 
-                : await _receptionistService.SearchCustomersAsync(search);
+            var customers = await _receptionistService.GetCustomersPaginatedAsync(search, pageIndex, pageSize);
             return Ok(customers);
         }
 

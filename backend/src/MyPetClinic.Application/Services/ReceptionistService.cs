@@ -460,9 +460,7 @@ namespace MyPetClinic.Application.Services
 
         // --- HÀM REFACTOR TỪ CONTROLLER SANG ---
 
-        public async Task<IEnumerable<UserProfileDto>> GetAllCustomersAsync() => await _customerService.GetAllCustomersAsync();
-
-        public async Task<IEnumerable<UserProfileDto>> SearchCustomersAsync(string search) => await _customerService.SearchCustomersAsync(search);
+        public async Task<PaginatedResultDto<UserProfileDto>> GetCustomersPaginatedAsync(string? search, int pageIndex, int pageSize) => await _customerService.GetCustomersPaginatedAsync(search, pageIndex, pageSize);
 
         public async Task<System.Guid> CreateCustomerWithPetsAsync(CustomerCreateDto dto) => await _customerService.CreateCustomerWithPetsAsync(dto);
 

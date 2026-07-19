@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace MyPetClinic.Application.Services
 {
@@ -18,27 +19,32 @@ namespace MyPetClinic.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IEnumerable<UserProfileDto>> SearchCustomersAsync(string keyword)
+        public async Task<PaginatedResultDto<UserProfileDto>> GetCustomersPaginatedAsync(string? keyword, int pageIndex, int pageSize)
         {
-            IEnumerable<Customer> customers;
-            if (string.IsNullOrWhiteSpace(keyword))
-            {
-                customers = await _unitOfWork.Customers.FindWithIncludesAsync(c => c.DeletedAt == null, c => c.Account!);
-            }
-            else
+            var query = _unitOfWork.Customers.Query()
+                .Include(c => c.Account)
+                .Where(c => c.DeletedAt == null);
+
+            if (!string.IsNullOrWhiteSpace(keyword))
             {
                 var lowerKeyword = keyword.ToLower();
-                customers = await _unitOfWork.Customers.FindWithIncludesAsync(c => 
-                    c.DeletedAt == null && (
+                query = query.Where(c => 
                     (c.FullName != null && c.FullName.ToLower().Contains(lowerKeyword)) ||
                     (c.Phone != null && c.Phone.Contains(keyword)) ||
                     (c.Email != null && c.Email.ToLower().Contains(lowerKeyword)) ||
                     (c.CustomerCode != null && c.CustomerCode.ToLower().Contains(lowerKeyword))
-                    ), c => c.Account!
                 );
             }
 
-            return customers.Select(c => new UserProfileDto
+            var totalCount = await query.CountAsync();
+
+            var customers = await query
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var items = customers.Select(c => new UserProfileDto
             {
                 Id = c.Id,
                 FullName = c.FullName,
@@ -51,25 +57,8 @@ namespace MyPetClinic.Application.Services
                 RoleName = "Customer",
                 CreatedAt = c.CreatedAt
             });
-        }
 
-        public async Task<IEnumerable<UserProfileDto>> GetAllCustomersAsync()
-        {
-            var customers = await _unitOfWork.Customers.FindWithIncludesAsync(c => c.DeletedAt == null, c => c.Account!);
-
-            return customers.Select(c => new UserProfileDto
-            {
-                Id = c.Id,
-                FullName = c.FullName,
-                Email = !string.IsNullOrEmpty(c.Email) ? c.Email : c.Account?.Email,
-                Phone = c.Phone,
-                Address = c.Address,
-                Gender = c.Gender,
-                DateOfBirth = c.DateOfBirth,
-                Avatar = c.Avatar,
-                RoleName = "Customer",
-                CreatedAt = c.CreatedAt
-            });
+            return new PaginatedResultDto<UserProfileDto>(items, totalCount, pageIndex, pageSize);
         }
 
         public async Task<UserProfileDto?> GetCustomerDetailAsync(Guid id)

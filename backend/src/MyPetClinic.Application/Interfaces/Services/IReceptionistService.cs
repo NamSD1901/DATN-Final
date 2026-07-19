@@ -30,8 +30,7 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<CustomerWithPetsDto?> GetCustomerWithPetsByPhoneAsync(string phone);
 
         // --- Các hàm mới thêm từ việc Refactor ReceptionistController ---
-        Task<IEnumerable<UserProfileDto>> GetAllCustomersAsync();
-        Task<IEnumerable<UserProfileDto>> SearchCustomersAsync(string search);
+        Task<PaginatedResultDto<UserProfileDto>> GetCustomersPaginatedAsync(string? search, int pageIndex, int pageSize);
         Task<CustomerDashboardDetailDto?> GetCustomerDashboardDetailAsync(System.Guid id);
         Task<PetDashboardDetailDto?> GetPetDashboardDetailAsync(long id);
         Task<System.Guid> CreateCustomerWithPetsAsync(CustomerCreateDto dto);

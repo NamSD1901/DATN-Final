@@ -140,6 +140,7 @@ import { ref, onMounted } from 'vue';
 import { useClinicConfigStore } from '../../stores/clinicConfig.store';
 import WeeklyDayRow from '../Admin/OperatingHours/WeeklyDayRow.vue';
 import HolidayTable from '../Admin/OperatingHours/HolidayTable.vue';
+import Swal from 'sweetalert2';
 
 const store = useClinicConfigStore();
 const activeTab = ref('weekly');
@@ -157,7 +158,7 @@ const saveWeeklyHours = async () => {
   isSaving.value = true;
   try {
     await store.saveWeeklyHours({ days: localWeeklyHours.value });
-    alert('Cập nhật khung giờ hoạt động thành công!');
+    Swal.fire({ icon: 'success', title: 'Thành công', text: 'Cập nhật khung giờ hoạt động thành công!', timer: 2000, showConfirmButton: false });
     await store.fetchWeeklyHours();
     localWeeklyHours.value = JSON.parse(JSON.stringify(store.weeklyHours));
   } catch (error) {
@@ -207,10 +208,10 @@ const saveHoliday = async () => {
   try {
     if (editingHoliday.value) {
       await store.editHoliday(editingHoliday.value.id, holidayForm.value);
-      alert('Cập nhật ngày nghỉ thành công!');
+      Swal.fire({ icon: 'success', title: 'Thành công', text: 'Cập nhật ngày nghỉ thành công!', timer: 2000, showConfirmButton: false });
     } else {
       await store.addHoliday(holidayForm.value);
-      alert('Thêm ngày nghỉ mới thành công!');
+      Swal.fire({ icon: 'success', title: 'Thành công', text: 'Thêm ngày nghỉ mới thành công!', timer: 2000, showConfirmButton: false });
     }
     closeModal();
   } catch (error) {
@@ -221,10 +222,21 @@ const saveHoliday = async () => {
 };
 
 const confirmDeleteHoliday = async (id: number) => {
-  if (confirm('Bạn có chắc chắn muốn xóa ngày nghỉ này không?')) {
+  const result = await Swal.fire({
+    title: 'Xác nhận xóa?',
+    text: 'Bạn có chắc chắn muốn xóa ngày nghỉ này không?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Đồng ý',
+    cancelButtonText: 'Hủy'
+  });
+  
+  if (result.isConfirmed) {
     try {
       await store.removeHoliday(id);
-      alert('Xóa ngày nghỉ thành công!');
+      Swal.fire({ icon: 'success', title: 'Đã xóa', text: 'Xóa ngày nghỉ thành công!', timer: 2000, showConfirmButton: false });
     } catch (error) {
       // Error handled in store
     }

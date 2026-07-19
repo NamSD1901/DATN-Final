@@ -205,7 +205,7 @@
                 <!-- Payment Method Selectors -->
                 <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;">Hình thức thanh toán</h6>
                 <div class="row g-2 mb-3">
-                  <div class="col-4">
+                  <div class="col-6">
                     <div 
                       class="payment-method-card p-2 text-center" 
                       :class="{ 'active-method': paymentMethod === 'cash' }"
@@ -215,7 +215,7 @@
                       <span class="small fw-bold">Tiền mặt</span>
                     </div>
                   </div>
-                  <div class="col-4">
+                  <div class="col-6">
                     <div 
                       class="payment-method-card p-2 text-center" 
                       :class="{ 'active-method': paymentMethod === 'qr' }"
@@ -223,16 +223,6 @@
                     >
                       <i class="bi bi-qr-code-scan fs-4 text-primary d-block mb-1"></i>
                       <span class="small fw-bold">VietQR</span>
-                    </div>
-                  </div>
-                  <div class="col-4">
-                    <div 
-                      class="payment-method-card p-2 text-center" 
-                      :class="{ 'active-method': paymentMethod === 'pos' }"
-                      @click="paymentMethod = 'pos'"
-                    >
-                      <i class="bi bi-credit-card fs-4 text-info d-block mb-1"></i>
-                      <span class="small fw-bold">POS Thẻ</span>
                     </div>
                   </div>
                 </div>
@@ -262,12 +252,6 @@
                     <div class="mt-2 text-primary small fw-bold"><i class="bi bi-bank me-1"></i>Vietcombank - 990123456789</div>
                   </div>
 
-                  <!-- POS Card -->
-                  <div v-else-if="paymentMethod === 'pos'" class="py-3 text-center">
-                    <div class="spinner-grow spinner-grow-sm text-info mb-2"></div>
-                    <p class="mb-0 small fw-bold text-dark">Kết nối với thiết bị POS...</p>
-                    <small class="text-muted text-xs">Vui lòng quẹt hoặc chạm thẻ ngân hàng.</small>
-                  </div>
                 </div>
 
                 <!-- Print Options -->
@@ -320,7 +304,7 @@ const catalogQuery = ref('');
 const catalogResult = ref<any[]>([]);
 
 const discountAmount = ref<number>(0);
-const paymentMethod = ref<'cash' | 'qr' | 'pos'>('cash');
+const paymentMethod = ref<'cash' | 'qr'>('cash');
 const cashReceived = ref<number>(0);
 
 const printInvoiceOpt = ref<boolean>(true);
@@ -371,7 +355,12 @@ const selectAppointment = async (apptId: number) => {
     cashReceived.value = invoice.value.subtotal - discountAmount.value;
   } catch (err: any) {
     console.error(err);
-    alert(err.response?.data?.message || 'Không thể lập hóa đơn cho ca này.');
+    Swal.fire({ 
+      icon: 'error', 
+      title: 'Lỗi', 
+      text: err.response?.data?.message || 'Không thể lập hóa đơn cho ca này.',
+      confirmButtonColor: '#3b82f6'
+    });
     selectedAppointmentId.value = null;
   } finally {
     loadingInvoice.value = false;
@@ -413,7 +402,12 @@ const addCatalogItem = async (type: string, itemId: number) => {
       recalculateTotal();
     }
   } catch (err: any) {
-    alert(err.response?.data?.message || 'Không thể thêm sản phẩm.');
+    Swal.fire({
+      icon: 'warning',
+      title: 'Không thể thêm sản phẩm',
+      text: err.response?.data?.message || 'Có lỗi xảy ra khi thêm sản phẩm.',
+      confirmButtonColor: '#f59e0b'
+    });
   }
 };
 
@@ -425,8 +419,14 @@ const changeQty = async (itemId: number, newQty: number) => {
       invoice.value = res.data.invoice;
       recalculateTotal();
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
+    Swal.fire({
+      icon: 'warning',
+      title: 'Không thể cập nhật số lượng',
+      text: err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật số lượng.',
+      confirmButtonColor: '#f59e0b'
+    });
   }
 };
 
@@ -468,7 +468,7 @@ const confirmPayment = async () => {
 
   const result = await Swal.fire({
     title: 'Xác nhận thanh toán?',
-    html: `Tổng cần thu: <strong class="text-primary">${finalTotal.value.toLocaleString('vi-VN')}đ</strong><br>Hình thức: <strong>${paymentMethod.value === 'cash' ? 'Tiền mặt' : (paymentMethod.value === 'qr' ? 'VietQR' : 'POS Thẻ')}</strong>`,
+    html: `Tổng cần thu: <strong class="text-primary">${finalTotal.value.toLocaleString('vi-VN')}đ</strong><br>Hình thức: <strong>${paymentMethod.value === 'cash' ? 'Tiền mặt' : 'VietQR'}</strong>`,
     icon: 'question',
     showCancelButton: true,
     confirmButtonText: '✅ Xác nhận & In hóa đơn',
@@ -522,7 +522,7 @@ const printInvoiceWindow = (inv: any, appt: any, soap: any, optInvoice: boolean,
   if (!inv) return;
   const discount = discountAmount.value;
   const total = Math.max(0, inv.subtotal - discount);
-  const payLabel = paymentMethod.value === 'cash' ? 'Tiền mặt' : (paymentMethod.value === 'qr' ? 'Chuyển khoản VietQR' : 'POS / Thẻ ngân hàng');
+  const payLabel = paymentMethod.value === 'cash' ? 'Tiền mặt' : 'Chuyển khoản VietQR';
   const now = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const fmtCur = (v: number) => (v ?? 0).toLocaleString('vi-VN') + 'đ';
 
