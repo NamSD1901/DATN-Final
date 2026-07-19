@@ -113,7 +113,7 @@ onMounted(async () => {
     const allUsers = doctorsRes.data || [];
     doctors.value = allUsers.filter(u => {
       const r = u.role?.toLowerCase() || '';
-      return r === 'doctor' || r === 'clinical_doctor' || r === 'vaccination_doctor';
+      return (r === 'doctor' || r === 'clinical_doctor' || r === 'vaccination_doctor') && u.isActive === true;
     });
   } catch (error) {
     console.error('Failed to load initial data', error);

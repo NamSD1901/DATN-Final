@@ -416,7 +416,7 @@ const loadDoctors = async () => {
     const allUsers = res.data || [];
     doctorUsers.value = allUsers.filter((u: any) => {
       const r = u.role?.toLowerCase() || '';
-      return r === 'doctor' || r === 'clinical_doctor' || r === 'vaccination_doctor';
+      return (r === 'doctor' || r === 'clinical_doctor' || r === 'vaccination_doctor') && u.isActive === true;
     });
   } catch (err) {
     console.error('Lỗi tải danh sách bác sĩ:', err);
