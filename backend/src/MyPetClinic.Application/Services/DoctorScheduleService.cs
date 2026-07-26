@@ -103,7 +103,7 @@ namespace MyPetClinic.Application.Services
                 throw new InvalidOperationException("Không được phép phân ca trực trong quá khứ.");
             }
 
-            // BR01: Check overlap
+            // BR01: Check overlap with other schedules
             var overlappingSchedules = _unitOfWork.DoctorSchedules.Query()
                 .Where(s => s.DoctorId == dto.DoctorId 
                          && s.WorkDate == workDate 
@@ -116,6 +116,24 @@ namespace MyPetClinic.Application.Services
             if (isConflict)
             {
                 throw new InvalidOperationException("Bác sĩ đã có ca trực trùng giờ trong ngày này.");
+            }
+
+            // BR05: Check overlap with approved time off
+            var shiftStart = workDate.Add(dto.StartTime);
+            var shiftEnd = workDate.Add(dto.EndTime);
+
+            var overlappingTimeOffs = _unitOfWork.ScheduleExceptions.Query()
+                .Where(e => e.DoctorId == dto.DoctorId
+                         && e.Type == "TimeOff"
+                         && e.Status == "Approved")
+                .ToList();
+
+            var isTimeOffConflict = overlappingTimeOffs.Any(e =>
+                e.StartDate < shiftEnd && e.EndDate > shiftStart);
+
+            if (isTimeOffConflict)
+            {
+                throw new InvalidOperationException("Bác sĩ đang trong thời gian nghỉ phép đã được duyệt, không thể xếp ca trực.");
             }
 
             var schedule = new DoctorSchedule
@@ -170,6 +188,24 @@ namespace MyPetClinic.Application.Services
             if (isConflict)
             {
                 throw new InvalidOperationException("Thời gian cập nhật bị trùng với ca trực khác của bác sĩ.");
+            }
+
+            // BR05: Check overlap with approved time off
+            var shiftStart = schedule.WorkDate.Add(dto.StartTime);
+            var shiftEnd = schedule.WorkDate.Add(dto.EndTime);
+
+            var overlappingTimeOffs = _unitOfWork.ScheduleExceptions.Query()
+                .Where(e => e.DoctorId == schedule.DoctorId
+                         && e.Type == "TimeOff"
+                         && e.Status == "Approved")
+                .ToList();
+
+            var isTimeOffConflict = overlappingTimeOffs.Any(e =>
+                e.StartDate < shiftEnd && e.EndDate > shiftStart);
+
+            if (isTimeOffConflict)
+            {
+                throw new InvalidOperationException("Thời gian cập nhật rơi vào thời gian nghỉ phép đã được duyệt của bác sĩ.");
             }
 
             schedule.StartTime = dto.StartTime;

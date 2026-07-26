@@ -71,3 +71,13 @@
   2. Bổ sung 4 auth request DTOs (`ResendOtpRequestDto`, `VerifyOtpRequestDto`, `ForgotPasswordRequestDto`, `ResetPasswordRequestDto`) vào file `AuthDtos.cs` có sẵn.
   3. Cập nhật 4 Controller trỏ sang các DTO mới, thêm `using MyPetClinic.Application.DTOs`, xóa toàn bộ inline class.
 - **Hệ quả:** Controller sạch, chỉ chứa logic điều phối HTTP. DTOs tập trung một nơi, dễ tìm kiếm, dễ unit test, dễ tái sử dụng nếu có nhiều Controller cùng nhận cùng một kiểu input.
+
+## ADR 10: Tối ưu CSDL - Loại bỏ các bảng Banner, Tag và PostTag dư thừa
+
+- **Bối cảnh:** Bảng `Banners`, `Tags` và `PostTags` nằm trong module Tin tức/Marketing. Qua đánh giá nghiệp vụ phòng khám MyPetClinic, việc quản lý nhãn phụ (Tags) n-n tạo thêm độ phức tạp không cần thiết cho ERD (đã có `PostCategory` phục vụ phân loại bài viết), còn Banners không thực sự cần tính năng quản lý động từ Admin.
+- **Quyết định:**
+  1. Loại bỏ các Entity `Banner`, `Tag`, `PostTag` khỏi Domain Layer và DbContext.
+  2. Tạo EF Core Migration `RemoveBannersAndTags` thực hiện `DROP TABLE banners;`, `DROP TABLE post_tags;`, `DROP TABLE tags;`.
+  3. Loại bỏ các Service, Controller, DTOs và Vue Dashboard Tab tương ứng (`BannersAdminTab.vue`, `tagService`, `bannerService`).
+- **Hệ quả:** CSDL gọn nhẹ hơn, tối ưu số lượng bảng và giảm độ phức tạp truy vấn n-n, hoàn toàn an toàn và không gây ảnh hưởng tới bất kỳ module nghiệp vụ lõi nào của phòng khám.
+

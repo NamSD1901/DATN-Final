@@ -42,9 +42,6 @@ namespace MyPetClinic.Infrastructure.Repositories
         public IGenericRepository<ClinicOperatingShift> ClinicOperatingShifts { get; private set; }
         public IGenericRepository<ClinicHoliday> ClinicHolidays { get; private set; }
         public IGenericRepository<PostCategory> PostCategories { get; private set; }
-        public IGenericRepository<Tag> Tags { get; private set; }
-        public IGenericRepository<PostTag> PostTags { get; private set; }
-        public IGenericRepository<Banner> Banners { get; private set; }
         public IGenericRepository<ScheduleProfile> ScheduleProfiles { get; private set; }
         public IGenericRepository<ScheduleProfileShift> ScheduleProfileShifts { get; private set; }
         public IGenericRepository<DoctorScheduleProfile> DoctorScheduleProfiles { get; private set; }
@@ -81,9 +78,6 @@ namespace MyPetClinic.Infrastructure.Repositories
             ClinicOperatingShifts = new GenericRepository<ClinicOperatingShift>(_context);
             ClinicHolidays = new GenericRepository<ClinicHoliday>(_context);
             PostCategories = new GenericRepository<PostCategory>(_context);
-            Tags = new GenericRepository<Tag>(_context);
-            PostTags = new GenericRepository<PostTag>(_context);
-            Banners = new GenericRepository<Banner>(_context);
             ScheduleProfiles = new GenericRepository<ScheduleProfile>(_context);
             ScheduleProfileShifts = new GenericRepository<ScheduleProfileShift>(_context);
             DoctorScheduleProfiles = new GenericRepository<DoctorScheduleProfile>(_context);

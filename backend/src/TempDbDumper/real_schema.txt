@@ -3,10 +3,6 @@ Table: __EFMigrationsHistory
 - MigrationId (character varying)
 - ProductVersion (character varying)
 
-Table: appointment_services
-- id (bigint)
-- appointment_id (bigint)
-- service_id (bigint)
 
 Table: appointments
 - id (bigint)

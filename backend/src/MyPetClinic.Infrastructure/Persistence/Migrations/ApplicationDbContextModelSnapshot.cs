@@ -163,84 +163,6 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.ToTable("appointments", (string)null);
                 });
 
-            modelBuilder.Entity("MyPetClinic.Domain.Entities.Banner", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("end_date");
-
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("image_url");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("LinkUrl")
-                        .HasColumnType("text")
-                        .HasColumnName("link_url");
-
-                    b.Property<int>("Order")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0)
-                        .HasColumnName("order");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea")
-                        .HasColumnName("row_version");
-
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("start_date");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("title");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("updated_by");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedBy");
-
-                    b.HasIndex("UpdatedBy");
-
-                    b.ToTable("banners", (string)null);
-                });
-
             modelBuilder.Entity("MyPetClinic.Domain.Entities.BlockTime", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1327,23 +1249,6 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.ToTable("post_categories", (string)null);
                 });
 
-            modelBuilder.Entity("MyPetClinic.Domain.Entities.PostTag", b =>
-                {
-                    b.Property<long>("PostId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("post_id");
-
-                    b.Property<long>("TagId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("tag_id");
-
-                    b.HasKey("PostId", "TagId");
-
-                    b.HasIndex("TagId");
-
-                    b.ToTable("post_tags", (string)null);
-                });
-
             modelBuilder.Entity("MyPetClinic.Domain.Entities.Prescription", b =>
                 {
                     b.Property<long>("Id")
@@ -1682,41 +1587,6 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("service_categories", (string)null);
-                });
-
-            modelBuilder.Entity("MyPetClinic.Domain.Entities.Tag", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("slug");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Slug")
-                        .IsUnique();
-
-                    b.ToTable("tags", (string)null);
                 });
 
             modelBuilder.Entity("MyPetClinic.Domain.Entities.User", b =>
@@ -2142,23 +2012,6 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.Navigation("Vaccine");
                 });
 
-            modelBuilder.Entity("MyPetClinic.Domain.Entities.Banner", b =>
-                {
-                    b.HasOne("MyPetClinic.Domain.Entities.User", "Creator")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("MyPetClinic.Domain.Entities.User", "Updater")
-                        .WithMany()
-                        .HasForeignKey("UpdatedBy")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Creator");
-
-                    b.Navigation("Updater");
-                });
-
             modelBuilder.Entity("MyPetClinic.Domain.Entities.BlockTime", b =>
                 {
                     b.HasOne("MyPetClinic.Domain.Entities.User", "Doctor")
@@ -2388,25 +2241,6 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.Navigation("Parent");
                 });
 
-            modelBuilder.Entity("MyPetClinic.Domain.Entities.PostTag", b =>
-                {
-                    b.HasOne("MyPetClinic.Domain.Entities.Post", "Post")
-                        .WithMany("PostTags")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MyPetClinic.Domain.Entities.Tag", "Tag")
-                        .WithMany("PostTags")
-                        .HasForeignKey("TagId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Post");
-
-                    b.Navigation("Tag");
-                });
-
             modelBuilder.Entity("MyPetClinic.Domain.Entities.Prescription", b =>
                 {
                     b.HasOne("MyPetClinic.Domain.Entities.User", "Doctor")
@@ -2624,11 +2458,6 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                     b.Navigation("VaccinationRecords");
                 });
 
-            modelBuilder.Entity("MyPetClinic.Domain.Entities.Post", b =>
-                {
-                    b.Navigation("PostTags");
-                });
-
             modelBuilder.Entity("MyPetClinic.Domain.Entities.PostCategory", b =>
                 {
                     b.Navigation("Children");
@@ -2661,11 +2490,6 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("MyPetClinic.Domain.Entities.ServiceCategory", b =>
                 {
                     b.Navigation("Services");
-                });
-
-            modelBuilder.Entity("MyPetClinic.Domain.Entities.Tag", b =>
-                {
-                    b.Navigation("PostTags");
                 });
 
             modelBuilder.Entity("MyPetClinic.Domain.Entities.User", b =>

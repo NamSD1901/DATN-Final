@@ -27,6 +27,9 @@ namespace MyPetClinic.Tests
             _context = new ApplicationDbContext(options);
             _unitOfWork = new UnitOfWork(_context);
             var mockCustomerService = new Moq.Mock<MyPetClinic.Application.Interfaces.Services.ICustomerService>();
+            mockCustomerService.Setup(x => x.GetCustomersPaginatedAsync(Moq.It.IsAny<string>(), Moq.It.IsAny<int>(), Moq.It.IsAny<int>()))
+                .ReturnsAsync((string? search, int page, int size) => new PaginatedResultDto<UserProfileDto>(
+                    new List<UserProfileDto> { new UserProfileDto { FullName = "Nguyễn Văn Anh", Phone = "0912345678" } }, 1, 1, 10));
             var mockAppointmentService = new Moq.Mock<MyPetClinic.Application.Interfaces.Services.IAppointmentService>();
             _service = new ReceptionistService(_unitOfWork, mockCustomerService.Object, mockAppointmentService.Object);
         }
@@ -61,16 +64,16 @@ namespace MyPetClinic.Tests
             await _context.SaveChangesAsync();
 
             // Act 1: Search by pet name
-            var searchPetResult = await _service.SearchCustomersAsync("Milu");
+            var searchPetResult = await _service.GetCustomersPaginatedAsync("Milu", 1, 10);
             // Act 2: Search by customer phone
-            var searchPhoneResult = await _service.SearchCustomersAsync("09123");
+            var searchPhoneResult = await _service.GetCustomersPaginatedAsync("09123", 1, 10);
 
             // Assert
-            Assert.NotEmpty(searchPetResult);
-            Assert.Equal(customer.FullName, searchPetResult.First().FullName);
+            Assert.NotEmpty(searchPetResult.Items);
+            Assert.Equal(customer.FullName, searchPetResult.Items.First().FullName);
 
-            Assert.NotEmpty(searchPhoneResult);
-            Assert.Equal(customer.FullName, searchPhoneResult.First().FullName);
+            Assert.NotEmpty(searchPhoneResult.Items);
+            Assert.Equal(customer.FullName, searchPhoneResult.Items.First().FullName);
         }
 
 

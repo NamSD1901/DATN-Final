@@ -320,6 +320,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import Swal from 'sweetalert2';
 import api from '../../services/api';
 import ScheduleProfileManager from './ScheduleProfileManager.vue';
 import AssignProfileDialog from './AssignProfileDialog.vue';
@@ -659,18 +660,26 @@ const submitForm = async () => {
     showModal.value = false;
     await loadData(); // Reload both schedules & blocks
   } catch (err: any) {
-    alert(err.response?.data?.message || 'Lỗi khi lưu ca trực.');
+    Swal.fire('Lỗi', err.response?.data?.message || 'Lỗi khi lưu ca trực.', 'error');
   }
 };
 
 const handleDelete = async (id: number) => {
-  if (!confirm('Bạn có chắc chắn muốn xoá ca trực này không?')) return;
+  const result = await Swal.fire({
+    title: 'Xác nhận xóa',
+    text: 'Bạn có chắc chắn muốn xoá ca trực này không?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Có, xóa',
+    cancelButtonText: 'Hủy'
+  });
+  if (!result.isConfirmed) return;
   try {
     await api.delete(`/doctor-schedules/${id}`);
     showModal.value = false;
     await loadData();
   } catch (err: any) {
-    alert(err.response?.data?.message || 'Lỗi khi xoá ca trực.');
+    Swal.fire('Lỗi', err.response?.data?.message || 'Lỗi khi xoá ca trực.', 'error');
   }
 };
 
@@ -773,20 +782,20 @@ const submitBlockForm = async () => {
   }
 
   if (!blockForm.value.startDate || !blockForm.value.endDate || !blockForm.value.startHour || !blockForm.value.endHour) {
-    alert('Vui lòng chọn đầy đủ ngày và giờ.');
+    Swal.fire('Cảnh báo', 'Vui lòng chọn đầy đủ ngày và giờ.', 'warning');
     return;
   }
   if (blockForm.value.endHour <= blockForm.value.startHour) {
-    alert('Giờ kết thúc phải sau giờ bắt đầu.');
+    Swal.fire('Cảnh báo', 'Giờ kết thúc phải sau giờ bắt đầu.', 'warning');
     return;
   }
   if (blockForm.value.endDate < blockForm.value.startDate) {
-    alert('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.');
+    Swal.fire('Cảnh báo', 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.', 'warning');
     return;
   }
 
   if (isBlockEdit.value) {
-    alert('Chỉnh sửa trực tiếp chưa hỗ trợ, vui lòng xóa và tạo mới!');
+    Swal.fire('Thông báo', 'Chỉnh sửa trực tiếp chưa hỗ trợ, vui lòng xóa và tạo mới!', 'info');
     return;
   }
 
@@ -808,18 +817,26 @@ const submitBlockForm = async () => {
     showBlockModal.value = false;
     await loadData();
   } catch (err: any) {
-    alert(err.response?.data?.message || 'Lỗi lưu lịch nghỉ.');
+    Swal.fire('Lỗi', err.response?.data?.message || 'Lỗi lưu lịch nghỉ.', 'error');
   }
 };
 
 const handleDeleteBlock = async (id: string) => {
-  if (!confirm('Bạn có chắc chắn muốn hủy lịch nghỉ này?')) return;
+  const result = await Swal.fire({
+    title: 'Xác nhận xóa',
+    text: 'Bạn có chắc chắn muốn hủy lịch nghỉ này?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Có, xóa',
+    cancelButtonText: 'Hủy'
+  });
+  if (!result.isConfirmed) return;
   try {
     await api.delete(`/block-times/${id}`);
     showBlockModal.value = false;
     await loadData();
   } catch (err: any) {
-    alert(err.response?.data?.message || 'Lỗi khi hủy lịch nghỉ.');
+    Swal.fire('Lỗi', err.response?.data?.message || 'Lỗi khi hủy lịch nghỉ.', 'error');
   }
 };
 

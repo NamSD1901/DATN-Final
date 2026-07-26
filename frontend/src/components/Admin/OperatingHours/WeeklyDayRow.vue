@@ -55,10 +55,16 @@ const getDayName = (dayOfWeek: number) => {
   return days[dayOfWeek];
 };
 
+const getNextShiftTimes = (currentShiftsCount: number) => {
+  if (currentShiftsCount === 0) return { startTime: '08:00:00', endTime: '12:00:00' };
+  if (currentShiftsCount === 1) return { startTime: '13:30:00', endTime: '17:30:00' };
+  return { startTime: '18:00:00', endTime: '21:00:00' };
+};
+
 const updateDay = () => {
   if (localDay.value.isOpen && localDay.value.shifts.length === 0) {
-    // Add default shift if opened and empty
-    localDay.value.shifts.push({ startTime: '08:00:00', endTime: '17:00:00' });
+    // Add default Morning shift if opened and empty
+    localDay.value.shifts.push(getNextShiftTimes(0));
   }
   emit('update:modelValue', localDay.value);
 };
@@ -70,7 +76,7 @@ const removeShift = (index: number) => {
 
 const addShift = () => {
   if (localDay.value.shifts.length < 3) {
-    localDay.value.shifts.push({ startTime: '08:00:00', endTime: '12:00:00' });
+    localDay.value.shifts.push(getNextShiftTimes(localDay.value.shifts.length));
     updateDay();
   }
 };

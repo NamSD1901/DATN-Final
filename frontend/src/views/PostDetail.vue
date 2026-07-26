@@ -133,8 +133,8 @@ const fetchPostDetail = async () => {
       
       // Fetch related
       try {
-        const res = await postStore.fetchPublicPosts(1, 3, undefined, post.value.categorySlug);
-        relatedPosts.value = res?.items?.filter((p: any) => p.id !== post.value.id) || [];
+        await postStore.fetchPublicPosts(1, 4, undefined, post.value.categorySlug);
+        relatedPosts.value = postStore.posts.filter((p: any) => p.id !== post.value.id).slice(0, 3);
       } catch (err) {
         // Ignore related error
       }

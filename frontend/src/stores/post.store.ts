@@ -1,25 +1,23 @@
 import { defineStore } from 'pinia';
-import { postService, postCategoryService, tagService, bannerService } from '../services/post.service';
+import { postService, postCategoryService } from '../services/post.service';
 
 export const usePostStore = defineStore('post', {
   state: () => ({
-    posts: [],
+    posts: [] as any[],
     totalCount: 0,
     pageIndex: 1,
     pageSize: 10,
-    currentPost: null,
-    categories: [],
-    tags: [],
-    banners: [],
+    currentPost: null as any,
+    categories: [] as any[],
     loading: false,
-    error: null
+    error: null as string | null
   }),
   actions: {
     // ---- Posts ----
-    async fetchPublicPosts(page = 1, limit = 10, search?: string, categorySlug?: string, tagSlug?: string) {
+    async fetchPublicPosts(page = 1, limit = 10, search?: string, categorySlug?: string) {
       this.loading = true;
       try {
-        const res = await postService.getPublicPosts(page, limit, search, categorySlug, tagSlug);
+        const res = await postService.getPublicPosts(page, limit, search, categorySlug);
         this.posts = res.items || [];
         this.totalCount = res.totalCount || 0;
         this.pageIndex = res.pageIndex || 1;
@@ -128,75 +126,7 @@ export const usePostStore = defineStore('post', {
       } catch (err: any) {
         throw new Error(err.response?.data?.message || err.message);
       }
-    },
-
-    // ---- Tags ----
-    async fetchTags() {
-      try {
-        this.tags = await tagService.getAll();
-      } catch (err: any) {
-        this.error = err.response?.data?.message || err.message;
-      }
-    },
-    async createTag(data: any) {
-      try {
-        await tagService.create(data);
-        await this.fetchTags();
-      } catch (err: any) {
-        throw new Error(err.response?.data?.message || err.message);
-      }
-    },
-    async updateTag(id: number, data: any) {
-      try {
-        await tagService.update(id, data);
-        await this.fetchTags();
-      } catch (err: any) {
-        throw new Error(err.response?.data?.message || err.message);
-      }
-    },
-    async deleteTag(id: number) {
-      try {
-        await tagService.delete(id);
-        await this.fetchTags();
-      } catch (err: any) {
-        throw new Error(err.response?.data?.message || err.message);
-      }
-    },
-
-    // ---- Banners ----
-    async fetchBanners(onlyActive: boolean = false) {
-      this.loading = true;
-      try {
-        this.banners = await bannerService.getAll(onlyActive);
-      } catch (err: any) {
-        this.error = err.response?.data?.message || err.message;
-      } finally {
-        this.loading = false;
-      }
-    },
-    async createBanner(data: any) {
-      try {
-        await bannerService.create(data);
-        await this.fetchBanners();
-      } catch (err: any) {
-        throw new Error(err.response?.data?.message || err.message);
-      }
-    },
-    async updateBanner(id: number, data: any) {
-      try {
-        await bannerService.update(id, data);
-        await this.fetchBanners();
-      } catch (err: any) {
-        throw new Error(err.response?.data?.message || err.message);
-      }
-    },
-    async deleteBanner(id: number) {
-      try {
-        await bannerService.delete(id);
-        await this.fetchBanners();
-      } catch (err: any) {
-        throw new Error(err.response?.data?.message || err.message);
-      }
     }
   }
 });
+

@@ -23,7 +23,7 @@
           <!-- Sidebar widgets -->
           <aside class="sidebar-wrapper">
             <!-- Search box widget -->
-            <div class="card border-0 glass-card p-3 mb-4 widget-card">
+            <div class="card border-0 glass-card p-3 mb-4 widget-card shadow-sm">
               <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
                 <Search class="widget-icon" /> Tìm kiếm bài viết
               </h6>
@@ -31,6 +31,7 @@
                 <input 
                   type="text" 
                   v-model="searchQuery" 
+                  @input="debouncedSearch"
                   class="form-control input-premium search-input" 
                   placeholder="Nhập từ khóa..." 
                 />
@@ -38,74 +39,98 @@
             </div>
 
             <!-- Categories Widget -->
-            <div class="card border-0 glass-card p-3 mb-4 widget-card">
+            <div class="card border-0 glass-card p-3 mb-4 widget-card shadow-sm">
               <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
                 <Tag class="widget-icon" /> Chuyên Mục
               </h6>
               <div class="nav flex-column gap-1">
-                <a class="sidebar-link active" href="#" @click.prevent="selectedCategory = 'All'">
+                <a 
+                  class="sidebar-link" 
+                  :class="{ active: !selectedCategory }" 
+                  href="#" 
+                  @click.prevent="selectCategory('')"
+                >
                   <ChevronRight class="chevron" /> Tất cả bài viết
                 </a>
-                <a class="sidebar-link" href="#" @click.prevent="selectedCategory = 'Dinh Dưỡng'">
-                  <ChevronRight class="chevron" /> Dinh Dưỡng Thú Cưng
-                </a>
-                <a class="sidebar-link" href="#" @click.prevent="selectedCategory = 'Bệnh Học'">
-                  <ChevronRight class="chevron" /> Bệnh Học Chó Mèo
-                </a>
-                <a class="sidebar-link" href="#" @click.prevent="selectedCategory = 'Kinh Nghiệm'">
-                  <ChevronRight class="chevron" /> Kinh Nghiệm Nuôi Dạy
-                </a>
-                <a class="sidebar-link" href="#" @click.prevent="selectedCategory = 'Y Học Dự Phòng'">
-                  <ChevronRight class="chevron" /> Y Học Dự Phòng
+                <a 
+                  v-for="cat in categories" 
+                  :key="cat.id" 
+                  class="sidebar-link" 
+                  :class="{ active: selectedCategory === cat.slug }" 
+                  href="#" 
+                  @click.prevent="selectCategory(cat.slug)"
+                >
+                  <ChevronRight class="chevron" /> {{ cat.name }}
                 </a>
               </div>
             </div>
 
             <!-- Popular Articles Widget -->
-            <div class="card border-0 glass-card p-3 widget-card">
+            <div class="card border-0 glass-card p-3 widget-card shadow-sm">
               <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
                 <Star class="widget-icon text-warning" /> Đọc Nhiều Nhất
               </h6>
-              <div class="popular-list">
-                <router-link to="/article/1" class="popular-item">
-                  <span class="popular-date">25/05/2026</span>
-                  <strong>Nấm da ở chó mèo có lây sang người không?</strong>
-                </router-link>
-                <router-link to="/article/2" class="popular-item">
-                  <span class="popular-date">24/05/2026</span>
-                  <strong>Tại sao chó bị rụng lông & điều trị thế nào?</strong>
-                </router-link>
-                <router-link to="/article/3" class="popular-item">
-                  <span class="popular-date">20/05/2026</span>
-                  <strong>Chó bị táo bón: Cách chữa trị tại nhà</strong>
+              <div v-if="popularPosts.length > 0" class="popular-list">
+                <router-link 
+                  v-for="post in popularPosts" 
+                  :key="post.id" 
+                  :to="`/news/${post.slug}`" 
+                  class="popular-item"
+                >
+                  <span class="popular-date">{{ formatDate(post.publishedAt || post.createdAt) }}</span>
+                  <strong>{{ post.title }}</strong>
                 </router-link>
               </div>
+              <div v-else class="text-muted small">Chưa có bài viết nổi bật.</div>
             </div>
           </aside>
 
           <!-- Articles Grid -->
           <main class="main-content">
-            <div class="articles-grid">
+            <div v-if="postStore.loading && posts.length === 0" class="text-center py-5">
+              <div class="spinner-border text-warning" role="status"></div>
+              <p class="text-muted mt-2 small">Đang tải kiến thức y khoa...</p>
+            </div>
+
+            <div v-else-if="posts.length > 0" class="articles-grid">
               <!-- Article Card -->
               <router-link 
-                v-for="art in filteredArticles" 
-                :key="art.id" 
-                :to="'/article/' + art.id" 
-                class="article-card glass-card text-decoration-none"
+                v-for="post in posts" 
+                :key="post.id" 
+                :to="`/news/${post.slug}`" 
+                class="article-card glass-card text-decoration-none shadow-sm"
               >
                 <div class="article-img-wrapper">
-                  <img :src="art.image" class="article-img" :alt="art.title" />
+                  <img :src="post.thumbnail || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=400&auto=format&fit=crop'" class="article-img" :alt="post.title" />
                 </div>
                 <div class="article-body">
-                  <span class="badge" :class="art.badgeClass">{{ art.category }}</span>
-                  <h5 class="article-title">{{ art.title }}</h5>
-                  <p class="article-desc">{{ art.excerpt }}</p>
+                  <span v-if="post.categoryName" class="badge badge-cat bg-warning text-dark">{{ post.categoryName }}</span>
+                  <h5 class="article-title">{{ post.title }}</h5>
+                  <p class="article-desc">{{ post.summary || truncateText(post.content || '', 120) }}</p>
                 </div>
               </router-link>
             </div>
             
-            <div v-if="filteredArticles.length === 0" class="text-center py-5 no-results">
+            <div v-else class="text-center py-5 no-results card border-0 glass-card p-4 shadow-sm">
+              <i class="bi bi-journal-x fs-1 d-block mb-2 text-warning opacity-50"></i>
               Không tìm thấy bài viết nào phù hợp.
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="postStore.totalCount > 0" class="d-flex justify-content-center mt-5">
+              <nav>
+                <ul class="pagination pagination-md">
+                  <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                    <button class="page-link rounded-start-pill text-dark" @click="changePage(currentPage - 1)">Trước</button>
+                  </li>
+                  <li class="page-item disabled">
+                    <span class="page-link text-muted">Trang {{ currentPage }} / {{ totalPages }}</span>
+                  </li>
+                  <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
+                    <button class="page-link rounded-end-pill text-dark" @click="changePage(currentPage + 1)">Sau</button>
+                  </li>
+                </ul>
+              </nav>
             </div>
           </main>
         </div>
@@ -124,66 +149,81 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { usePostStore } from '../../stores/post.store';
 import Header from '../../components/layout/Header.vue';
 import Footer from '../../components/layout/Footer.vue';
 import BookingModal from '../../components/shared/BookingModal.vue';
 import { BookOpen, Search, Tag, Star, ChevronRight } from 'lucide-vue-next';
 
+const postStore = usePostStore();
+
 const showBookingModal = ref(false);
 const searchQuery = ref('');
-const selectedCategory = ref('All');
+const selectedCategory = ref('');
+const currentPage = ref(1);
 
-const handleBookingSuccess = (msg: string) => {
-  alert(msg);
+const posts = computed(() => postStore.posts);
+const categories = computed(() => postStore.categories.filter((c: any) => c.isActive));
+const totalPages = computed(() => Math.ceil(postStore.totalCount / 10) || 1);
+
+// Lấy danh sách 3 bài viết có lượt xem cao nhất hoặc mới nhất làm "Đọc nhiều nhất"
+const popularPosts = computed(() => {
+  return [...postStore.posts]
+    .sort((a: any, b: any) => (b.viewCount || 0) - (a.viewCount || 0))
+    .slice(0, 3);
+});
+
+let searchTimeout: any = null;
+
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1;
+    fetchPosts();
+  }, 500);
 };
 
-const handleBookingError = (msg: string) => {
-  alert(msg);
+const selectCategory = (slug: string) => {
+  selectedCategory.value = slug;
+  currentPage.value = 1;
+  fetchPosts();
 };
 
-const articles = ref([
-  {
-    id: 1,
-    title: 'Nấm da ở chó mèo có lây sang người không?',
-    category: 'Bệnh Học',
-    badgeClass: 'bg-danger',
-    image: 'https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?q=80&w=400&auto=format&fit=crop',
-    excerpt: 'Tìm hiểu nguyên nhân gây nấm da (Microsporum canis), các triệu chứng điển hình ở người khi bị lây nhiễm (vết đỏ tròn như đồng xu, ngứa ngáy) và biện pháp phòng ngừa triệt để tại nhà...'
-  },
-  {
-    id: 2,
-    title: 'Tại sao chó bị rụng lông và cách điều trị hiệu quả',
-    category: 'Kinh Nghiệm',
-    badgeClass: 'bg-warning text-dark',
-    image: 'https://images.unsplash.com/photo-1581888227599-779811939961?q=80&w=400&auto=format&fit=crop',
-    excerpt: 'Phân biệt rụng lông sinh lý tự nhiên và rụng lông bệnh lý do ký sinh trùng (ghẻ demodex, xà mâu, bọ chét) hoặc dị ứng thức ăn để có hướng can thiệp y khoa kịp thời...'
-  },
-  {
-    id: 3,
-    title: 'Chó bị táo bón: Biểu hiện và cách điều trị tại nhà',
-    category: 'Dinh Dưỡng',
-    badgeClass: 'bg-info',
-    image: 'https://images.unsplash.com/photo-1544568100-847a948585b9?q=80&w=400&auto=format&fit=crop',
-    excerpt: 'Hướng dẫn bổ sung chất xơ hòa tan, men vi sinh đường ruột và thay đổi thói quen cho chó uống nước nhằm điều trị dứt điểm chứng táo bón, khó tiêu ở thú cưng...'
-  },
-  {
-    id: 4,
-    title: 'Chế độ dinh dưỡng khoa học cho mèo dưới 1 năm tuổi',
-    category: 'Dinh Dưỡng',
-    badgeClass: 'bg-info',
-    image: 'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?q=80&w=400&auto=format&fit=crop',
-    excerpt: 'Thời kỳ phát triển vàng quyết định tầm vóc và đề kháng của bé mèo. Những thành phần dinh dưỡng bắt buộc (Taurine, Canxi, Protein dễ tiêu) và các thực phẩm tuyệt đối cấm kỵ...'
+const changePage = (page: number) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+    fetchPosts();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-]);
+};
 
-const filteredArticles = computed(() => {
-  return articles.value.filter(a => {
-    const matchesSearch = a.title.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
-                          a.excerpt.toLowerCase().includes(searchQuery.value.toLowerCase());
-    const matchesCategory = selectedCategory.value === 'All' || a.category === selectedCategory.value;
-    return matchesSearch && matchesCategory;
+const fetchPosts = async () => {
+  await postStore.fetchPublicPosts(currentPage.value, 10, searchQuery.value, selectedCategory.value);
+};
+
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  return new Date(dateStr).toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
   });
+};
+
+const truncateText = (text: string, length: number) => {
+  if (!text) return '';
+  const cleanText = text.replace(/<[^>]*>?/gm, ''); // Bỏ bớt thẻ HTML nếu có
+  if (cleanText.length <= length) return cleanText;
+  return cleanText.substring(0, length) + '...';
+};
+
+const handleBookingSuccess = (msg: string) => alert(msg);
+const handleBookingError = (msg: string) => alert(msg);
+
+onMounted(async () => {
+  await postStore.fetchCategories();
+  fetchPosts();
 });
 </script>
 
@@ -233,6 +273,7 @@ const filteredArticles = computed(() => {
 
 .widget-card {
   background-color: white !important;
+  border-radius: var(--radius-md);
 }
 
 .widget-icon {
@@ -256,11 +297,11 @@ const filteredArticles = computed(() => {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0.5rem 0.8rem;
+  padding: 0.6rem 0.8rem;
   border-radius: var(--radius-sm);
   color: var(--text-dark) !important;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   text-decoration: none;
   transition: all var(--transition-speed);
 }
@@ -311,60 +352,63 @@ const filteredArticles = computed(() => {
 /* Articles layout */
 .articles-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.8rem;
 }
 
-@media (max-width: 576px) {
+@media (max-width: 768px) {
   .articles-grid {
     grid-template-columns: 1fr;
   }
 }
 
 .article-card {
+  border-radius: var(--radius-md);
   overflow: hidden;
   height: 100%;
   display: flex;
   flex-direction: column;
   background-color: white !important;
-  transition: box-shadow var(--transition-speed);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .article-card:hover {
-  box-shadow: var(--shadow-md) !important;
+  transform: translateY(-4px);
+  box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.08) !important;
 }
 
 .article-img-wrapper {
-  height: 180px;
+  height: 200px;
+  overflow: hidden;
 }
 
 .article-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.article-card:hover .article-img {
+  transform: scale(1.05);
 }
 
 .article-body {
-  padding: 1.5rem;
+  padding: 1.4rem;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
 }
 
-.badge {
+.badge-cat {
   align-self: start;
   font-size: 0.7rem;
   font-weight: 700;
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
   text-transform: uppercase;
-  margin-bottom: 8px;
-  color: white;
+  margin-bottom: 10px;
 }
-
-.bg-danger { background-color: #ef4444; }
-.bg-warning { background-color: var(--primary-gold); }
-.bg-info { background-color: #0ea5e9; }
 
 .article-title {
   font-size: 1.1rem;
@@ -373,6 +417,10 @@ const filteredArticles = computed(() => {
   margin-bottom: 8px;
   color: var(--text-dark);
   transition: color 0.3s ease;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .article-card:hover .article-title {
@@ -380,10 +428,14 @@ const filteredArticles = computed(() => {
 }
 
 .article-desc {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   line-height: 1.6;
   color: var(--text-muted);
   margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .no-results {
@@ -391,3 +443,4 @@ const filteredArticles = computed(() => {
   color: var(--text-muted);
 }
 </style>
+

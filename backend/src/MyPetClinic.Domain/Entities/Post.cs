@@ -26,7 +26,6 @@ namespace MyPetClinic.Domain.Entities
         public Guid? AuthorId { get; set; }
         public User? Author { get; set; }
         
-        public ICollection<PostTag> PostTags { get; set; } = new List<PostTag>();
         
         // Audit Logs & Concurrency
         public Guid? UpdatedBy { get; set; }

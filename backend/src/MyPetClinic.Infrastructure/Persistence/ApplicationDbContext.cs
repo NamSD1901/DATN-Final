@@ -53,9 +53,6 @@ namespace MyPetClinic.Infrastructure.Persistence
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Post> Posts { get; set; }
         public DbSet<PostCategory> PostCategories { get; set; }
-        public DbSet<Tag> Tags { get; set; }
-        public DbSet<PostTag> PostTags { get; set; }
-        public DbSet<Banner> Banners { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<ClinicOperatingDay> ClinicOperatingDays { get; set; }
         public DbSet<ClinicOperatingShift> ClinicOperatingShifts { get; set; }
@@ -581,60 +578,6 @@ namespace MyPetClinic.Infrastructure.Persistence
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // tags
-            modelBuilder.Entity<Tag>(entity =>
-            {
-                entity.ToTable("tags");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
-                entity.Property(e => e.Name).HasColumnName("name").IsRequired().HasMaxLength(50);
-                entity.Property(e => e.Slug).HasColumnName("slug").IsRequired().HasMaxLength(255);
-                entity.HasIndex(e => e.Slug).IsUnique();
-                entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
-            });
-
-            // post_tags
-            modelBuilder.Entity<PostTag>(entity =>
-            {
-                entity.ToTable("post_tags");
-                entity.HasKey(e => new { e.PostId, e.TagId });
-                entity.Property(e => e.PostId).HasColumnName("post_id");
-                entity.Property(e => e.TagId).HasColumnName("tag_id");
-
-                entity.HasOne(d => d.Post)
-                    .WithMany(p => p.PostTags)
-                    .HasForeignKey(d => d.PostId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(d => d.Tag)
-                    .WithMany(p => p.PostTags)
-                    .HasForeignKey(d => d.TagId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // banners
-            modelBuilder.Entity<Banner>(entity =>
-            {
-                entity.ToTable("banners");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Id).HasColumnName("id").UseIdentityAlwaysColumn();
-                entity.Property(e => e.Title).HasColumnName("title").IsRequired().HasMaxLength(255);
-                entity.Property(e => e.ImageUrl).HasColumnName("image_url").IsRequired();
-                entity.Property(e => e.LinkUrl).HasColumnName("link_url");
-                entity.Property(e => e.Order).HasColumnName("order").HasDefaultValue(0);
-                entity.Property(e => e.StartDate).HasColumnName("start_date");
-                entity.Property(e => e.EndDate).HasColumnName("end_date");
-                entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
-                
-                entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-                entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
-                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
-                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-                entity.Property(e => e.RowVersion).HasColumnName("row_version").IsRowVersion();
-
-                entity.HasOne(d => d.Creator).WithMany().HasForeignKey(d => d.CreatedBy).OnDelete(DeleteBehavior.SetNull);
-                entity.HasOne(d => d.Updater).WithMany().HasForeignKey(d => d.UpdatedBy).OnDelete(DeleteBehavior.SetNull);
-            });
 
             // posts
             modelBuilder.Entity<Post>(entity =>

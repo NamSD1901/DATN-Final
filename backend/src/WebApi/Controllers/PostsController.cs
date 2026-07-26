@@ -22,9 +22,9 @@ namespace WebApi.Controllers
         // ================= PUBLIC ENDPOINTS =================
 
         [HttpGet("posts")]
-        public async Task<IActionResult> GetPublicPosts([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string? categorySlug = null, [FromQuery] string? tagSlug = null)
+        public async Task<IActionResult> GetPublicPosts([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string? categorySlug = null)
         {
-            var result = await _postService.GetPublicPostsAsync(pageIndex, pageSize, search, categorySlug, tagSlug);
+            var result = await _postService.GetPublicPostsAsync(pageIndex, pageSize, search, categorySlug);
             return Ok(result);
         }
 

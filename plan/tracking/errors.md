@@ -207,3 +207,21 @@ Khi bác sĩ sử dụng `ConsultationRecordTab.vue` hoặc `MedicalRecordsTab.v
 ### Giải pháp
 1. **Phía Frontend:** Cập nhật `ConsultationRecordTab.vue`, bổ sung biến lưu trữ `currentDoctorId` lấy từ thông tin cuộc hẹn đang khám. Khi hiển thị danh sách các khung giờ trống, tiến hành lọc mảng `res.data` chỉ giữ lại các giờ trống thuộc về `doctorId` của bác sĩ đang đăng nhập.
 2. **Phía Backend:** Cập nhật `CreateSoapMedicalRecordAsync` và `CreateMedicalRecordAsync` trong `MedicalRecordService.cs`. Đưa toàn bộ module kiểm tra validation của `AppointmentService` (kiểm tra Clinic Holidays, Clinic Operating Shifts, Doctor Schedules, Duplicate Customer/Doctor appointments) vào luồng tạo lịch tái khám. Báo lỗi `InvalidOperationException` lập tức nếu phát hiện khung giờ không hợp lệ.
+
+## [BUG-UI-001] Thiếu thông tin Tiền sử, Khám lâm sàng và Kế hoạch điều trị trong Lịch sử y tế
+- **Trạng thái:** FIXED
+- **Thời gian:** 25-07-2026
+### Nguyên nhân
+Tại màn hình Lịch sử y tế của Khách hàng (`MyHistoryTab.vue`), ứng dụng chỉ hiển thị "Chẩn đoán của bác sĩ" (A) và "Lời dặn dò" (P) thay vì hiển thị toàn bộ 4 mục SOAP. Phía Backend API `CustomerAppointmentController` chỉ trả về mỗi `Diagnosis`.
+### Giải pháp
+1. Cập nhật `MedicalRecordCustomerViewDto` bổ sung các trường `MedicalHistory`, `ClinicalSigns`, và `TreatmentPlan`.
+2. Map dữ liệu trong `CustomerAppointmentController.cs` bằng `ExtractReadableSoap` cho các trường `S`, `O`, và `P`.
+3. Bổ sung giao diện trong `MyHistoryTab.vue` để hiển thị thành phần `Comprehensive Medical Details (SOAP)` đầy đủ thay vì `Simplified Medical Details`.
+
+## [BUG-SCHEDULE-001] Có thể xếp ca trực vào ngày bác sĩ đã xin nghỉ phép
+- **Trạng thái:** FIXED
+- **Thời gian:** 26-07-2026
+### Nguyên nhân
+Trong `DoctorScheduleService`, các hàm tạo và cập nhật ca trực (`CreateScheduleAsync`, `UpdateScheduleAsync`) mới chỉ kiểm tra trùng lặp thời gian giữa các ca trực (Overlap schedules) với nhau, mà không đối chiếu với các đơn xin nghỉ phép đã được duyệt của bác sĩ trong bảng `ScheduleExceptions`.
+### Giải pháp
+Bổ sung logic truy vấn `_unitOfWork.ScheduleExceptions.Query()` với điều kiện `Type == "TimeOff"` và `Status == "Approved"`. Chuyển đổi khung giờ trực thành `shiftStart` và `shiftEnd` tuyệt đối, sau đó kiểm tra thuật toán giao cắt thời gian `StartDate < shiftEnd && EndDate > shiftStart`. Nếu bị trùng, ném ra ngoại lệ `InvalidOperationException` để chặn việc xếp ca trực.

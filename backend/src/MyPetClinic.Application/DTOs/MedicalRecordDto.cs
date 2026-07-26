@@ -85,6 +85,9 @@ namespace MyPetClinic.Application.DTOs
         public decimal Temperature { get; set; }
         
         public string Diagnosis { get; set; } = string.Empty;
+        public string MedicalHistory { get; set; } = string.Empty;
+        public string ClinicalSigns { get; set; } = string.Empty;
+        public string TreatmentPlan { get; set; } = string.Empty;
         public string CareInstructions { get; set; } = string.Empty;
         public DateTime? FollowUpDate { get; set; }
         

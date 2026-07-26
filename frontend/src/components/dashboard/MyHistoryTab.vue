@@ -152,16 +152,73 @@
                     </div>
                   </div>
 
-                  <!-- Simplified Medical Details -->
-                  <div class="medical-details mb-4">
-                    <div class="mb-4">
-                      <div class="small fw-bold text-muted mb-2 text-uppercase" style="letter-spacing: 0.5px;">Chẩn đoán của bác sĩ:</div>
-                      <div class="text-dark fw-bold p-3 bg-light rounded-3 border" style="font-size: 1.1rem;">{{ record.diagnosis || 'Chưa có chẩn đoán' }}</div>
+                  <!-- Premium Comprehensive Medical Details (SOAP) -->
+                  <div class="medical-details-premium mb-4">
+                    
+                    <!-- Subjective (S) -->
+                    <div v-if="record.medicalHistory" class="soap-block mb-4">
+                      <div class="soap-header text-primary mb-2">
+                        <i class="bi bi-file-earmark-medical-fill me-2"></i>Tiền sử & Lý do khám (S)
+                      </div>
+                      <div class="soap-body bg-primary bg-opacity-10 border-start border-primary border-4 p-3 rounded-end-3">
+                        <div class="d-flex flex-wrap gap-2">
+                          <div v-for="(item, idx) in parseSoapField(record.medicalHistory, '|')" :key="idx" 
+                               class="soap-badge" v-html="formatSoapItem(item)">
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     
-                    <div v-if="record.careInstructions || record.doctorNotes" class="mt-4 p-3 bg-warning bg-opacity-10 rounded-3 border-start border-warning border-3">
-                      <div class="small fw-bold text-warning-emphasis mb-2"><i class="bi bi-info-circle-fill me-1"></i>Lời dặn dò chăm sóc:</div>
-                      <div class="text-dark fw-medium" style="line-height: 1.6;">{{ record.careInstructions || record.doctorNotes }}</div>
+                    <!-- Objective (O) -->
+                    <div v-if="record.clinicalSigns" class="soap-block mb-4">
+                      <div class="soap-header text-success mb-2">
+                        <i class="bi bi-heart-pulse-fill me-2"></i>Khám lâm sàng (O)
+                      </div>
+                      <div class="soap-body bg-success bg-opacity-10 border-start border-success border-4 p-3 rounded-end-3">
+                        <div class="d-flex flex-wrap gap-2">
+                          <div v-for="(item, idx) in parseSoapField(record.clinicalSigns, ',')" :key="idx" 
+                               class="soap-badge" v-html="formatSoapItem(item)">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Assessment (A) -->
+                    <div class="soap-block mb-4">
+                      <div class="soap-header text-danger mb-2">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Chẩn đoán của bác sĩ (A)
+                      </div>
+                      <div class="soap-body bg-danger bg-opacity-10 border-start border-danger border-4 p-3 rounded-end-3">
+                        <div class="d-flex flex-column gap-2">
+                          <div v-for="(item, idx) in parseSoapField(record.diagnosis || 'Chưa có chẩn đoán', '|')" :key="idx" 
+                               class="soap-badge fs-6 py-2 px-3" v-html="formatSoapItem(item)" style="border-left: 3px solid #ef4444;">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Plan (P) -->
+                    <div v-if="record.treatmentPlan" class="soap-block mb-4">
+                      <div class="soap-header text-info text-opacity-75 mb-2" style="color: #0dcaf0 !important;">
+                        <i class="bi bi-capsule me-2"></i>Kế hoạch điều trị (P)
+                      </div>
+                      <div class="soap-body bg-info bg-opacity-10 border-start border-info border-4 p-3 rounded-end-3">
+                        <div class="d-flex flex-wrap gap-2">
+                          <div v-for="(item, idx) in parseSoapField(record.treatmentPlan, ',')" :key="idx" 
+                               class="soap-badge" v-html="formatSoapItem(item)">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Note -->
+                    <div v-if="record.careInstructions || record.doctorNotes" class="soap-block mt-4">
+                      <div class="soap-header text-warning-emphasis mb-2">
+                        <i class="bi bi-info-circle-fill me-2"></i>Lời dặn dò chăm sóc
+                      </div>
+                      <div class="soap-body bg-warning bg-opacity-10 border-start border-warning border-4 p-3 rounded-end-3">
+                        <div class="text-dark fw-medium" style="line-height: 1.6;">{{ record.careInstructions || record.doctorNotes }}</div>
+                      </div>
                     </div>
                   </div>
 
@@ -261,7 +318,10 @@ interface MedicalRecord {
   doctorName: string;
   weight?: number;
   temperature?: number;
+  medicalHistory?: string;
+  clinicalSigns?: string;
   diagnosis: string;
+  treatmentPlan?: string;
   careInstructions: string;
   doctorNotes?: string;
   followUpDate?: string;
@@ -309,6 +369,21 @@ const formatDiagnosis = (diag: string) => {
     // Ignore error
   }
   return diag;
+};
+
+const parseSoapField = (text: string | undefined, separator: string = '|') => {
+  if (!text) return [];
+  return text.split(separator).map(item => item.trim()).filter(item => item.length > 0);
+};
+
+const formatSoapItem = (item: string) => {
+  const colonIndex = item.indexOf(':');
+  if (colonIndex > -1) {
+    const key = item.substring(0, colonIndex);
+    const value = item.substring(colonIndex + 1);
+    return `<span class="text-muted fw-bold me-1">${key}:</span><span class="text-dark fw-medium">${value}</span>`;
+  }
+  return `<span class="text-dark fw-medium">${item}</span>`;
 };
 
 // ===== API =====
@@ -661,5 +736,30 @@ onMounted(fetchPets);
 }
 .medicine-table td {
   vertical-align: middle;
+}
+
+/* ===== SOAP UI ===== */
+.soap-header {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.soap-badge {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.92rem;
+  display: inline-block;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.soap-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 </style>

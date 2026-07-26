@@ -18,20 +18,15 @@ namespace MyPetClinic.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<PaginatedResultDto<PostDto>> GetPublicPostsAsync(int pageIndex, int pageSize, string? search, string? categorySlug, string? tagSlug)
+        public async Task<PaginatedResultDto<PostDto>> GetPublicPostsAsync(int pageIndex, int pageSize, string? search, string? categorySlug)
         {
             var now = DateTime.UtcNow;
             
             var allPosts = await _unitOfWork.Posts.FindWithIncludesAsync(
                 p => p.Status == "published" && (!p.PublishedAt.HasValue || p.PublishedAt <= now),
                 p => p.Category!,
-                p => p.Author!,
-                p => p.PostTags!
+                p => p.Author!
             );
-            
-            // To get tags we need to fetch them
-            // In a better approach, we'd use specialized repository method
-            var tags = await _unitOfWork.Tags.GetAllAsync();
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -44,26 +39,13 @@ namespace MyPetClinic.Application.Services
                 allPosts = allPosts.Where(p => p.Category != null && p.Category.Slug == categorySlug);
             }
 
-            if (!string.IsNullOrWhiteSpace(tagSlug))
-            {
-                var tagId = tags.FirstOrDefault(t => t.Slug == tagSlug)?.Id;
-                if (tagId.HasValue)
-                {
-                    allPosts = allPosts.Where(p => p.PostTags != null && p.PostTags.Any(pt => pt.TagId == tagId.Value));
-                }
-                else
-                {
-                    allPosts = new List<Post>(); // Tag not found
-                }
-            }
-
             var totalCount = allPosts.Count();
             var pagedPosts = allPosts.OrderByDescending(p => p.PublishedAt ?? p.CreatedAt)
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
-            var dtos = pagedPosts.Select(p => MapToDto(p, tags.ToList())).ToList();
+            var dtos = pagedPosts.Select(p => MapToDto(p)).ToList();
 
             return new PaginatedResultDto<PostDto>(dtos, totalCount, pageIndex, pageSize);
         }
@@ -73,16 +55,14 @@ namespace MyPetClinic.Application.Services
             var posts = await _unitOfWork.Posts.FindWithIncludesAsync(
                 p => p.Slug == slug,
                 p => p.Category!,
-                p => p.Author!,
-                p => p.PostTags!
+                p => p.Author!
             );
 
             var post = posts.FirstOrDefault();
             if (post == null || post.Status == "archived")
                 throw new Exception("Post not found");
 
-            var tags = await _unitOfWork.Tags.GetAllAsync();
-            return MapToDto(post, tags.ToList());
+            return MapToDto(post);
         }
 
         public async Task<PaginatedResultDto<PostDto>> GetAdminPostsAsync(int pageIndex, int pageSize, string? search, string? status, long? categoryId)
@@ -90,8 +70,7 @@ namespace MyPetClinic.Application.Services
             var allPosts = await _unitOfWork.Posts.FindWithIncludesAsync(
                 p => true,
                 p => p.Category!,
-                p => p.Author!,
-                p => p.PostTags!
+                p => p.Author!
             );
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -116,8 +95,7 @@ namespace MyPetClinic.Application.Services
                 .Take(pageSize)
                 .ToList();
 
-            var tags = await _unitOfWork.Tags.GetAllAsync();
-            var dtos = pagedPosts.Select(p => MapToDto(p, tags.ToList())).ToList();
+            var dtos = pagedPosts.Select(p => MapToDto(p)).ToList();
 
             return new PaginatedResultDto<PostDto>(dtos, totalCount, pageIndex, pageSize);
         }
@@ -146,8 +124,6 @@ namespace MyPetClinic.Application.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            await SyncTags(post, dto.Tags);
-
             await _unitOfWork.Posts.AddAsync(post);
             await _unitOfWork.SaveChangesAsync();
 
@@ -156,8 +132,7 @@ namespace MyPetClinic.Application.Services
 
         public async Task<PostDto> UpdatePostAsync(long id, UpdatePostDto dto, Guid? updaterId)
         {
-            var posts = await _unitOfWork.Posts.FindWithIncludesAsync(p => p.Id == id, p => p.PostTags!);
-            var post = posts.FirstOrDefault();
+            var post = await _unitOfWork.Posts.GetByIdAsync(id);
 
             if (post == null) throw new Exception("Post not found");
 
@@ -190,8 +165,6 @@ namespace MyPetClinic.Application.Services
             post.CategoryId = dto.CategoryId;
             post.UpdatedBy = updaterId;
             post.UpdatedAt = DateTime.UtcNow;
-
-            await SyncTags(post, dto.Tags);
 
             _unitOfWork.Posts.Update(post);
             await _unitOfWork.SaveChangesAsync();
@@ -228,57 +201,17 @@ namespace MyPetClinic.Application.Services
             var related = await _unitOfWork.Posts.FindWithIncludesAsync(
                 p => p.Id != postId && p.CategoryId == post.CategoryId && p.Status == "published",
                 p => p.Category!,
-                p => p.Author!,
-                p => p.PostTags!
+                p => p.Author!
             );
 
-            var tags = await _unitOfWork.Tags.GetAllAsync();
-            
             return related.OrderByDescending(p => p.PublishedAt)
                 .Take(count)
-                .Select(p => MapToDto(p, tags.ToList()))
+                .Select(p => MapToDto(p))
                 .ToList();
         }
 
-        private async Task SyncTags(Post post, List<string> tagNames)
+        private PostDto MapToDto(Post p)
         {
-            if (post.PostTags == null) post.PostTags = new List<PostTag>();
-            
-            var allTags = await _unitOfWork.Tags.GetAllAsync();
-            var existingTags = allTags.Where(t => tagNames.Contains(t.Name)).ToList();
-
-            var newTagNames = tagNames.Except(existingTags.Select(t => t.Name)).ToList();
-            
-            foreach(var newTagName in newTagNames)
-            {
-                var newTag = new Tag
-                {
-                    Name = newTagName,
-                    Slug = newTagName.ToLower().Replace(" ", "-")
-                };
-                await _unitOfWork.Tags.AddAsync(newTag);
-                existingTags.Add(newTag);
-            }
-
-            post.PostTags.Clear();
-            foreach(var tag in existingTags)
-            {
-                post.PostTags.Add(new PostTag { PostId = post.Id, TagId = tag.Id, Post = post, Tag = tag });
-            }
-        }
-
-        private PostDto MapToDto(Post p, List<Tag> allTags)
-        {
-            var tagNames = new List<string>();
-            if (p.PostTags != null)
-            {
-                foreach(var pt in p.PostTags)
-                {
-                    var tag = allTags.FirstOrDefault(t => t.Id == pt.TagId);
-                    if (tag != null) tagNames.Add(tag.Name);
-                }
-            }
-
             return new PostDto
             {
                 Id = p.Id,
@@ -296,8 +229,7 @@ namespace MyPetClinic.Application.Services
                 CategoryId = p.CategoryId,
                 CategoryName = p.Category?.Name,
                 AuthorName = p.Author?.FullName ?? "Bác sĩ thú y",
-                CreatedAt = p.CreatedAt,
-                Tags = tagNames
+                CreatedAt = p.CreatedAt
             };
         }
     }

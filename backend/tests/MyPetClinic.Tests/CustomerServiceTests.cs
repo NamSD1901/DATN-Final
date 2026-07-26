@@ -38,11 +38,11 @@ namespace MyPetClinic.Tests
             await _context.SaveChangesAsync();
 
             // Act
-            var result = await _service.SearchCustomersAsync("0987");
+            var result = await _service.GetCustomersPaginatedAsync("0987", 1, 10);
 
             // Assert
-            Assert.Single(result);
-            Assert.Equal("John Doe", result.First().FullName);
+            Assert.Single(result.Items);
+            Assert.Equal("John Doe", result.Items.First().FullName);
         }
 
         [Fact]

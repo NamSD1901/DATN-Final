@@ -47,8 +47,7 @@ namespace MyPetClinic.Tests
                 Content = "<p>Nội dung</p>",
                 Thumbnail = "http://example.com/img.jpg",
                 CategoryId = 1,
-                Status = "published",
-                Tags = new List<string> { "Cho", "Mua Dong" }
+                Status = "published"
             };
 
             var result = await _postService.CreatePostAsync(dto, adminId);
@@ -56,11 +55,10 @@ namespace MyPetClinic.Tests
             Assert.NotNull(result);
             Assert.Equal("Chăm sóc chó mùa đông", result.Title);
             
-            var savedPost = await _context.Posts.Include(p => p.PostTags).FirstOrDefaultAsync(p => p.Id == result.Id);
+            var savedPost = await _context.Posts.FirstOrDefaultAsync(p => p.Id == result.Id);
             Assert.NotNull(savedPost);
             Assert.Equal(adminId, savedPost.AuthorId);
             Assert.Equal("published", savedPost.Status);
-            Assert.Equal(2, savedPost.PostTags.Count);
         }
 
         [Fact]
@@ -105,7 +103,7 @@ namespace MyPetClinic.Tests
             );
             await _context.SaveChangesAsync();
 
-            var result = await _postService.GetPublicPostsAsync(1, 10, null, null, null);
+            var result = await _postService.GetPublicPostsAsync(1, 10, null, null);
 
             Assert.Equal(1, result.TotalCount);
             Assert.Equal("Post 1", result.Items.First().Title);

@@ -110,11 +110,11 @@
 
       <!-- Sidebar Footer Actions -->
       <div class="sidebar-footer p-3 border-top mt-auto">
-        <button v-if="role !== 'doctor'" class="btn btn-premium w-100 mb-3 py-2 fw-bold shadow-sm rounded-4" @click="handleSidebarBookNew">
+        <button v-if="role !== 'doctor' && role !== 'admin'" class="btn btn-premium w-100 mb-3 py-2 fw-bold shadow-sm rounded-4" @click="handleSidebarBookNew">
           <i class="bi bi-plus-circle-fill me-1"></i> {{ role === 'customer' ? $t('sidebar.bookNew') : 'Đặt Lịch Mới' }}
         </button>
 
-        <button @click="activeTab = 'settings'" class="btn btn-outline-secondary w-100 mb-2 border-0 text-start ps-4 rounded-4 hover-text-warning py-2 fw-bold" :class="{'bg-light text-warning': activeTab === 'settings'}" style="font-size: 0.95em;">
+        <button v-if="role === 'customer'" @click="activeTab = 'settings'" class="btn btn-outline-secondary w-100 mb-2 border-0 text-start ps-4 rounded-4 hover-text-warning py-2 fw-bold" :class="{'bg-light text-warning': activeTab === 'settings'}" style="font-size: 0.95em;">
           <i class="bi bi-gear-fill text-warning opacity-75 me-2 fs-5 align-middle"></i> {{ $t('common.settings') }}
         </button>
 
@@ -375,10 +375,6 @@
             <ReviewsAdminTab />
           </div>
 
-          <!-- tab: Banners Admin Tab -->
-          <div v-else-if="activeTab === 'banners-admin'" class="container-fluid p-0">
-            <BannersAdminTab />
-          </div>
         </Transition>
       </div>
 
@@ -457,9 +453,7 @@ import SchedulesAdminTab from '../components/dashboard/SchedulesAdminTab.vue';
 import ReportsAdminTab from '../components/dashboard/ReportsAdminTab.vue';
 import BlogAdminTab from '../components/dashboard/BlogAdminTab.vue';
 import CategoriesAdminTab from '../components/dashboard/CategoriesAdminTab.vue';
-import BannersAdminTab from '../components/dashboard/BannersAdminTab.vue';
 import ReviewsAdminTab from '../components/dashboard/ReviewsAdminTab.vue';
-import ProfileTab from '../components/dashboard/ProfileTab.vue';
 import SettingsTab from '../components/dashboard/SettingsTab.vue';
 
 const router = useRouter();

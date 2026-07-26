@@ -2,14 +2,13 @@ import api from './api';
 
 export const postService = {
   // Public Endpoints
-  getPublicPosts: async (pageIndex = 1, pageSize = 10, search?: string, categorySlug?: string, tagSlug?: string) => {
+  getPublicPosts: async (pageIndex = 1, pageSize = 10, search?: string, categorySlug?: string) => {
     const params = new URLSearchParams({
       pageIndex: pageIndex.toString(),
       pageSize: pageSize.toString(),
     });
     if (search) params.append('search', search);
     if (categorySlug) params.append('categorySlug', categorySlug);
-    if (tagSlug) params.append('tagSlug', tagSlug);
     
     const response = await api.get(`/posts?${params.toString()}`);
     return response.data;
@@ -83,44 +82,3 @@ export const postCategoryService = {
   }
 };
 
-export const bannerService = {
-  getAll: async (onlyActive: boolean = false) => {
-    const response = await api.get(`/Banners?onlyActive=${onlyActive}`);
-    return response.data;
-  },
-  getById: async (id: number) => {
-    const response = await api.get(`/Banners/${id}`);
-    return response.data;
-  },
-  create: async (data: any) => {
-    const response = await api.post('/Banners', data);
-    return response.data;
-  },
-  update: async (id: number, data: any) => {
-    const response = await api.put(`/Banners/${id}`, data);
-    return response.data;
-  },
-  delete: async (id: number) => {
-    const response = await api.delete(`/Banners/${id}`);
-    return response.data;
-  }
-};
-
-export const tagService = {
-  getAll: async () => {
-    const response = await api.get('/Tags');
-    return response.data;
-  },
-  create: async (data: any) => {
-    const response = await api.post('/Tags', data);
-    return response.data;
-  },
-  update: async (id: number, data: any) => {
-    const response = await api.put(`/Tags/${id}`, data);
-    return response.data;
-  },
-  delete: async (id: number) => {
-    const response = await api.delete(`/Tags/${id}`);
-    return response.data;
-  }
-};

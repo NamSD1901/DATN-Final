@@ -23,7 +23,6 @@ namespace MyPetClinic.Application.DTOs
         // Relationships
         public long? CategoryId { get; set; }
         public string? CategoryName { get; set; }
-        public List<string> Tags { get; set; } = new List<string>();
         
         public DateTime CreatedAt { get; set; }
         public string AuthorName { get; set; } = string.Empty;
@@ -44,7 +43,6 @@ namespace MyPetClinic.Application.DTOs
         public string? Keywords { get; set; }
         
         public long? CategoryId { get; set; }
-        public List<string> Tags { get; set; } = new List<string>();
     }
 
     public class UpdatePostDto : CreatePostDto
