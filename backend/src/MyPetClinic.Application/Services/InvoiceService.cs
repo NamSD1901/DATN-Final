@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Repositories;
 using MyPetClinic.Application.Interfaces.Services;
@@ -192,15 +193,16 @@ namespace MyPetClinic.Application.Services
             }
             else if (itemType == "medicine")
             {
-                var medicine = await _unitOfWork.Medicines.GetByIdAsync(itemId);
+                var medicine = await _unitOfWork.Medicines.Query().Include(m => m.Batches).FirstOrDefaultAsync(m => m.Id == itemId);
                 if (medicine == null) throw new InvalidOperationException("Không tìm thấy thuốc.");
                 
+                var actualStock = medicine.Batches != null && medicine.Batches.Any() ? medicine.Batches.Where(b => b.ExpiryDate > DateTime.UtcNow).Sum(b => b.CurrentQuantity) : medicine.StockQuantity;
                 var currentQty = existingItem != null ? existingItem.Quantity : 0;
-                if (currentQty + quantity > medicine.StockQuantity)
+                if (currentQty + quantity > actualStock)
                 {
-                    throw new InvalidOperationException(medicine.StockQuantity == 0 
+                    throw new InvalidOperationException(actualStock == 0 
                         ? "Sản phẩm này đã hết hàng." 
-                        : $"Chỉ có thể thêm tối đa {medicine.StockQuantity - currentQty} sản phẩm nữa (trong kho còn {medicine.StockQuantity}).");
+                        : $"Chỉ có thể thêm tối đa {actualStock - currentQty} sản phẩm nữa (trong kho còn {actualStock}).");
                 }
                 
                 itemName = medicine.Name;
@@ -302,10 +304,14 @@ namespace MyPetClinic.Application.Services
 
             if (item.ItemType == "medicine" && item.ItemId.HasValue)
             {
-                var medicine = await _unitOfWork.Medicines.GetByIdAsync(item.ItemId.Value);
-                if (medicine != null && quantity > medicine.StockQuantity)
+                var medicine = await _unitOfWork.Medicines.Query().Include(m => m.Batches).FirstOrDefaultAsync(m => m.Id == item.ItemId.Value);
+                if (medicine != null)
                 {
-                    throw new InvalidOperationException($"Chỉ còn {medicine.StockQuantity} sản phẩm trong kho.");
+                    var actualStock = medicine.Batches != null && medicine.Batches.Any() ? medicine.Batches.Where(b => b.ExpiryDate > DateTime.UtcNow).Sum(b => b.CurrentQuantity) : medicine.StockQuantity;
+                    if (quantity > actualStock)
+                    {
+                        throw new InvalidOperationException($"Chỉ còn {actualStock} sản phẩm trong kho.");
+                    }
                 }
             }
 
@@ -433,7 +439,7 @@ namespace MyPetClinic.Application.Services
                 StockQuantity = 999
             }));
 
-            var medicinesQuery = _unitOfWork.Medicines.Query();
+            IQueryable<Medicine> medicinesQuery = _unitOfWork.Medicines.Query().Include(m => m.Batches);
             if (!string.IsNullOrEmpty(lowerQuery))
             {
                 medicinesQuery = medicinesQuery.Where(m => m.Name.ToLower().Contains(lowerQuery));
@@ -447,7 +453,7 @@ namespace MyPetClinic.Application.Services
                 Name = m.Name,
                 Price = m.SellPrice,
                 Unit = m.Unit,
-                StockQuantity = m.StockQuantity
+                StockQuantity = m.Batches != null && m.Batches.Any() ? m.Batches.Where(b => b.ExpiryDate > DateTime.UtcNow).Sum(b => b.CurrentQuantity) : m.StockQuantity
             }));
 
             return list;

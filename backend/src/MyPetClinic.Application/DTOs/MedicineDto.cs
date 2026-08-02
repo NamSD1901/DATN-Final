@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace MyPetClinic.Application.DTOs
 {
@@ -10,5 +11,7 @@ namespace MyPetClinic.Application.DTOs
         public int StockQuantity { get; set; }
         public decimal ImportPrice { get; set; }
         public decimal SellPrice { get; set; }
+        public DateTime? ExpiryDate { get; set; }
+        public IEnumerable<MedicineBatchDto> Batches { get; set; } = new List<MedicineBatchDto>();
     }
 }

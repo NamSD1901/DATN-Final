@@ -7,7 +7,7 @@ namespace MyPetClinic.Application.Interfaces.Services
 {
     public interface IReviewService
     {
-        Task<PaginatedResultDto<ReviewDto>> GetReviewsAsync(int page, int limit, string? sortBy, short? rating, bool includeDeleted = false);
+        Task<PaginatedResultDto<ReviewDto>> GetReviewsAsync(int page, int limit, string? sortBy, short? rating, string? petType, long? serviceId, Guid? doctorId, bool? hasImages, bool includeDeleted = false);
         Task<PaginatedResultDto<ReviewDto>> GetMyReviewsAsync(Guid customerId, int page, int limit);
         Task<ReviewDto> GetReviewByIdAsync(long id);
         Task<ReviewDto> CreateReviewAsync(Guid customerId, CreateReviewDto dto);
@@ -15,5 +15,7 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task SoftDeleteReviewAsync(long id);
         Task RestoreReviewAsync(long id);
         Task<ReviewStatisticsDto> GetReviewStatisticsAsync();
+        Task IncrementHelpfulCountAsync(long id);
+        Task DecrementHelpfulCountAsync(long id);
     }
 }

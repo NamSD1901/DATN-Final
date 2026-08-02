@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyPetClinic.Infrastructure.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyPetClinic.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260724130251_RemoveBannersAndTags")]
+    partial class RemoveBannersAndTags
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1346,10 +1349,6 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("appointment_id");
 
-                    b.Property<string>("ClinicReply")
-                        .HasColumnType("text")
-                        .HasColumnName("clinic_reply");
-
                     b.Property<string>("Comment")
                         .HasColumnType("text")
                         .HasColumnName("comment");
@@ -1368,35 +1367,9 @@ namespace MyPetClinic.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("deleted_at");
 
-                    b.Property<int>("HelpfulCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0)
-                        .HasColumnName("helpful_count");
-
-                    b.Property<string>("ImageUrls")
-                        .HasColumnType("text")
-                        .HasColumnName("image_urls");
-
-                    b.Property<bool>("IsVerified")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_verified");
-
-                    b.Property<int>("LikeCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0)
-                        .HasColumnName("like_count");
-
                     b.Property<short>("Rating")
                         .HasColumnType("smallint")
                         .HasColumnName("rating");
-
-                    b.Property<DateTime?>("RepliedAt")
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("replied_at");
 
                     b.HasKey("Id");
 

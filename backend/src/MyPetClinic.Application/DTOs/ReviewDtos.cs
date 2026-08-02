@@ -11,10 +11,22 @@ namespace MyPetClinic.Application.DTOs
         public string? CustomerAvatarUrl { get; set; }
         public long AppointmentId { get; set; }
         public string? ServiceName { get; set; }
+        public Guid? DoctorId { get; set; }
+        public string? DoctorName { get; set; }
+        public string? PetName { get; set; }
+        public string? PetBreed { get; set; }
+        public string? PetAge { get; set; }
         public short Rating { get; set; }
         public string? Comment { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
+
+        public bool IsVerified { get; set; }
+        public string? ClinicReply { get; set; }
+        public DateTime? RepliedAt { get; set; }
+        public int HelpfulCount { get; set; }
+        public int LikeCount { get; set; }
+        public string? ImageUrls { get; set; }
     }
 
     public class CreateReviewDto
@@ -27,6 +39,8 @@ namespace MyPetClinic.Application.DTOs
 
         [MaxLength(1000, ErrorMessage = "Nội dung đánh giá không được vượt quá 1000 ký tự")]
         public string? Comment { get; set; }
+
+        public string? ImageUrls { get; set; }
     }
 
     public class UpdateReviewDto

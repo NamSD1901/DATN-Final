@@ -32,10 +32,10 @@ namespace MyPetClinic.Infrastructure.Repositories
                 .FirstOrDefaultAsync(b => b.Id == id);
         }
 
-        public async Task<MedicineBatch?> GetBatchByNumberAsync(string batchNumber)
+        public async Task<MedicineBatch?> GetBatchByNumberAndMedicineAsync(string batchNumber, long medicineId)
         {
             return await _context.MedicineBatches
-                .FirstOrDefaultAsync(b => b.BatchNumber == batchNumber);
+                .FirstOrDefaultAsync(b => b.BatchNumber == batchNumber && b.MedicineId == medicineId);
         }
     }
 }

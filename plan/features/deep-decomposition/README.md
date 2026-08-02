@@ -49,7 +49,7 @@ Tài liệu này đóng vai trò hạt nhân điều phối toàn bộ các phâ
 - **[23. Admin Personnel & Role Authorization](./phase3-23-admin-users)** `✅ CODE DONE` — Admin quản lý tài khoản nhân sự phòng khám, phân quyền vai trò nhân viên.
 - **[24. Admin Drug & Medical Supplies Inventory](./phase3-24-admin-inventory)** `✅ CODE DONE` — Admin quản lý tồn kho thuốc vật tư, cảnh báo hàng sắp hết hoặc hết hạn sử dụng.
 - **[25. Admin Revenue & Performance Reports](./phase3-25-admin-reports)** `✅ CODE DONE` — Admin báo cáo thống kê doanh số trực quan bằng biểu đồ và KPI chi tiết.
-
+- **[26. Customer Reviews](./customer-reviews.md)** `❌ SPEC ONLY` — Hệ thống đánh giá (Reviews) chuyên sâu phong cách Booking.com, hiển thị phân bổ sao và lọc nâng cao.
 ---
 
 ## 🎨 HƯỚNG DẪN THIẾT KẾ VÀ TIÊU CHUẨN LẬP TRÌNH (CORE RULES)

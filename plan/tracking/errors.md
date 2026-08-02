@@ -225,3 +225,40 @@ Tại màn hình Lịch sử y tế của Khách hàng (`MyHistoryTab.vue`), ứ
 Trong `DoctorScheduleService`, các hàm tạo và cập nhật ca trực (`CreateScheduleAsync`, `UpdateScheduleAsync`) mới chỉ kiểm tra trùng lặp thời gian giữa các ca trực (Overlap schedules) với nhau, mà không đối chiếu với các đơn xin nghỉ phép đã được duyệt của bác sĩ trong bảng `ScheduleExceptions`.
 ### Giải pháp
 Bổ sung logic truy vấn `_unitOfWork.ScheduleExceptions.Query()` với điều kiện `Type == "TimeOff"` và `Status == "Approved"`. Chuyển đổi khung giờ trực thành `shiftStart` và `shiftEnd` tuyệt đối, sau đó kiểm tra thuật toán giao cắt thời gian `StartDate < shiftEnd && EndDate > shiftStart`. Nếu bị trùng, ném ra ngoại lệ `InvalidOperationException` để chặn việc xếp ca trực.
+
+## [BUG-INVOICE-001] Lỗi hiển thị 0 số lượng tồn kho dù đã thêm lô thuốc
+- **Trạng thái:** FIXED
+- **Thời gian:** 01-08-2026
+### Nguyên nhân
+Khi nhập thêm lô thuốc mới thông qua `MedicineService.ImportMedicineAsync` và `AdjustMedicineStockAsync`, trường denormalized `StockQuantity` trên bảng `Medicine` đã không được cộng dồn (update) khiến nó bị kẹt ở giá trị cũ (hoặc 0). Đồng thời, API `GetCatalogItemsAsync` không dùng số lượng tự tính từ Batch để phòng ngừa lỗi sai lệch data.
+### Giải pháp
+1. Thêm đoạn code cập nhật `medicine.StockQuantity += quantity` vào cả 2 hàm import và adjust của `MedicineService`.
+2. Sửa lại `InvoiceService.GetCatalogItemsAsync` để sử dụng `.Include(m => m.Batches)` và tính toán linh động số lượng tồn từ `Sum(CurrentQuantity)` của các lô còn hạn sử dụng.
+3. Sửa lại logic trong hàm `AddInvoiceItemAsync` và `UpdateInvoiceItemQtyAsync` của `InvoiceService.cs` để query mảng `Batches` và tính toán lượng tồn kho thực tế, thay vì dựa vào trường `StockQuantity` lỗi thời của `Medicine`, đảm bảo data cũ bị kẹt StockQuantity 0 vẫn có thể thanh toán, thêm bớt hóa đơn bình thường.
+
+## [BUG-UI-002] Lịch hẹn Pending (Chờ duyệt) hiển thị sai ở Lịch Trình Chi Tiết
+- **Trạng thái:** FIXED
+- **Thời gian:** 01-08-2026
+### Nguyên nhân
+Tại trang "Lịch Trình Chi Tiết" (Bảng lịch hẹn và điều phối), danh sách đáng lẽ chỉ hiển thị những lịch hẹn đã xác nhận hoặc đang tiến hành, nhưng hệ thống vẫn truy vấn và trả về cả những lịch hẹn ở trạng thái `pending` (Chờ duyệt).
+### Giải pháp
+Cập nhật API lấy sự kiện lịch (`GetCalendarEventsAsync`) tại cả 2 file `ReceptionistAppointmentService.cs` và `DoctorAppointmentService.cs` để loại bỏ các lịch hẹn có `Status == "pending"`. Các lịch hẹn chờ duyệt nay chỉ hiển thị trong tab "Yêu Cầu Chờ Duyệt" của lễ tân.
+
+## [BUG-UI-003] Cập nhật số lượng sản phẩm trên hóa đơn bị chậm và giật lag (Terribly Slow)
+- **Trạng thái:** FIXED
+- **Thời gian:** 01-08-2026
+### Nguyên nhân
+Khi người dùng bấm nút `+` hoặc `-` nhiều lần liên tiếp để tăng/giảm số lượng sản phẩm (trong Component `InvoicesTab.vue`), hàm `changeQty` lập tức gọi API `PUT /invoice/items/{id}` ở mỗi lần click mà không có cơ chế chờ (debounce). Điều này dẫn đến việc Frontend gửi dồn dập hàng loạt request xuống Backend cùng lúc, gây nghẽn cổ chai DB do Backend phải liên tục Update và tính toán lại `Subtotal`, khiến giao diện bị "đơ" chờ phản hồi.
+### Giải pháp
+Sử dụng kỹ thuật **Optimistic UI Update kết hợp với Debounce** trong `changeQty`:
+1. Ngay lập tức cập nhật `item.quantity` và `totalPrice` ở bộ nhớ tạm (Local Vue state) trên giao diện để người dùng thấy số nhảy lên mượt mà ngay tắp lự mà không bị delay.
+2. Dùng `setTimeout(..., 400)` để dồn tất cả các thao tác bấm chuột liên tiếp lại. Backend API chỉ thực sự được gọi **sau khi người dùng ngừng bấm** được 0.4 giây. Nếu API báo lỗi (quá số lượng tồn kho), giao diện sẽ tự động gọi lại hàm `selectAppointment` để cuộn ngược (rollback) về dữ liệu chuẩn của Server.
+
+## [BUG-INVOICE-002] Lỗi trùng mã lô thuốc (Batch Number) không phân biệt loại thuốc
+- **Trạng thái:** FIXED
+- **Thời gian:** 02-08-2026
+### Nguyên nhân
+Khi nhập thêm lô thuốc mới, API kiểm tra tính duy nhất của mã lô bằng hàm `GetBatchByNumberAsync` chỉ dựa vào `batchNumber` trên toàn cục kho. Do đó, nếu thuốc A có mã lô "L01", thuốc B cũng muốn có lô "L01" thì sẽ bị chặn lại vì thông báo "Số lô đã được sử dụng cho một loại thuốc khác".
+### Giải pháp
+1. Cập nhật hàm `GetBatchByNumberAsync` thành `GetBatchByNumberAndMedicineAsync(string batchNumber, long medicineId)`.
+2. Kiểm tra tính duy nhất của mã lô kết hợp đồng thời với `medicineId` trong Repository và Service, đảm bảo các loại thuốc khác nhau có thể sử dụng chung một mã lô độc lập.

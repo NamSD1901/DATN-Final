@@ -245,7 +245,7 @@ namespace MyPetClinic.Application.Services
                     var customer = _unitOfWork.Customers.Query()
                         .FirstOrDefault(c => c.Phone == dto.CustomerPhone && c.DeletedAt == null);
 
-                    if (customer == null)
+                    if (customer == null) 
                     {
                         var requestedEmail = !string.IsNullOrWhiteSpace(dto.CustomerEmail) ? dto.CustomerEmail.Trim().ToLower() : null;
                         if (requestedEmail != null)
@@ -398,11 +398,11 @@ namespace MyPetClinic.Application.Services
             System.Linq.Expressions.Expression<Func<Appointment, bool>> predicate;
             if (doctorId.HasValue)
             {
-                predicate = a => a.AppointmentDate >= start && a.AppointmentDate <= end && a.DoctorId == doctorId.Value;
+                predicate = a => a.AppointmentDate >= start && a.AppointmentDate <= end && a.DoctorId == doctorId.Value && a.Status != "pending";
             }
             else
             {
-                predicate = a => a.AppointmentDate >= start && a.AppointmentDate <= end;
+                predicate = a => a.AppointmentDate >= start && a.AppointmentDate <= end && a.Status != "pending";
             }
 
             var appointments = await _unitOfWork.Appointments.FindWithIncludesAsync(
@@ -812,8 +812,9 @@ namespace MyPetClinic.Application.Services
 
         public async Task<IEnumerable<AppointmentDetailDto>> GetPendingAppointmentsAsync()
         {
+            var today = DateTime.UtcNow.Date;
             var rawList = _unitOfWork.Appointments.Query()
-                .Where(a => a.Status == "pending")
+                .Where(a => a.Status == "pending" && a.AppointmentDate >= today)
                 .OrderBy(a => a.AppointmentDate)
                 .ThenBy(a => a.StartTime)
                 .Select(a => new

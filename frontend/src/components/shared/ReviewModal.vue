@@ -26,6 +26,11 @@
                 <textarea v-model="form.comment" class="form-control rounded-4 bg-light p-3" rows="3" 
                           placeholder="Bác sĩ rất tận tình, không gian sạch sẽ..." style="resize: none;"></textarea>
               </div>
+
+              <div class="text-start mb-2">
+                <label class="form-label fw-bold text-secondary small">Hình ảnh đính kèm (tối đa 5 ảnh)</label>
+                <ImageUploader v-model="form.images" :max-images="5" :max-size-m-b="5" />
+              </div>
             </div>
 
             <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-3">
@@ -63,18 +68,24 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import ImageUploader from './ImageUploader.vue';
+import { useReviewStore } from '../../stores/review.store';
+
+const reviewStore = useReviewStore();
 
 const props = defineProps<{
   isOpen: boolean;
   isEdit?: boolean;
-  initialData?: { appointmentId?: number, reviewId?: number, rating?: number, comment?: string };
+  initialData?: { appointmentId?: number, reviewId?: number, rating?: number, comment?: string, imageUrls?: string };
 }>();
 
 const emit = defineEmits(['close', 'submit']);
 
 const form = ref({
   rating: 0,
-  comment: ''
+  comment: '',
+  images: [] as File[],
+  existingImageUrls: '[]'
 });
 
 const loading = ref(false);
@@ -84,10 +95,12 @@ watch(() => props.isOpen, (newVal) => {
     if (props.isEdit && props.initialData) {
       form.value = {
         rating: props.initialData.rating || 0,
-        comment: props.initialData.comment || ''
+        comment: props.initialData.comment || '',
+        images: [], // Can't easily load existing File objects, so we keep track of old urls
+        existingImageUrls: props.initialData.imageUrls || '[]'
       };
     } else {
-      form.value = { rating: 5, comment: '' }; // Default to 5 stars
+      form.value = { rating: 5, comment: '', images: [], existingImageUrls: '[]' }; // Default to 5 stars
     }
   }
 });
@@ -96,8 +109,30 @@ const closeModal = () => {
   emit('close');
 };
 
-const submit = () => {
+const submit = async () => {
   if (form.value.rating === 0) return;
-  emit('submit', { ...form.value, appointmentId: props.initialData?.appointmentId, reviewId: props.initialData?.reviewId });
+  
+  loading.value = true;
+  let finalImageUrls = form.value.existingImageUrls;
+
+  try {
+    if (form.value.images && form.value.images.length > 0) {
+      // Upload new images
+      const urls = await reviewStore.uploadImages(form.value.images);
+      finalImageUrls = JSON.stringify(urls);
+    }
+    
+    emit('submit', { 
+      ...form.value, 
+      imageUrls: finalImageUrls,
+      appointmentId: props.initialData?.appointmentId, 
+      reviewId: props.initialData?.reviewId 
+    });
+  } catch (err) {
+    console.error("Lỗi khi upload ảnh:", err);
+    // You could show toast here if you want
+  } finally {
+    loading.value = false;
+  }
 };
 </script>

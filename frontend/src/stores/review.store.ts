@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type { ReviewDto, ReviewStatisticsDto, CreateReviewDto, UpdateReviewDto, PaginatedReviews } from '../services/review.service';
+import type { ReviewDto, ReviewStatisticsDto, CreateReviewDto, UpdateReviewDto } from '../services/review.service';
 import ReviewService from '../services/review.service';
 
 export const useReviewStore = defineStore('review', {
@@ -16,11 +16,11 @@ export const useReviewStore = defineStore('review', {
     }),
 
     actions: {
-        async fetchPublicReviews(page: number = 1, sortBy?: string, rating?: number) {
+        async fetchPublicReviews(page: number = 1, sortBy?: string, rating?: number, petType?: string, serviceId?: number, doctorId?: string, hasImages?: boolean) {
             this.loading = true;
             this.error = null;
             try {
-                const res = await ReviewService.getPublicReviews(page, this.publicPagination.limit, sortBy, rating);
+                const res = await ReviewService.getPublicReviews(page, this.publicPagination.limit, sortBy, rating, petType, serviceId, doctorId, hasImages);
                 this.publicReviews = res.items;
                 this.publicPagination = {
                     page: res.page,
@@ -127,6 +127,19 @@ export const useReviewStore = defineStore('review', {
             } catch (err: any) {
                 this.error = err.response?.data?.message || 'Lỗi khi khôi phục đánh giá.';
                 throw err;
+            }
+        },
+
+        async uploadImages(files: File[]) {
+            this.loading = true;
+            this.error = null;
+            try {
+                return await ReviewService.uploadImages(files);
+            } catch (err: any) {
+                this.error = err.response?.data?.message || 'Lỗi tải ảnh lên.';
+                throw err;
+            } finally {
+                this.loading = false;
             }
         }
     }

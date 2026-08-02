@@ -140,6 +140,20 @@ namespace WebApi.Controllers
                 return Ok(new { success = true });
             }
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+        }
+
+        [HttpDelete("medicines/batches/{batchId}")]
+        public async Task<IActionResult> DeleteMedicineBatch(long batchId)
+        {
+            try
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                await _adminService.DeleteMedicineBatchAsync(batchId, currentUserId!);
+                return Ok(new { success = true });
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
         }
 
         // ================= VACCINES MANAGEMENT =================

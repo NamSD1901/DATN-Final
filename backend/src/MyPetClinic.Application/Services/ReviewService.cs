@@ -19,12 +19,16 @@ namespace MyPetClinic.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<PaginatedResultDto<ReviewDto>> GetReviewsAsync(int page, int limit, string? sortBy, short? rating, bool includeDeleted = false)
+        public async Task<PaginatedResultDto<ReviewDto>> GetReviewsAsync(int page, int limit, string? sortBy, short? rating, string? petType, long? serviceId, Guid? doctorId, bool? hasImages, bool includeDeleted = false)
         {
             var query = _unitOfWork.Reviews.Query()
                 .Include(r => r.Customer)
                 .Include(r => r.Appointment)
-                .ThenInclude(a => a.Service)
+                    .ThenInclude(a => a.Service)
+                .Include(r => r.Appointment)
+                    .ThenInclude(a => a.Pet)
+                .Include(r => r.Appointment)
+                    .ThenInclude(a => a.Doctor)
                 .AsQueryable();
 
             if (includeDeleted)
@@ -39,6 +43,22 @@ namespace MyPetClinic.Application.Services
             if (rating.HasValue)
             {
                 query = query.Where(r => r.Rating == rating.Value);
+            }
+            if (!string.IsNullOrEmpty(petType))
+            {
+                query = query.Where(r => r.Appointment != null && r.Appointment.Pet != null && r.Appointment.Pet.Species == petType);
+            }
+            if (serviceId.HasValue)
+            {
+                query = query.Where(r => r.Appointment != null && r.Appointment.ServiceId == serviceId.Value);
+            }
+            if (doctorId.HasValue)
+            {
+                query = query.Where(r => r.Appointment != null && r.Appointment.DoctorId == doctorId.Value);
+            }
+            if (hasImages.HasValue && hasImages.Value)
+            {
+                query = query.Where(r => !string.IsNullOrEmpty(r.ImageUrls));
             }
 
             query = sortBy switch
@@ -60,10 +80,21 @@ namespace MyPetClinic.Application.Services
                 CustomerAvatarUrl = r.Customer?.Avatar,
                 AppointmentId = r.AppointmentId,
                 ServiceName = r.Appointment?.Service?.Name,
+                DoctorId = r.Appointment?.DoctorId,
+                DoctorName = r.Appointment?.Doctor?.FullName,
+                PetName = r.Appointment?.Pet?.Name,
+                PetBreed = r.Appointment?.Pet?.Breed,
+                PetAge = r.Appointment?.Pet?.BirthDate.HasValue == true ? Math.Floor((DateTime.UtcNow - r.Appointment.Pet.BirthDate.Value).TotalDays / 365.25).ToString() : null,
                 Rating = r.Rating,
                 Comment = r.Comment,
                 CreatedAt = r.CreatedAt,
-                DeletedAt = r.DeletedAt
+                DeletedAt = r.DeletedAt,
+                IsVerified = r.IsVerified,
+                ClinicReply = r.ClinicReply,
+                RepliedAt = r.RepliedAt,
+                HelpfulCount = r.HelpfulCount,
+                LikeCount = r.LikeCount,
+                ImageUrls = r.ImageUrls
             }).ToList();
 
             return new PaginatedResultDto<ReviewDto>(dtos, totalItems, page, limit);
@@ -100,7 +131,11 @@ namespace MyPetClinic.Application.Services
             var review = await _unitOfWork.Reviews.Query()
                 .Include(r => r.Customer)
                 .Include(r => r.Appointment)
-                .ThenInclude(a => a.Service)
+                    .ThenInclude(a => a.Service)
+                .Include(r => r.Appointment)
+                    .ThenInclude(a => a.Pet)
+                .Include(r => r.Appointment)
+                    .ThenInclude(a => a.Doctor)
                 .IgnoreQueryFilters() // Admins might need to fetch a specific deleted review
                 .FirstOrDefaultAsync(r => r.Id == id);
 
@@ -117,10 +152,21 @@ namespace MyPetClinic.Application.Services
                 CustomerAvatarUrl = review.Customer?.Avatar,
                 AppointmentId = review.AppointmentId,
                 ServiceName = review.Appointment?.Service?.Name,
+                DoctorId = review.Appointment?.DoctorId,
+                DoctorName = review.Appointment?.Doctor?.FullName,
+                PetName = review.Appointment?.Pet?.Name,
+                PetBreed = review.Appointment?.Pet?.Breed,
+                PetAge = review.Appointment?.Pet?.BirthDate.HasValue == true ? Math.Floor((DateTime.UtcNow - review.Appointment.Pet.BirthDate.Value).TotalDays / 365.25).ToString() : null,
                 Rating = review.Rating,
                 Comment = review.Comment,
                 CreatedAt = review.CreatedAt,
-                DeletedAt = review.DeletedAt
+                DeletedAt = review.DeletedAt,
+                IsVerified = review.IsVerified,
+                ClinicReply = review.ClinicReply,
+                RepliedAt = review.RepliedAt,
+                HelpfulCount = review.HelpfulCount,
+                LikeCount = review.LikeCount,
+                ImageUrls = review.ImageUrls
             };
         }
 
@@ -285,6 +331,35 @@ namespace MyPetClinic.Application.Services
             }
 
             return result;
+        }
+
+        public async Task IncrementHelpfulCountAsync(long id)
+        {
+            var review = await _unitOfWork.Reviews.Query().IgnoreQueryFilters().FirstOrDefaultAsync(r => r.Id == id);
+            if (review == null)
+            {
+                throw new KeyNotFoundException($"Không tìm thấy đánh giá với Id: {id}");
+            }
+
+            review.HelpfulCount++;
+            _unitOfWork.Reviews.Update(review);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task DecrementHelpfulCountAsync(long id)
+        {
+            var review = await _unitOfWork.Reviews.Query().IgnoreQueryFilters().FirstOrDefaultAsync(r => r.Id == id);
+            if (review == null)
+            {
+                throw new KeyNotFoundException($"Không tìm thấy đánh giá với Id: {id}");
+            }
+
+            if (review.HelpfulCount > 0)
+            {
+                review.HelpfulCount--;
+                _unitOfWork.Reviews.Update(review);
+                await _unitOfWork.SaveChangesAsync();
+            }
         }
     }
 }

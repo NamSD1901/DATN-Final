@@ -38,6 +38,11 @@
                     <Users class="dropdown-icon" /> Đội ngũ nhân viên
                   </router-link>
                 </li>
+                <li>
+                  <router-link to="/reviews" class="dropdown-item" @click="closeMobileMenu">
+                    <Star class="dropdown-icon text-warning" style="fill: currentColor;" /> Đánh giá từ khách hàng
+                  </router-link>
+                </li>
               </ul>
             </li>
 
@@ -150,7 +155,7 @@ import {
   History as HistoryIcon, Users, Stethoscope, 
   ShieldCheck, Scissors, Newspaper, BookOpen, 
   UserCircle, LayoutDashboard, LogOut, LogIn, 
-  UserPlus, CalendarDays 
+  UserPlus, CalendarDays, Star
 } from '@lucide/vue';
 
 const emit = defineEmits(['open-booking']);

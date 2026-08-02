@@ -552,6 +552,14 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.Property(e => e.Comment).HasColumnName("comment");
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
                 entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
+                
+                // Mới thêm cho Phase 2
+                entity.Property(e => e.IsVerified).HasColumnName("is_verified").HasDefaultValue(false);
+                entity.Property(e => e.ClinicReply).HasColumnName("clinic_reply");
+                entity.Property(e => e.RepliedAt).HasColumnName("replied_at");
+                entity.Property(e => e.HelpfulCount).HasColumnName("helpful_count").HasDefaultValue(0);
+                entity.Property(e => e.LikeCount).HasColumnName("like_count").HasDefaultValue(0);
+                entity.Property(e => e.ImageUrls).HasColumnName("image_urls");
 
                 entity.HasQueryFilter(e => e.DeletedAt == null);
 

@@ -411,23 +411,43 @@ const addCatalogItem = async (type: string, itemId: number) => {
   }
 };
 
-const changeQty = async (itemId: number, newQty: number) => {
+let qtyTimeouts: Record<number, any> = {};
+
+const changeQty = (itemId: number, newQty: number) => {
   if (newQty < 1) return;
-  try {
-    const res = await api.put(`/invoice/items/${itemId}`, { quantity: newQty });
-    if (res.data.success) {
-      invoice.value = res.data.invoice;
+
+  // Optimistic UI update
+  if (invoice.value && invoice.value.items) {
+    const item = invoice.value.items.find((i: any) => i.id === itemId);
+    if (item) {
+      item.quantity = newQty;
+      item.totalPrice = newQty * item.unitPrice;
       recalculateTotal();
     }
-  } catch (err: any) {
-    console.error(err);
-    Swal.fire({
-      icon: 'warning',
-      title: 'Không thể cập nhật số lượng',
-      text: err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật số lượng.',
-      confirmButtonColor: '#f59e0b'
-    });
   }
+
+  if (qtyTimeouts[itemId]) clearTimeout(qtyTimeouts[itemId]);
+
+  qtyTimeouts[itemId] = setTimeout(async () => {
+    try {
+      const res = await api.put(`/invoice/items/${itemId}`, { quantity: newQty });
+      if (res.data.success) {
+        invoice.value = res.data.invoice;
+        recalculateTotal();
+      }
+    } catch (err: any) {
+      console.error(err);
+      Swal.fire({
+        icon: 'warning',
+        title: 'Không thể cập nhật số lượng',
+        text: err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật số lượng.',
+        confirmButtonColor: '#f59e0b'
+      });
+      if (selectedAppointmentId.value) {
+        selectAppointment(selectedAppointmentId.value); // rollback
+      }
+    }
+  }, 400);
 };
 
 const handleManualQtyChange = (itemId: number, valStr: string) => {

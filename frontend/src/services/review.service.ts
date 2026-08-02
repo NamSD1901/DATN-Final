@@ -7,16 +7,28 @@ export interface ReviewDto {
     customerAvatarUrl?: string;
     appointmentId: number;
     serviceName?: string;
+    doctorId?: string;
+    doctorName?: string;
+    petName?: string;
+    petBreed?: string;
+    petAge?: string;
     rating: number;
     comment?: string;
     createdAt: string;
     deletedAt?: string | null;
+    isVerified: boolean;
+    clinicReply?: string;
+    repliedAt?: string;
+    helpfulCount: number;
+    likeCount: number;
+    imageUrls?: string;
 }
 
 export interface CreateReviewDto {
     appointmentId: number;
     rating: number;
     comment?: string;
+    imageUrls?: string;
 }
 
 export interface UpdateReviewDto {
@@ -39,10 +51,14 @@ export interface PaginatedReviews {
 }
 
 class ReviewService {
-    async getPublicReviews(page: number = 1, limit: number = 10, sortBy?: string, rating?: number): Promise<PaginatedReviews> {
+    async getPublicReviews(page: number = 1, limit: number = 10, sortBy?: string, rating?: number, petType?: string, serviceId?: number, doctorId?: string, hasImages?: boolean): Promise<PaginatedReviews> {
         const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
         if (sortBy) params.append('sortBy', sortBy);
         if (rating) params.append('rating', rating.toString());
+        if (petType) params.append('petType', petType);
+        if (serviceId) params.append('serviceId', serviceId.toString());
+        if (doctorId) params.append('doctorId', doctorId);
+        if (hasImages) params.append('hasImages', 'true');
         
         const response = await api.get(`/Reviews?${params.toString()}`);
         return response.data;
@@ -79,6 +95,25 @@ class ReviewService {
 
     async restoreReview(id: number): Promise<void> {
         await api.patch(`/Reviews/${id}/restore`);
+    }
+
+    async uploadImages(images: File[]): Promise<string[]> {
+        const formData = new FormData();
+        images.forEach((file) => {
+            formData.append('images', file);
+        });
+        const response = await api.post('/Reviews/upload-images', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data.urls;
+    }
+
+    async markHelpful(id: number): Promise<void> {
+        await api.post(`/Reviews/${id}/helpful`);
+    }
+
+    async unmarkHelpful(id: number): Promise<void> {
+        await api.post(`/Reviews/${id}/unhelpful`);
     }
 }
 

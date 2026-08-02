@@ -38,7 +38,18 @@ namespace MyPetClinic.Application.Services
                 Unit = m.Unit,
                 StockQuantity = m.StockQuantity,
                 ImportPrice = m.ImportPrice,
-                SellPrice = m.SellPrice
+                SellPrice = m.SellPrice,
+                ExpiryDate = m.ExpiryDate,
+                Batches = m.Batches.Select(b => new MedicineBatchDto
+                {
+                    Id = b.Id,
+                    BatchNumber = b.BatchNumber,
+                    MedicineId = b.MedicineId,
+                    ManufactureDate = b.ManufactureDate,
+                    ExpiryDate = b.ExpiryDate,
+                    InitialQuantity = b.InitialQuantity,
+                    CurrentQuantity = b.CurrentQuantity
+                }).OrderBy(b => b.ExpiryDate).ToList()
             });
         }
 
@@ -118,14 +129,11 @@ namespace MyPetClinic.Application.Services
                 if (dto.ManufactureDate > DateTime.UtcNow)
                     throw new Exception("Ngày sản xuất không hợp lệ (lớn hơn ngày hiện tại).");
 
-                var existingBatch = await _batchRepo.GetBatchByNumberAsync(dto.BatchNumber);
+                var existingBatch = await _batchRepo.GetBatchByNumberAndMedicineAsync(dto.BatchNumber, dto.MedicineId);
                 MedicineBatch batch;
 
                 if (existingBatch != null)
                 {
-                    if (existingBatch.MedicineId != dto.MedicineId)
-                        throw new Exception("Số lô đã được sử dụng cho một loại thuốc khác.");
-                    
                     batch = existingBatch;
                     batch.CurrentQuantity += dto.Quantity;
                     batch.InitialQuantity += dto.Quantity;
@@ -144,6 +152,9 @@ namespace MyPetClinic.Application.Services
                     };
                     await _unitOfWork.MedicineBatches.AddAsync(batch);
                 }
+
+                medicine.StockQuantity += dto.Quantity;
+                _unitOfWork.Medicines.Update(medicine);
 
                 await _unitOfWork.SaveChangesAsync();
 
@@ -236,6 +247,13 @@ namespace MyPetClinic.Application.Services
 
                 batch.CurrentQuantity += dto.QuantityChange;
                 _unitOfWork.MedicineBatches.Update(batch);
+
+                var medicine = await _unitOfWork.Medicines.GetByIdAsync(dto.MedicineId);
+                if (medicine != null)
+                {
+                    medicine.StockQuantity += dto.QuantityChange;
+                    _unitOfWork.Medicines.Update(medicine);
+                }
 
                 var transaction = new InventoryTransaction
                 {

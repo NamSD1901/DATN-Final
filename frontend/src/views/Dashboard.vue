@@ -102,6 +102,9 @@
           <li :class="{ 'active': activeTab === 'my-history' }">
             <a href="#" @click.prevent="activeTab = 'my-history'"><i class="bi bi-clock-history text-warning opacity-75"></i> {{ $t('sidebar.myHistory') }}</a>
           </li>
+          <li :class="{ 'active': activeTab === 'my-reviews' }">
+            <a href="#" @click.prevent="activeTab = 'my-reviews'"><i class="bi bi-star-half text-warning opacity-75"></i> Đánh giá của tôi</a>
+          </li>
           <li :class="{ 'active': activeTab === 'my-services-invoices' }">
             <a href="#" @click.prevent="activeTab = 'my-services-invoices'"><i class="bi bi-receipt text-warning opacity-75"></i> {{ $t('sidebar.myInvoices') }}</a>
           </li>
@@ -315,6 +318,11 @@
             <MyServicesInvoicesTab />
           </div>
 
+          <!-- tab: My Reviews Tab (Customer) -->
+          <div v-else-if="activeTab === 'my-reviews'" class="container-fluid p-0">
+            <MyReviewsTab @switch-tab="activeTab = $event" />
+          </div>
+
           <!-- tab: Doctor Cases Tab -->
           <div v-else-if="activeTab === 'doctor-cases'" class="container-fluid p-0">
             <DoctorQueueTab @switch-tab="activeTab = $event" />
@@ -442,6 +450,7 @@ import PetProfile from '../views/PetProfile.vue';
 import MyAppointmentsTab from '../components/dashboard/MyAppointmentsTab.vue';
 import MyHistoryTab from '../components/dashboard/MyHistoryTab.vue';
 import MyServicesInvoicesTab from '../components/dashboard/MyServicesInvoicesTab.vue';
+import MyReviewsTab from '../components/dashboard/MyReviewsTab.vue';
 import DoctorQueueTab from '../components/dashboard/DoctorQueueTab.vue';
 import MedicalRecordsTab from '../components/dashboard/MedicalRecordsTab.vue';
 import StaffTab from '../components/dashboard/StaffTab.vue';
@@ -528,6 +537,7 @@ const getTitle = computed(() => {
     if (activeTab.value === 'pet-profile') return t('pageTitle.petProfile');
     if (activeTab.value === 'my-appointments') return t('pageTitle.myAppointments');
     if (activeTab.value === 'my-history') return t('pageTitle.myHistory');
+    if (activeTab.value === 'my-reviews') return 'Đánh giá của tôi';
     if (activeTab.value === 'my-services-invoices') return t('pageTitle.myServicesInvoices');
     if (activeTab.value === 'settings') return t('common.settings');
   } else {

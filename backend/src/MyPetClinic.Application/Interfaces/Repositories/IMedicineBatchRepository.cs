@@ -8,6 +8,6 @@ namespace MyPetClinic.Application.Interfaces.Repositories
     {
         Task<IEnumerable<MedicineBatch>> GetAvailableBatchesAsync(long medicineId);
         Task<MedicineBatch?> GetBatchWithMedicineAsync(long id);
-        Task<MedicineBatch?> GetBatchByNumberAsync(string batchNumber);
+        Task<MedicineBatch?> GetBatchByNumberAndMedicineAsync(string batchNumber, long medicineId);
     }
 }

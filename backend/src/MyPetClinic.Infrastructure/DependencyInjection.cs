@@ -78,6 +78,7 @@ namespace MyPetClinic.Infrastructure
             services.AddHostedService<Workers.VaccineReminderWorker>();
             services.AddHostedService<Workers.AppointmentReminderWorker>();
             services.AddHostedService<Workers.ScheduleGeneratorWorker>();
+            services.AddHostedService<Workers.OverdueAppointmentCleanerWorker>();
 
             // Đăng ký Background Email Queue
             services.AddSingleton<IEmailQueue, EmailQueue>();

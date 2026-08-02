@@ -169,7 +169,18 @@ namespace MyPetClinic.Application.Services
                 Unit = m.Unit,
                 StockQuantity = m.StockQuantity,  // [NotMapped] = Batches.Sum(b => b.CurrentQuantity)
                 ImportPrice = m.ImportPrice,
-                SellPrice = m.SellPrice
+                SellPrice = m.SellPrice,
+                ExpiryDate = m.ExpiryDate,
+                Batches = m.Batches.Select(b => new MedicineBatchDto
+                {
+                    Id = b.Id,
+                    BatchNumber = b.BatchNumber,
+                    MedicineId = b.MedicineId,
+                    ManufactureDate = b.ManufactureDate,
+                    ExpiryDate = b.ExpiryDate,
+                    InitialQuantity = b.InitialQuantity,
+                    CurrentQuantity = b.CurrentQuantity
+                }).OrderBy(b => b.ExpiryDate).ToList()
             });
         }
 
@@ -258,10 +269,31 @@ namespace MyPetClinic.Application.Services
         {
             var medicine = await _unitOfWork.Medicines.GetByIdAsync(id) ?? throw new KeyNotFoundException("Không tìm thấy thuốc.");
 
+            var batches = await _unitOfWork.MedicineBatches.FindAsync(b => b.MedicineId == id);
+            if (batches.Any(b => b.CurrentQuantity > 0))
+            {
+                throw new InvalidOperationException("Không thể xoá thuốc vẫn còn tồn kho trong các lô.");
+            }
+
             _unitOfWork.Medicines.Remove(medicine);
             await _unitOfWork.SaveChangesAsync();
 
             await _auditLogService.LogActionAsync(currentUserId, "DeleteMedicine", $"Xoá thuốc ID {id}");
+        }
+
+        public async Task DeleteMedicineBatchAsync(long batchId, string currentUserId)
+        {
+            var batch = await _unitOfWork.MedicineBatches.GetByIdAsync(batchId) ?? throw new KeyNotFoundException("Không tìm thấy lô thuốc.");
+            
+            if (batch.CurrentQuantity > 0)
+            {
+                throw new InvalidOperationException("Không thể xoá lô thuốc vẫn còn tồn kho. Hãy dùng tính năng xuất kho/điều chỉnh nếu cần.");
+            }
+
+            _unitOfWork.MedicineBatches.Remove(batch);
+            await _unitOfWork.SaveChangesAsync();
+
+            await _auditLogService.LogActionAsync(currentUserId, "DeleteMedicineBatch", $"Xoá lô thuốc ID {batchId}");
         }
 
         // ================= VACCINES MANAGEMENT =================
