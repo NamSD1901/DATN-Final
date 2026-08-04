@@ -6,12 +6,33 @@
           <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-box-seam-fill text-warning me-2"></i>Quản lý Dịch vụ & Giá cả</h4>
           <p class="text-muted small mb-0">Cấu hình danh mục dịch vụ y tế, giá cả khám bệnh và thời gian thực hiện</p>
         </div>
-        <button class="btn btn-premium px-4 py-2.5 rounded-pill shadow-sm" @click="openCreateModal">
+        <button v-if="activeTab === 'services'" class="btn btn-premium px-4 py-2.5 rounded-pill shadow-sm" @click="openCreateModal">
           <i class="bi bi-plus-circle-fill me-2"></i> Thêm Dịch Vụ Mới
+        </button>
+        <button v-if="activeTab === 'categories'" class="btn btn-premium px-4 py-2.5 rounded-pill shadow-sm" @click="openCategoryModal">
+          <i class="bi bi-plus-circle-fill me-2"></i> Thêm Danh Mục
         </button>
       </div>
 
-      <!-- Filters & Table -->
+      <!-- Tabs -->
+      <div class="mb-4">
+        <ul class="nav nav-tabs nav-tabs-premium" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold px-4" :class="{ active: activeTab === 'services' }" @click="activeTab = 'services'">
+              <i class="bi bi-list-ul me-2"></i> Danh sách Dịch vụ
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold px-4" :class="{ active: activeTab === 'categories' }" @click="activeTab = 'categories'">
+              <i class="bi bi-tags-fill me-2"></i> Danh mục Dịch vụ
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Tab Services -->
+      <div v-if="activeTab === 'services'" class="tab-pane-content">
+        <!-- Filters & Table -->
       <div class="row g-2 mb-3 align-items-center">
         <div class="col-md-6">
           <div class="input-group">
@@ -75,6 +96,79 @@
           </tbody>
         </table>
       </div>
+      </div> <!-- End Tab Services -->
+
+      <!-- Tab Categories -->
+      <div v-else-if="activeTab === 'categories'" class="tab-pane-content">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-6">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+              <input 
+                type="text" 
+                v-model="searchCategoryKeyword" 
+                class="form-control border-start-0 input-premium" 
+                placeholder="Tìm kiếm danh mục..."
+              />
+            </div>
+          </div>
+          <div class="col-md-6 text-md-end text-muted small">
+            Tổng số: <strong class="text-dark">{{ filteredCategories.length }}</strong> danh mục
+          </div>
+        </div>
+
+        <div class="table-responsive rounded-4 border overflow-hidden mt-3">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light-gold">
+              <tr>
+                <th class="ps-4">ID</th>
+                <th>Tên danh mục</th>
+                <th class="text-center">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="filteredCategories.length === 0" class="text-center">
+                <td colspan="3" class="py-5 text-muted">
+                  <i class="bi bi-folder-x fs-2 mb-2 d-block"></i>
+                  Không tìm thấy danh mục nào.
+                </td>
+              </tr>
+              <tr v-for="category in filteredCategories" :key="category.id" v-else>
+                <td class="ps-4 text-muted">{{ category.id }}</td>
+                <td class="fw-bold text-dark">{{ category.name }}</td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-outline-warning rounded-pill px-3 me-2" @click="openCategoryModal">
+                    <i class="bi bi-pencil-fill me-1"></i>Sửa
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                    <i class="bi bi-trash-fill me-1"></i>Xóa
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Modal Placeholder -->
+    <div v-if="showCategoryModal" class="zalo-modal-overlay" @click.self="showCategoryModal = false">
+      <div class="zalo-modal-card max-w-500">
+        <div class="zalo-modal-header bg-warning text-dark">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-tags-fill me-2"></i> Danh Mục Dịch Vụ
+          </h5>
+          <button class="modal-close text-dark border-0 bg-transparent" @click="showCategoryModal = false"><i class="bi bi-x-lg fs-5"></i></button>
+        </div>
+        <div class="zalo-modal-body text-start">
+          <div class="alert alert-info">
+            Tính năng đang được nâng cấp. Sẽ sớm hỗ trợ thêm/sửa danh mục động qua API.
+          </div>
+          <div class="text-end">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" @click="showCategoryModal = false">Đóng</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Create/Edit Modal -->
@@ -136,10 +230,25 @@ import Swal from 'sweetalert2';
 const loading = ref(false);
 const servicesList = ref<any[]>([]);
 const searchKeyword = ref('');
+const activeTab = ref('services');
 
 const showModal = ref(false);
+const showCategoryModal = ref(false);
 const isEdit = ref(false);
 const currentServiceId = ref<number | null>(null);
+
+const categoriesList = ref([
+  { id: 1, name: 'Khám bệnh' },
+  { id: 2, name: 'Tiêm phòng' },
+  { id: 3, name: 'Xét nghiệm & Siêu âm' },
+  { id: 4, name: 'Phẫu thuật' },
+  { id: 5, name: 'Grooming & Spa' }
+]);
+const searchCategoryKeyword = ref('');
+
+const openCategoryModal = () => {
+  showCategoryModal.value = true;
+};
 
 const form = ref({
   name: '',
@@ -154,6 +263,12 @@ const filteredServices = computed(() => {
   return servicesList.value.filter(s => 
     s.isActive && (s.name.toLowerCase().includes(keyword) || (s.description && s.description.toLowerCase().includes(keyword)))
   );
+});
+
+const filteredCategories = computed(() => {
+  const keyword = searchCategoryKeyword.value.toLowerCase().trim();
+  if (!keyword) return categoriesList.value;
+  return categoriesList.value.filter(c => c.name.toLowerCase().includes(keyword));
 });
 
 const loadServices = async () => {
@@ -244,6 +359,35 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.nav-tabs-premium {
+  border-bottom: 2px solid #f1f5f9;
+}
+.nav-tabs-premium .nav-link {
+  color: #64748b;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.3s ease;
+}
+.nav-tabs-premium .nav-link:hover {
+  color: #f59e0b;
+  border-color: transparent;
+}
+.nav-tabs-premium .nav-link.active {
+  color: #d97706;
+  background: transparent;
+  border-color: #f59e0b;
+}
+
+.tab-pane-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .bg-light-gold {
   background-color: #fdfaf0;
 }

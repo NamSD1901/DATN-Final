@@ -13,7 +13,7 @@
 
       <!-- Filters & Table -->
       <div class="row g-2 mb-3 align-items-center">
-        <div class="col-md-6">
+        <div class="col-md-5">
           <div class="input-group">
             <span class="input-group-text bg-white border-end-0 rounded-start-pill"><i class="bi bi-search text-muted"></i></span>
             <input 
@@ -24,7 +24,16 @@
             />
           </div>
         </div>
-        <div class="col-md-6 text-md-end text-muted small">
+        <div class="col-md-3">
+          <select v-model="selectedRole" class="form-select input-premium rounded-pill text-muted">
+            <option value="">Tất cả vai trò</option>
+            <option value="admin">Quản trị viên</option>
+            <option value="clinical_doctor">BS. Khám Bệnh</option>
+            <option value="vaccination_doctor">BS. Tiêm Chủng</option>
+            <option value="receptionist">Lễ tân</option>
+          </select>
+        </div>
+        <div class="col-md-4 text-md-end text-muted small">
           Tổng số: <strong class="text-dark">{{ filteredStaff.length }}</strong> nhân sự
         </div>
       </div>
@@ -131,17 +140,24 @@ import type { EmployeeDto } from '../../services/employee.service';
 
 const employeeStore = useEmployeeStore();
 const searchKeyword = ref('');
+const selectedRole = ref('');
 const showModal = ref(false);
 const selectedEmployee = ref<EmployeeDto | null>(null);
 
 const filteredStaff = computed(() => {
   const keyword = searchKeyword.value.toLowerCase().trim();
-  if (!keyword) return employeeStore.employees;
-  return employeeStore.employees.filter(member => 
-    member.fullName.toLowerCase().includes(keyword) || 
-    member.email.toLowerCase().includes(keyword) ||
-    member.identityCard.includes(keyword)
-  );
+  const roleFilter = selectedRole.value;
+
+  return employeeStore.employees.filter(member => {
+    const matchesKeyword = !keyword || 
+      member.fullName.toLowerCase().includes(keyword) || 
+      member.email.toLowerCase().includes(keyword) ||
+      member.identityCard.includes(keyword);
+      
+    const matchesRole = !roleFilter || member.roleName === roleFilter;
+    
+    return matchesKeyword && matchesRole;
+  });
 });
 
 const loadStaff = async () => {

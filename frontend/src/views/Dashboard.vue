@@ -78,9 +78,6 @@
           <li :class="{ 'active': activeTab === 'reports-admin' }">
             <a href="#" @click.prevent="activeTab = 'reports-admin'"><i class="bi bi-graph-up-arrow text-warning opacity-75"></i> Báo cáo doanh thu</a>
           </li>
-          <li :class="{ 'active': activeTab === 'categories-admin' }">
-            <a href="#" @click.prevent="activeTab = 'categories-admin'"><i class="bi bi-tags-fill text-warning opacity-75"></i> Quản lý Danh mục</a>
-          </li>
           <li :class="{ 'active': activeTab === 'reviews-admin' }">
             <a href="#" @click.prevent="activeTab = 'reviews-admin'"><i class="bi bi-star-fill text-warning opacity-75"></i> Quản lý Đánh giá</a>
           </li>
@@ -101,9 +98,6 @@
           </li>
           <li :class="{ 'active': activeTab === 'my-history' }">
             <a href="#" @click.prevent="activeTab = 'my-history'"><i class="bi bi-clock-history text-warning opacity-75"></i> {{ $t('sidebar.myHistory') }}</a>
-          </li>
-          <li :class="{ 'active': activeTab === 'my-reviews' }">
-            <a href="#" @click.prevent="activeTab = 'my-reviews'"><i class="bi bi-star-half text-warning opacity-75"></i> Đánh giá của tôi</a>
           </li>
           <li :class="{ 'active': activeTab === 'my-services-invoices' }">
             <a href="#" @click.prevent="activeTab = 'my-services-invoices'"><i class="bi bi-receipt text-warning opacity-75"></i> {{ $t('sidebar.myInvoices') }}</a>
@@ -318,11 +312,6 @@
             <MyServicesInvoicesTab />
           </div>
 
-          <!-- tab: My Reviews Tab (Customer) -->
-          <div v-else-if="activeTab === 'my-reviews'" class="container-fluid p-0">
-            <MyReviewsTab @switch-tab="activeTab = $event" />
-          </div>
-
           <!-- tab: Doctor Cases Tab -->
           <div v-else-if="activeTab === 'doctor-cases'" class="container-fluid p-0">
             <DoctorQueueTab @switch-tab="activeTab = $event" />
@@ -371,11 +360,6 @@
           <!-- tab: Blog Admin Tab -->
           <div v-else-if="activeTab === 'blog-admin'" class="container-fluid p-0">
             <BlogAdminTab />
-          </div>
-
-          <!-- tab: Categories Admin Tab -->
-          <div v-else-if="activeTab === 'categories-admin'" class="container-fluid p-0">
-            <CategoriesAdminTab />
           </div>
 
           <!-- tab: Reviews Admin Tab -->
@@ -450,7 +434,6 @@ import PetProfile from '../views/PetProfile.vue';
 import MyAppointmentsTab from '../components/dashboard/MyAppointmentsTab.vue';
 import MyHistoryTab from '../components/dashboard/MyHistoryTab.vue';
 import MyServicesInvoicesTab from '../components/dashboard/MyServicesInvoicesTab.vue';
-import MyReviewsTab from '../components/dashboard/MyReviewsTab.vue';
 import DoctorQueueTab from '../components/dashboard/DoctorQueueTab.vue';
 import MedicalRecordsTab from '../components/dashboard/MedicalRecordsTab.vue';
 import StaffTab from '../components/dashboard/StaffTab.vue';
@@ -461,7 +444,6 @@ import VaccinesAdminTab from '../components/dashboard/VaccinesAdminTab.vue';
 import SchedulesAdminTab from '../components/dashboard/SchedulesAdminTab.vue';
 import ReportsAdminTab from '../components/dashboard/ReportsAdminTab.vue';
 import BlogAdminTab from '../components/dashboard/BlogAdminTab.vue';
-import CategoriesAdminTab from '../components/dashboard/CategoriesAdminTab.vue';
 import ReviewsAdminTab from '../components/dashboard/ReviewsAdminTab.vue';
 import SettingsTab from '../components/dashboard/SettingsTab.vue';
 
@@ -537,7 +519,6 @@ const getTitle = computed(() => {
     if (activeTab.value === 'pet-profile') return t('pageTitle.petProfile');
     if (activeTab.value === 'my-appointments') return t('pageTitle.myAppointments');
     if (activeTab.value === 'my-history') return t('pageTitle.myHistory');
-    if (activeTab.value === 'my-reviews') return 'Đánh giá của tôi';
     if (activeTab.value === 'my-services-invoices') return t('pageTitle.myServicesInvoices');
     if (activeTab.value === 'settings') return t('common.settings');
   } else {

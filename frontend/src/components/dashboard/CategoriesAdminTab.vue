@@ -1,13 +1,19 @@
 <template>
   <div class="categories-admin-container p-4">
     <!-- Header Tools -->
-    <div class="glass-card p-4 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div v-if="!hideHeader" class="glass-card p-4 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
       <div>
         <h4 class="fw-bold text-dark mb-1"><i class="bi bi-tags-fill text-warning me-2"></i>Quản Trị Danh Mục Bài Viết</h4>
         <p class="text-muted small mb-0">Tạo và phân loại các chủ đề tin tức, blog kiến thức</p>
       </div>
       
       <button class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-dark shadow-sm d-flex align-items-center gap-1" @click="openCreateModal">
+        <i class="bi bi-plus-circle-fill"></i> Thêm danh mục
+      </button>
+    </div>
+    
+    <div v-else class="text-end mb-3">
+      <button class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-dark shadow-sm d-flex align-items-center gap-1 d-inline-flex" @click="openCreateModal">
         <i class="bi bi-plus-circle-fill"></i> Thêm danh mục
       </button>
     </div>
@@ -158,6 +164,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { usePostStore } from '../../stores/post.store';
+
+const props = defineProps({
+  hideHeader: {
+    type: Boolean,
+    default: false
+  }
+});
 
 const postStore = usePostStore();
 const categories = computed(() => postStore.categories);

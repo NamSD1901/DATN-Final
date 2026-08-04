@@ -1,18 +1,35 @@
 <template>
   <div class="blog-admin-container p-4">
     <!-- Header Tools -->
-    <div class="glass-card p-4 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
-      <div>
-        <h4 class="fw-bold text-dark mb-1"><i class="bi bi-journal-richtext text-warning me-2"></i>Quản Trị Bài Viết & Tin Tức</h4>
-        <p class="text-muted small mb-0">Viết cẩm nang chăm sóc thú cưng và các thông báo khuyến mại của phòng khám</p>
+    <div class="glass-card p-4 mb-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+          <h4 class="fw-bold text-dark mb-1"><i class="bi bi-journal-richtext text-warning me-2"></i>Quản Trị Bài Viết & Tin Tức</h4>
+          <p class="text-muted small mb-0">Viết cẩm nang chăm sóc thú cưng và các thông báo khuyến mại của phòng khám</p>
+        </div>
+        
+        <button v-if="activeTab === 'posts'" class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-dark shadow-sm d-flex align-items-center gap-1" @click="openCreateModal">
+          <i class="bi bi-plus-circle-fill"></i> Viết bài mới
+        </button>
       </div>
-      
-      <button class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-dark shadow-sm d-flex align-items-center gap-1" @click="openCreateModal">
-        <i class="bi bi-plus-circle-fill"></i> Viết bài mới
-      </button>
+
+      <!-- Tabs -->
+      <ul class="nav nav-tabs nav-tabs-premium" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-bold px-4" :class="{ active: activeTab === 'posts' }" @click="activeTab = 'posts'">
+            <i class="bi bi-list-ul me-2"></i> Danh sách Bài viết
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-bold px-4" :class="{ active: activeTab === 'categories' }" @click="activeTab = 'categories'">
+            <i class="bi bi-tags-fill me-2"></i> Danh mục Bài viết
+          </button>
+        </li>
+      </ul>
     </div>
 
-    <!-- Error/Success Alerts -->
+    <div v-if="activeTab === 'posts'" class="tab-pane-content">
+      <!-- Error/Success Alerts -->
     <div v-if="successMsg" class="alert alert-success rounded-4 shadow-sm mb-4" role="alert">
       <i class="bi bi-check-circle-fill me-2"></i>{{ successMsg }}
     </div>
@@ -115,6 +132,11 @@
           <button class="btn btn-sm btn-light border-0 shadow-sm" :disabled="posts.length < 10" @click="pageIndex++; fetchPosts()">Trang sau</button>
         </div>
       </div>
+    </div>
+    </div> <!-- End Posts Tab -->
+
+    <div v-else-if="activeTab === 'categories'" class="tab-pane-content mt-3">
+      <CategoriesAdminTab :hide-header="true" />
     </div>
 
     <!-- Create/Edit Post Modal Dialog -->
@@ -219,6 +241,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { usePostStore } from '../../stores/post.store';
+import CategoriesAdminTab from './CategoriesAdminTab.vue';
 import { QuillEditor } from '@vueup/vue-quill';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 
@@ -227,6 +250,7 @@ const postStore = usePostStore();
 const posts = computed(() => postStore.posts);
 const categories = computed(() => postStore.categories);
 
+const activeTab = ref('posts');
 const saving = ref(false);
 const successMsg = ref('');
 const validationError = ref('');
@@ -443,6 +467,35 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.nav-tabs-premium {
+  border-bottom: 2px solid #f1f5f9;
+}
+.nav-tabs-premium .nav-link {
+  color: #64748b;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.3s ease;
+}
+.nav-tabs-premium .nav-link:hover {
+  color: #f59e0b;
+  border-color: transparent;
+}
+.nav-tabs-premium .nav-link.active {
+  color: #d97706;
+  background: transparent;
+  border-color: #f59e0b;
+}
+
+.tab-pane-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .glass-card {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
