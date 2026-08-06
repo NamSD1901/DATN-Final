@@ -59,6 +59,7 @@ namespace MyPetClinic.Application.Services
                 .Select(g => new ServiceRevenueDto
                 {
                     ServiceName = g.Key.ItemName ?? string.Empty,
+                    ItemType    = g.Key.ItemType ?? string.Empty,
                     Amount      = g.Sum(ii => ii.TotalPrice),
                     Count       = g.Sum(ii => ii.Quantity)
                 })

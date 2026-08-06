@@ -9,6 +9,8 @@ namespace MyPetClinic.Application.DTOs
 
         [Required(ErrorMessage = "Mật khẩu mới không được để trống.")]
         [MinLength(8, ErrorMessage = "Mật khẩu mới phải có ít nhất 8 ký tự.")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", 
+            ErrorMessage = "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt")]
         public string NewPassword { get; set; } = null!;
 
         [Required(ErrorMessage = "Xác nhận mật khẩu không được để trống.")]

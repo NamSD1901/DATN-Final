@@ -18,7 +18,7 @@
         </div>
         <button class="btn btn-warning btn-sm px-3 fw-bold rounded-pill shadow-sm text-dark d-flex align-items-center gap-1" @click="loadReport" :disabled="loading">
           <i v-if="loading" class="spinner-border spinner-border-sm me-1" role="status"></i>
-          <i v-else class="bi bi-arrow-clockwise"></i> Tải báo cáo
+          <i v-else class="bi bi-filter"></i> Lọc dữ liệu
         </button>
       </div>
     </div>
@@ -27,6 +27,21 @@
     <div v-if="errorMsg" class="alert alert-danger rounded-4 shadow-sm mb-4" role="alert">
       <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ errorMsg }}
     </div>
+
+    <!-- Toast Notification (auto-dismiss) -->
+    <Transition name="toast-slide">
+      <div v-if="showToast" class="position-fixed top-0 end-0 p-3" style="z-index: 1055">
+        <div class="toast align-items-center text-white border-0 show" :class="toastType === 'toast-success' ? 'bg-success' : 'bg-danger'" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body">
+              <i :class="toastType === 'toast-success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'" class="me-2"></i>
+              {{ toastMessage }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" @click="showToast = false" aria-label="Close"></button>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Stats summary cards -->
     <div class="row g-4 mb-4">
@@ -72,8 +87,10 @@
       <div class="col-lg-8">
         <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
           <h5 class="fw-bold text-dark mb-4"><i class="bi bi-activity text-success me-2"></i>Biểu Đồ Doanh Thu Theo Ngày</h5>
-          <div class="chart-container" style="position: relative; height: 350px;">
-            <canvas ref="revenueChartCanvas"></canvas>
+          <div class="chart-wrapper" style="overflow-x: auto; overflow-y: hidden;">
+            <div class="chart-container" :style="{ width: chartDynamicWidth, height: '350px', minWidth: '100%' }">
+              <canvas ref="revenueChartCanvas"></canvas>
+            </div>
           </div>
         </div>
       </div>
@@ -117,31 +134,67 @@
 
       <!-- Service & Product Breakdown -->
       <div class="col-12">
-        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-          <h5 class="fw-bold text-dark mb-4"><i class="bi bi-bag-check-fill text-warning me-2"></i>Chi Tiết Doanh Thu Dịch Vụ & Thuốc Kê Đơn</h5>
-          <div class="table-responsive">
-            <table class="table align-middle border-bottom mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th class="py-3 ps-4 border-0 text-muted small">Tên dịch vụ / Thuốc</th>
-                  <th class="py-3 border-0 text-muted small text-center">Số lượng bán ra</th>
-                  <th class="py-3 border-0 text-muted small text-end pe-4">Tổng doanh thu</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, idx) in reportData?.serviceRevenue" :key="idx">
-                  <td class="py-3 ps-4 border-0 fw-bold text-dark">{{ item.serviceName }}</td>
-                  <td class="py-3 border-0 text-center text-muted">{{ item.count }}</td>
-                  <td class="py-3 border-0 text-end pe-4 text-emerald fw-bold">{{ formatCurrency(item.amount) }}</td>
-                </tr>
-                <tr v-if="!reportData?.serviceRevenue || reportData.serviceRevenue.length === 0">
-                  <td colspan="3" class="text-center py-5 text-muted small">
-                    <i class="bi bi-cart-x fs-2 d-block mb-2 text-black-50 opacity-25"></i>
-                    Chưa có doanh thu bán dịch vụ hoặc thuốc nào phát sinh
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <div class="row g-4">
+          <!-- Services Table -->
+          <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+              <h5 class="fw-bold text-dark mb-4"><i class="bi bi-heart-pulse-fill text-danger me-2"></i>Chi Tiết Doanh Thu Dịch Vụ</h5>
+              <div class="table-responsive">
+                <table class="table align-middle border-bottom mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="py-3 ps-4 border-0 text-muted small">Tên dịch vụ</th>
+                      <th class="py-3 border-0 text-muted small text-center">Số lượng</th>
+                      <th class="py-3 border-0 text-muted small text-end pe-4">Doanh thu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(item, idx) in serviceOnlyRevenue" :key="'s'+idx">
+                      <td class="py-3 ps-4 border-0 fw-bold text-dark">{{ item.serviceName }}</td>
+                      <td class="py-3 border-0 text-center text-muted">{{ item.count }}</td>
+                      <td class="py-3 border-0 text-end pe-4 text-emerald fw-bold">{{ formatCurrency(item.amount) }}</td>
+                    </tr>
+                    <tr v-if="serviceOnlyRevenue.length === 0">
+                      <td colspan="3" class="text-center py-5 text-muted small">
+                        <i class="bi bi-inbox fs-2 d-block mb-2 text-black-50 opacity-25"></i>
+                        Chưa có doanh thu dịch vụ
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Medicines Table -->
+          <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+              <h5 class="fw-bold text-dark mb-4"><i class="bi bi-capsule text-primary me-2"></i>Chi Tiết Doanh Thu Thuốc</h5>
+              <div class="table-responsive">
+                <table class="table align-middle border-bottom mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="py-3 ps-4 border-0 text-muted small">Tên thuốc</th>
+                      <th class="py-3 border-0 text-muted small text-center">Số lượng</th>
+                      <th class="py-3 border-0 text-muted small text-end pe-4">Doanh thu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(item, idx) in medicineOnlyRevenue" :key="'m'+idx">
+                      <td class="py-3 ps-4 border-0 fw-bold text-dark">{{ item.serviceName }}</td>
+                      <td class="py-3 border-0 text-center text-muted">{{ item.count }}</td>
+                      <td class="py-3 border-0 text-end pe-4 text-emerald fw-bold">{{ formatCurrency(item.amount) }}</td>
+                    </tr>
+                    <tr v-if="medicineOnlyRevenue.length === 0">
+                      <td colspan="3" class="text-center py-5 text-muted small">
+                        <i class="bi bi-inbox fs-2 d-block mb-2 text-black-50 opacity-25"></i>
+                        Chưa có doanh thu thuốc kê đơn
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -169,6 +222,23 @@ const reportData = ref<any>(null);
 
 const revenueChartCanvas = ref<HTMLCanvasElement | null>(null);
 let chartInstance: Chart | null = null;
+const chartDynamicWidth = ref('100%');
+
+// Toast Notification State
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastType = ref<'toast-success' | 'toast-error'>('toast-success');
+let toastTimer: ReturnType<typeof setTimeout> | null = null;
+
+const triggerToast = (message: string, type: 'toast-success' | 'toast-error' = 'toast-success') => {
+  if (toastTimer) clearTimeout(toastTimer);
+  toastMessage.value = message;
+  toastType.value = type;
+  showToast.value = true;
+  toastTimer = setTimeout(() => {
+    showToast.value = false;
+  }, 3000);
+};
 
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
@@ -177,6 +247,16 @@ const formatCurrency = (val: number) => {
 const totalCompletedAppointments = computed(() => {
   if (!reportData.value || !reportData.value.doctorPerformance) return 0;
   return reportData.value.doctorPerformance.reduce((acc: number, cur: any) => acc + Number(cur.completedAppointments), 0);
+});
+
+const serviceOnlyRevenue = computed(() => {
+  if (!reportData.value?.serviceRevenue) return [];
+  return reportData.value.serviceRevenue.filter((s: any) => s.itemType?.toLowerCase() === 'service');
+});
+
+const medicineOnlyRevenue = computed(() => {
+  if (!reportData.value?.serviceRevenue) return [];
+  return reportData.value.serviceRevenue.filter((s: any) => s.itemType?.toLowerCase() === 'medicine');
 });
 
 const loadReport = async () => {
@@ -191,6 +271,7 @@ const loadReport = async () => {
     });
     reportData.value = res.data;
     renderChart();
+    triggerToast('Đã cập nhật dữ liệu báo cáo thành công!', 'toast-success');
   } catch (err: any) {
     console.error('Không thể tải báo cáo doanh thu:', err);
     errorMsg.value = err.response?.data?.message || 'Lỗi hệ thống khi tải báo cáo.';
@@ -206,29 +287,46 @@ const renderChart = () => {
     chartInstance.destroy();
   }
 
-  const labels = reportData.value.dailyRevenue.map((d: any) => {
-    return new Date(d.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-  });
-  const data = reportData.value.dailyRevenue.map((d: any) => d.amount);
+  const labels: string[] = [];
+  const data: number[] = [];
+
+  if (startDate.value && endDate.value) {
+    const start = new Date(startDate.value + 'T00:00:00');
+    const end = new Date(endDate.value + 'T00:00:00');
+    
+    const revenueMap = new Map();
+    if (reportData.value?.dailyRevenue) {
+      reportData.value.dailyRevenue.forEach((d: any) => {
+        const dateKey = new Date(d.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        revenueMap.set(dateKey, d.amount);
+      });
+    }
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const fullDateKey = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const label = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+      labels.push(label);
+      data.push(revenueMap.get(fullDateKey) || 0);
+    }
+  }
+  
+  // Calculate dynamic width based on number of bars (approx 60px per bar)
+  const minRequiredWidth = labels.length * 60;
+  chartDynamicWidth.value = minRequiredWidth > 800 ? `${minRequiredWidth}px` : '100%';
 
   chartInstance = new Chart(revenueChartCanvas.value, {
-    type: 'line',
+    type: 'bar',
     data: {
       labels,
       datasets: [
         {
           label: 'Doanh thu hàng ngày (VND)',
           data,
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.08)',
-          borderWidth: 3,
-          fill: true,
-          tension: 0.35,
-          pointBackgroundColor: '#10b981',
-          pointBorderColor: '#ffffff',
-          pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7
+          backgroundColor: 'rgba(16, 185, 129, 0.85)',
+          hoverBackgroundColor: '#10b981',
+          borderRadius: 6,
+          barPercentage: 0.7,
+          categoryPercentage: 0.9
         }
       ]
     },
@@ -269,6 +367,11 @@ const renderChart = () => {
         x: {
           grid: {
             display: false
+          },
+          ticks: {
+            maxRotation: 0,
+            minRotation: 0,
+            autoSkip: false
           }
         }
       }
@@ -301,11 +404,21 @@ onMounted(() => {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 }
 
-.text-emerald {
-  color: #10b981;
+.chart-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
-
+.chart-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+.chart-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chart-wrapper::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 10px;
+}
 .chart-container {
-  width: 100%;
+  position: relative;
 }
 </style>

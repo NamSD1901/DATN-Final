@@ -242,7 +242,15 @@
 
       <!-- Pending Approval Queue -->
       <div v-else-if="activeSubTab === 'pending'" class="card border-0 shadow-sm rounded-4 p-4 bg-white animate-fade-in">
-        <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-clock-history text-warning me-2"></i>Yêu cầu lịch hẹn chờ duyệt</h5>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-clock-history text-warning me-2"></i>Yêu cầu lịch hẹn chờ duyệt
+          </h5>
+          <button class="btn btn-sm btn-outline-warning text-dark fw-bold rounded-pill px-3 shadow-sm" @click="loadPending" :disabled="loadingPending">
+            <span v-if="loadingPending" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            <i v-else class="bi bi-arrow-clockwise me-1"></i> Làm mới
+          </button>
+        </div>
         
         <div v-if="pendingList.length === 0" class="text-center py-5 text-muted">
           <i class="bi bi-inbox fs-2 mb-2 d-block text-black-50"></i>
@@ -1101,6 +1109,7 @@ const pendingList = ref<any[]>([]);
 
 // Loading
 const loadingEvents = ref(false);
+const loadingPending = ref(false);
 
 // Modals
 const showDetailModal = ref(false);
@@ -1530,11 +1539,14 @@ const loadEvents = async () => {
 };
 
 const loadPending = async () => {
+  loadingPending.value = true;
   try {
     const res = await api.get('/appointment/pending');
     pendingList.value = res.data || [];
   } catch (err) {
     console.error(err);
+  } finally {
+    loadingPending.value = false;
   }
 };
 

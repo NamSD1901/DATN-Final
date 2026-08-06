@@ -41,6 +41,20 @@ namespace MyPetClinic.Application.Services
             var user = await _userRepository.GetUserByIdAsync(userId);
             if (user == null) return false;
 
+            if (!string.IsNullOrWhiteSpace(dto.Phone) && dto.Phone != user.Phone)
+            {
+                string normalizedPhone = dto.Phone.Trim();
+                string legacyPhone = normalizedPhone.StartsWith("+84") ? "0" + normalizedPhone.Substring(3) : normalizedPhone;
+
+                var usersWithSamePhone = await _unitOfWork.Users.FindAsync(u => 
+                    u.Id != userId && (u.Phone == normalizedPhone || u.Phone == legacyPhone) && u.IsActive == true);
+                
+                if (usersWithSamePhone.Any())
+                {
+                    throw new InvalidOperationException("Số điện thoại này đã được sử dụng bởi tài khoản khác.");
+                }
+            }
+
             user.FullName = dto.FullName;
             user.Phone = dto.Phone;
             user.Address = dto.Address;

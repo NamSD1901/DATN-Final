@@ -4,6 +4,7 @@ namespace MyPetClinic.Application.DTOs
     {
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        [System.ComponentModel.DataAnnotations.RegularExpression(@"^\+[1-9]\d{1,14}$", ErrorMessage = "Số điện thoại không hợp lệ (Phải bắt đầu bằng dấu + và theo chuẩn quốc tế).")]
         public string Phone { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;

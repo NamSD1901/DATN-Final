@@ -487,12 +487,10 @@ const handleNotificationChange = () => {
 
 /* ── Glass Card ──────────────────────────────────────────────── */
 .glass-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(245, 158, 11, 0.1);
+  background: white;
+  border: 1px solid #f1f5f9;
   border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(30, 41, 59, 0.06);
+  box-shadow: none;
 }
 
 /* ── Main Layout: 2 cột Desktop, 1 cột Mobile ───────────────── */

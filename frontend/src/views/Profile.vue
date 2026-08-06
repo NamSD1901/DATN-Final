@@ -92,13 +92,15 @@
 
                   <div class="input-group">
                     <label for="phone">Số điện thoại</label>
-                    <input 
-                      id="phone" 
-                      type="tel" 
-                      v-model="profileForm.phone" 
-                      required 
-                      class="form-input"
-                    />
+                    <vue-tel-input 
+                      v-model="rawPhone" 
+                      @validate="onPhoneValidate"
+                      mode="international"
+                      :dropdownOptions="{ showDialCodeInSelection: true, showFlags: true, showSearchBox: true }"
+                      :inputOptions="{ placeholder: 'Số điện thoại', required: true }"
+                      class="custom-tel-wrapper"
+                    ></vue-tel-input>
+                    <span v-if="rawPhone && !isPhoneValid" class="text-danger mt-1" style="font-size: 0.8rem;"><i class="bi bi-x-circle"></i> Số điện thoại không hợp lệ</span>
                   </div>
 
                   <div class="input-group">
@@ -167,6 +169,26 @@
                       class="form-input"
                       placeholder="Tối thiểu 8 ký tự"
                     />
+                    
+                    <!-- Password Strength Meter -->
+                    <div class="password-strength-container" v-if="passwordForm.newPassword">
+                      <div class="strength-bar-wrapper">
+                        <div class="strength-bar" :style="{ width: passwordStrength.width, backgroundColor: passwordStrength.color }"></div>
+                      </div>
+                      <div class="strength-text" :style="{ color: passwordStrength.color }">
+                        {{ passwordStrength.text }}
+                      </div>
+                    </div>
+                    
+                    <!-- Password Hints -->
+                    <ul class="password-hints" v-if="passwordForm.newPassword && passwordStrength.score < 5">
+                      <li v-for="(error, index) in passwordErrors" :key="index" class="text-danger">
+                        <i class="bi bi-x-circle"></i> {{ error }}
+                      </li>
+                      <li v-if="passwordStrength.score === 5" class="text-success">
+                        <i class="bi bi-check-circle"></i> Mật khẩu đạt độ mạnh tối đa
+                      </li>
+                    </ul>
                   </div>
 
                   <div class="input-group">
@@ -179,6 +201,10 @@
                       class="form-input"
                       placeholder="Nhập lại mật khẩu mới"
                     />
+                    <div class="match-hint" v-if="isConfirmPasswordMatch !== null">
+                      <span v-if="isConfirmPasswordMatch" class="text-success"><i class="bi bi-check-circle"></i> Mật khẩu trùng khớp</span>
+                      <span v-else class="text-danger"><i class="bi bi-x-circle"></i> Mật khẩu xác nhận chưa khớp</span>
+                    </div>
                   </div>
                 </div>
 
@@ -199,8 +225,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { VueTelInput } from 'vue-tel-input';
+import 'vue-tel-input/vue-tel-input.css';
 import api from '../services/api';
 import { 
   User, 
@@ -248,6 +276,53 @@ const passwordForm = reactive({
   newPassword: '',
   confirmNewPassword: ''
 });
+
+const passwordStrength = computed(() => {
+  const pwd = passwordForm.newPassword;
+  let score = 0;
+  if (!pwd) return { score: 0, text: '', color: '#e2e8f0', width: '0%' };
+
+  if (pwd.length >= 8) score += 1;
+  if (/[A-Z]/.test(pwd)) score += 1;
+  if (/[a-z]/.test(pwd)) score += 1;
+  if (/[0-9]/.test(pwd)) score += 1;
+  if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
+
+  if (score <= 2) return { score, text: 'Yếu', color: '#ef4444', width: '33%' };
+  if (score <= 4) return { score, text: 'Trung bình', color: '#f59e0b', width: '66%' };
+  return { score, text: 'Mạnh', color: '#10b981', width: '100%' };
+});
+
+const passwordErrors = computed(() => {
+  const errors = [];
+  const pwd = passwordForm.newPassword;
+  if (!pwd) return [];
+  if (pwd.length < 8) errors.push('Tối thiểu 8 ký tự');
+  if (!/[A-Z]/.test(pwd)) errors.push('Ít nhất 1 chữ hoa (A-Z)');
+  if (!/[a-z]/.test(pwd)) errors.push('Ít nhất 1 chữ thường (a-z)');
+  if (!/[0-9]/.test(pwd)) errors.push('Ít nhất 1 số (0-9)');
+  if (!/[^A-Za-z0-9]/.test(pwd)) errors.push('Ít nhất 1 ký tự đặc biệt (@, #, $...)');
+  return errors;
+});
+
+const isConfirmPasswordMatch = computed(() => {
+  if (!passwordForm.confirmNewPassword) return null;
+  return passwordForm.newPassword === passwordForm.confirmNewPassword;
+});
+
+const rawPhone = ref('');
+const isPhoneValid = ref(true);
+
+const onPhoneValidate = (phoneObject: any) => {
+  if (phoneObject) {
+    isPhoneValid.value = phoneObject.valid;
+    if (phoneObject.valid) {
+      profileForm.phone = phoneObject.number;
+    } else {
+      profileForm.phone = '';
+    }
+  }
+};
 
 // Toast State
 interface Toast {
@@ -304,6 +379,7 @@ const fetchProfile = async () => {
     // Bind to edit form
     profileForm.fullName = response.data.fullName || '';
     profileForm.phone = response.data.phone || '';
+    rawPhone.value = response.data.phone || '';
     profileForm.address = response.data.address || '';
     profileForm.gender = response.data.gender;
     
@@ -321,6 +397,10 @@ const fetchProfile = async () => {
 };
 
 const handleUpdateProfile = async () => {
+  if (!isPhoneValid.value) {
+    showErrorToast('Số điện thoại không hợp lệ.');
+    return;
+  }
   saving.value = true;
   try {
     const response = await api.put('/profile', profileForm);
@@ -341,7 +421,11 @@ const handleUpdateProfile = async () => {
 };
 
 const handleChangePassword = async () => {
-  if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
+  if (passwordErrors.value.length > 0) {
+    showErrorToast('Mật khẩu mới chưa đủ mạnh. Vui lòng kiểm tra lại các yêu cầu.');
+    return;
+  }
+  if (!isConfirmPasswordMatch.value) {
     showErrorToast('Mật khẩu mới không khớp.');
     return;
   }
@@ -798,5 +882,93 @@ onMounted(() => {
 .toast-fade-leave-to {
   opacity: 0;
   transform: translateY(20px) scale(0.9);
+}
+
+.text-danger { color: #ef4444 !important; }
+
+.text-success { color: #10b981 !important; }
+
+/* Password Strength & Hints */
+.password-strength-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 0.5rem;
+}
+.strength-bar-wrapper {
+  flex: 1;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.strength-bar {
+  height: 100%;
+  transition: all 0.3s ease;
+}
+.strength-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 60px;
+}
+.password-hints {
+  list-style: none;
+  padding: 0.5rem;
+  margin: 0.5rem 0 0 0;
+  font-size: 0.75rem;
+  color: #64748b;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+.password-hints li {
+  margin-bottom: 0.2rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.password-hints li:last-child {
+  margin-bottom: 0;
+}
+.match-hint {
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+/* Custom Vue Tel Input Overrides */
+.vue-tel-input.custom-tel-wrapper {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  background: #f8fafc !important;
+  transition: all 0.3s ease;
+  height: 48px; /* Match standard inputs like .form-input */
+  box-shadow: none !important;
+}
+.vue-tel-input.custom-tel-wrapper:focus-within {
+  border-color: #f59e0b !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15) !important;
+}
+.vue-tel-input.custom-tel-wrapper .vti__input {
+  font-size: 0.95rem !important;
+  color: #0f172a !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+}
+.vue-tel-input.custom-tel-wrapper .vti__dropdown {
+  padding: 0.5rem 0.75rem !important;
+  border-radius: 12px 0 0 12px !important;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+.vue-tel-input.custom-tel-wrapper .vti__dropdown:hover {
+  background: rgba(0,0,0,0.03) !important;
 }
 </style>

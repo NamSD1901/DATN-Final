@@ -41,6 +41,17 @@ namespace MyPetClinic.Application.Services
                 }
             }
 
+            string normalizedPhone = model.Phone.Trim();
+            string legacyPhone = normalizedPhone.StartsWith("+84") ? "0" + normalizedPhone.Substring(3) : normalizedPhone;
+
+            var usersWithSamePhone = await _unitOfWork.Users.FindAsync(u => 
+                (u.Phone == normalizedPhone || u.Phone == legacyPhone) && u.IsActive == true);
+            
+            if (usersWithSamePhone.Any())
+            {
+                return new AuthResult { Success = false, ErrorMessage = "Số điện thoại này đã được đăng ký cho một tài khoản khác." };
+            }
+
             var customerRole = await _userRepository.GetRoleByNameAsync("customer");
             if (customerRole == null)
             {
@@ -128,7 +139,9 @@ namespace MyPetClinic.Application.Services
             if (!string.IsNullOrWhiteSpace(user.Phone))
             {
                 string phone = user.Phone.Trim();
-                var customers = await _unitOfWork.Customers.FindAsync(c => c.Phone == phone);
+                string legacyPhone = phone.StartsWith("+84") ? "0" + phone.Substring(3) : phone;
+
+                var customers = await _unitOfWork.Customers.FindAsync(c => c.Phone == phone || c.Phone == legacyPhone);
                 var existingCustomer = customers.FirstOrDefault();
 
                 if (existingCustomer != null && !existingCustomer.HasAccount)
@@ -338,7 +351,9 @@ namespace MyPetClinic.Application.Services
             if (string.IsNullOrEmpty(phone))
                 return new AuthResult { Success = false, ErrorMessage = "Không thể xác định số điện thoại." };
 
-            var customers = await _unitOfWork.Customers.FindAsync(c => c.Phone == phone);
+            string legacyPhone = phone.StartsWith("+84") ? "0" + phone.Substring(3) : phone;
+
+            var customers = await _unitOfWork.Customers.FindAsync(c => c.Phone == phone || c.Phone == legacyPhone);
             var existingCustomer = customers.FirstOrDefault();
 
             if (existingCustomer == null)

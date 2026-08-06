@@ -57,7 +57,7 @@ namespace WebApi.Controllers
             }
             catch (Exception ex)
             {
-                return Unauthorized(new { message = ex.Message });
+                return BadRequest(new { success = false, message = ex.Message });
             }
         }
 

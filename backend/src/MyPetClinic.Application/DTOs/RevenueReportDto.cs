@@ -22,6 +22,7 @@ namespace MyPetClinic.Application.DTOs
     public class ServiceRevenueDto
     {
         public string ServiceName { get; set; } = string.Empty;
+        public string ItemType { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public int Count { get; set; }
     }
