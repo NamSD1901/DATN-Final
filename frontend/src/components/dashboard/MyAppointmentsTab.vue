@@ -1232,10 +1232,31 @@ const onCalendarDateSelect = (dateStr: string) => {
 };
 
 
-const masterMorningTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
-const masterAfternoonTimes = ['13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'];
-const masterEveningTimes = ['18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30'];
+const computedStepMinutes = computed(() => {
+  let duration = 30;
+  if (bookForm.value.serviceId) {
+    const svc = services.value.find(s => s.id === bookForm.value.serviceId);
+    if (svc && ((svc as any).durationMinutes || (svc as any).duration)) {
+      duration = (svc as any).durationMinutes || (svc as any).duration;
+    }
+  }
+  return Math.max(30, Math.ceil(duration / 30) * 30);
+});
 
+const generateTimes = (startH: number, startM: number, endH: number, endM: number, step: number) => {
+  const times: string[] = [];
+  let h = startH; let m = startM;
+  while(h < endH || (h === endH && m < endM)) {
+     times.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+     m += step;
+     while(m >= 60) { m -= 60; h++; }
+  }
+  return times;
+};
+
+const masterMorningTimes = computed(() => generateTimes(8, 0, 12, 0, computedStepMinutes.value));
+const masterAfternoonTimes = computed(() => generateTimes(13, 30, 18, 0, computedStepMinutes.value));
+const masterEveningTimes = computed(() => generateTimes(18, 0, 24, 0, computedStepMinutes.value));
 interface SlotDisplay {
   time: string;
   slotStr: string;
@@ -1296,9 +1317,9 @@ const buildSlots = (times: string[]): SlotDisplay[] => {
   }).filter(s => !s.isClosed);
 };
 
-const displayMorningSlots = computed<SlotDisplay[]>(() => buildSlots(masterMorningTimes));
-const displayAfternoonSlots = computed<SlotDisplay[]>(() => buildSlots(masterAfternoonTimes));
-const displayEveningSlots = computed<SlotDisplay[]>(() => buildSlots(masterEveningTimes));
+const displayMorningSlots = computed<SlotDisplay[]>(() => buildSlots(masterMorningTimes.value));
+const displayAfternoonSlots = computed<SlotDisplay[]>(() => buildSlots(masterAfternoonTimes.value));
+const displayEveningSlots = computed<SlotDisplay[]>(() => buildSlots(masterEveningTimes.value));
 
 // ===== End Calendar State =====
 

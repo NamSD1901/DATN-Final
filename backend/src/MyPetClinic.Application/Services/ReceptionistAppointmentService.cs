@@ -788,7 +788,11 @@ namespace MyPetClinic.Application.Services
                 {
                     Id = s.Id,
                     Name = s.Name,
-                    Price = s.Price
+                    Price = s.Price,
+                    CategoryId = s.CategoryId,
+                    DurationMinutes = s.DurationMinutes,
+                    Description = s.Description,
+                    IsActive = s.IsActive
                 });
         }
 
@@ -1055,19 +1059,28 @@ namespace MyPetClinic.Application.Services
             }
 
             var targetRole = "";
+            int serviceDuration = 30; // Default
             if (serviceId.HasValue)
             {
                 var service = await _unitOfWork.Services.FindWithIncludesAsync(s => s.Id == serviceId.Value, s => s.Category!);
                 var firstService = service.FirstOrDefault();
-                if (firstService != null && firstService.Category != null)
+                if (firstService != null)
                 {
-                    if (firstService.Category.Name.Equals("Khám bệnh", StringComparison.OrdinalIgnoreCase))
+                    if (firstService.DurationMinutes.HasValue && firstService.DurationMinutes.Value > 0)
                     {
-                        targetRole = "clinical_doctor";
+                        serviceDuration = firstService.DurationMinutes.Value;
                     }
-                    else if (firstService.Category.Name.Equals("Tiêm phòng", StringComparison.OrdinalIgnoreCase))
+
+                    if (firstService.Category != null)
                     {
-                        targetRole = "vaccination_doctor";
+                        if (firstService.Category.Name.Equals("Khám bệnh", StringComparison.OrdinalIgnoreCase))
+                        {
+                            targetRole = "clinical_doctor";
+                        }
+                        else if (firstService.Category.Name.Equals("Tiêm phòng", StringComparison.OrdinalIgnoreCase))
+                        {
+                            targetRole = "vaccination_doctor";
+                        }
                     }
                 }
             }
@@ -1109,13 +1122,13 @@ namespace MyPetClinic.Application.Services
 
                     foreach (var schedule in group)
                     {
-                        var availableTimes = MyPetClinic.Application.Helpers.SlotCalculationHelper.GetAvailableSlots(schedule, appointments, blockTimes, 30);
+                        var availableTimes = MyPetClinic.Application.Helpers.SlotCalculationHelper.GetAvailableSlots(schedule, appointments, blockTimes, serviceDuration);
 
                         // Filter by ClinicOperatingShifts if available
                         if (clinicShifts.Any())
                         {
                             availableTimes = availableTimes.Where(t => 
-                                clinicShifts.Any(s => s.StartTime <= t.TimeOfDay && s.EndTime >= t.TimeOfDay.Add(TimeSpan.FromMinutes(30)))
+                                clinicShifts.Any(s => s.StartTime <= t.TimeOfDay && s.EndTime >= t.TimeOfDay.Add(TimeSpan.FromMinutes(serviceDuration)))
                             ).ToList();
                         }
                         

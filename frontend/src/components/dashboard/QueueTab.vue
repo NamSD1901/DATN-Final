@@ -16,8 +16,9 @@
               Bs. {{ doc.fullName }}
             </option>
           </select>
-          <button class="btn btn-light border rounded-circle p-2 shadow-sm" @click="loadQueue" title="Làm mới">
-            <i class="bi bi-arrow-clockwise"></i>
+          <button class="btn btn-light border rounded-circle p-2 shadow-sm" @click="manualRefresh" title="Làm mới" :disabled="isRefreshing">
+            <i v-if="!isRefreshing" class="bi bi-arrow-clockwise"></i>
+            <span v-else class="spinner-border spinner-border-sm text-secondary"></span>
           </button>
         </div>
       </div>
@@ -464,6 +465,7 @@ const toggleDropdown = (id: number) => {
 const doctorList = ref<any[]>([]);
 const queueList = ref<any[]>([]);
 const intervals = ref<any[]>([]);
+const isRefreshing = ref(false);
 
 // Modals state
 const showEmergencyModal = ref(false);
@@ -597,6 +599,24 @@ const loadQueue = async () => {
   } catch (err) {
     console.error('Lỗi tải danh sách hàng khám:', err);
   }
+};
+
+const manualRefresh = async () => {
+  if (isRefreshing.value) return;
+  isRefreshing.value = true;
+  await loadQueue();
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: 'success',
+    title: 'Đã cập nhật hàng khám',
+    showConfirmButton: false,
+    timer: 1500,
+    timerProgressBar: true
+  });
+  setTimeout(() => {
+    isRefreshing.value = false;
+  }, 500); // Tạo độ trễ ảo để user kịp nhìn thấy hiệu ứng loading
 };
 
 const loadDoctors = async () => {
