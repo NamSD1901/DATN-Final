@@ -26,5 +26,6 @@ namespace MyPetClinic.Application.DTOs
     {
         public string PaymentMethod { get; set; } = string.Empty;
         public decimal DiscountAmount { get; set; }
+        public string? VoucherCode { get; set; }
     }
 }

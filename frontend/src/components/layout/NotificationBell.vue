@@ -19,7 +19,7 @@
 
         <div class="notification-list custom-scrollbar">
           <div v-if="notifications.length === 0" class="text-center py-4 text-muted">
-            <BellOff class="mb-2 opacity-50" size="24" />
+            <BellOff class="mb-2 opacity-50" :size="24" />
             <p class="mb-0 fs-7">Không có thông báo nào</p>
           </div>
 
@@ -27,7 +27,7 @@
                class="notification-item" :class="{ 'unread': !notif.isRead }"
                @click="handleNotificationClick(notif)">
             <div class="notification-icon-wrapper" :class="getIconClass(notif.type)">
-              <component :is="getIconComponent(notif.type)" size="16" />
+              <component :is="getIconComponent(notif.type)" :size="16" />
             </div>
             <div class="notification-content">
               <p class="notification-title mb-1 text-dark fw-semibold">{{ notif.title }}</p>
@@ -42,14 +42,14 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { Bell, BellOff, Info, CalendarCheck, CalendarX, CheckCircle } from 'lucide-vue-next';
 import { useNotificationStore } from '../../stores/notification.store';
 
 const store = useNotificationStore();
 const isOpen = ref(false);
-const dropdownRef = ref(null);
+const dropdownRef = ref<HTMLElement | null>(null);
 
 const unreadCount = computed(() => store.unreadCount);
 const notifications = computed(() => store.notifications);
@@ -61,7 +61,7 @@ const toggleDropdown = () => {
   }
 };
 
-const closeDropdown = (e) => {
+const closeDropdown = (e: any) => {
   if (dropdownRef.value && !dropdownRef.value.contains(e.target)) {
     isOpen.value = false;
   }
@@ -71,7 +71,7 @@ const markAllAsRead = async () => {
   await store.markAllAsRead();
 };
 
-const handleNotificationClick = async (notif) => {
+const handleNotificationClick = async (notif: any) => {
   if (!notif.isRead) {
     await store.markAsRead(notif.id);
   }
@@ -79,10 +79,10 @@ const handleNotificationClick = async (notif) => {
   isOpen.value = false;
 };
 
-const formatTime = (dateStr) => {
+const formatTime = (dateStr: string) => {
   const date = new Date(dateStr);
   const now = new Date();
-  const diff = now - date;
+  const diff = now.getTime() - date.getTime();
   
   if (diff < 60000) return 'Vừa xong';
   if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
@@ -90,7 +90,7 @@ const formatTime = (dateStr) => {
   return date.toLocaleDateString('vi-VN');
 };
 
-const getIconComponent = (type) => {
+const getIconComponent = (type: string) => {
   switch (type) {
     case 'AppointmentUpdate': return CalendarCheck;
     case 'AppointmentCancel': return CalendarX;
@@ -99,7 +99,7 @@ const getIconComponent = (type) => {
   }
 };
 
-const getIconClass = (type) => {
+const getIconClass = (type: string) => {
   switch (type) {
     case 'AppointmentUpdate': return 'bg-primary-subtle text-primary';
     case 'AppointmentCancel': return 'bg-danger-subtle text-danger';

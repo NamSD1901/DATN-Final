@@ -36,7 +36,7 @@
           
           <div class="d-flex justify-content-end mb-4">
             <button class="btn btn-outline-primary rounded-pill d-flex align-items-center gap-2">
-              <PlusCircle size="18" /> Add New Pet
+              <PlusCircle :size="18" /> Add New Pet
             </button>
           </div>
 
@@ -103,7 +103,7 @@
               <h5 class="service-name">{{ service.name }}</h5>
               <p class="service-desc">{{ service.description }}</p>
               <div class="service-meta">
-                <span class="service-duration"><Clock size="14" /> {{ service.duration }} min</span>
+                <span class="service-duration"><Clock :size="14" /> {{ service.duration }} min</span>
                 <span class="service-price">{{ formatCurrency(service.price) }}</span>
               </div>
             </div>
@@ -120,8 +120,8 @@
               <div class="calendar-header">
                 <h5 class="calendar-month">{{ currentMonthName }}, {{ currentYear }}</h5>
                 <div class="calendar-nav">
-                  <button class="nav-btn" @click="prevMonth"><ChevronLeft size="16" /></button>
-                  <button class="nav-btn" @click="nextMonth"><ChevronRight size="16" /></button>
+                  <button class="nav-btn" @click="prevMonth"><ChevronLeft :size="16" /></button>
+                  <button class="nav-btn" @click="nextMonth"><ChevronRight :size="16" /></button>
                 </div>
               </div>
               <div class="calendar-grid">
@@ -143,14 +143,14 @@
                 </div>
               </div>
               <div class="calendar-legend">
-                <Info size="14" /> Dots indicate dates with high availability.
+                <Info :size="14" /> Dots indicate dates with high availability.
               </div>
             </div>
 
             <!-- Time Slots Area -->
             <div class="time-slots-area">
               <div class="selected-date-header">
-                <Calendar size="18" class="text-primary me-2" />
+                <Calendar :size="18" class="text-primary me-2" />
                 <div>
                   <h5 class="mb-0">{{ formattedSelectedDate }}</h5>
                   <small class="text-muted">Hệ thống tự động phân công ({{ selectedService?.name }})</small>
@@ -163,14 +163,14 @@
               <div v-else class="slots-container">
                 <div v-if="morningSlots.length === 0 && afternoonSlots.length === 0 && eveningSlots.length === 0" class="text-center py-5 px-3">
                   <div class="mb-3">
-                    <CalendarX size="48" class="text-muted opacity-50" />
+                    <CalendarX :size="48" class="text-muted opacity-50" />
                   </div>
                   <h6 class="fw-bold text-dark mb-1">Không có bác sĩ trực</h6>
                   <p class="text-muted small mb-0">Rất tiếc, ngày này phòng khám không có ca trực hoặc bác sĩ đã kín lịch. Vui lòng chọn một ngày khác.</p>
                 </div>
                 
                 <template v-else>
-                  <h6 class="slot-section-title"><Sun size="16" /> BUỔI SÁNG</h6>
+                  <h6 class="slot-section-title"><Sun :size="16" /> BUỔI SÁNG</h6>
                 <div class="slots-grid">
                   <button 
                     v-for="slot in morningSlots" 
@@ -181,11 +181,11 @@
                     @click="selectedTime = slot.time"
                   >
                     {{ slot.time }}
-                    <CheckCircle2 v-if="selectedTime === slot.time" size="14" class="ms-1" />
+                    <CheckCircle2 v-if="selectedTime === slot.time" :size="14" class="ms-1" />
                   </button>
                 </div>
 
-                <h6 class="slot-section-title mt-4"><Sunset size="16" /> BUỔI CHIỀU</h6>
+                <h6 class="slot-section-title mt-4"><Sunset :size="16" /> BUỔI CHIỀU</h6>
                 <div class="slots-grid">
                   <button 
                     v-for="slot in afternoonSlots" 
@@ -197,12 +197,12 @@
                   >
                     {{ slot.time }}
                     <span v-if="slot.fast" class="badge-fast">Fast</span>
-                    <CheckCircle2 v-if="selectedTime === slot.time" size="14" class="ms-1" />
+                    <CheckCircle2 v-if="selectedTime === slot.time" :size="14" class="ms-1" />
                   </button>
                 </div>
 
                 <template v-if="eveningSlots.length > 0">
-                  <h6 class="slot-section-title mt-4"><Moon size="16" /> BUỔI TỐI</h6>
+                  <h6 class="slot-section-title mt-4"><Moon :size="16" /> BUỔI TỐI</h6>
                   <div class="slots-grid">
                     <button 
                       v-for="slot in eveningSlots" 
@@ -213,7 +213,7 @@
                       @click="selectedTime = slot.time"
                     >
                       {{ slot.time }}
-                      <CheckCircle2 v-if="selectedTime === slot.time" size="14" class="ms-1" />
+                      <CheckCircle2 v-if="selectedTime === slot.time" :size="14" class="ms-1" />
                     </button>
                   </div>
                 </template>
@@ -237,7 +237,7 @@
               <!-- Patient Info -->
               <div class="confirm-card">
                 <div class="card-header-flex">
-                  <h6 class="mb-0"><Stethoscope size="18" class="me-2 text-primary"/> Thông tin bệnh nhân</h6>
+                  <h6 class="mb-0"><Stethoscope :size="18" class="me-2 text-primary"/> Thông tin bệnh nhân</h6>
                   <span class="edit-link" @click="step = 1">SỬA</span>
                 </div>
                 <div class="card-body-flex">
@@ -265,7 +265,7 @@
               <!-- Service Info -->
               <div class="confirm-card">
                 <div class="card-header-flex">
-                  <h6 class="mb-0"><ClipboardList size="18" class="me-2 text-success"/> Dịch vụ đăng ký</h6>
+                  <h6 class="mb-0"><ClipboardList :size="18" class="me-2 text-success"/> Dịch vụ đăng ký</h6>
                   <span class="edit-link" @click="step = 2">SỬA</span>
                 </div>
                 <div class="service-summary-box">
@@ -283,7 +283,7 @@
               <!-- Notes -->
               <div class="confirm-card">
                 <div class="card-header-flex border-0 pb-0">
-                  <h6 class="mb-0"><AlignLeft size="18" class="me-2 text-muted"/> Lý do khám bệnh</h6>
+                  <h6 class="mb-0"><AlignLeft :size="18" class="me-2 text-muted"/> Lý do khám bệnh</h6>
                 </div>
                 <div class="p-3 pt-2">
                   <textarea 
@@ -305,7 +305,7 @@
                   </div>
                   <h3 class="fw-bold text-primary mb-1">{{ selectedTime }} {{ selectedTime && parseInt(selectedTime) < 12 ? 'Sáng' : 'Chiều' }}</h3>
                   <div class="text-primary fw-semibold d-flex align-items-center justify-content-center gap-2 opacity-75 mt-1">
-                    <Calendar size="14" /> {{ formattedSelectedDate }}
+                    <Calendar :size="14" /> {{ formattedSelectedDate }}
                   </div>
                 </div>
                 
@@ -327,9 +327,24 @@
                     <span class="text-muted">Phí mở hồ sơ mới</span>
                     <strong class="text-dark">0 ₫</strong>
                   </div>
-                  <div class="d-flex justify-content-between align-items-center mb-4">
+
+                  <!-- Voucher Section -->
+                  <div class="d-flex justify-content-between align-items-center mb-3 bg-light rounded p-2" @click="showOfferModal = true" style="cursor: pointer; border: 1px dashed #0d6efd;">
+                    <div class="d-flex align-items-center gap-2">
+                      <i class="bi bi-ticket-perforated text-primary"></i>
+                      <span class="small fw-bold text-primary">{{ appliedVoucherCode ? `Mã: ${appliedVoucherCode}` : 'Chọn mã khuyến mãi' }}</span>
+                    </div>
+                    <i class="bi bi-chevron-right small text-muted"></i>
+                  </div>
+                  
+                  <div v-if="discountAmount > 0" class="d-flex justify-content-between mb-3 text-success fw-bold">
+                    <span>Khuyến mãi</span>
+                    <span>-{{ formatCurrency(discountAmount) }}</span>
+                  </div>
+
+                  <div class="d-flex justify-content-between align-items-center mb-4 border-top pt-3">
                     <span class="fw-bold text-dark fs-5">Tổng cộng</span>
-                    <strong class="text-primary fs-4">{{ formatCurrency(selectedService?.price) }}</strong>
+                    <strong class="text-primary fs-4">{{ formatCurrency(Math.max(0, (selectedService?.price || 0) - discountAmount)) }}</strong>
                   </div>
                   <p class="text-center text-muted small mb-0">Thanh toán tại phòng khám</p>
                 </div>
@@ -340,7 +355,7 @@
                 @click="submitBooking"
                 :disabled="isSubmitting"
               >
-                <span v-if="!isSubmitting"><CalendarCheck size="18"/> Xác nhận đặt lịch</span>
+                <span v-if="!isSubmitting"><CalendarCheck :size="18"/> Xác nhận đặt lịch</span>
                 <span v-else class="spinner-border spinner-border-sm" role="status"></span>
               </button>
               
@@ -349,7 +364,7 @@
               </button>
               
               <div class="text-center mt-3 text-muted small d-flex justify-content-center align-items-center gap-1">
-                <ShieldCheck size="14" /> Thông tin của bạn được bảo mật an toàn
+                <ShieldCheck :size="14" /> Thông tin của bạn được bảo mật an toàn
               </div>
             </div>
           </div>
@@ -360,7 +375,7 @@
       <!-- Footer Buttons -->
       <div v-if="step < 4" class="wizard-footer">
         <button class="btn btn-outline-secondary px-4 py-2" @click="step === 1 ? closeModal() : step--">
-          <ArrowLeft v-if="step > 1" size="16" class="me-2" />
+          <ArrowLeft v-if="step > 1" :size="16" class="me-2" />
           {{ step === 1 ? 'Cancel' : 'Back' }}
         </button>
         <button 
@@ -368,10 +383,20 @@
           @click="nextStep"
           :disabled="!canProceedToNextStep"
         >
-          {{ step === 3 ? 'Tiếp tục' : 'Next Step' }} <ArrowRight size="16" />
+          {{ step === 3 ? 'Tiếp tục' : 'Next Step' }} <ArrowRight :size="16" />
         </button>
       </div>
 
+      <!-- Voucher Selector Modal -->
+      <OfferSelectorModal 
+        v-if="step === 4"
+        :show="showOfferModal" 
+        :order-amount="selectedService?.price || 0"
+        :current-selected-code="appliedVoucherCode"
+        :customer-id="selectedCustomer?.id"
+        @close="showOfferModal = false"
+        @apply="handleApplyVoucher"
+      />
     </div>
   </div>
 </template>
@@ -385,6 +410,7 @@ import {
   Syringe, FlaskConical, Bath
 } from 'lucide-vue-next';
 import api from '../../services/api';
+import OfferSelectorModal from './OfferSelectorModal.vue';
 
 const props = defineProps<{ show: boolean }>();
 const emit = defineEmits(['close', 'success', 'error']);
@@ -609,12 +635,36 @@ const nextStep = () => {
 
 const closeModal = () => {
   emit('close');
-  // Reset after transition
   setTimeout(() => {
     step.value = 1;
     selectedTime.value = '';
     notes.value = '';
+    appliedVoucherCode.value = '';
+    discountAmount.value = 0;
   }, 300);
+};
+
+// --- VOUCHER LOGIC ---
+const showOfferModal = ref(false);
+const appliedVoucherCode = ref('');
+const discountAmount = ref(0);
+
+const handleApplyVoucher = async (code: string) => {
+  try {
+    const res = await api.post('/offers/validate', {
+      code,
+      orderAmount: selectedService.value?.price || 0,
+      serviceIds: [selectedService.value?.id].filter(Boolean),
+      customerId: selectedCustomer.value?.id
+    });
+    if (res.data.success) {
+      appliedVoucherCode.value = code;
+      discountAmount.value = res.data.data.discountAmount;
+      showOfferModal.value = false;
+    }
+  } catch (err: any) {
+    alert(err.response?.data?.message || 'Mã không hợp lệ hoặc không đủ điều kiện');
+  }
 };
 
 // --- SUBMIT ---
@@ -627,7 +677,8 @@ const submitBooking = async () => {
       species: selectedPet.value.species,
       serviceName: selectedService.value.name,
       appointmentDate: `${selectedDate.value}T${selectedTime.value}:00`,
-      symptom: notes.value
+      symptom: notes.value,
+      note: appliedVoucherCode.value ? `[Áp dụng voucher: ${appliedVoucherCode.value}]` : ''
     };
     
     await api.post('/appointment/book', payload).catch(() => {

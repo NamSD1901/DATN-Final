@@ -121,10 +121,16 @@
                 </div>
               </div>
 
+              <!-- Voucher Badge -->
+              <div v-if="extractVoucher(appt.note) || extractVoucher(appt.symptom)" class="mt-2 mb-1">
+                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1 rounded-pill fw-medium" style="font-size: 0.75rem;">
+                  <i class="bi bi-ticket-perforated-fill me-1"></i> Đã áp dụng mã: {{ extractVoucher(appt.note) || extractVoucher(appt.symptom) }}
+                </span>
+              </div>
               <!-- Note -->
-              <div v-if="appt.note || appt.symptom" class="appt-note">
+              <div v-if="cleanNote(appt.symptom) || cleanNote(appt.note)" class="appt-note">
                 <i class="bi bi-chat-left-text-fill me-1 text-muted"></i>
-                <span>{{ appt.symptom || appt.note }}</span>
+                <span>{{ cleanNote(appt.symptom) || cleanNote(appt.note) }}</span>
               </div>
 
               <!-- Actions -->
@@ -645,11 +651,26 @@
                               <span class="text-muted" style="font-size: 0.8rem;">Phí mở hồ sơ mới</span>
                               <strong class="text-dark" style="font-size: 0.85rem;">0 ₫</strong>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                              <span class="fw-bold text-dark" style="font-size: 0.9rem;">{{ $t('booking.total') }}</span>
-                              <strong class="text-primary fs-5">{{ getSelectedServicePrice() ? formatCurrency(getSelectedServicePrice()) : '0 ₫' }}</strong>
+
+                            <!-- Voucher Section -->
+                            <div class="d-flex justify-content-between align-items-center mb-2 bg-light rounded p-2 mt-2" @click="showOfferModal = true" style="cursor: pointer; border: 1px dashed #0d6efd;">
+                              <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-ticket-perforated text-primary"></i>
+                                <span class="small fw-bold text-primary" style="font-size: 0.75rem;">{{ appliedVoucherCode ? `Mã: ${appliedVoucherCode}` : 'Chọn mã khuyến mãi' }}</span>
+                              </div>
+                              <i class="bi bi-chevron-right small text-muted"></i>
                             </div>
-                            <p class="text-center text-muted mb-0" style="font-size: 0.65rem;">{{ $t('booking.payAtClinic') }}</p>
+                            
+                            <div v-if="discountAmount > 0" class="d-flex justify-content-between mb-2 text-success fw-bold" style="font-size: 0.8rem;">
+                              <span>Khuyến mãi</span>
+                              <span>-{{ formatCurrency(discountAmount) }}</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-1 mt-2 border-top pt-2">
+                              <span class="fw-bold text-dark" style="font-size: 0.9rem;">{{ $t('booking.total') }}</span>
+                              <strong class="text-primary fs-5">{{ getSelectedServicePrice() ? formatCurrency(Math.max(0, getSelectedServicePrice() - discountAmount)) : '0 ₫' }}</strong>
+                            </div>
+                            <p class="text-center text-muted mb-0 mt-1" style="font-size: 0.65rem;">{{ $t('booking.payAtClinic') }}</p>
                           </div>
                         </div>
 
@@ -682,6 +703,15 @@
         </div>
       </Transition>
     </Teleport>
+
+    <OfferSelectorModal 
+      v-if="currentStep === (isVaccinationService ? 4 : 3)"
+      :show="showOfferModal" 
+      :order-amount="getSelectedServicePrice()"
+      :current-selected-code="appliedVoucherCode"
+      @close="showOfferModal = false"
+      @apply="handleApplyVoucher"
+    />
 
 <!-- ===== DETAIL MODAL ===== -->
     <Teleport to="body">
@@ -738,10 +768,16 @@
                     <div class="detail-value">{{ detailAppt.symptom }}</div>
                   </div>
                 </div>
-                <div v-if="detailAppt.note" class="col-12">
+                <div v-if="extractVoucher(detailAppt.note) || extractVoucher(detailAppt.symptom)" class="col-12">
+                  <div class="detail-item">
+                    <div class="detail-label"><i class="bi bi-ticket-perforated-fill me-1"></i>Mã giảm giá</div>
+                    <div class="detail-value text-danger fw-bold">{{ extractVoucher(detailAppt.note) || extractVoucher(detailAppt.symptom) }}</div>
+                  </div>
+                </div>
+                <div v-if="cleanNote(detailAppt.note)" class="col-12">
                   <div class="detail-item">
                     <div class="detail-label">Ghi chú</div>
-                    <div class="detail-value">{{ detailAppt.note }}</div>
+                    <div class="detail-value">{{ cleanNote(detailAppt.note) }}</div>
                   </div>
                 </div>
                 <div v-if="detailAppt.invoiceId" class="col-12">
@@ -936,6 +972,7 @@ import ReviewModal from '../shared/ReviewModal.vue';
 import { useReviewStore } from '../../stores/review.store';
 import { useI18n } from 'vue-i18n';
 import { translateApiError } from '../../utils/errorTranslator';
+import OfferSelectorModal from '../shared/OfferSelectorModal.vue';
 
 const { t, locale } = useI18n();
 const router = useRouter();
@@ -1372,6 +1409,11 @@ const petWarningDismissed = ref(false);
 const selectPet = (petId: number) => {
   if (bookForm.value.petId === petId) return; // deselect logic: keep selected
   bookForm.value.petId = petId;
+  bookForm.value.vaccineId = null;
+  bookForm.value.symptom = '';
+  bookForm.value.note = '';
+  appliedVoucherCode.value = '';
+  discountAmount.value = 0;
   petWarningDismissed.value = false; // reset dismissal when changing pet
 };
 
@@ -1457,6 +1499,28 @@ const fetchServices = async () => {
   } catch { /* silent */ }
 };
 
+// --- VOUCHER LOGIC ---
+const showOfferModal = ref(false);
+const appliedVoucherCode = ref('');
+const discountAmount = ref(0);
+
+const handleApplyVoucher = async (code: string) => {
+  try {
+    const res = await api.post('/offers/validate', {
+      code,
+      orderAmount: getSelectedServicePrice(),
+      serviceIds: [bookForm.value.serviceId].filter(Boolean)
+    });
+    if (res.data.success) {
+      appliedVoucherCode.value = code;
+      discountAmount.value = res.data.data.discountAmount;
+      showOfferModal.value = false;
+    }
+  } catch (err: any) {
+    alert(err.response?.data?.message || 'Mã không hợp lệ hoặc không đủ điều kiện');
+  }
+};
+
 const submitBooking = async () => {
   bookingLoading.value = true;
   bookingError.value = '';
@@ -1466,7 +1530,7 @@ const submitBooking = async () => {
       serviceId: bookForm.value.serviceId,
       appointmentDate: bookForm.value.appointmentDate,
       symptom: bookForm.value.symptom,
-      note: bookForm.value.note,
+      note: appliedVoucherCode.value ? `[Áp dụng voucher: ${appliedVoucherCode.value}]\n${bookForm.value.note || ''}` : bookForm.value.note,
       vaccineId: bookForm.value.vaccineId,
       doctorId: bookForm.value.doctorId,
     });
@@ -1755,6 +1819,17 @@ const validateVaccineChoice = async () => {
   } finally {
     checkingValidation.value = false;
   }
+};
+
+const extractVoucher = (text?: string | null): string | null => {
+  if (!text) return null;
+  const match = text.match(/\[(Á|A)p d(ụ|\?)ng voucher:\s*(.*?)\]/i);
+  return match ? match[3].trim() : null;
+};
+
+const cleanNote = (text?: string | null): string => {
+  if (!text) return '';
+  return text.replace(/\[(Á|A)p d(ụ|\?)ng voucher:\s*.*?\]/i, '').trim();
 };
 
 const formatDay = (dateStr: string): string => {

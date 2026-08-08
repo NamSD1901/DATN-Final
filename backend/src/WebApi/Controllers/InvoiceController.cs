@@ -86,7 +86,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                var success = await _invoiceService.ProcessPaymentAsync(invoiceId, req.PaymentMethod, req.DiscountAmount);
+                var success = await _invoiceService.ProcessPaymentAsync(invoiceId, req.PaymentMethod, req.DiscountAmount, req.VoucherCode);
                 return Ok(new { success });
             }
             catch (System.Exception ex)

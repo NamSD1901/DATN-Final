@@ -1,255 +1,323 @@
-# TÀI LIỆU PHÂN TÍCH VÀ THIẾT KẾ CHỨC NĂNG ĐẶT LỊCH KHÁM NHIỀU THÚ CƯNG (MULTI-PET APPOINTMENT BOOKING)
+# Kế Hoạch Triển Khai: Hệ Thống Quản Lý Mã Giảm Giá (Voucher Module)
 
-Tài liệu này đóng vai trò là **Software Requirement Specification (SRS)** kết hợp **Business Analysis Document (BAD)** và **Solution Design Document (SDD)** cho tính năng Đặt lịch khám nhiều thú cưng trong cùng một lần đặt của hệ thống MyPetClinic.
+Kế hoạch này phác thảo thiết kế chi tiết cho Module Voucher của MyPetClinic, đáp ứng tiêu chuẩn doanh nghiệp (tương tự Shopee, Grab) và được tối ưu hóa cho mô hình phòng khám thú y, sử dụng kiến trúc .NET Core Web API, Vue.js 3, và PostgreSQL.
 
----
-
-## 1. Business Objective
-
-### Multi-Pet Booking là gì?
-Multi-Pet Booking là chức năng cho phép Khách hàng (Customer) hoặc Lễ tân (Receptionist) đặt lịch khám cho tối đa 2 thú cưng thuộc cùng một chủ sở hữu trong một giao dịch đặt lịch (booking transaction) duy nhất, phân bổ vào các khoảng thời gian (slot) liên tiếp nhau với cùng một bác sĩ.
-
-### Vì sao phòng khám nên hỗ trợ?
-Khách hàng nuôi nhiều thú cưng thường muốn tiết kiệm thời gian di chuyển bằng cách đưa tất cả thú cưng đi khám cùng một lúc. Nếu hệ thống chỉ cho phép đặt từng thú cưng, khách hàng sẽ phải lặp lại thao tác nhiều lần, dễ dẫn đến rủi ro các slot không liền kề hoặc bị khách hàng khác đặt chen ngang.
-
-### Khi nào nên / không nên sử dụng?
-*   **Nên sử dụng:** Khám tổng quát định kỳ, tiêm phòng, tẩy giun cho đàn chó/mèo; các dịch vụ có thể dự đoán trước thời gian.
-*   **Không nên sử dụng:** Cấp cứu (Emergency), phẫu thuật phức tạp (vì thời lượng khó xác định chính xác và cần ưu tiên xử lý ngay lập tức).
-
-### Lợi ích mang lại
-*   **Đối với Khách hàng:** Nâng cao trải nghiệm người dùng, tiết kiệm thời gian đặt lịch, đảm bảo chắc chắn lịch khám liên tục cho tất cả thú cưng trong một chuyến đi.
-*   **Đối với Bác sĩ:** Tránh thời gian chết (idle time) giữa các ca khám, dễ dàng nắm bắt thông tin của cả "gia đình" thú cưng, tăng hiệu quả tư vấn.
-*   **Đối với Lễ tân:** Giảm bớt thao tác thủ công khi nhận điện thoại đặt lịch, dễ quản lý luồng khách hàng tại phòng chờ.
-*   **Đối với Phòng khám:** Tối ưu hóa hiệu suất sử dụng slot, tăng doanh thu trên mỗi lượt khách đến thăm, thể hiện sự chuyên nghiệp của dịch vụ.
-
----
-
-## 2. Business Context
-
-Trong bối cảnh thực tế tại các phòng khám thú y hiện đại:
-*   Khách hàng thường sở hữu nhiều hơn 1 thú cưng (ví dụ: 1 chó + 1 mèo).
-*   Khi cần tiêm vaccine định kỳ, khách hàng có xu hướng mang cả 2 đi cùng lúc.
-*   Luồng nghiệp vụ hiện tại: Khách hàng phải tạo Booking 1 cho "Lucky" (08:00), tạo Booking 2 cho "Mimi" (08:20). Quá trình này rườm rà, và giữa chừng có thể một khách hàng khác đặt mất slot 08:20.
-*   Chức năng mới cần gộp các thao tác này lại: Khách chọn tối đa 2 thú cưng (ví dụ: Lucky, Mimi), chọn ngày, hệ thống sẽ tự động cấp một dải slot liên tiếp (ví dụ: 08:00 - 08:40).
-
----
-
-## 3. Functional Requirements
-
-Các chức năng chi tiết cần được hệ thống hỗ trợ:
-
-1.  **Multi-Selection UI:** Giao diện cho phép chọn tối đa 2 thú cưng (thuộc quyền sở hữu của khách hàng).
-2.  **Service Binding:** Cho phép chọn chung một dịch vụ cho tất cả thú cưng hoặc chỉ định dịch vụ riêng lẻ cho từng thú cưng (ví dụ: Chó tiêm dại, Mèo siêu âm).
-3.  **Doctor/Resource Selection:** Chọn đích danh bác sĩ hoặc chọn chế độ "Bác sĩ bất kỳ" (Auto-assign).
-4.  **Date & Slot Availability:** Hiển thị các block thời gian trống đủ sức chứa tổng thời lượng của tất cả thú cưng. 
-5.  **Duration Summary:** Tính toán và hiển thị tổng thời lượng cần thiết, giờ bắt đầu và giờ kết thúc dự kiến.
-6.  **Atomic Checkout:** Chức năng xác nhận đặt lịch (Confirm) phải hoạt động như một giao dịch duy nhất (Atomic Transaction) - thành công tất cả hoặc không có gì.
-7.  **Multi-Appointment Generation:** Tự động sinh ra các mã Appointment riêng biệt cho từng thú cưng nhưng có liên kết (Linked/Group Booking) để quản lý.
-
----
-
-## 4. Business Rules
+## User Review Required
 
 > [!IMPORTANT]
-> Đây là các nguyên tắc cốt lõi không được phép vi phạm trong hệ thống.
+> **Quyết định về Sinh mã tự động**: Hiện tại thiết kế tập trung vào mã nhập thủ công (VD: `WELCOME50`) theo yêu cầu. Việc sinh mã tự động (auto-generated unique codes) được đưa vào phần mở rộng tương lai. Vui lòng xác nhận nếu bạn muốn tích hợp sinh mã tự động ngay trong giai đoạn này.
 
-*   **Rule 1 - Nhóm Booking:** Một Giao dịch Đặt lịch (Booking) có thể sinh ra tối đa 2 Lịch khám (Appointment) chi tiết.
-*   **Rule 2 - Ràng buộc Thú cưng:** Mỗi Appointment thuộc một Booking phải được gán cho một (và chỉ một) Pet duy nhất. Cả 2 Pet trong Booking phải có cùng một OwnerId.
-*   **Rule 3 - Ràng buộc Bác sĩ:** Mặc định, tất cả Appointment trong cùng một Multi-Pet Booking phải được thực hiện bởi cùng một Bác sĩ (để khách hàng không phải chạy qua lại giữa các phòng khám).
-*   **Rule 4 - Phân bổ Thời gian:** Một Appointment phải khớp chính xác vào các khung Slot đã được cấu hình (ví dụ: bội số của 15 hoặc 20 phút).
-*   **Rule 5 - Tính liên tục:** Các Appointment trong cùng một Booking phải được xếp nối tiếp nhau thành một khối liên tục về mặt thời gian (Contiguous Block).
-*   **Rule 6 - Không phân mảnh:** Nghiêm cấm tạo khoảng trống (gap) giữa các Appointment của cùng một Booking. 
-*   **Rule 7 - Single-Tasking:** Một bác sĩ tuyệt đối không được gán 2 Appointment diễn ra đồng thời (No Overlapping).
-*   **Rule 8 - Slot Availability:** Nếu hệ thống không tìm thấy dải slot trống liên tục đủ độ dài, giao dịch Booking sẽ bị từ chối với thông báo rõ ràng.
-*   **Rule 9 - Atomic Transaction:** Nếu quá trình tạo Appointment cho thú cưng thứ N bị lỗi, toàn bộ Booking phải bị Rollback.
-*   **Rule 10 - Slot Locking:** Khi khách hàng vào màn hình Checkout, hệ thống áp dụng cơ chế Temporary Lock (Giữ chỗ tạm thời trong 5-10 phút) để tránh xung đột đột ngột.
-*   **Rule 11 - Trạng thái Rời rạc:** Sau khi Booking thành công, trạng thái (Status) của từng Appointment được quản lý độc lập (ví dụ: Lucky khám xong trước, Mimi đang khám, Bunny bị hủy).
+> [!WARNING]
+> **Xử lý Concurrency (Đồng thời)**: Đề xuất sử dụng Optimistic Concurrency Control (Row Versioning/xmin trong PostgreSQL) cho bảng `offers` để xử lý Race Condition khi giảm số lượng (`quantity`) voucher. Vui lòng xác nhận.
 
----
+## 1. Phân Tích Business
 
-## 5. Slot Allocation Strategy
+**Mục tiêu:** Tăng trưởng doanh thu, thu hút khách hàng mới, giữ chân khách hàng cũ, và kích cầu cho các dịch vụ ít người sử dụng.
 
-### Thuật toán phân bổ slot liên tục (Contiguous Slot Allocation)
+**Lợi ích:**
+- **Phòng khám:** Tăng doanh số trong giờ thấp điểm (Happy Hour), đẩy mạnh các gói dịch vụ mới (Spa, Tiêm phòng), tăng tỷ lệ quay lại.
+- **Khách hàng:** Tiết kiệm chi phí, trải nghiệm dịch vụ cao cấp với giá ưu đãi.
 
-**Bài toán:** Khách chọn 2 thú cưng, mỗi con 20 phút -> Tổng cộng 40 phút (2 slot 20 phút).
-Hệ thống phải quét lịch của bác sĩ để tìm ra một "cửa sổ" trống liên tục ít nhất 40 phút.
+**Trường hợp sử dụng (Use Cases):**
+- Khách hàng mới đặt lịch lần đầu.
+- Kỷ niệm ngày thành lập phòng khám, lễ, tết.
+- Tri ân khách hàng VIP/khách hàng cũ quay lại sau 6 tháng.
 
-**Giải pháp (Sliding Window Algorithm):**
-1.  Truy vấn danh sách tất cả các Slot khả dụng của Bác sĩ trong ngày `D`.
-2.  Chuyển đổi các Slot thành chuỗi thời gian tuyến tính.
-3.  Tính toán tổng số block cần thiết: `N = Total Duration / Base Slot Duration`.
-4.  Dùng thuật toán cửa sổ trượt (Sliding Window) kích thước `N` để quét qua chuỗi Slot.
-5.  Nếu tất cả các Slot trong cửa sổ đều mang trạng thái `Available`, điểm bắt đầu của cửa sổ đó là một mốc thời gian hợp lệ để hiển thị cho người dùng.
-6.  Khi khách hàng chọn mốc `08:00`:
-    *   `08:00 - 08:20` gán cho Pet 1.
-    *   `08:20 - 08:40` gán cho Pet 2.
+**Trường hợp KHÔNG nên sử dụng:**
+- Dịch vụ cấp cứu (Emergency) - vì tính chất khẩn cấp và chi phí khó ước lượng trước.
+- Thuốc đặc trị khan hiếm (tránh bán phá giá).
 
----
+**Rủi ro gian lận & Cách phòng chống:**
+- *Tạo nhiều tài khoản ảo để lạm dụng voucher cho khách mới:* Chống bằng cách giới hạn số lần sử dụng trên mỗi thiết bị/SĐT, và yêu cầu xác thực SĐT/Email.
+- *Nhân viên phòng khám tự ý thêm voucher cho người nhà:* Phân quyền chặt chẽ, mọi hành động áp dụng voucher thủ công tại quầy phải được ghi log (Auditing).
+- *Dùng brute-force để đoán mã:* Tích hợp Rate Limiting (chặn IP nếu nhập sai quá 5 lần/phút).
 
-## 6. Duration Calculation
-
-### Thuật toán tính tổng thời lượng
-
-Tổng thời lượng = Sum(Thời lượng dịch vụ của từng Pet).
-
-*   Lucky (Khám tổng quát): 20 phút.
-*   Mimi (Tiêm vaccine): 15 phút.
-*   **Tổng:** 35 phút.
-
-**Vấn đề:** 65 phút không chia hết cho Base Slot (giả sử Base Slot là 20 phút).
-**Giải pháp Padding (Làm tròn lên theo khối slot):**
-*   Mỗi ca khám sẽ được làm tròn thời lượng thành bội số của Base Slot (Ceiling).
-*   Ví dụ (Base Slot = 20 phút):
-    *   Lucky (20m) -> Chiếm 1 slot (20m).
-    *   Mimi (15m) -> Chiếm 1 slot (20m). Dư 5 phút xem như thời gian nghỉ/chuyển ca cho bác sĩ (Buffer time).
-*   **Tổng slot thực tế cần giữ:** 2 block 20 phút (40 phút tổng cộng).
-
-> [!TIP]
-> Việc tích hợp Buffer Time tự động (làm tròn lên) giúp bác sĩ có thời gian thở, ghi chép sổ bệnh án giữa các ca của cùng một khách hàng mà không làm trễ lịch của khách hàng tiếp theo.
+**Các loại Voucher:**
+- Giảm theo phần trăm (VD: Giảm 20% tối đa 100k).
+- Giảm số tiền cố định (VD: Giảm 50k cho đơn từ 300k).
+- Tặng kèm dịch vụ (Free cắt móng khi tắm sấy - *mở rộng sau*).
 
 ---
 
-## 7. Booking Workflow
+## 2. Thiết Kế Database (PostgreSQL)
+
+> [!NOTE]
+> Database được chuẩn hóa để dễ mở rộng (ví dụ: áp dụng voucher theo dịch vụ, danh mục). Sử dụng UUID cho bảo mật.
+
+### Bảng `offers` (Voucher/Khuyến mãi)
+Lưu thông tin chính của chương trình khuyến mãi.
+- `id` (UUID, PK): Định danh.
+- `code` (VARCHAR(50), UNIQUE, INDEX): Mã nhập (VD: `WELCOME50`). Index để tìm kiếm nhanh.
+- `name` (VARCHAR(255)): Tên chương trình.
+- `description` (TEXT): Mô tả chi tiết.
+- `discount_type` (VARCHAR(20)): `PERCENTAGE` hoặc `FIXED_AMOUNT`.
+- `discount_value` (DECIMAL): Giá trị giảm (số tiền hoặc %).
+- `max_discount` (DECIMAL, NULLABLE): Giảm tối đa (chỉ dùng cho `PERCENTAGE`).
+- `min_order_value` (DECIMAL): Giá trị đơn hàng tối thiểu.
+- `total_quantity` (INT, NULLABLE): Tổng số lượng phát hành (NULL = không giới hạn).
+- `used_quantity` (INT, DEFAULT 0): Số lượng đã sử dụng. Dùng Optimistic Concurrency (`xmin` trong PG) để tránh race condition.
+- `usage_limit_per_user` (INT, DEFAULT 1): Số lần dùng tối đa mỗi user.
+- `start_date` (TIMESTAMPTZ): Thời gian bắt đầu.
+- `end_date` (TIMESTAMPTZ): Thời gian kết thúc.
+- `status` (VARCHAR(20)): `DRAFT`, `ACTIVE`, `EXPIRED`, `LOCKED`.
+- `is_public` (BOOLEAN): Voucher ẩn hay hiện trên UI của user.
+- `created_at`, `updated_at`, `created_by` (UUID, FK tới bảng Users).
+
+### Bảng `offer_services` & `offer_categories` (Ràng buộc Dịch vụ)
+- Chỉ áp dụng voucher cho dịch vụ/danh mục cụ thể (nếu để trống tức là áp dụng toàn shop).
+- Gồm: `offer_id` (FK), `service_id`/`category_id` (FK). Composite PK.
+
+### Bảng `user_offers` (Ví Voucher)
+Lưu các voucher user đã thu thập/được tặng (như ví Shopee).
+- `id` (UUID, PK)
+- `user_id` (UUID, FK)
+- `offer_id` (UUID, FK)
+- `collected_at` (TIMESTAMPTZ)
+- `is_used` (BOOLEAN, DEFAULT FALSE)
+
+### Bảng `offer_usage_logs` (Lịch sử sử dụng)
+- `id` (UUID, PK)
+- `offer_id` (UUID, FK)
+- `user_id` (UUID, FK)
+- `appointment_id` / `invoice_id` (UUID, FK): Áp dụng cho hóa đơn/lịch khám nào.
+- `discount_applied` (DECIMAL): Số tiền đã giảm thực tế.
+- `applied_at` (TIMESTAMPTZ)
+- `ip_address` (VARCHAR(50))
+- `status` (VARCHAR(20)): `APPLIED`, `REVERTED` (khi hủy đơn thì hoàn lượt).
+
+---
+
+## 3. Business Rule (Quy tắc Nghiệp vụ)
+
+- **Trạng thái:** `status` phải là `ACTIVE`.
+- **Thời gian:** `start_date` <= NOW <= `end_date`.
+- **Số lượng:** Nếu `total_quantity` IS NOT NULL, `used_quantity` < `total_quantity`.
+- **Giới hạn người dùng:** Số log trong `offer_usage_logs` của `user_id` với `offer_id` < `usage_limit_per_user`.
+- **Điều kiện hóa đơn:** Tổng tiền tạm tính >= `min_order_value`.
+- **Logic tính tiền:**
+  - Nếu `FIXED_AMOUNT`: Giảm = MIN(Giá trị hóa đơn, `discount_value`). (Tránh hóa đơn âm).
+  - Nếu `PERCENTAGE`: Giảm = MIN((Giá trị hóa đơn * `discount_value` / 100), `max_discount`).
+- **Phạm vi (Scope):** Nếu `offer_services` có dữ liệu, voucher chỉ tính giảm giá trên tổng tiền của các dịch vụ được phép. (Rất quan trọng, tránh lỗi logic giảm cả đơn mua thuốc).
+- **Độc quyền:** Chỉ 1 voucher được áp dụng trên 1 hóa đơn (hiện tại).
+- **Hoàn trả:** Nếu hủy đơn hàng, hệ thống tự động `REVERT` log và giảm `used_quantity`, trả lại voucher cho người dùng.
+
+---
+
+## 4. Admin Features
+
+**Quản lý Voucher:**
+- **Danh sách:** Có Grid table phân trang, filter theo Status (`ACTIVE`, `EXPIRED`), Search theo mã/tên.
+- **Cột hiển thị:** Mã, Tên, Loại (%, Tiền), Đơn tối thiểu, Giảm tối đa, Số lượng (Đã dùng/Tổng), Thời hạn, Trạng thái.
+- **Form Tạo Mới/Cập nhật:**
+  - Validation chặt chẽ phía Client (Vue) và Server (.NET).
+  - Chọn dịch vụ áp dụng (Dropdown/Multi-select).
+- **Xem chi tiết & Thống kê:** Hiển thị biểu đồ số lượt dùng theo ngày, danh sách user đã dùng.
+- **Hành động:** Khóa (Lock) khẩn cấp nếu phát hiện gian lận.
+
+---
+
+## 5. Tạo Mã Voucher
+
+- **Giai đoạn hiện tại:** Admin nhập thủ công (`Code`). Validation đảm bảo `Code` là duy nhất, viết hoa, không chứa ký tự đặc biệt, dễ đọc (VD: `SUMMER24`, `PETSPA50`).
+- **Phân tích phương án sinh tự động (Mở rộng):** Sử dụng thuật toán sinh mã ngẫu nhiên có prefix (VD: `REF-A3X9-L2M1`), check trùng lặp (collision) trước khi lưu. Sinh theo batch.
+
+---
+
+## 6. Luồng Nghiệp Vụ (Workflow)
 
 ```mermaid
 sequenceDiagram
-    actor C as Customer
-    participant UI as Web/App UI
-    participant API as API Gateway
-    participant Bck as Booking Service
-    participant Sch as Schedule Service
-    participant DB as Database
+    participant Admin
+    participant System
+    participant Customer
     
-    C->>UI: Chọn Tối đa 2 Pets & Dịch vụ tương ứng
-    C->>UI: Chọn Bác sĩ & Ngày
-    UI->>API: GET /api/schedules/available-blocks?duration=X
-    API->>Sch: Tính tổng thời lượng & Áp dụng Sliding Window
-    Sch->>DB: Truy vấn Slot trống
-    Sch-->>UI: Trả về danh sách thời gian có thể đáp ứng
-    C->>UI: Chọn giờ bắt đầu (VD: 08:00) & Click Đặt lịch
-    UI->>API: POST /api/bookings/multi-pet
+    Admin->>System: Tạo Voucher & Publish
+    Customer->>System: Đặt lịch & Chọn dịch vụ
+    Customer->>System: Nhập mã Voucher (WELCOME50)
     
-    API->>Bck: Khởi tạo Transaction
-    Bck->>Sch: Request Lock (08:00 - 08:40) (Redis Distributed Lock)
-    alt Lock Thất bại (Có người đã đặt)
-        Sch-->>Bck: Conflict Exception
-        Bck-->>UI: Lỗi: Thời gian không còn khả dụng
-    else Lock Thành công
-        Bck->>DB: Tạo bản ghi Booking (Parent)
-        loop Mỗi Pet
-            Bck->>DB: Tạo Appointment (Child) nối tiếp
-            Bck->>DB: Đánh dấu các Slot tương ứng thành 'Booked'
-        end
-        Bck->>DB: Commit Transaction
-        Bck->>Sch: Release Lock
-        Bck-->>UI: Booking Thành công (Trả về danh sách Appointment IDs)
+    System->>System: Validate: Tồn tại? Hạn? Số lượng?
+    alt Validate Thất bại
+        System-->>Customer: Trả về lỗi (Hết hạn/Hết lượt/Không đủ điều kiện)
+    else Validate Thành công
+        System->>System: Tính toán số tiền giảm
+        System-->>Customer: Hiển thị số tiền giảm & Tổng mới
     end
+    
+    Customer->>System: Thanh toán/Xác nhận đơn
+    System->>System: Bắt đầu Transaction
+    System->>System: Lock Voucher Row (Optimistic)
+    System->>System: Cập nhật used_quantity += 1
+    System->>System: Lưu OfferUsageLog
+    System->>System: Lưu Invoice (kèm thông tin Voucher)
+    System->>System: Commit Transaction
+    System-->>Customer: Hoàn thành đặt lịch
 ```
 
 ---
 
-## 8. Validation Rules
+## 7. Backend (RESTful API)
 
-| Mã Lỗi | Mô tả Validation | HTTP Status | Exception Type |
-| :--- | :--- | :--- | :--- |
-| `ERR_NO_PET` | Yêu cầu tạo booking nhưng không truyền danh sách Pet. | 400 | `ValidationException` |
-| `ERR_MAX_PETS` | Yêu cầu tạo booking vượt quá số lượng tối đa (2 thú cưng). | 400 | `ValidationException` |
-| `ERR_PET_OWNERSHIP` | Phát hiện PetId không thuộc quyền sở hữu của CustomerId hiện tại. (Bảo vệ IDOR) | 403 | `ForbiddenAccessException` |
-| `ERR_PET_INACTIVE` | Thú cưng đã chết hoặc bị đánh dấu vô hiệu hóa. | 400 | `BusinessRuleException` |
-| `ERR_SLOT_NOT_FOUND` | Khung giờ được chọn không tồn tại trong lịch làm việc của Bác sĩ. | 404 | `NotFoundException` |
-| `ERR_SLOT_OVERLAPPING` | Một trong các slot cần thiết đã bị người khác đặt hoặc đang tạm giữ. | 409 | `ConflictException` |
-| `ERR_NOT_CONTIGUOUS` | Không có đủ số lượng slot liên tiếp để phục vụ. | 409 | `BusinessRuleException` |
-| `ERR_DOCTOR_OFF` | Bác sĩ đã xin nghỉ phép vào ngày/khung giờ đó. | 409 | `BusinessRuleException` |
-
----
-
-## 9. Appointment Generation Strategy
-
-**Tại sao một Booking nhưng tạo nhiều Appointment?**
-Về mặt trải nghiệm, khách hàng chỉ đặt 1 lần. Nhưng về mặt vận hành y khoa, mỗi thú cưng là một cá thể với Bệnh án (Medical Record), Đơn thuốc, và Trạng thái hoàn thành khác nhau. Do đó, hệ thống phải tách rời thành các `Appointment` riêng biệt ngay từ khâu đặt lịch.
-
-**Transaction & Rollback:**
-Quá trình ghi dữ liệu phải nằm trong một `IDbContextTransaction`. Nếu lưu đến thú cưng thứ 2 mà phát sinh lỗi cơ sở dữ liệu, toàn bộ `SaveChanges` sẽ bị bỏ qua (Rollback), đảm bảo tính toàn vẹn (ACID). Không lưu Booking nháp (Draft) trong trường hợp này để tránh rác dữ liệu, bắt buộc phải thành công 100% hoặc thất bại toàn bộ.
+- `GET /api/v1/offers`: Admin lấy danh sách (có phân trang, filter).
+- `GET /api/v1/offers/public`: User lấy danh sách voucher hợp lệ đang active.
+- `GET /api/v1/offers/{id}`: Lấy chi tiết.
+- `POST /api/v1/offers`: Admin tạo mới.
+- `PUT /api/v1/offers/{id}`: Admin sửa.
+- `PATCH /api/v1/offers/{id}/status`: Admin đổi trạng thái (Lock).
+- `POST /api/v1/offers/validate`: 
+  - **Request:** `{ "code": "ABC", "orderAmount": 500000, "serviceIds": ["uuid-1", "uuid-2"] }`
+  - **Response:** `{ "isValid": true, "discountAmount": 50000, "message": "Thành công" }` (HTTP 200) hoặc lỗi kinh doanh (HTTP 400).
+- `POST /api/v1/offers/apply` (Thường tích hợp thẳng vào API Checkout/CreateInvoice): Ghi nhận sử dụng.
 
 ---
 
-## 10. Database Design
+## 8. Validation
 
-### Lược đồ thiết kế tối ưu
-
-**1. Bảng `Bookings` (Transaction Group)**
-Đóng vai trò là cái ô (Umbrella) gom nhóm các cuộc hẹn.
-*   `Id` (PK, Guid)
-*   `CustomerId` (FK)
-*   `BookingSource` (Enum: Web, App, WalkIn, Phone)
-*   `CreatedAt`, `CreatedBy`
-
-**2. Bảng `Appointments`**
-Thực thể chính quản lý ca khám cho từng thú cưng.
-*   `Id` (PK, Guid)
-*   `BookingId` (FK) -> Nối về Booking
-*   `PetId` (FK)
-*   `DoctorId` (FK)
-*   `ServiceId` (FK)
-*   `StartTime` (DateTimeOffset)
-*   `EndTime` (DateTimeOffset)
-*   `Status` (Enum: Scheduled, InProgress, Completed, Cancelled)
-*   `IsDeleted` (Soft Delete - bool)
-
-**3. Bảng `AppointmentSlots` (Mapping Time)**
-Liên kết một Appointment với các Slot vi mô trong lịch (VD: 1 ca siêu âm 40p nối với 2 Slot 20p).
-*   `AppointmentId` (FK)
-*   `SlotId` (FK)
-*   PK là (`AppointmentId`, `SlotId`)
-
-> [!CAUTION]
-> **Index Strategy:** Cần tạo Unique Composite Index trên `(DoctorId, StartTime, EndTime)` (hoặc sử dụng các cấu trúc Range Type nếu RDBMS hỗ trợ như PostgreSQL, với SQL Server cần viết Trigger/Check Constraint chống Overlapping) để phòng thủ Double Booking ở tầng DB.
+- **Code:** Bắt buộc, duy nhất, độ dài 3-20 ký tự, `^[A-Z0-9]+$`.
+- **Discount:** 
+  - Nếu `PERCENTAGE`: 0 < value <= 100.
+  - Nếu `FIXED_AMOUNT`: value > 0.
+- **Date:** `start_date` phải là tương lai hoặc hiện tại. `end_date` > `start_date`.
+- **Quantity:** `total_quantity` >= 0 (hoặc NULL). `usage_limit_per_user` > 0.
+- **Order:** `min_order_value` >= 0.
 
 ---
 
-## 11. Concurrency (Xử lý đồng thời)
+## 9. Thuật toán (Pseudocode)
 
-Đây là vấn đề cốt lõi nhất của hệ thống đặt lịch.
-
-**Nguy cơ:**
-Hai khách hàng (hoặc 1 khách web + 1 lễ tân tại quầy) cùng nhìn thấy slot 08:00 - 09:00 trống và bấm "Xác nhận" cùng một miligiây (Race Condition).
-
-**Giải pháp chống Double Booking:**
-1.  **Distributed Lock (Redis):** Khi bắt đầu xử lý request đặt lịch, dùng khóa Redis `lock:doctor:{DoctorId}:date:{Date}` để đảm bảo chỉ có 1 thread được duyệt slot của bác sĩ đó tại một thời điểm.
-2.  **Optimistic Concurrency Control (EF Core):** Bảng `Slot` gắn trường `RowVersion`. Khi 2 request cùng cố cập nhật `Status = Booked` cho một slot, cái đến sau sẽ văng `DbUpdateConcurrencyException`.
-3.  **Database Unique Constraint:** Mức phòng thủ cuối cùng ở DB như đã đề cập ở phần 10.
-
----
-
-## 12. Edge Cases (Các trường hợp góc)
-
-1.  **Lịch bị cắt ngang:** Khách đặt 2 con (40p), bác sĩ chỉ còn 20p trước giờ nghỉ trưa, 20p sau giờ nghỉ trưa -> *Từ chối, không đáp ứng Continuous Block.*
-2.  **Một Pet hủy giữa chừng:** Đến ngày khám, khách chỉ mang 1/2 thú cưng đi. -> Lễ tân hủy 1 Appointment. Appointment còn lại vẫn giữ nguyên giờ. Slot của Pet bị hủy lập tức mở ra (Available) cho khách khác đặt (dù ở giữa khoảng thời gian).
-3.  **Khám kéo dài (Overrun):** Pet 1 khám quá thời lượng, lấn sang slot Pet 2. -> Hệ thống đẩy luồng (Queue) của Pet 2 lùi lại, khách hàng nhận thông báo "Đang chuẩn bị" lâu hơn bình thường trên bảng Queue.
-4.  **Bác sĩ nghỉ đột xuất (Sick leave):** Khi Admin hủy ca bác sĩ, hệ thống tự động dò tìm các "nhóm Appointment" (qua BookingId) và cố gắng chuyển toàn bộ nhóm sang Bác sĩ khác (nguyên khối). Nếu không được, thông báo cho khách.
-5.  **Timeout khi thanh toán (Nếu có Pre-pay):** Áp dụng TTL (Time To Live) cho Slot Lock trên Redis. Quá 10 phút không thanh toán, giải phóng slot.
-
-*(Và hơn 25 trường hợp khác liên quan đến cấu hình ca làm việc, thay đổi múi giờ, đổi bác sĩ...)*
+### `ValidateVoucher(code, user_id, order_details)`
+```text
+1. Fetch offer = DB.Offers.FirstOrDefault(o => o.Code == code)
+2. IF offer IS NULL THEN RETURN Error("Voucher không tồn tại")
+3. IF offer.Status != ACTIVE THEN RETURN Error("Voucher không khả dụng")
+4. IF NOW() < offer.StartDate OR NOW() > offer.EndDate THEN RETURN Error("Voucher ngoài thời gian áp dụng")
+5. IF offer.TotalQuantity != NULL AND offer.UsedQuantity >= offer.TotalQuantity THEN RETURN Error("Voucher đã hết lượt")
+6. 
+7. used_count = DB.OfferUsageLogs.Count(l => l.OfferId == offer.Id AND l.UserId == user_id)
+8. IF used_count >= offer.UsageLimitPerUser THEN RETURN Error("Bạn đã dùng hết lượt voucher này")
+9.
+10. eligible_amount = Tính tổng tiền các dịch vụ trong order_details thuộc offer_services (hoặc tổng tiền nếu ko ràng buộc)
+11. IF eligible_amount < offer.MinOrderValue THEN RETURN Error("Chưa đạt giá trị tối thiểu")
+12.
+13. discount = CaculateDiscount(offer, eligible_amount)
+14. RETURN Success(discount)
+```
 
 ---
 
-## 13. Best Practices
+## 10. Concurrency (Xử lý đồng thời)
 
-Khảo sát các hệ thống HIS / VPMS hiện tại:
-*   **Cách 1 (Tồi):** Xếp n thú cưng vào cùng 1 slot giờ, và ghi chú "Có 3 con". -> Rất tệ vì phá vỡ hệ thống tính tải công việc (capacity) và sai lệch Medical Record.
-*   **Cách 2 (Trung bình):** Tự động dàn thời gian, nhưng lại coi là 1 Appointment khổng lồ. Bác sĩ phải viết 3 hồ sơ bệnh án trong cùng 1 Appointment. -> Bất cập cấu trúc dữ liệu, khó xuất hóa đơn chi tiết.
-*   **Cách 3 (Tối ưu - Áp dụng trong thiết kế này):** Sequential Linked Appointments. Giao diện UX là Multi, dữ liệu hạ tầng (DB) là Single. Việc sử dụng thuộc tính "Parent Booking" làm keo dính giúp hệ thống cực kỳ mềm dẻo.
+**Vấn đề:** 1 voucher chỉ còn 1 lượt. 2 user cùng lúc gọi API `ApplyVoucher`. Nếu chỉ check IF (`used_quantity` < `total_quantity`) rồi update, sẽ bị vượt quá số lượng (Race Condition).
+
+**Giải pháp:** Sử dụng **Optimistic Concurrency Control** kết hợp Entity Framework Core `[Timestamp]` (hoặc `xmin` trong PG) hoặc kiểm tra điều kiện ngay trong câu lệnh UPDATE.
+```csharp
+// Logic EF Core / SQL:
+UPDATE Offers 
+SET UsedQuantity = UsedQuantity + 1 
+WHERE Id = @offerId AND UsedQuantity < TotalQuantity;
+
+// Nếu số dòng update (RowsAffected) == 0 -> Bắn lỗi: "Voucher vừa mới hết lượt do người khác nhanh tay hơn." -> Rollback Transaction.
+```
+- Sử dụng Database Transaction khi tạo Hóa Đơn và Ghi Log Voucher để đảm bảo tính nguyên vẹn (ACID). Nếu tạo hóa đơn xịt -> Rollback Voucher Log.
 
 ---
 
-## 14. Recommendation (Đề xuất của Solution Architect)
+## 11. Logging
 
-Với tư cách là Solution Architect, tôi đề xuất áp dụng kiến trúc **Sequential Linked Appointments kết hợp thuật toán Sliding Window và Redis Distributed Lock**.
+Bảng `offer_usage_logs` đã thiết kế ở trên, lưu rõ:
+- Ai dùng (`user_id`).
+- Voucher nào (`offer_id`).
+- Hóa đơn nào (`invoice_id`).
+- Giảm bao nhiêu (`discount_applied`).
+- Thời gian (`applied_at`).
+- IP (`ip_address`) - phòng chống gian lận.
+- Kết quả (`status` = `APPLIED` / `REVERTED`).
 
-**Lý do:**
-1.  **Khả năng mở rộng (Scalability):** Tách rời khái niệm Booking (Giao dịch) và Appointment (Sự kiện Y tế). Hệ thống có thể dễ dàng mở rộng để đặt lịch xét nghiệm, spa tách biệt sau này.
-2.  **Hiệu năng (Performance):** Thuật toán Sliding Window tính toán bằng Memory trên Application Server cực nhanh, không cần Write/Read DB phức tạp.
-3.  **Toàn vẹn Dữ liệu (Integrity):** Đạt ACID compliance tuyệt đối thông qua Database Transaction và EF Core Concurrency Tokens. Không bao giờ xảy ra tình trạng "đặt được nửa đàn, nửa đàn bị đẩy ra".
+---
 
-**Kế hoạch tiếp theo:**
-Đợi sự phê duyệt của Product Manager / Domain Expert về các Business Rules (đặc biệt là cơ chế Padding Buffer Time). Nếu phê duyệt, đội ngũ Backend có thể bắt đầu xây dựng Endpoint `POST /api/bookings/multi-pet` dựa trên thiết kế này.
+## 12. UI/UX Design (Vue.js 3 + Tailwind CSS)
+
+**Customer (Giao diện Chọn Voucher Hiện Đại):**
+- **Modal/Bottom Sheet "Khuyến Mãi (Promotions)":** Thay vì chỉ có ô nhập mã đơn điệu ở trang thanh toán, khi người dùng bấm "Chọn Voucher", một Bottom Sheet (trên mobile) hoặc Modal (trên PC) sẽ bật lên.
+- **Khu vực nhập mã thủ công:** Vẫn giữ ô text input "Nhập mã khuyến mãi..." ở trên cùng cho các mã ẩn (Private Voucher).
+- **Danh sách "Tất cả khuyến mãi" (Voucher Cards):**
+  - Hiển thị danh sách các voucher dưới dạng **Ticket Card** (thẻ có đường viền răng cưa/đứt nét mô phỏng vé).
+  - Có icon/hình ảnh bên trái, chi tiết ưu đãi ở giữa (VD: "Giảm 6% tối đa 50k").
+  - Bên phải là **Checkbox/Radio Button** để chọn nhanh voucher.
+- **Phân loại trạng thái Voucher:**
+  - **Hợp lệ:** Thẻ hiển thị rõ ràng, cho phép chọn.
+  - **Không hợp lệ:** Thẻ bị mờ (opacity thấp), Checkbox bị disable, kèm theo dòng text cảnh báo lỗi màu đỏ ngay trên thẻ (VD: *"Đơn hàng chưa đạt tối thiểu 200k"* hoặc *"Chỉ áp dụng cho dịch vụ Spa"*).
+- **Floating Bottom Bar:** Dưới cùng của Modal luôn ghim một thanh bar nổi hiển thị **Tổng số tiền tiết kiệm được** (Animation nhảy số tiền) và nút **ÁP DỤNG (Apply)** kích thước lớn, màu chủ đạo bắt mắt.
+- **Ví Voucher (My Vouchers):** Hiển thị thanh tiến trình (progress bar) cho lượng voucher còn lại để tạo cảm giác khan hiếm (FOMO).
+
+**Admin:**
+- Sử dụng Glassmorphism / Dashboard UI.
+- Thống kê (Chart.js) hiển thị số voucher đã dùng theo ngày/tháng để đánh giá chiến dịch.
+- Badge màu cho Trạng thái: Xanh (Active), Xám (Expired), Đỏ (Locked).
+
+---
+
+## 13. Phân Quyền (RBAC)
+
+- **Admin/Manager:** Có toàn quyền CRUD `offers`, Publish, Lock, xem `offer_usage_logs`.
+- **Receptionist (Lễ tân):** Chỉ được xem danh sách voucher (để tư vấn khách), được phép áp dụng voucher thủ công khi tạo hóa đơn tại quầy, KHÔNG được tạo mới hay xóa.
+- **Customer:** Chỉ được xem voucher `is_public = true`, xem ví voucher của mình, và thực hiện Apply voucher.
+
+---
+
+## 14. Test Cases (Tổng quan 40+ Cases)
+
+- **Happy Case (Thành công):** Nhập mã giảm %, tính đúng tiền. Nhập mã giảm tiền, tính đúng tiền. Áp dụng mã cho khách mới thành công.
+- **Validation:** Mã rỗng, mã chứa ký tự đặc biệt, tạo voucher % > 100, tạo giá trị âm, Ngày KT < Ngày BĐ.
+- **Boundary (Biên):** Đơn hàng bằng chính xác `min_order_value` (Phải thành công). Sử dụng lượt cuối cùng của voucher (Phải thành công). Giảm % chạm mốc `max_discount` (Phải cắt ngọn ở `max_discount`).
+- **Exception (Ngoại lệ):** Nhập mã đã hết hạn. Nhập mã chưa bắt đầu. Nhập mã bị khóa. Đơn hàng chưa đạt tối thiểu. Dịch vụ không nằm trong danh mục áp dụng.
+- **Security & Concurrency:** 2 user cùng apply mã chỉ còn 1 lượt cuối (1 pass, 1 fail). User A sửa request API để dùng voucher của User B (IDOR -> Phải chặn qua JWT UserId). Bắn API liên tục (Rate limiting).
+
+---
+
+## 15. Lộ Trình Triển Khai (Execution Roadmap)
+
+Để đảm bảo chất lượng, hạn chế tối đa sai sót và làm kỹ càng từng thành phần, chúng ta sẽ chia quá trình lập trình thành **6 Giai Đoạn (Phases)**. Nguyên tắc là hoàn thành dứt điểm 100% (cả Test) giai đoạn trước mới chuyển sang giai đoạn sau.
+
+### Giai Đoạn 1: Database Foundation & Core Models (Backend)
+- Định nghĩa các Entity Classes (`Offer`, `OfferService`, `UserOffer`, `OfferUsageLog`) trong thư mục Domain.
+- Cấu hình Entity Framework Core mapping (Fluent API), đảm bảo tạo Index cho cột `Code` và cấu hình Optimistic Concurrency cho `UsedQuantity`.
+- Viết Database Migrations và cập nhật DB (Supabase/PostgreSQL).
+- **Tiêu chí hoàn thành (DoD):** Database được tạo đúng chuẩn, các quan hệ FK chính xác, lưu được dữ liệu mẫu bằng pgAdmin/DBeaver.
+
+### Giai Đoạn 2: Core Business Logic & API (Backend)
+- Xây dựng DTOs (Data Transfer Objects) và FluentValidation rules.
+- Viết `OfferService` chứa toàn bộ lõi thuật toán (Quy tắc số 9). Đảm bảo tách biệt rõ ràng việc tính toán và việc ghi dữ liệu.
+- Viết API Controllers (`OffersController`) cho cả Admin (CRUD) và Customer (Lấy danh sách & Apply).
+- Cấu hình JWT Authorization (Admin/Customer roles).
+- **Tiêu chí hoàn thành (DoD):** Swagger có thể test được API, dữ liệu được validate chặt chẽ (vd: nhập sai ngày kết thúc sẽ báo lỗi 400).
+
+### Giai Đoạn 3: Unit Testing & Concurrency Testing (QA)
+- Viết Unit Tests cho `OfferService` sử dụng xUnit và Moq (Bao phủ 40+ Test Cases đã thiết kế ở mục 14).
+- Đặc biệt viết Integration Test mô phỏng 2 Request gọi API `ApplyVoucher` cùng một thời điểm tính bằng milliseconds để kiểm tra xem hệ thống có bắt được lỗi Race Condition và chặn cấp phát thừa voucher hay không.
+- **Tiêu chí hoàn thành (DoD):** Test Coverage > 85%, tất cả test cases (Happy, Biên, Lỗi) phải Pass xanh.
+
+### Giai Đoạn 4: Admin Management UI (Frontend Vue.js)
+- Cấu hình Pinia Store (`offerStore.js`) để call API lấy dữ liệu.
+- Dựng UI Dashboard cho Admin (List, Filter, Phân trang).
+- Dựng UI Form Tạo/Sửa Voucher (áp dụng validation phía client).
+- **Tiêu chí hoàn thành (DoD):** Admin có thể tự thao tác chu trình khép kín: Tạo Voucher -> Xem danh sách -> Sửa -> Xóa/Khóa.
+
+### Giai Đoạn 5: Customer Promotions UI (Frontend Vue.js)
+- Triển khai UI Modal/Bottom Sheet chứa danh sách "Ticket Cards" như đã mô tả ở mục 12.
+- Gọi API get danh sách voucher public, xử lý logic disable các thẻ không đạt "Đơn tối thiểu".
+- Tích hợp hàm Apply voucher vào lúc checkout, hiển thị Animation nhảy số và tổng tiền tiết kiệm được dưới Floating Bar.
+- **Tiêu chí hoàn thành (DoD):** Giao diện cực mượt, bấm áp dụng/hủy áp dụng tiền nhảy realtime không bị delay. Cảm giác thao tác sang trọng (Premium UI).
+
+### Giai Đoạn 6: Tích hợp Toàn Hệ Thống & UAT
+- Liên kết flow hoàn chỉnh: Admin tạo -> Khách nhìn thấy -> Khách đặt lịch -> Khách chọn voucher -> Trừ tiền -> Thanh toán -> Giảm số lượng -> Ghi Log.
+- Cập nhật lại file theo dõi công việc (`progress.md`, `features-tested.md`).
+
+---
+
+## 16. Mở Rộng Tương Lai (Future Enhancements)
+
+- **Sinh mã tự động (Auto-gen Codes):** Admin tạo 1 chương trình mẹ, sinh ra 1000 mã con duy nhất (VD: gửi qua email marketing).
+- **Voucher sự kiện & sinh nhật:** Tự động gửi voucher giảm 20% vào tháng sinh nhật của thú cưng.
+- **Chương trình giới thiệu (Referral):** "Mời 1 bạn, nhận 50k".
+- **Voucher tích điểm (Loyalty/Membership):** Hạng Vàng được voucher giảm nhiều hơn Hạng Bạc.
+- **Tặng kèm dịch vụ:** Mua gói tiêm phòng, tặng voucher cắt móng miễn phí.

@@ -1,61 +1,108 @@
 <template>
-  <div class="w-full">
+  <div class="w-100">
+    <input 
+      type="file" 
+      ref="fileInput" 
+      class="d-none" 
+      multiple 
+      accept="image/jpeg, image/png, image/webp" 
+      @change="handleFileInput"
+      :disabled="images.length >= maxImages"
+    />
+    
+    <!-- Big Dropzone when empty -->
     <div 
-      class="border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-colors relative"
+      v-if="images.length === 0"
+      class="p-4 d-flex flex-column align-items-center justify-content-center position-relative"
+      style="border: 2px dashed #dee2e6; border-radius: 1rem; transition: background-color 0.2s;"
       :class="[
-        isDragging ? 'border-[var(--primary-color)] bg-[var(--primary-color)]/5' : 'border-gray-300 bg-gray-50 hover:bg-gray-100',
-        images.length >= maxImages ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+        isDragging ? 'bg-primary bg-opacity-10 border-primary' : 'bg-light custom-hover-bg',
+        'cursor-pointer'
       ]"
       @dragover.prevent="isDragging = true"
       @dragleave.prevent="isDragging = false"
       @drop.prevent="handleDrop"
       @click="triggerFileInput"
     >
-      <input 
-        type="file" 
-        ref="fileInput" 
-        class="hidden" 
-        multiple 
-        accept="image/jpeg, image/png, image/webp" 
-        @change="handleFileInput"
-        :disabled="images.length >= maxImages"
-      />
-      
-      <svg class="w-10 h-10 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="text-secondary mb-3" style="width: 48px; height: 48px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
       </svg>
-      <p class="text-sm font-medium text-gray-700 text-center">
+      <p class="fw-medium text-dark text-center mb-1">
         Nhấn để chọn ảnh hoặc kéo thả vào đây
       </p>
-      <p class="text-xs text-gray-500 mt-1 text-center">
+      <p class="small text-muted text-center mb-0">
         Tối đa {{ maxImages }} ảnh (JPG, PNG, WEBP). Tối đa {{ maxSizeMB }}MB/ảnh.
       </p>
     </div>
 
-    <!-- Error Message -->
-    <p v-if="error" class="text-red-500 text-xs mt-2">{{ error }}</p>
-
-    <!-- Previews -->
-    <div v-if="images.length > 0" class="mt-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+    <!-- Previews and Mini Add Button -->
+    <div v-else class="row g-2 mt-1">
       <div 
         v-for="(img, index) in previews" 
         :key="index" 
-        class="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group shadow-sm"
+        class="col-4 col-md-3 col-lg-2"
       >
-        <img :src="img" alt="Preview" class="w-full h-full object-cover" />
-        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div class="position-relative rounded overflow-hidden border bg-white shadow-sm" style="aspect-ratio: 1; cursor: pointer;" @click="previewUrl = img">
+          <img :src="img" alt="Preview" class="w-100 h-100 object-fit-cover" />
+          
+          <!-- Delete Button (Top Right) -->
           <button 
             @click.stop="removeImage(index)" 
-            class="bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 focus:outline-none transform hover:scale-110 transition-transform"
+            class="btn btn-danger position-absolute top-0 end-0 m-1 rounded-circle p-0 d-flex align-items-center justify-content-center shadow"
+            style="width: 24px; height: 24px; z-index: 10;"
             title="Xóa ảnh"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            <i class="bi bi-x" style="font-size: 1.2rem; line-height: 1;"></i>
           </button>
         </div>
       </div>
+      
+      <!-- Mini Add Button -->
+      <div v-if="images.length < maxImages" class="col-4 col-md-3 col-lg-2">
+        <div 
+          class="position-relative rounded overflow-hidden d-flex flex-column align-items-center justify-content-center cursor-pointer custom-hover-bg"
+          style="aspect-ratio: 1; border: 2px dashed #dee2e6; background-color: #f8f9fa;"
+          @dragover.prevent="isDragging = true"
+          @dragleave.prevent="isDragging = false"
+          @drop.prevent="handleDrop"
+          @click="triggerFileInput"
+        >
+          <i class="bi bi-plus-lg text-secondary mb-1" style="font-size: 1.5rem;"></i>
+          <span class="text-secondary fw-bold" style="font-size: 0.75rem;">Thêm</span>
+        </div>
+      </div>
     </div>
+    
+    <!-- Error Message -->
+    <p v-if="error" class="text-danger small mt-2 mb-0">{{ error }}</p>
+
+    <!-- Fullscreen Image Preview -->
+    <Teleport to="body">
+      <div v-if="previewUrl" class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-flex align-items-center justify-content-center" style="z-index: 9999;" @click="previewUrl = null">
+        <div class="position-relative" style="max-width: 90%; max-height: 90%;">
+          <img :src="previewUrl" class="img-fluid rounded shadow-lg" style="max-height: 90vh;" @click.stop />
+          <button class="btn-close btn-close-white position-absolute top-0 end-0 m-3 shadow" @click="previewUrl = null"></button>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.custom-hover-bg:hover {
+  background-color: #e9ecef !important;
+}
+.custom-hover-opacity {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+.position-relative:hover .custom-hover-opacity {
+  opacity: 1;
+}
+.object-fit-cover {
+  object-fit: cover;
+}
+</style>
 
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount } from 'vue';
@@ -77,6 +124,7 @@ const error = ref('');
 
 const images = ref<File[]>([...props.modelValue]);
 const previews = ref<string[]>([]);
+const previewUrl = ref<string | null>(null);
 
 // Sync from parent
 watch(() => props.modelValue, (newVal) => {

@@ -1,0 +1,3024 @@
+TRƯỜNG CAO ĐẲNG FPT POLYTECHNIC BỘ MÔN CÔNG NGHỆ THÔNG TIN CHUYÊN NGÀNH: LẬP TRÌNH WEB
+BÁO CÁO DỰ ÁN TỐT NGHIỆP
+ĐỀ TÀI:
+HỆ THỐNG ĐẶT LỊCH VÀ QUẢN 
+LÝ PHÒNG KHÁM THÚ Y
+Giảng viên hướng dẫn:Phạm Ngọc Ái Liên Sinh viên thực hiện dự án:
+Họ và tên
+MSSV
+Vai trò
+Tạ Ngọc Nam
+TD01188
+Trưởng nhóm
+Ngô Tường Lâm
+TD01177
+Thành viên
+Cao Hà Phương
+TD01108
+Thành viên
+Ngô Thị Hạnh
+TD01293
+Thành viên
+Đà Nẵng, tháng 08 năm 2026
+MỤC LỤC
+PHÂN TÍCH YÊU CẦU8
+Giới thiệu đề tài9
+Khảo sát yêu cầu8
+Khách hàng8
+Quản trị viên10
+PHÂN TÍCH HỆ THỐNG11
+Use case khách hàng vãng lai11
+Use case khách hàng12
+Use case quản trị viên13
+Chức năng khách vãng lai13
+Đăng ký13
+Tìm kiếm14
+Xem danh sách sản phẩm14
+Xem chi tiết sản phẩm15
+Xem bài viết15
+Xem chi tiết bài viết16
+Chức năng khách hàng16
+Đăng nhập16
+Đăng xuất17
+Thông tin tài khoản17
+Quên mật khẩu18
+Đổi mật khẩu18
+Giỏ hàng19
+Mục sản phẩm yêu thích19
+Đặt hàng và thanh toán20
+Đánh giá sản phẩm21
+Lịch sử đơn hàng22
+Bộ lọc sản phẩm22
+Chức năng quản trị viên23
+Dashboard23
+Quản lý người dùng23
+Quản lý bài viết24
+Quản lý danh mục25
+Quản lý sản phẩm26
+Quản lý thương hiệu26
+Quản lý đánh giá sản phẩm27
+Quản lý đơn hàng, theo dõi đơn hàng28
+Quản lý mã giảm giá28
+Quản lý sản phẩm yêu thích29
+Thống kê30
+Đặc tả thực thể31
+Giao diện Front End42
+TRIỂN KHAI46
+Site map46
+Sơ đồ tổ chức code47
+Xử lý code cho các trang49
+Xử lí code trang đăng nhập49
+Xử lí code trang giỏ hàng49
+DEMO GIAO DIỆN52
+Giao diện người dùng52
+Giao diện quản trị56
+KIỂM THỬ58
+Kiểm thử phía khách hàng58
+Kiểm thử phía admin63
+KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN71
+Mục tiêu đã được chinh phục71
+Ưu điểm và nhược điểm của dự án72
+Hướng phát triển72
+DANH MỤC BẢNG
+Bảng 1. User (người dùng)31
+Bảng 2. User_addresses (địa chỉ người dùng)31
+Bảng 3. Product (sản phẩm)33
+Bảng 4. Product_image (sản phẩm chi tiết)34
+Bảng 5. Categories (danh mục sản phẩm)34
+Bảng 6. Brand (thương hiệu)35
+Bảng 7. Orders (đơn hàng)35
+Bảng 8. Order_detalis (chi tiết đơn hàng)37
+Bảng 9. Favorites (sản phẩm yêu thích)37
+Bảng 10. Review (đánh giá sản phẩm)38
+Bảng 11. Posts (bài viết)38
+Bảng 12. Discount_codes (mã giảm giá)39
+Bảng 13. Cart (giỏ hàng)39
+Bảng 14. Contact_form (liên hệ)40
+Bảng 15. Email_otps (bảng mã xác thực email)40
+Bảng 16. Kiểm thử form đăng ký58
+Bảng 17. Kiểm thử form đăng nhập60
+Bảng 18. Kiểm thử chức năng thêm giỏ hàng60
+Bảng 19. Kiểm thử chức năng thêm sản phẩm vào yêu thích60
+Bảng 20. Kiểm thử chức năng tìm kiếm sản phẩm61
+Bảng 21. Kiểm thử chức năng thanh toán61
+Bảng 22. Kiểm thử chức năng quản lý người dùng63
+Bảng 23. Kiểm thử chức năng quản lý danh mục sản phẩm64
+Bảng 24. Kiểm thử chức năng quản lý mã giảm giá64
+Bảng 25. Kiểm thử danh mục quản lý sản phẩm65
+Bảng 26. Kiểm thử danh mục quản lý sản phẩm yêu thích66
+Bảng 27. Kiểm thử danh mục quản lý bài viết67
+Bảng 28. Kiểm thử danh mục quản lý đánh giá sản phẩm68
+Bảng 29. Kiểm thử quản lý đơn hàng68
+Bảng 30. Kiểm thử quản lý thương hiệu69
+Bảng 31. Kiểm thử chức năng thống kê70
+DANH MỤC HÌNH ẢNH
+Hình 1. Giao diện trang chủ42
+Hình 2. Giao diện trang danh sách sản phẩm43
+Hình 3. Giao diện trang chi tiết sản phẩm44
+Hình 4. Giao diện trang thanh toán45
+Hình 5. Site map khách hàng46
+Hình 6. Giao diện trang chủ52
+Hình 7. Giao diện trang danh sách sản phẩm53
+Hình 8. Giao diện trang chi tiết sản phẩm54
+Hình 9. Giao diện trang thanh toán55
+Hình 10. Dashboard thống kê56
+Hình 11. Quản lí đơn hàng57
+Hình 12. Quản lí danh mục58
+LỜI CẢM ƠN
+Chúng em xin gửi lời cảm ơn chân thành đến quý thầy cô và Trường FPT Polytechnic đã luôn đồng hành và hỗ trợ chúng em trong suốt quá trình học tập ngành Phát triển phần mềm. Sự giảng dạy tận tâm, định hướng chuyên môn rõ ràng cùng những chia sẻ thực tiễn từ quý thầy cô đã giúp chúng em xây dựng nền tảng vững chắc về tư duy lập trình, thiết kế hệ thống và phát triển phần mềm hiện đại.
+Trong suốt quá trình học tập, chúng em đã được trang bị những kiến thức chuyên sâu cũng như kỹ năng cần thiết để từng bước hoàn thiện bản thân, từ khả năng phân tích bài toán, xây dựng giải pháp đến triển khai và phát triển các ứng dụng phần mềm. Đây chính là hành trang quan trọng giúp chúng em tự tin bước vào môi trường làm việc trong tương lai.
+Chúng em trân trọng những kiến thức, kỹ năng và giá trị mà nhà trường và quý thầy cô đã truyền đạt. Chúng em cam kết sẽ tiếp tục học hỏi, phát triển bản thân, không ngừng đổi mới tư duy và nâng cao năng lực để có thể đóng góp tích cực cho lĩnh vực công nghệ thông tin nói chung và ngành phát triển phần mềm nói riêng.
+Bên cạnh đó, chúng em xin gửi lời cảm ơn sâu sắc đến gia đình và bạn bè – những người luôn bên cạnh, động viên và tiếp thêm động lực trong suốt chặng đường học tập. Gia đình là điểm tựa vững chắc, luôn tin tưởng và ủng hộ chúng em vượt qua mọi khó khăn. Những người bạn đã cùng nhau học tập, chia sẻ kiến thức, hỗ trợ lẫn nhau trong từng dự án, từng deadline và tạo nên những kỷ niệm đáng nhớ của quãng đời sinh viên.
+Một lần nữa, chúng em xin chân thành cảm ơn tất cả mọi người đã luôn đồng hành và là nguồn động lực to lớn giúp chúng em trưởng thành hơn mỗi ngày.
+CAM KẾT
+Tôi tên là Tạ Ngọc Nam, sinh viên ngành Phát triển phần mềm – trưởng nhóm thực hiện đề tài “Hệ Thống Đặt Lịch Và Quản Lý Phòng Khám Thú Y”, xin cam kết những nội dung sau:
+Toàn bộ nội dung trong báo cáo Dự án Tốt nghiệp này là kết quả của quá trình nghiên cứu, xây dựng và thực hiện nghiêm túc của các thành viên trong nhóm dưới sự hướng dẫn trực tiếp của giảng viên Phạm Ngọc Ái Liên.
+Nhóm chúng tôi đã chủ động tìm hiểu tài liệu, tự triển khai chức năng, lập trình giao diện và xử lý logic của hệ thống. Tất cả kiến thức, số liệu và nội dung trình bày đều là do chính nhóm thực hiện, không sao chép từ bất kỳ nguồn nào mà không trích dẫn rõ ràng.
+Sản phẩm được xây dựng dựa trên kiến thức đã học và quá trình tự nghiên cứu của nhóm. Chúng tôi cam kết mọi kết quả, hình ảnh, dữ liệu minh họa và chức năng được trình bày trong báo cáo đều trung thực, chính xác và phù hợp với sản phẩm thực tế đã hoàn thành.
+Nếu phát hiện có bất kỳ hành vi gian lận hoặc vi phạm quy định nào trong quá trình thực hiện đồ án, tôi xin hoàn toàn chịu trách nhiệm trước Hội đồng chấm đồ án và nhà trường.
+PHẦN MỞ ĐẦU
+PHÂN TÍCH YÊU CẦU
+Giới thiệu đề tài:
+Lý do chọn đề tài: Hệ thống đặt lịch và quản lí Phòng khám thú y.
+Hiện nay, nhu cầu chăm sóc thú cưng ngày càng tăng, kéo theo sự phát triển của các phòng khám thú y. Tuy nhiên, nhiều phòng khám vẫn quản lý lịch hẹn và thông tin khách hàng bằng sổ sách hoặc các công cụ đơn giản, dễ gây nhầm lẫn, mất thời gian và khó theo dõi.
+Ngoài ra, việc đặt lịch chủ yếu qua điện thoại hoặc trực tiếp cũng gây bất tiện cho khách hàng và khó sắp xếp thời gian hợp lý. Vì vậy, việc xây dựng một hệ thống đặt lịch và quản lý phòng khám thú y là cần thiết, giúp tối ưu quy trình làm việc và nâng cao trải nghiệm người dùng.
+Nhóm chúng em chọn đề tài “Hệ thống đặt lịch và quản lý phòng khám thú y” và phát triển dưới dạng web theo mô hình MVC, nhằm áp dụng kiến thức đã học như lập trình web, quản lý dữ liệu và xây dựng hệ thống thực tế. Đồng thời, đề tài cũng giúp chúng em rèn luyện kỹ năng phát triển phần mềm và hiểu rõ hơn quy trình xây dựng một ứng dụng hoàn chỉnh.
+Khảo sát yêu cầu
+Khách vãng lai
+Trang chủ: Hiển thị thông tin giới thiệu phòng khám thú y, các dịch vụ nổi bật, đội ngũ bác sĩ, bảng giá dịch vụ, các bài viết chăm sóc thú cưng và thông tin liên hệ.
+Trang dịch vụ: Hiển thị danh sách các dịch vụ của phòng khám như khám bệnh, tiêm chủng,cùng thông tin chi tiết và chi phí dịch vụ.
+Trang chi tiết dịch vụ: Cung cấp đầy đủ thông tin về từng dịch vụ như mô tả, quy trình thực hiện, giá dịch vụ và thời gian thực hiện dự kiến.
+Trang đội ngũ bác sĩ: Hiển thị danh sách bác sĩ thú y, chuyên môn, kinh nghiệm và lịch làm việc của từng bác sĩ.
+Trang bài viết: Hiển thị các bài viết chia sẻ kiến thức về chăm sóc, nuôi dưỡng và phòng bệnh cho thú cưng.
+Trang chi tiết bài viết: Hiển thị đầy đủ nội dung của bài viết và các thông tin liên quan.
+Khách hàng 
+Quản lý tài khoản khách hàng
+Đăng nhập: Khách hàng đăng ký tài khoản với các thông tin cơ bản như họ tên, email, số điện thoại và mật khẩu.
+Đăng ký: Cho phép khách hàng đăng nhập vào hệ thống bằng email và mật khẩu.
+Quên mật khẩu: Hỗ trợ khách hàng lấy lại mật khẩu thông qua email.
+Cập nhật thông tin cá nhân: Cho phép khách hàng cập nhật thông tin cá nhân khi có thay đổi.
+Quản lý thông tin thú cưng: Khách hàng có thể thêm, sửa, xóa thông tin thú cưng như tên, giống loài, giới tính, ngày sinh và tình trạng sức khỏe.
+Đặt lịch khám bệnh và tiêm chủng: Cho phép khách hàng lựa chọn dịch vụ, bác sĩ, ngày giờ khám phù hợp và gửi yêu cầu đặt lịch.
+Quản lý lịch hẹn: Hiển thị danh sách các lịch hẹn đã đặt. Khách hàng có thể xem, hủy hoặc thay đổi lịch hẹn khi cần thiết.
+Lịch sử hóa đơn và dịch vụ: 
+Đánh giá dịch vụ: Cho phép khách hàng đánh giá chất lượng dịch vụ, bác sĩ và thái độ phục vụ sau khi sử dụng dịch vụ.
+AI Chatbot: Cho phép khách hàng gửi câu hỏi, và giải đáp những câu hỏi về thông tin phòng khám và kiến thức về thú cưng.
+Quản trị viên
+Dashboard: Hiển thị tổng số khách hàng, tổng số thú cưng, tổng số lịch hẹn, tổng doanh thu, số lượng dịch vụ và đánh giá mới nhất.
+Quản lý người dùng: Hiển thị danh sách tất cả người dùng đã đăng ký tài khoản, bao gồm thông tin cá nhân, trạng thái tài khoản và quyền truy cập.
+Quản lý dịch vụ: Hiển thị danh sách dịch vụ. Quản trị viên có thể thêm, sửa, xóa dịch vụ và cập nhật giá dịch vụ.
+Quản lý thuốc: Hiển thị danh sách thuốc, số lượng tồn kho và thông tin thuốc. Thêm, sửa, xóa thuốc khi cần thiết.
+Quản lý vắc xin: Hiển thị danh sách vắc xin, số lượng tồn kho và thông tin thuốc. Thêm, sửa, xóa thuốc khi cần thiết.
+Quản lý lịch làm việc của bác sĩ: Phân công, cập nhật và theo dõi lịch làm việc của bác sĩ thú y.
+Cấu hình khung giờ đặt lịch: Thiết lập lịch làm việc linh hoạt theo ca trong tuần và cấu hình ngày nghỉ/lễ cho toàn bộ phòng khám.
+Quản lý bài viết: Hiển thị danh sách bài viết. Thêm, sửa, xóa bài viết và cập nhật nội dung chia sẻ kiến thức chăm sóc thú cưng.
+Quản lý đánh giá: Hiển thị danh sách đánh giá của khách hàng. Có thể xem, duyệt hoặc xóa các đánh giá không phù hợp.
+Thống kê và báo cáo: Hiển thị doanh thu theo dịch vụ, theo bác sĩ hoặc theo thời gian (ngày, tháng, năm). Thống kê số lượng lịch hẹn, khách hàng và các dịch vụ được sử dụng nhiều nhất.
+Bác sĩ thú y
+Xem lịch khám: Xem danh sách lịch khám được phân công.
+Tiếp nhận ca khám: Tiếp nhận và thực hiện khám cho thú cưng theo lịch.
+Xem hồ sơ và thông tin thú cưng: Tra cứu lịch sử khám bệnh, tiêm chủng và thông tin sức khỏe của thú cưng.
+Tiếp nhận khách hàng: Thực hiện thủ tục tiếp nhận khách hàng khi đến khám.
+Thiết lập Hồ sơ bệnh án khám bệnh: Bác sĩ chẩn đoán lâm sàng, kê đơn thuốc và lưu vết toàn bộ bệnh sử cho thú cưng.
+Thiếp lập Hồ sơ bệnh án tiêm phòng: Thực hiện khám nhanh lâm sàng tiêm chủng.
+Cập nhật tráng thái lịch hẹn: cập nhật trạng thái đang khám sang, hoàn thành.
+ Lễ tân 
+Quản lý hồ sơ khách hàng và thú cưng: Tiếp nhận, cập nhật và quản lý thông tin khách hàng cùng hồ sơ thú cưng.
+Quản lý và xác nhận lịch hẹn: Xem danh sách lịch hẹn, xác nhận hoặc thay đổi lịch hẹn theo yêu cầu khách hàng.
+Tiếp nhận khách hàng: Thực hiện thủ tục tiếp nhận khách hàng khi đến khám.
+Quản lý hàng đợi khám: Theo dõi và sắp xếp thứ tự khám cho khách hàng.
+Thanh toán hoá đơn: Lập hóa đơn, xác nhận thanh toán và in hóa đơn dịch
+PHÂN TÍCH HỆ THỐNG
+Use case tổng quan
+Hình 1. Use case tổng quan
+Use Case khách vãng lai
+    
+Hình 2. Use case khách vãng lai
+Use Case khách hàng
+  
+Hình 3. Use case khách hàng
+Use case quản trị viên
+ 
+Hình 4. Use case quản trị viên
+Use case lễ tân
+   
+Hình 5. Use case lễ tân
+Use case bác sĩ thú y
+ 
+Hình 5. Site map khách hàng
+Đặc tả use case (mô tả tên chức năng và chi tiết về chức năng)
+Chức năng khách vãng lai 
+Xem thông tin phòng khám
+Mô tả chức năng: Hiển thị các thông tin giới thiệu về phòng khám thú y như lịch sử hình thành, sứ mệnh, tầm nhìn, địa chỉ, thông tin liên hệ và thời gian làm việc.
+Tiến trình xử lý:
+Hệ thống truy vấn thông tin phòng khám từ cơ sở dữ liệu.
+Xử lý dữ liệu.
+Hiển thị thông tin lên giao diện.
+Giá trị đầu ra: Thông tin chi tiết của phòng khám thú y.
+Tiến trình thực hiện:
+Người dùng truy cập trang chủ.
+Chọn mục "Giới thiệu" hoặc "Thông tin phòng khám".
+Hệ thống hiển thị thông tin phòng khám.
+Xem dịch vụ
+Mô tả chức năng: Hiển thị danh sách các dịch vụ mà phòng khám đang cung cấp.
+Tiến trình xử lý:
+Hệ thống truy vấn dữ liệu sản phẩm từ cơ sở dữ liệu.
+Xử lý dữ liệu nhận được.
+Hiển thị danh sách dịch vụ.
+Giá trị đầu ra: Danh sách dịch vụ bao gồm tên dịch vụ, mô tả ngắn và giá tham khảo.
+Quy trình thực hiện:
+Người dùng chọn mục "Dịch vụ”.
+Hệ thống hiển thị danh sách dịch vụ của phòng khám.
+Xem đội ngũ bác sĩ
+Mô tả chức năng: Hiển thị danh sách bác sĩ đang làm việc tại phòng khám cùng các thông tin chuyên môn.
+Tiến trình xử lý:
+Hệ thống truy vấn dữ liệu bác sĩ từ cơ sở dữ liệu.
+Xử lý dữ liệu.
+Hiển thị thông tin bác sĩ trên giao diện.
+Giá trị đầu ra: Danh sách bác sĩ bao gồm họ tên, chuyên môn, kinh nghiệm và hình ảnh đại diện.
+Quy trình thực hiện:
+Người dùng chọn mục "Đội ngũ bác sĩ".
+Hệ thống hiển thị danh sách bác sĩ.
+Xem bảng giá
+Mô tả chức năng: Hiển thị bảng giá các dịch vụ đang được áp dụng tại phòng khám.
+Tiến trình xử lý:
+Hệ thống truy vấn dữ liệu bảng giá từ cơ sở dữ liệu.
+Xử lý dữ liệu.
+Hiển thị bảng giá dịch vụ.
+Giá trị đầu ra: Danh sách các dịch vụ và mức giá tương ứng.
+Tiến trình thực hiện:
+Người dùng chọn mục "Bảng giá".
+Hệ thống hiển thị bảng giá các dịch vụ.
+Xem bài viết / Blog
+Mô tả chức năng: Hiển thị các bài viết chia sẻ kiến thức chăm sóc, nuôi dưỡng và phòng bệnh cho thú cưng.
+Tiến trình xử lý:
+Hệ thống truy vấn danh sách bài viết từ cơ sở dữ liệu.
+Xử lý dữ liệu nhận được.
+Hiển thị danh sách bài viết.
+Giá trị đầu ra: Danh sách bài viết gồm tiêu đề, hình ảnh đại diện, ngày đăng và mô tả ngắn.
+Quy trình thực hiện:
+Người dùng chọn mục "Blog" hoặc "Tin tức".
+Hệ thống hiển thị danh sách bài viết để người dùng tham khảo.
+Chức năng khách hàng 
+Đăng ký
+Mô tả chức năng: Cho phép khách hàng tạo tài khoản mới để sử dụng các chức năng của hệ thống.
+Giá trị đầu vào: Email, mật khẩu, họ tên, số điện thoại.
+Tiến trình xử lý:
+Người dùng nhập thông tin đăng ký.
+Hệ thống gửi mã OTP đến email.
+Người dùng nhập mã OTP xác thực.
+Hệ thống kiểm tra tính hợp lệ.
+Mã hóa mật khẩu và lưu tài khoản.
+Giá trị đầu ra: Tài khoản được tạo thành công.
+Tiến trình thực hiện:
+Chọn đăng ký.
+Nhập thông tin.
+Nhập OTP xác thực.
+Hoàn tất đăng ký.
+Đăng nhập
+Mô tả chức năng: Cho phép khách hàng đăng nhập vào hệ thống.
+Giá trị đầu vào: Email và mật khẩu.
+Tiến trình xử lý:
+Kiểm tra thông tin đăng nhập.
+Xác thực tài khoản.
+Tạo phiên làm việc.
+Giá trị đầu ra: Đăng nhập thành công.
+Tiến trình thực hiện:
+Chọn đăng nhập.
+Nhập email và mật khẩu.
+Truy cập hệ thống.
+Đặc biệt: người dùng có thể đăng nhập qua google
+Quên mật khẩu
+Mô tả chức năng: Hỗ trợ khách hàng đặt lại mật khẩu khi quên.
+Giá trị đầu vào: Email tài khoản.
+Tiến trình xử lý:
+Người dùng nhập email.
+Hệ thống gửi mã OTP
+Người dùng nhập OTP.
+Nhập mật khẩu mới.
+Cập nhật mật khẩu.
+Giá trị đầu ra: Mật khẩu mới được cập nhật.
+Tiến trình thực hiện:
+Chọn quên mật khẩu.
+Nhập emai.
+Nhập OTP.
+Đặt mật khẩu mới.
+Quản lý thông tin cá nhân
+Mô tả chức năng: Cho phép khách hàng xem và cập nhật thông tin cá nhân.
+Giá trị đầu vào: Họ tên, số điện thoại, ảnh đại diện, mật khẩu.
+Tiến trình xử lý:
+Hiển thị thông tin hiện tại.
+Người dùng chỉnh sửa thông tin.
+Hệ thống kiểm tra dữ liệu.
+Cập nhật dữ liệu.
+Giá trị đầu ra: Thông tin cá nhân được cập nhật.
+Tiến trình thực hiện:
+Truy cập trang cá nhân.
+Chỉnh sửa thông tin.
+Lưu thay đổi.
+Quản lý thú cưng
+Mô tả chức năng: Quản lý hồ sơ thú cưng của khách hàng.
+Giá trị đầu vào: Tên thú cưng, giống loài, giới tính, ngày sinh, cân nặng, thông tin sức khỏe.
+Tiến trình xử lý:
+Thêm thú cưng mới.
+Chỉnh sửa thông tin thú cưng.
+Xoá thú cưng.
+Lưu dữ liệu.
+Giá trị đầu ra: Danh sách thú cưng được cập nhật.
+Tiến trình thực hiện
+Chọn quản lý thú cưng.
+Thêm/Sửa/Xoá thông tin.
+Lưu dữ liệu.
+Xem hồ sơ chi tiết thú cưng
+Mô tả chức năng: Xem thông tin chi tiết, lịch sử y tế và tiêm phòng thú cưng.
+Giá trị đầu vào: Chọn thú cưng cần xem.
+Tiến trình xử lý:
+Truy xuất thông tin cơ bản.
+Truy xuất lịch sử khám bệnh.
+Truy xuất lịch sử tiêm phòng.
+Hiển thị dữ liệu.
+Giá trị đầu ra: Hồ sơ chi tiết của thú cưng với đầy đủ các thông tin lịch sử y tế.
+Tiến trình thực hiện
+Chọn một thú cưng từ danh sách  .
+Xem thông tin tổng quan và các tab chi tiết (lịch sử khám, tiêm phòng).
+Đặt lịch khám bệnh và tiêm chủng
+Mô tả chức năng: Cho phép khách hàng đặt lịch khám hoặc tiêm chủng cho thú cưng.
+Giá trị đầu vào: Thú cưng, loại dịch vụ, ngày khám, giờ khám.
+Tiến trình xử lý:
+Chọn thú cưng.
+Chọn loại dịch vụ.
+Chọn ngày giờ khám còn trống.
+Xác nhận thông tin lịch hẹn
+Hệ thống lưu lịch hẹn.
+Giá trị đầu ra: Lịch hẹn được tạo thành công.
+Tiến trình thực hiện:
+Chọn đặt lịch.
+Chọn thú cưng.
+Chọn dịch vụ.
+Xác nhận đặt lịch.
+Quản lý lịch hẹn
+Mô tả chức năng: Theo dõi và quản lý các lịch hẹn đã đặt.
+Giá trị đầu vào: Thông tin lịch hẹn.
+Tiến trình xử lý:
+Hiển thị danh sách lịch hẹn.
+Hiển thị chi tiết lịch hẹn.
+Cho phép huỷ hoặc đổi lịch.
+Giá trị đầu ra: Danh sáh lịch hẹn được cập nhật.
+Tiến trình thực hiện:
+Truy cập Quản lý lịch hẹn.
+Xem hoặc chỉnh sửa lịch hẹn.
+Lưu thay đổi.
+Lịch sử y tế 
+Mô tả chức năng: Hệ thống lưu trữ và quản lý và hiển thị toàn bộ hồ sơ khám chữa bệnh của thú cưng qua từng lần thăm khám tại phòng khám. Tính năng này giúp khách hàng theo dõi sát sao tình trạng sức khỏe của thú cưng .
+Giá trị đầu vào: 
+ID (Mã định danh) của thú cưng.
+Lựa chọn xem phân loại hồ sơ: “Khám chữa bệnh” hoặc “Tiêm phòng”.
+Tiến trình xử lý:
+Hệ thống trích xuất toàn bộ các ca khám và lịch sử tiêm chủng phòng liên kết với ID thú cưng, sắp xết thời gian mới nhất đến cũ nhất
+Truy xuất chi tiết ca Khám bệnh (Consultation - theo chuẩn SOAP)
+Truy xuất chi tiết ca Tiêm phòng (Vaccination - theo chuẩn SOAP).
+Điều trị & Đơn thuốc: Các thủ thuật đã thực hiện, danh sách thuốc đã kê.
+Lời dặn dò của bác sĩ và lịch hẹn tái khám dự kiến.
+Giá trị đầu ra:
+Giao diện dòng thời gian Timeline liệt kê các lần khám và tiêm phòng xen kỹ.
+Giao diện xem chi tiết hồ sơ bệnh án được chia tách rõ ràng thành 4 phần S-O-A-P.
+Tiến trình thực hiện:
+Lịch sử y tế ở sidebar bên trái
+Hệ thống hiển thị danh sách các lần khám đó trước dưới dạng Timeline
+Người dùng nhấp vào một cột mốc thời gian để xem chi tiết.
+Màn hình chi tiết hiển thị dữ liệu được format chuẩn y khoa SOAP.
+ Đánh giá dịch vụ
+Mô tả chức năng: Cho phép khách hàng đánh giá dịch vụ sau khi hoàn thành khám chữa bệnh.
+Giá trị đầu vào: Số sao đánh giá, nội dung nhận xét.
+Tiến trình xử lý:
+Kiểm tra dịch vụ đã hoàn thành.
+Nhập đánh giá.
+Lưu đánh giá.
+Giá trị đầu ra: Đánh giá được đăng thành công
+Tiến trình thực hiện:
+Chọn dịch vụ đã sử dụng.
+Nhập số sao.
+Nhập nhận xét.
+Gửi đánh giá.
+Thông báo
+Mô tả chức năng: Gửi thông báo đến khách hàng liên quan đến lịch hẹn và quá trình khám chữa bệnh.
+Giá trị đầu vào: Các sự kiện phát sinh trong hệ thống.
+Tiến trình xử lý:
+Hệ thống phát hiện sự kiện.
+Tạo nội dung thông báo.
+Gửi thông báo đến khách hàng.
+Giá trị đầu ra: thông báo được hiển thị cho khách hàng.
+Tiến trình thực hiện: 
+Khách hàng truy cập mục Thông báo.
+Xem các thông báo mới gồm:
+Đặt lịch thành công.
+Đổi lịch hẹn.
+Huỷ lịch hẹn.
+Nhắc lịch khám.
+Nhắc tiêm vaccine.
+Chức năng quản trị viên 
+Quản lý dịch vụ
+Mô tả chức năng: Quản trị viên quản lý các dịch vụ của phòng khám như khám bệnh, tiêm chủng,…
+Giá trị đầu vào: Tên dịch vụ, mô tả, giá dịch vụ, thời gian thực hiện.
+Tiến trình xử lý:
+Thêm mới dịch vụ.
+Chỉnh sửa thông tin dịch vụ.
+Xóa dịch vụ không còn sử dụng.
+Lưu dữ liệu vào cơ sở dữ liệu.
+Giá trị đầu ra: Danh sách dịch vụ được cập nhật.
+Tiến trình thực hiện:
+Truy cập chức năng Quản lý dịch vụ.
+Thêm, sửa hoặc xóa dịch vụ.
+Hệ thống lưu và hiển thị kết quả.
+Quản lý người dùng
+Mô tả chức năng: Quản lý thông tin hồ sơ của toàn bộ nhân viên trong phòng khám (Bác sĩ, Lễ tân, Quản lý). Cho phép thêm mới, phân quyền (Role), theo dõi trạng thái làm việc (Đang làm/Đã nghỉ).
+Giá trị đầu vào: 
+Thông tin cá nhân (họ tên, email, số điện thoại, Giới tính, Ngày sinh, Địa chỉ)
+Phân quyền Role: Vai trò trên hệ thống. 
+Tiến trình xử lý:
+Hệ thống hiển thị danh sách toàn bộ tài khoản nhân viên
+Thêm mới nhân sự.
+Cho phép sửa đổi thông tin cá nhân.
+Cập nhật trạng thái nghỉ việc và vộ hiệu hóa tài khoản.
+Giá trị đầu ra: 
+Danh sách nhân sự chi tiết với các bộ lọc theo vai trò và trạng thái.
+Giao diện hồ sơ chi tiết của từng nhân viên.
+Tiến trình thực hiện:
+Truy cập chức năng Quản lý người dùng.
+Thực hiện thao tác quản lý.
+Hệ thống lưu dữ liệu và hiển thị kết quả.
+Cấu hình khung giờ đặt lịch
+Mô tả chức năng: Thiết lập các khung giờ đặt lịch khám.
+Giá trị đầu vào: Thời gian bắt đầu, thời gian kết thúc hoạt động của đặt lịch phòng khám.
+Tiến trình xử lý:
+Nhập thông tin khung giờ.
+Kiểm tra tính hợp lệ của dữ liệu.
+Lưu cấu hình vào hệ thống.
+Giá trị đầu ra: Danh sách khung giờ đặt lịch được cập nhật.
+Tiến trình thực hiện:
+Truy cập chức năng Cấu hình khung giờ đặt lịch.
+Thiết lập khung giờ cho từng dịch vụ.
+Lưu cấu hình.
+Xem báo cáo doanh thu
+Mô tả chức năng: Xem và thống kê doanh thu theo ngày, theo dịch vụ hoặc theo bác sĩ.
+Giá trị đầu vào: Khoảng thời gian thống kê, dịch vụ hoặc bác sĩ cần xem.
+Tiến trình xử lý:
+Hệ thống truy vấn dữ liệu hóa đơn.
+Tính toán doanh thu.
+Tổng hợp và hiển thị báo cáo.
+Giá trị đầu ra: Báo cáo doanh thu và các biểu đồ thống kê.
+Tiến trình thực hiện:
+Truy cập chức năng Báo cáo doanh thu.
+Chọn tiêu chí thống kê.
+Xem kết quả báo cáo.
+Quản lý thuốc
+Mô tả chức năng: Quản lý danh sách thuốc sử dụng tại phòng khám.
+Giá trị đầu vào: Tên thuốc, đơn vị tính, số lượng tồn kho, giá thuốc, hạn sử dụng.
+Tiến trình xử lý:
+Thêm thuốc mới.
+Cập nhật thông tin thuốc.
+Xóa thuốc.
+Theo dõi số lượng tồn kho.
+Giá trị đầu ra: Danh sách thuốc được cập nhật.
+Tiến trình thực hiện
+Truy cập chức năng Quản lý thuốc.
+Thực hiện các thao tác quản lý.
+Quản lý vaccine
+Mô tả chức năng: Quản lý danh sách thuốc sử dụng tại phòng khám.
+Giá trị đầu vào: Tên thuốc, đơn vị tính, số lượng tồn kho, giá thuốc, hạn sử dụng.
+Tiến trình xử lý:
+Thêm lô vaccine mới.
+Cập nhật thông tin thuốc.
+Xóa thuốc.
+Theo dõi số lượng tồn kho.
+Giá trị đầu ra: Danh sách thuốc được cập nhật.
+Tiến trình thực hiện
+Truy cập chức năng Quản lý thuốc.
+Thực hiện các thao tác quản lý.
+Quản lý lịch làm việc của bác sĩ
+Mô tả chức năng: Quản lý và phân công lịch làm việc cho bác sĩ thú y.
+Giá trị đầu vào: Thông tin bác sĩ, ngày làm việc, ca làm việc.
+Tiến trình xử lý:
+Phân công lịch làm việc.
+Chỉnh sửa lịch làm việc.
+Kiểm tra trùng lịch.
+Giá trị đầu ra: Danh sách lịch làm việc của bác sĩ.
+Quy trình thực hiện:
+Truy cập chức năng Quản lý lịch làm việc.
+Chọn bác sĩ và phân công ca làm.
+Lưu thông tin.
+Quản lý bài viết và đánh giá
+Mô tả chức năng: Quản lý các bài viết chia sẻ kiến thức và đánh giá từ khách hàng.
+Giá trị đầu vào: Tiêu đề bài viết, nội dung bài viết, hình ảnh, đánh giá của khách hàng.
+Tiến trình xử lý:
+Thêm bài viết mới.
+Chỉnh sửa bài viết.
+Xoá bài viết.
+Duyệt hoặc xoá đánh giá không phù hợp.
+Giá trị đầu ra Danh sách bài viết và đánh giá được cập nhật.
+Tiến trình thực hiện:
+Truy cập chức năng Quản lý bài viết và đánh giá.
+Thực hiện các thao tác quản lý.
+Hệ thống lưu và hiển thị kết quả.
+Chức năng lễ tân 
+Quản lý hồ sơ khách hàng và thú cưng 
+Mô tả chức năng: Lễ tân quản lý thông tin khách hàng và hồ sơ thú cưng để phục vụ cho việc khám chữa bệnh.
+Giá trị đầu vào: Họ tên khách hàng, số điện thoại, địa chỉ, email, thông tin thú cưng (tên, giống loài, giới tính, ngày sinh, tình trạng sức khỏe).
+Tiến trình xử lý:
+Tiếp nhận thông tin khách hàng và thú cưng.
+Thêm mới hồ sơ vào hệ thống.
+Chỉnh sửa hoặc cập nhật thông tin khi cần thiết.
+Lưu dữ liệu vào cơ sở dữ liệu.
+Giá trị đầu ra: Danh sách hồ sơ khách hàng và thú cưng được cập nhật.
+Tiến trình thực hiện:
+Truy cập chức năng Quản lý hồ sơ khách hàng và thú cưng.
+Thực hiện thêm, sửa hoặc cập nhật thông tin.
+Hệ thống lưu dữ liệu và hiển thị kết quả.
+Quản lý và xác nhận lịch hẹn 
+Mô tả chức năng: Quản lý các lịch hẹn khám bệnh và xác nhận lịch hẹn của khách hàng.
+Giá trị đầu vào: Thông tin lịch hẹn, khách hàng, thú cưng, dịch vụ, bác sĩ và thời gian khám.
+Tiến trình xử lý:
+Xem danh sách lịch hẹn.
+Kiểm tra tính hợp lệ của lịch hẹn.
+Xác nhận hoặc từ chối lịch hẹn.
+Cập nhật trạng thái lịch hẹn.
+Giá trị đầu ra: Danh sách lịch hẹn đã được xác nhận hoặc cập nhật.
+Tiến trình thực hiện:
+Truy cập chức năng Quản lý lịch hẹn.
+Chọn lịch hẹn cần xử lý.
+Thực hiện xác nhận hoặc cập nhật trạng thái.
+Hệ thống lưu thông tin.
+Tiếp nhận khách hàng
+Mô tả chức năng: Hỗ trợ Lễ tân quản lý luồng khách hàng đến phòng khám. Tính năng này xử lý việc xác nhận khách hàng đã đến (Check-in) đối với các lịch hẹn đặt trước, hoặc tạo mới lịch chờ cho khách vãng lai (Walk-in). Đồng thời hệ thống sẽ cấp số thứ tự (Queue Number).
+Giá trị đầu vào: 
+Mã QR của lịch hẹn (QrToken), Số điện thoại khách hàng, hoặc Mã khách hàng.
+Thời gian checkin thực tế 
+Tiến trình xử lý:
+Lễ tân quét mã QR hoặc tìm kiếm theo số điện thoại để tìm Appointment đang ở trạng thái pending..
+Khách vãng lai (Walk-in): Tạo nhanh một Appointment mới và bật cờ IsWalkIn = true.
+Hệ thống ghi nhận thời điểm khách đến tại trường CheckInTime
+Hệ thống tự động tính toán và cấp một số thứ tự (QueueNumber) dựa trên dịch vụ và bác sĩ tiếp nhận.
+Giá trị đầu ra: 
+Lịch hẹn được cập nhật trạng thái kèm theo CheckInTime và QueueNumber.
+Màn hình danh sách hàng đợi (Queue Dashboard) tại phòng chờ và trong hệ thống của Bác sĩ được cập nhật realtime.
+Tiến trình thực hiện:
+Lễ tân truy cập màn hình "Quản lý lịch hẹn và bấm quét mã QR"..
+Quét mã QR (do hệ thống sinh ra ở trường QrToken khi khách đặt lịch) hoặc nhập mã QR. Nhấn nút "Check-in".
+Khách vãng lai: Nhấn "Tiếp nhận vãng lai", điền nhanh thông tin thú cưng, chọn Dịch vụ/Bác sĩ, sau đó lưu lại..
+Hệ thống trả về màn hình "Check-in thành công" kèm số thứ tự. Bác sĩ ở trong phòng khám lập tức nhìn thấy hồ sơ trên màn hình hàng đợi của mình.
+ Quản lý hàng đợi khám
+Mô tả chức năng: Theo dõi và sắp xếp thứ tự khám cho khách hàng và thú cưng.
+Giá trị đầu vào: Danh sách khách hàng đã tiếp nhận và lịch hẹn khám.
+Tiến trình xử lý:
+Nhận danh sách khách chờ khám.
+Sắp xếp theo thứ tự ưu tiên hoặc thời gian đặt lịch.
+Cập nhật trạng thái chờ khám, đang khám hoặc thanh toán.
+Giá trị đầu ra: Danh sách hàng đợi khám được cập nhật.
+Tiến trình thực hiện:
+Truy cập chức năng Quản lý hàng đợi khám.
+Theo dõi danh sách khách chờ.
+Cập nhật trạng thái theo thực tế khám bệnh.
+Thanh toán hoá đơn
+Mô tả chức năng: Thực hiện thanh toán chi phí khám bệnh và các dịch vụ cho khách hàng.
+Giá trị đầu vào: Thông tin hoá đơn, dịch vụ sử dụng, thuốc lá đã kê và phương thức thanh toán.
+Tiến trình xử lý:
+Hệ thống tính tổng chi phí dịch vụ và thuốc.
+Lễ tân xác nhận thông tin thanh toán.
+Ghi nhận giao dịch thanh toán
+Cập nhật trạng thái hoá đơn
+Giá trị đầu ra: Hoá đơn thanh toán đã được xác nhận.
+Tiến trình thực hiện
+Truy cập chức năng Thanh toán hoá đơn.
+Chọn hoá đơn cần thanh toán.
+Xác nhận phương thức thanh toán.
+Hoàn tất giao dịch và in hoá đơn cho khách hàng.
+Chức năng bác sĩ thú y
+Xem lịch khám
+Mô tả chức năng: Bác sĩ xem danh sách các lịch khám đã được phân công trong ngày hoặc theo khoảng thời gian cụ thể.
+Giá trị đầu vào: Thông tin lịch khám, ngày khám, bác sĩ phụ trách.
+Tiến trình xử lý:
+Hệ thống truy vấn danh sách lịch khám của bác sĩ.
+Lọc dữ liệu theo ngày hoặc khoảng thời gian.
+Hiển thị danh sách lịch khám.
+Giá trị đầu ra: Danh sách lịch khám của bác sĩ.
+Tiến trình thực hiện
+Đăng nhập vào hệ thống.
+Truy cập chức năng Xem lịch khám.
+Hệ thống hiển thị danh sách lịch khám được phân công.
+Tiếp nhận ca khám
+Mô tả chức năng: Bác sĩ tiếp nhận và thực hiện khám bệnh cho thú cưng theo lịch hẹn hoặc theo phân công của phòng khám.
+Giá trị đầu vào: Thông tin khách hàn, thông tin thú cưng và lịch hẹn khám.
+Tiến trình xử lý:
+Kiểm tra thông tin ca khám.
+Tiếp nhận thú cưng.
+Thực hiện khám bệnh và ghi nhận kết quả khám ban đầu.
+Chuyển sang bước lập hoặc cấp nhận bệnh án.
+Giá trị đầu ra: Thông tin ca khám đã được tiếp nhận.
+Tiến trình thực hiện
+Chọn ca khám trong danh sách lịch khám.
+Xác nhận tiếp nhận ca khám.
+Bắt đầu quá trình khám bệnh.
+Xem hồ sơ và thông tin thú cưng
+Mô tả chức năng: Bác sĩ tra cứu hồ sơ và thông tin sức khoẻ của thú cưng trước khi tiến hành khám hoặc điều trị.
+Giá trị đầu vào: Mã thú cưng hoặc thông tin khách hàng.
+Tiến trình xử lý:
+Nhận yêu cầu tra cứu hồ sơ.
+Truy vấn dữ liệu từ cơ sở dữ liệu.
+Hiển thị thông tin thú cưng và lịch sử khám chữa bệnh.
+Giá trị đầu ra: Hồ sơ thú cưng và lịch sử khám bệnh.
+Tiến trình thực hiện
+Truy cập chức năng Xem hồ sơ thú cưng.
+Tìm kiếm thú cưng cần tra cứu.
+Hệ thống hiển thị thông tin chi tiết.
+ Thiết lập Hồ sơ bệnh án khám bệnh
+Mô tả chức năng: Tính năng này hỗ trợ Bác sĩ thú y trong quá trình thăm khám lâm sàng. Hệ thống cung cấp không gian làm việc số (Workspace) để bác sĩ ghi nhận kết quả khám theo tiêu chuẩn SOAP, đưa ra chẩn đoán, lên phác đồ điều trị và kê đơn thuốc (Prescription) trực tiếp trên hệ thống.
+Giá trị đầu vào: Chẩn đoán bệnh, triệu chứng, kết quả khám, đơn thuốc, ghi chú điều trị.
+Tiến trình xử lý:
+Bác sĩ chọn ca khám từ danh sách chờ (Trạng thái waiting). Trạng thái Lịch hẹn chuyển sang in-progress (Đang khám).
+Bác sĩ hoặc Trợ lý nhập các chỉ số cân nặng, nhiệt độ và triệu chứng quan sát được.
+Dựa vào lâm sàng/cận lâm sàng, bác sĩ kết luận bệnh (Diagnosis) và đưa ra kế hoạch điều trị.
+Bác sĩ tìm kiếm thuốc.
+Hệ thống cho phép thiết lập liều dùng, tần suất (ví dụ: 2 viên/lần, 2 lần/ngày) và số ngày điều trị. Hệ thống có thể tự tính toán số lượng tổng (Quantity) cần bán.
+Giá trị đầu ra: 
+Bản ghi MedicalRecord mang định dạng SOAP hoàn chỉnh được lưu vào cơ sở dữ liệu.
+Đơn thuốc điện tử Prescription đính kèm với MedicalRecord.
+Giao diện Bệnh án điện tử sẵn sàng để in ấn hoặc xuất PDF đưa cho khách hàng.
+Tiến trình thực hiện
+Bác sĩ mở màn hình "Phòng khám của tôi", thấy danh sách thú cưng đang chờ.
+Click vào tên thú cưng để bắt đầu khám.
+Bác sĩ điền form chẩn đoán bệnh án chuẩn SOAP (S-O-A-P).
+Di chuyển xuống mục "Đơn thuốc", nhấn "Thêm thuốc", chọn tên thuốc từ kho và điền liều lượng, số ngày uống.
+Nhập lời dặn dò, chọn ngày hẹn tái khám (nếu cần).
+Nhấn nút "Hoàn tất khám bệnh". Hồ sơ lập tức được đồng bộ lên hệ thống phòng khám.
+Tiêm chủng
+Mô tả chức năng: Đây là phân hệ khám sàng lọc và tiêm phòng chuyên dụng dành cho Bác sĩ thú y. Hệ thống tuân thủ chặt chẽ quy trình sàng lọc y tế trước tiêm, ghi nhận chi tiết loại vắc-xin, lô thuốc sản xuất và lập lịch nhắc nhở mũi tiêm tiếp theo (Next Due Date) để tăng cường miễn dịch cho thú cưng một cách an toàn.
+Giá trị đầu vào: 
+Dữ liệu tiếp nhận: ID Lịch hẹn, ID Thú cưng, Bác sĩ thực hiện.
+Quy trình Sàng lọc trước tiêm (S - Subjective): Lịch sử tiêm ngừa cũ, Có đang điều trị bệnh không, Tình trạng ăn uống, Các dấu hiệu bất thường (Nôn mửa, tiêu chảy, ho, hắt hơi), Tiền sử dị ứng hoặc sốc phản vệ với vắc-xin cũ.
+Khám lâm sàng (O - Objective): Cân nặng, Nhiệt độ, Nhịp tim, Nhịp thở, Tình trạng tinh thần (Mental Status), Tình trạng niêm mạc, Hạch bạch huyết, Tỉ lệ mất nước.
+Thông tin Vắc-xin: Tên vắc-xin (VaccineId), Lô sản xuất (VaccineBatchId), Liều lượng (Dose), Đường tiêm (Route - ví dụ: Tiêm dưới da, tiêm bắp), Vị trí tiêm (InjectionSite).
+Kết luận & Kế hoạch (A & P): Đánh giá lâm sàng (Đủ điều kiện tiêm/Hoãn tiêm), Ngày tiêm, Ngày tiêm nhắc lại dự kiến (Next Due Date), Lời dặn theo dõi sau tiêm.
+Tiến trình xử lý:
+Khám sàng lọc (Bắt buộc): Bác sĩ sẽ đặt các câu hỏi cho chủ nuôi (Subjective) và tự mình kiểm tra sinh hiệu (Objective) để đảm bảo thú cưng hoàn toàn khỏe mạnh, không có dấu hiệu suy giảm miễn dịch hoặc ủ bệnh.
+Xuất vắc-xin từ kho:
+Bác sĩ chọn đúng loại Vắc-xin từ bảng Vaccine.
+Hệ thống yêu cầu chọn chính xác Lô vắc-xin (VaccineBatchId) để phục vụ việc truy xuất nguồn gốc nếu xảy ra sự cố sốc phản vệ.
+Ghi nhận quy trình tiêm: Ghi lại liều lượng, đường tiêm và vị trí đâm kim lên cơ thể thú cưng.
+Lập lịch tiêm nhắc lại:
+Bác sĩ kết luận ca tiêm thành công và thiết lập NextDueDate (Ngày cần tiêm mũi tiếp theo).
+Dữ liệu này sẽ làm cơ sở cho hệ thống tự động gửi Email/SMS nhắc lịch cho khách hàng vào tháng/năm sau.
+Hoàn tất: Lịch hẹn chuyển trạng thái sang thanh toán. Hệ thống cập nhật bảng VaccinationRecord.
+Giá trị đầu ra: 
+Bản ghi VaccinationRecord hợp lệ, chứa đầy đủ bằng chứng sàng lọc sức khỏe và thông tin lô vắc-xin.
+Thông tin cảnh báo tự động về lịch nhắc mũi tiêm hiển thị ở Khách hàng.
+Dữ liệu trừ kho vắc-xin tương ứng.
+Tiến trình thực hiện
+Tại màn hình làm việc, Bác sĩ chọn một ca có dịch vụ là "Tiêm phòng".
+Hệ thống hiển thị Form "Sàng lọc trước tiêm"
+Bác sĩ điền sinh hiệu và đánh giá "Đủ điều kiện tiêm".
+Ở phần Vắc-xin, hệ thống dropdown danh sách các loại Vắc-xin còn hạn sử dụng trong kho. Bác sĩ chọn vắc-xin, lô thuốc và ghi vị trí tiêm (VD: Tiêm dưới da gáy).
+Cuối cùng, chọn ngày hẹn mũi kế tiếp (ví dụ: +21 ngày cho mũi 2, hoặc +1 năm cho mũi nhắc lại) và nhấn "Hoàn tất khám tiêm chủng".
+THIẾT KẾ ỨNG DỤNG
+Thực thể
+Sơ đồ quan hệ thực thể (ERD)
+Hình 6. Sơ đồ ERD
+Link: https://dbdiagram.io/d/6a45e35a4ac62e474c0fbcbf 
+Chi tiết thực thể
+3.1.2.1 Thực thể Roles
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+role_id
+bigint
+Mã vai trò (PK)
+name
+varchar
+Tên vai trò (Ví dụ: Admin, User, Manager...)
+3.1.2.2 Thực thể Users
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+user_id
+uuid
+Mã người dùng (PK)
+role_id
+bigint
+Mã định vai trò (FK)
+full_name
+varchar
+Họ và tên người dùng
+email
+varchar
+Địa chỉ email người dùng (Unique)
+phone
+varchar
+Số điện thoại người dùng
+password_hash
+text
+Mật khẩu (đã mã hóa)
+avatar
+text
+Đường dẫn ảnh đại diện
+gender
+smallint
+Giới tính
+date_of_birth
+date
+Ngày sinh người dùng
+address
+text
+Địa chỉ người dùng
+is_active
+boolean
+Trạng thái hoạt động (Kích hoạt / Khóa)
+created_at
+timestamptz
+Thời gian tạo tài khoản
+deleted_at
+timestamptz
+Thời gian xóa tài khoản (Xóa mềm)
+customerId
+uuid
+Mã khách hàng (FK)
+3.1.2.3 Thực thể Customers
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+customer_id
+uuid
+Mã khách hàng (PK)
+customer_code
+varchar
+Mã khách hàng (VD: KH0001)
+full_name
+varchar
+Họ và tên khách hàng
+email
+varchar
+Email khách hàng (UNIQUE)
+phone
+varchar
+Số điện thoại
+avatar
+text
+Ảnh đại diện
+gender
+smallint
+Giới tính
+date_of_birth
+date
+Ngày sinh
+address
+text
+Địa chỉ
+has_account
+boolean
+Đã liên kết tài khoản đăng nhập hay chưa
+status
+varchar(50)
+Trạng thái
+created_at
+timestamptz
+Thời gian tạo
+updated_at
+timestamptz
+Thời gian cập nhật
+deleted_at
+timestamptz
+Thời gian xoá (xoá mềm)
+AccountId
+uuid
+Mã tài khoản (FK)
+3.1.2.4 Thực thể employee_profiles
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+employee_profile_id
+uuid
+Mã hồ sơ (PK)
+user_id
+uuid
+Liên kết tài khoản nhân viên (FK, UNIQUE)
+identity_card
+varchar(50)
+Căn cước công dân
+position
+varchar(100)
+Chức vụ
+is_resigned
+boolean
+Trạng thái nghỉ việc
+created_at
+timestamptz
+Thời gian tạo
+deleted_at
+timestamptz
+Thời gian xóa (Soft delete)
+3.1.2.5 Thực thể invitations
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+invitation_id
+uuid
+Mã lời mời (PK)
+user_id
+uuid
+Người được mời (FK)
+token
+varchar(255)
+Chuỗi xác thực lời mời
+expire_at
+timestamptz
+Thời hạn lời mời
+is_used
+boolean
+Đã sử dụng hay chưa
+created_at
+timestamptz
+Thời gian tạo
+3.1.2.6 Thực thể Pets
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+pet_id
+bigint
+Mã thú cưng (PK)
+owner_id
+uuid
+Mã chủ nuôi (FK)
+name
+varchar(255)
+Tên của thú cưng
+species
+varchar(100)
+Loài thú cưng (Vd: chó, mèo, chim,…)
+breed
+varchar(100)
+Giống thú cưng (Vd: poodle, golden, corgi,…)
+gender
+smallint
+Giới tính thú cưng
+birth_date
+date
+Ngày sinh của thú cưng
+weight
+Numeric
+Cân nặng của thú cưng
+color
+varchar(100)
+Màu lông/Màu sắc của thú cưng
+blood_type
+varchar(20)
+Nhóm máu của thú cưng
+sterilized
+boolean
+Trạng thai triệt sản (Đã triệt sản/Chưa)
+microchip_code
+varchar(100)
+Mã số định danh microchip (nếu có)
+allergy_note
+text
+Ghi chú về các dị ứng của thú cưng
+avatar
+text
+Ảnh đại diện
+is_deceased
+boolean
+Trạng thái còn sống hay đã mất (Not null)
+IsAggressive
+boolean
+Trạng thái hung hăn (Not null)
+ChronicDisease
+text
+Bệnh mãn tính
+CurrentDiet
+text
+Chế độ ăn hiện tại
+Created_at
+timestamptz
+Thời gian hồ sơ thú cưng được tạo
+Deleted_at
+timestamptz
+Thời gian hồ sơ thú cưng bị xoá (Xoá mềm)
+3.1.2.7 Thực thể Services
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+service_id
+bigint
+Mã lịch hẹn (PK)
+category_id
+bigint
+Mã dịch vụ (FK)
+name
+varchar(255)
+Tên dịch vụ
+price
+numeric(12,2)
+Giá tiền của dịch vụ
+duration_minutes
+int
+Thời lượng thực hiện dịch vụ (tính bằng phút)
+description
+text
+Mô tả chi tiết về dịch vụ
+is_active
+boolean
+Trạng thái hoặt động của dịch vụ (Đang áp dụng/Ngưng áp dụng)
+deleted_at
+timestamptz
+Thời gian xoá dịch vụ (Xoá mềm)
+3.1.2.8 Thực thể Service_Categories
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+service_catorgory_id
+bigint
+Mã danh mục dịch vụ (PK)
+name
+varchar(255)
+Tên danh mục dịch vụ (Vd: khám bệnh, tiêm phòng, phẫu thuật,...
+deleted_at
+timestamptz
+Thời gian xoá danh mục dịch vụ (Xoá mềm)
+3.1.2.9 Thực thể Doctor_schedules
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+doctor_schedule_id
+bigint
+Mã lịch làm việc (PK)
+doctor_id
+uuid
+Mã bác sĩ (FK)
+work_date
+date
+Ngày làm việc
+start_time
+time
+Thời gian bắt đầu ca làm việc
+end_time
+time
+Thời gian kết thúc ca làm việc
+max_appointments
+int
+Số lượng lịch hẹn tối đa có thể tiếp nhận trong ca
+is_available
+boolean
+Trạng thái trống lịch (Còn nhận lịch hẹn/Đã đầy hoặc bận)
+deleted_at
+timestamptz
+Thời gian xoá ca làm việc (Xoá mềm)
+3.1.2.10 Thực thể Appointments
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+appointment_id
+bigint
+Mã lịch làm việc (PK)
+pet_id
+bigint
+Mã thú cưng (FK)
+customer_id
+uuid
+Mã khách hàng/chủ nuôi (FK)
+doctor_id
+uuid
+Mã bác sĩ phụ trách (FK)
+appointment_date
+date
+Ngày hẹn
+start_time
+time
+Thời gian bắt đầu lịch hẹn 
+end_time
+time
+Thời gian kết thúc lịch hẹn dự kiến 
+status
+varchar(50)
+Trạng thái lịch hẹn (Vd: đang chờ, đã xác nhận,…)
+symptom
+text
+Triệu chứng mô tả trước
+note
+text
+Ghi chú của khách hàng
+created_by
+uuid
+Người tạo lịch hẹn (FK)
+created_at
+timestamptz
+Thời gian tạo lịch
+deleted_at
+timestamptz
+Thời gian xoá lịch hẹn (xoá mềm)
+cancellation_reason
+text
+Lý do huỷ lịch hẹn
+cancel_reason
+text
+Mô tả chi tiết lý do huỷ
+cancelled_by_role
+varchar
+Vai trò người huỷ lịch hẹn
+service_id
+bigint
+Mã dịch vụ sử dụng (FK)
+vaccine_id
+bigint
+Mã vaccine (FK)
+is_emergency
+boolean
+Lịch cấp cứu
+is_walk_in
+boolean
+Khách vãng lai đến trực tiếp (không đặt trước)
+queue_number
+int
+Số thứ tự xếp hàng
+qr_token
+text
+Mã QR check-in
+check_in_time
+timestamptz
+Thời gian check-in
+check_out_time
+timestamptz
+Thời gian check-out
+3.1.2.11 Thực thể Medical_records
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+medical_record_id
+bigint
+Mã bệnh án (PK)
+appointment_id
+bigint
+Khóa ngoại liên kết lịch hẹn (FK, UNIQUE)
+doctor_id
+uuid
+Bác sĩ khám (FK)
+pet_id
+bigint
+Mã thú cưng (FK)
+record_type
+varchar(50)
+Loại bệnh án (Consultation...)
+medical_history
+text
+Tiền sử bệnh lý
+weight
+numeric
+Cân nặng (kg)
+temperature
+numeric
+Nhiệt độ (°C)
+clinical_signs
+text
+Dấu hiệu lâm sàng
+diagnosis
+text
+Chẩn đoán của bác sĩ
+treatment_plan
+text
+Kế hoạch điều trị
+doctor_notes
+text
+Ghi chú thêm của bác sĩ
+follow_up_date
+date
+Ngày tái khám
+Deleted_at
+timestamptz
+Xóa mềm
+3.1.2.12 Thực thể Medicine_categories
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+medicine_category_id
+bigint
+Mã danh mục thuốc (PK)
+name
+varchar
+Tên danh mục thuốc (Not null)
+description
+text
+Mô tả danh mục thuốc
+3.1.2.13 Thực thể Medicines
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+medicine_id
+bigint
+Mã thuốc (PK)
+category_id
+bigint
+Danh mục thuốc (FK)
+name
+varchar(255)
+Tên thuốc
+unit
+varchar(50)
+Đơn vị tính (Viên, Lọ...)
+medicine_code
+varchar(50)
+Mã số thuốc (UNIQUE)
+import_price
+numeric
+Giá nhập
+sell_price
+numeric
+Giá bán
+min_stock_level
+int
+Số lượng tồn kho tối thiểu cảnh báo
+description
+text
+Mô tả thuốc
+is_active
+boolean
+Đang kinh doanh
+deleted_at
+timestamptz
+Thời gian xóa (xoá mềm)
+3.1.2.14 Thực thể Medicines_batches
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+medicine_batches
+bigint
+Khóa chính (PK)
+batch_number
+character varying
+Thông tin batch number
+medicine_id
+bigint
+Mã liên kết (FK)
+manufacture_date
+timestamp without time zone
+Thông tin manufacture date
+expiry_date
+timestamp without time zone
+Thông tin expiry date
+initial_quantity
+integer
+Thông tin initial quantity
+current_quantity
+integer
+Thông tin current quantity
+3.1.2.15 Thực thể Inventory_transactions
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+inventory_transaction_id
+bigint
+Mã giao dịch kho (PK)
+medicine_id
+bigint
+Mã thuốc (FK, Not null)
+batch_id
+bigint
+Mã lô hàng (FK)
+created_by_user_id
+uuid
+Mã người tạo giao dịch (FK, Not null)
+transaction_date
+timestamp
+Ngày thực hiện giao dịch (Not null, Default)
+type
+integer
+Loại giao dịch (Not null)
+quantity_change
+integer
+Số lượng thay đổi (Not null)
+reference_code
+varchar
+Mã tham chiếu giao dịch
+notes
+text
+Ghi chú giao dịch
+3.1.2.16 Thực thể Prescriptions
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+prescription_id
+bigint
+Mã đơn thuốc (PK)
+medical_record_id
+bigint
+Mã hồ sơ bệnh án (FK)
+doctor_id
+uuid
+Mã bác sĩ (FK)
+note
+text
+Ghi chú đơn thuốc
+create_at
+timestamptz
+Thời gian tạo đơn thuốc
+deleted_at
+timestamptz
+Thời gian xoá đơn thuốc (Xoá mềm)
+3.1.2.17 Thực thể Vaccines
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+vaccine_id
+bigint
+Mã (PK)
+name
+varchar(255)
+Tên
+manufacturer
+varchar(255)
+Nhà sản xuất
+description
+text
+Mô tả
+deleted_at
+timestamptz
+Thời gian xóa (xoá mềm)
+stock_quantity
+int
+Tồn kho
+target_species
+varchar(50)
+Loài chỉ định
+min_age_weeks
+int
+Số tuần tuổi tối thiểu
+interval_days
+int
+Khoảng cách giữa 2 mũi (ngày)
+3.1.2.18 Thực thể vaccine_batches
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+vaccine_batch_id
+bigint
+Mã (PK)
+vaccine_id
+bigint
+Mã liên kết (FK)
+batch_number
+varchar(100)
+Thông tin batch number
+expiration_date
+timestamp
+Thông tin expiration date
+import_date
+timestamp
+Thông tin import date
+stock_quantity
+int
+Thông tin stock quantity
+import_price
+numeric
+Thông tin import price
+selling_price
+numeric
+Thông tin selling price
+3.1.2.19 Thực thể Prescription_items
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+prescription_item_id
+bigint
+Mã chi tiết đơn thuốc (PK)
+prescription_id
+bigint
+Mã đơn thuốc (FK)
+medicine_id
+bigint
+Mã thuốc (FK)
+dosage
+varchar(100)
+Liều lượng thuốc
+frequency
+varchar(100)
+Tần suất sử dụng thuốc
+duration_days
+int
+Số ngày sử dụng thuốc
+quantity
+int
+Số lượng thuốc
+instrustion
+text
+Hướng dẫn sử dụng thuốc
+3.1.2.20 Thực thể Vaccination_records
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+vaccination_record_id
+bigint
+Mã lịch sử tiêm chủng (PK)
+pet_id
+bigint
+Mã thú cưng (FK)
+vaccine_id
+bigint
+Mã vaccine (FK)
+appointment_id
+bigint
+Mã lịch hẹn (FK)
+doctor_id
+uuid
+Mã bác sĩ (FK)
+vaccine_batch_id
+bigint
+Mã lô vaccine (FK)
+injection_date
+date
+Ngày tiêm vaccine
+next_due_date
+date
+Ngày tiêm nhắc lại tiếp theo
+weight
+decimal
+Cân nặng thú cưng tại thời điểm tiêm (Not null)
+temperature
+decimal
+Nhiệt độ cơ thể
+heart_rate
+integer
+Nhịp tim
+respiratory_rate
+integer
+Nhịp thở
+dehydration_percent
+integer
+Tỷ lệ mất nước
+dose
+decimal
+Liều lượng vaccine
+is_allergic
+boolean
+Trạng thái dị ứng (Not null)
+has_previous_reaction
+boolean
+Có phản ứng với vaccine trước đó (Not null)
+has_cough_or_sneeze
+boolean
+Có ho hoặc hắt hơi (Not null)
+has_vomiting_or_diarrhea
+boolean
+Có nôn mửa hoặc tiêu chảy (Not null)
+is_under_treatment
+boolean
+Đang trong quá trình điều trị (Not null)
+reaction_note
+varchar
+Ghi chú phản ứng sau tiêm
+allergy_details
+varchar
+Chi tiết dị ứng
+previous_reaction_details
+varchar
+Chi tiết phản ứng trước đó
+previous_vaccine_history
+varchar
+Lịch sử tiêm vaccine trước đó
+clinical_assessment
+varchar
+Đánh giá lâm sàng
+mental_status
+varchar
+Trạng thái tinh thần
+mucosa_status
+varchar
+Trạng thái niêm mạc
+lymph_node_status
+varchar
+Trạng thái hạch bạch huyết
+eating_status
+varchar
+Trạng thái ăn uống
+eye_nose_ear_status
+varchar
+Trạng thái mắt, mũi, tai
+injection_site
+varchar
+Vị trí tiêm
+route
+varchar
+Đường tiêm
+reason_for_visit
+varchar
+Lý do đến khám
+owner_notes
+varchar
+Ghi chú của chủ thú cưng
+doctor_remarks
+varchar
+Nhận xét của bác sĩ
+follow_up_instructions
+varchar
+Hướng dẫn theo dõi sau tiêm
+Treatment_details
+Varchar
+Chi tiết điều trị
+Created_at
+timestamp
+Thời gian tạo (Not null)
+Deleted_at
+timestamptz
+Thời gian xoá (xoá mềm)
+3.1.2.21 Thực thể Invoices
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+invoice_id
+bigint
+Mã hóa đơn (PK)
+appointment_id
+bigint
+Mã lịch hẹn (FK)
+subtotal
+numeric(12,2)
+Tổng tiền trước khi giảm giá
+discount_amount
+numeric(12,2)
+Số tiền được giảm giá
+total_amount
+numeric(12,2)
+Tổng tiền sau khi giảm giá
+payment_status
+varchar(50)
+Trạng thái thanh toán
+payment_method
+varchar(50)
+Phương thức thanh toán
+paid_at
+timestamptz
+Thời gian thanh toán
+created_at
+timestamptz
+Thời gian tạo hóa đơn
+deleted_at
+timestamptz
+Thời gian xoá hóa đơn (Xoá mềm)
+3.1.2.22 Thực thể Invoice_items
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+invoice_item_id
+bigint
+Mã chi tiết hóa đơn (PK)
+invoice_id
+bigint
+Mã hóa đơn (FK)
+item_type
+varchar
+Loại dịch vụ (thuốc, vaccine, dịch vụ,...)
+item_id
+bigint
+Mã của từng loại dịch vụ
+item_name
+varchar
+Tên dịch vụ hoặc sản phẩm
+quantity
+integer
+Số lượng
+unit_price
+decimal
+Đơn giá
+total_price
+decimal
+Thành tiền
+3.1.2.23 Thực thể Clinic_operating_shifts
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+clinic_operating_shift_id
+integer
+Mã ca làm việc (PK)
+clinic_operating_day_id
+integer
+Mã ngày hoạt động của phòng khám (FK, Not null)
+start_time
+interval
+Thời gian bắt đầu ca (Not null)
+end_time
+interval
+Thời gian kết thúc ca (Not null)
+3.1.2.24 Thực thể Clinic_operating_days
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+clinic_operating_days
+integer
+Mã ngày hoạt động (PK)
+day_of_week
+integer
+Ngày trong tuần (Not null, Default)
+is_open
+boolean
+Trạng thái mở cửa (Not null, Default)
+3.1.2.25 Thực thể Clinic_holidays
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+clinic_holidays_id
+integer
+Mã ngày nghỉ lễ (PK)
+created_by
+uuid
+Mã người tạo
+name
+varchar
+Tên ngày nghỉ lễ (Not null)
+start_date
+timestamp
+Ngày bắt đầu nghỉ lễ (Not null)
+end_date
+timestamp
+Ngày kết thúc nghỉ lễ (Not null)
+is_active
+boolean
+Trạng thái áp dụng (Not null, Default)
+created_at
+timestamp
+Thời gian tạo (Not null, Default)
+3.1.2.26 Thực thể Reviews
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+review_id
+bigint
+Mã đánh giá (PK)
+customer_id
+uuid
+Mã khách hàng (FK)
+appointment_id
+bigint
+Mã lịch hẹn (FK)
+rating
+smallint
+Điểm đánh giá
+comment
+text
+Nội dung nhận xét
+created_at
+timestamptz
+Thời gian tạo đánh giá
+deleted_at
+timestamptz
+Thời gian xoá đánh giá (Xoá mềm)
+3.1.2.27 Thực thể Posts
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+post_id
+bigint
+Mã bài viết (PK)
+author_id
+uuid
+Mã tác giả (FK)
+category_id
+bigint
+Mã danh mục bài viết (FK)
+updated_by
+uuid
+Mã người cập nhật (FK)
+title
+varchar
+Tiêu đề bài viết (Not null)
+slug
+varchar
+Đường dẫn URL bài viết (UNIQUE, Not null)
+thumbnail
+text
+Ảnh đại diện bài viết
+content
+text
+Nội dung bài viết
+summary
+varchar
+Tóm tắt bài viết
+status
+varchar
+Trạng thái bài viết
+keywords
+varchar
+Từ khoá bài viết
+meta_title
+varchar
+Tiêu đề SEO
+meta_description
+varchar
+Mô tả SEO
+view_count
+integer
+Số lượt xem (Not null)
+published_at
+timestamp
+Thời gian xuất bản
+row_version
+bytea
+Phiên bản hàng dữ liệu (Not null)
+created_at
+timestamptz
+Thời gian tạo
+updated_at
+timestamp
+Thời gian cập nhật
+deleted_at
+timestamptz
+Thời gian xoá (Xoá mềm)
+3.1.2.28 Thực thể Post_categories
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+post_catorgory_id
+bigint
+Mã danh mục bài viết (PK)
+parent_id
+bigint
+Mã danh mục cha (FK)
+name
+varchar
+Tên danh mục (Not null)
+slug
+varchar
+Đường dẫn URL danh mục (Not null)
+description
+varchar
+Mô tả danh mục
+is_active
+boolean
+Trạng thái hoạt động (Not null, Default)
+3.1.2.29 Thực thể Notifications
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+notification_id
+bigint
+Mã thông báo (PK)
+user_id
+uuid
+Mã người dùng (FK)
+title
+varchar(255)
+Tiêu đề thông báo (Not null)
+content
+text
+Nội dung thông báo (Not null)
+is_read
+boolean
+Trạng thái đã đọc (Not null)
+type
+varchar(50)
+Loại thông báo (Not null)
+created_at
+timestamptz
+Thời gian tạo thông báo (Not null)
+3.1.2.30 Thực thể _EFMigrationsHistory
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+MigrationId
+varchar
+Mã migration (PK, Not null)
+ProductVersion
+varchar
+Phiên bản Entity Framework (Not null)
+3.1.2.31 Thực thể block_times
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+block_time_id
+uuid
+Mã thời gian chặn (PK)
+doctor_id
+uuid
+Mã bác sĩ (FK → users.user_id) (Not null)
+start_time
+timestamptz
+Thời gian bắt đầu chặn (Not null)
+end_time
+timestamptz
+Thời gian kết thúc chặn (Not null)
+block_type
+text
+Loại chặn lịch (Not null)
+reason
+text
+Lý do chặn lịch
+background_color
+text
+Màu hiển thị trên lịch
+3.1.2.32 Thực thể schedule_exceptions
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+Schedule_exception_id
+bigint
+Mã ngoại lệ lịch làm việc (PK)
+doctor_id
+uuid
+Mã bác sĩ (FK → users.user_id) (Not null)
+type
+varchar
+Loại ngoại lệ (Nghỉ phép, Nghỉ bệnh, Công tác,...) (Not null)
+start_date
+timestamp
+Thời gian bắt đầu ngoại lệ (Not null)
+end_date
+timestamp
+Thời gian kết thúc ngoại lệ (Not null)
+substitute_doctor_id
+uuid
+Mã bác sĩ thay thế (FK → users.user_id)
+reason
+varchar
+Lý do ngoại lệ
+status
+varchar
+Trạng thái phê duyệt (Mặc định: Approved) (Not null)
+3.1.2.33 Thực thể schedule_profiles_shifts
+                      
+ 
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+Schedule_profile_shift_id
+bigint
+Mã ca làm việc của mẫu lịch (PK)
+profile_id
+profile_id
+Mã mẫu lịch (FK → schedule_profiles.schedule_profile_id) (Not null)
+day_of_week
+integer
+Thứ trong tuần (1–7) (Not null)
+start_time
+interval
+Thời gian bắt đầu ca làm việc (Not null)
+end_time
+interval
+Thời gian kết thúc ca làm việc (Not null)
+is_day_off
+boolean
+Đánh dấu ngày nghỉ (Mặc định: false) (Not null)
+3.1.2.34 Thực thể schedule_profiles
+                      
+ 
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+schedule_profile_id
+bigint
+Mã mẫu lịch làm việc (PK)
+name
+varchar
+Tên mẫu lịch làm việc (Not null)
+description
+text
+Mô tả mẫu lịch làm việc
+is_active
+boolean
+Trạng thái hoạt động của mẫu lịch (Not null)
+created_at
+timestamp
+Thời gian tạo mẫu lịch (Not null)
+3.1.2.35 Thực thể doctor_schedule_profiles
+                      
+ 
+Thuộc tính
+Kiểu dữ liệu
+Mô tả
+doctor_schedule_profile_id
+bigint
+Mã phân công mẫu lịch (PK)
+doctor_id
+uuid
+Mã bác sĩ (FK → users.user_id) (Not null)
+profile_id
+bigint
+Mã mẫu lịch (FK → schedule_profiles.schedule_profile_id) (Not null)
+effective_date
+timestamp
+Ngày bắt đầu áp dụng mẫu lịch (Not null)
+end_date
+timestamp
+Ngày kết thúc áp dụng mẫu lịch
+Giao diện
+Sơ đồ tổ chức giao diện
+Giao diện cửa sổ chính
+Giao diện chức năng
+3.2.3.1 Đăng nhập
+3.2.3.2 Dashboard khách hàng
+3.2.3.3 Quản lý lịch hẹn
+3.2.3.3 Đặt lịch
+Bước 1: Chọn thú cưng
+Bước 2: Chọn dịch vụ
+Bước 3: Chọn giờ khám
+Bước 4: Xác nhận 
+3.2.3.4 Quản lý hồ sơ thú cưng 
+3.2.3.5 Xem hồ sơ chi tiết thú cưng
+Tab 1: Tổng quan
+Tab 2: Lịch sử khám 
+Tab 3: Vaccine
+Tab 4: Đơn thuốc
+3.2.3.2 Lịch sử y tế 
+3.2.3.2 Lịch sử dịch vụ & hóa đơn
+3.2.3.6  Dashboard lễ tân
+3.2.3.6  Hàng đợi khám 
+3.2.3.6  Quản lý hồ sơ khách hàng và thú cưng 
+3.2.3.6  Quản lý lịch hẹn khách hàng
+3.2.3.6  Quản lý hóa đơn 
+3.2.3.5 Dashboard admin
+3.2.3.5 Dashboard Quản lý nhân sự
+3.2.3.5 Dashboard Quản lý dịch vụ
+3.2.3.5 Dashboard Cấu hình phòng khám 
+3.2.3.5 Dashboard Lịch trực bác sĩ
+3.2.3.5 Dashboard Quản lý kho thuốc
+3.2.3.5 Dashboard Quản lý vắc xin
+3.2.3.5 Dashboard Báo cáo doanh thu 
+3.2.3.5 Dashboard Quản lý đánh giá 
+3.2.3.5 Dashboard Quản lý bài viết
+3.2.3.6 Dashboard bác sĩ thú y
+3.2.3.6 Xem ca khám
+3.2.3.6 Lập hồ sơ bệnh án
+THỰC HIỆN DỰ ÁN
+Tạo giao diện
+Giao diện chính
+Các giao diện quản lý
+Tạo CSDL với SQL Server
+Sơ đồ quan hệ
+Chi tiết các bảng 
+Bảng 1. User (người dùng)
+Tên cột
+Kiểu dữ liệu
+Ràng buộc
+Mô tả
+user_id
+BIGINT
+PRIMARY KEY,
+AUTO_INCREMENT
+Mã người dùng
+full_name
+VARCHAR(60)
+NOT NULL
+Họ tên người dùng
+email
+VARCHAR(255)
+UNIQUE, NOT
+NULL
+Email đăng ký (duy
+nhất)
+phone_number
+VARCHAR(15)
+UNIQUE, NOT
+NULL
+Số điện thoại người
+dùng (VN)
+password_hash
+VARCHAR(255)
+NOT NULL
+Mật khẩu đã mã hóa
+gender
+ENUM('Nam',
+'Nữ', 'Khác')
+DEFAULT 'Khác'
+Giới tính
+date_of_birth
+DATE
+Ngày sinh
+address
+TEXT
+Địa chỉ chi tiết
+ward
+VARCHAR(100)
+Phường/Xã
+district
+VARCHAR(100)
+Quận/Huyện
+province
+VARCHAR(100)
+Tỉnh/Thành phố
+role
+ENUM('customer',
+'admin')
+DEFAULT 'customer'
+Vai trò người dùng
+status
+ENUM('active', 'inactive',
+'banned')
+DEFAULT 'active'
+Trạng thái tài khoản
+is_email_verified
+tinyint(1)
+DEFAULT 0
+Đã xác thực email hay
+chưa
+google_id
+varchar(255)
+NULL
+ID tài khoản Google (nếu đăng nhập bằng Google)
+Bảng 2. User_addresses (địa chỉ người dùng)
+Tên cột
+Kiểu dữ liệu
+Ràng buộc
+Mô tả
+address_id
+VARCHAR(36)
+PRIMARY KEY, NOT NULL
+Mã địa chỉ, là khóa chính để định danh
+địa chỉ duy nhất
+user_id
+BIGINT(20)
+NOT NULL, UNSIGNED, FOREIGN KEY
+→ users(user_id)
+Mã người dùng sở hữu địa chỉ này
+full_name
+VARCHAR(60)
+NOT NULL
+Họ tên người nhận
+hàng
+phone_number
+VARCHAR(15)
+NOT NULL
+Số điện thoại
+người nhận hàng
+province
+VARCHAR(100)
+NOT NULL
+Tên tỉnh/thành phố
+district
+VARCHAR(100)
+NOT NULL
+Tên quận/huyện
+ward
+VARCHAR(100)
+NOT NULL
+Tên phường/xã
+address_line
+VARCHAR(100)
+NOT NULL
+Địa chỉ chi tiết (số nhà, tên đường,
+khu phố...)
+is_default
+TINYINT(1)
+DEFAULT 0
+Địa chỉ mặc định của người dùng (0
+= không, 1 = có)
+Bảng 3. Product (sản phẩm)
+Tên cột
+Kiểu dữ liệu
+Ràng buộc
+Mô tả
+product_id
+BIGINT(20)
+PRIMARY KEY,
+AUTO_INCREMENT
+Mã sản
+phẩm
+name
+VARCHAR(255)
+NOT NULL
+Tên sản
+phẩm
+description
+TEXT
+NULL
+Mô tả chi
+tiết
+short_description
+TEXT
+NULL
+Mô tả
+ngắn gọn
+price
+DECIMAL(10,2)
+NOT NULL
+Giá gốc
+discount_price
+DECIMAL(10,2)
+NULL
+Giá sau
+giảm
+stock_quantity
+INT(11)
+DEFAULT 0
+Tổng số lượng
+nhập kho
+sold
+INT(11)
+DEFAULT 0
+Số lượng
+đã bán
+category_id
+BIGINT(20)
+NOT NULL
+ID danh
+mục sản phẩm
+brand_id
+BIGINT(20)
+NULL
+ID
+thương hiệu
+thumbnail
+VARCHAR(255)
+NULL
+Ảnh đại
+diện sản phẩm
+ingredients
+TEXT
+NULL
+Thành phần sản phẩm
+usage_instructions
+TEXT
+NULL
+Hướng dẫn sử dụng sản
+phẩm
+created_at
+DATETIME
+DEFAULT
+CURRENT_TIMESTAMP
+Ngày tạo
+updated_at
+DATETIME
+DEFAULT CURRENT_TIMESTAMP ON UPDATE
+CURRENT_TIMESTAMP
+Ngày cập nhật
+Bảng 4. Product_image (sản phẩm chi tiết)
+Tên cột
+Kiểu dữ liệu
+Ràng buộc
+Mô tả
+image_id
+BIGINT
+PK,
+AUTO_INCREMENT
+Mã ảnh tự tăng
+product_id
+BIGINT
+NOT NULL, FK
+Liên kết với sản phẩm
+image_url
+VARCHAR(255)
+NOT NULL
+Đường dẫn tới ảnh sản
+phẩm
+Bảng 5. Categories (danh mục sản phẩm)
+Tên cột
+Thuộc tính
+Ràng buộc
+Mô tả
+category_id
+BIGINT
+PK, NOT NULL, AUTO_INCREMENT
+Mã danh
+mục (khóa
+chính)
+category_name
+VARCHAR(100)
+NOT NULL
+Tên danh
+mục
+slug
+VARCHAR(150)
+NOT NULL,
+UNIQUE INDEX
+Đường dẫn
+description
+TEXT
+NULL
+Mô tả
+Bảng 6. Brand (thương hiệu)
+Tên cột
+Thuộc tính
+Ràng buộc
+Mô tả
+brand_id
+BIGINT
+PK, NOT NULL,
+AUTO_INCREMENT
+Mã thương
+hiệu
+brand_name
+VARCHAR(100)
+NOT NULL
+Tên thương
+hiệu
+slug
+VARCHAR(150)
+NULL
+Đường dẫn
+logo
+VARCHAR(255)
+NULL
+Logo thương
+hiệu
+description
+TEXT
+NULL
+Mô tả thương
+hiệu
+Bảng 7. Orders (đơn hàng)
+Tên cột
+Kiểu dữ liệu
+Ràng buộc
+Mô tả
+order_id
+INT
+PRIMARY KEY
+Mã đơn hàng
+user_id
+BIGINT
+NOT NULL
+ID người
+dùng đặt hàng
+order_code
+VARCHAR(30)
+NULL
+Mã đơn hàng
+hiển thị
+recipient_name
+VARCHAR(100)
+NOT NULL
+Tên người
+nhận
+recipient_phone
+VARCHAR(15)
+NOT NULL
+SĐT người
+nhận
+total_amount
+DECIMAL(12,2)
+NOT NULL
+Tổng tiền đơn
+hàng
+payment_method
+VARCHAR(20)
+NOT NULL,
+DEFAULT 'cash'
+Phương thức
+thanh toán
+payment_status
+VARCHAR(20)
+DEFAULT
+'pending'
+Trạng thái
+thanh toán
+order_status
+VARCHAR(20)
+DEFAULT
+'pending'
+Trạng thái đơn hàng
+address_id
+VARCHAR(100)
+NULL
+ID địa chỉ
+giao hàng
+shipping_address
+_line
+VARCHAR(255)
+NULL
+Địa chỉ chi tiết giao hàng
+shipping_fee
+DECIMAL(10,2)
+NULL
+Phí vận chuyển
+discount_amount
+INT(11)
+DEFAULT 0
+Tiền giảm giá
+coupon_code
+VARCHAR(50)
+NULL
+Mã giảm giá (nếu có)
+created_at
+DATETIME
+DEFAULT
+CURRENT_TIMES TAMP
+Ngày tạo đơn
+hàng
+updated_at
+DATETIME
+DEFAULT CURRENT_TIMES TAMP ON UPDATE CURRENT_TIMES
+TAMP
+Ngày cập nhật đơn
+Bảng 8. Order_detalis (chi tiết đơn hàng)
+Tên cột
+Kiểu dữ liệu
+Ràng buộc
+Mô tả
+order_detail_id
+INT
+PRIMARY KEY, NOT NULL,
+AUTO_INCREMENT
+Mã chi tiết đơn hàng
+(khóa chính)
+order_id
+INT
+NOT NULL
+Mã đơn hàng
+product_id
+BIGINT
+NOT NULL
+Mã sản phẩm
+quantity
+INT
+NOT NULL
+Số lượng sản phẩm trong
+đơn hàng
+price
+DECIMAL
+NOT NULL
+Giá tại thời điểm đặt
+hàng
+Bảng 9. Favorites (sản phẩm yêu thích)
+Tên cột
+Kiểu dữ
+liệu
+Ràng buộc
+Mô tả
+favorite_id
+BIGINT
+PRIMARY KEY, AUTO_INCREMENT
+Mã dòng yêu thích (khóa
+chính)
+user_id
+BIGINT
+NOT NULL
+Người dùng nào
+yêu thích sản phẩm
+product_id
+BIGINT
+NOT NULL
+Mã sản phẩm
+được yêu thích
+Bảng 10. Review (đánh giá sản phẩm)
+Tên cột
+Kiểu dữ liệu
+Ràng buộc
+Mô tả
+review_id
+BIGINT
+PK, AUTO_INCREMENT
+Mã đánh giá
+(khóa chính)
+user_id
+BIGINT
+FK → users(user_id), NOT
+NULL
+Khách hàng đánh giá (khóa ngoại liên kết bảng
+users)
+product_id
+BIGINT
+FK → products(product_id),
+NOT NULL
+Sản phẩm được đánh giá (khóa ngoại liên kết
+bảng products)
+rating
+INT
+NOT NULL, CHECK (rating
+BETWEEN 1 AND 5)
+Điểm đánh giá
+(1–5 sao)
+comment
+TEXT
+NULL
+Nội dung bình
+luận
+created_at
+TIMESTAMP
+DEFAULT
+CURRENT_TIMESTAMP
+Ngày đánh giá
+Bảng 11. Posts (bài viết)
+Tên cột
+Kiểu dữ liệu
+Ràng buộc
+Mô tả
+post_id
+BIGINT
+PRIMARY KEY,
+AUTO_INCREMENT
+Mã bài viết (khóa
+chính)
+title
+VARCHAR(255)
+NOT NULL
+Tiêu đề bài viết
+content
+TEXT
+NOT NULL
+Nội dung chi tiết
+thumbnail
+VARCHAR(255)
+NULL
+Ảnh đại diện bài
+viết
+author_id
+INT
+NOT NULL
+Mã người viết
+slug
+VARCHAR(255)
+NOT NULL, UNIQUE
+Đường dẫn
+created_at
+DATETIME
+NOT NULL, DEFAULT
+CURRENT_TIMESTAMP
+Thời điểm tạo
+updated_at
+DATETIME
+DEFAULT NULL
+Thời điểm cập
+nhật gần nhất
+Bảng 12. Discount_codes (mã giảm giá)
+Tên Cột
+Kiểu Dữ Liệu
+Ràng Buộc
+Mô Tả
+code_id
+BIGINT
+PRIMARY KEY,
+AUTO_INCREMENT
+ID tự tăng,
+khóa chính
+code
+VARCHAR(50)
+UNIQUE, NOT NULL
+Mã giảm giá
+description
+TEXT
+NULL
+Mô tả mã giảm
+giá
+discount_percent
+DECIMAL(5,2)
+NULL
+% giảm giá
+discount_amount
+DECIMAL(10,2)
+NULL
+Giảm giá theo
+số tiền (VND)
+start_date
+DATETIME
+NOT NULL
+Ngày bắt đầu
+hiệu lực
+end_date
+DATETIME
+NOT NULL
+Ngày hết hạn
+Bảng 13. Cart (giỏ hàng)
+Tên Cột
+Kiểu Dữ Liệu
+Ràng Buộc
+Mô Tả
+cart_id
+INT(11)
+PRIMARY KEY,
+AUTO_INCREMENT
+Mã giỏ hàng
+user_id
+BIGINT
+UNSIGNED
+FOREIGN KEY →
+users(user_id)
+Mã người
+dùng
+product_id
+BIGINT(20)
+FOREIGN KEY →
+products(product_id)
+Mã sản phẩm
+quantity
+INT(11)
+NOT NULL, DEFAULT 1
+Số lượng sản
+phẩm
+Bảng 14. Contact_form (liên hệ)
+Tên Cột
+Kiểu Dữ Liệu
+Ràng Buộc
+Mô Tả
+id
+BIGINT
+PRIMARY KEY,
+AUTO_INCREMENT
+Mã liên hệ
+name
+VARCHAR(255)
+NULL
+Tên người
+dùng
+phone
+VARCHAR(20)
+NOT NULL
+Mã sản phẩm
+email
+TEXT
+NOT NULL
+Email người
+dùng
+message
+TIMESTAMP
+NOT NULL
+Nội dung liên hệ
+status
+VARCHAR(20)
+NOT NULL
+Trạng thái
+Bảng 15. Email_otps (bảng mã xác thực email)
+Tên Cột
+Kiểu Dữ Liệu
+Ràng Buộc
+Mô Tả
+id
+BIGINT
+PRIMARY KEY,
+AUTO_INCREMENT
+Mã OTP
+email
+VARCHAR(255)
+NOT NULL, UNIQUE
+Email người
+nhận mã
+otp
+VARCHAR(10)
+NOT NULL
+Mã xác thực
+OTP
+expires_at
+TIMESTAMP
+NOT NULL
+Thời điểm
+OTP hết hạn
+verified
+BOOLEAN
+NOT NULL, DEFAULT FALSE
+Đã xác thực
+OTP hay
+chưa
+created_at
+TIMESTAMP
+NOT NULL, DEFAULT
+CURRENT_TIMESTAMP
+Thời điểm
+tạo OTP
+KIỂM THỬ
+Kiểm thử phía khách hàng Bảng 16. Kiểm thử form đăng ký
+Thuộc tính
+Kiểm thử
+Email hợp lệ, chưa tồn tại
+Nhập email đúng định dạng và chưa đăng ký → Hệ thống gửi mã OTP đến
+email → Hiển thị form nhập OTP
+Email sai định dạng
+Nhập email không đúng chuẩn (vd: abc@, abc.com) → Hiển thị thông báo
+“Email không hợp lệ”
+Email đã tồn tại
+Nhập email đã được đăng ký → Hiển thị thông báo “Email này đã được
+đăng kí và xác minh”
+OTP đúng và trong thời hạn
+Nhập OTP chính xác trong thời gian quy định → Chuyển sang bước nhập
+thông tin cá nhân
+OTP sai
+Nhập OTP không trùng với mã đã gửi
+→ Hiển thị thông báo “Mã OTP không chính xác”
+OTP hết hạn
+Nhập OTP đúng nhưng quá thời gian
+hiệu lực → Hiển thị thông báo “Mã OTP đã hết hạn” và nút gửi lại mã
+Không nhập OTP
+Để trống trường OTP → Hiển thị
+thông báo yêu cầu nhập OTP
+Gửi lại mã OTP
+Nhấn nút gửi lại mã → Hệ thống gửi OTP mới và hiển thị thông báo thành công. chuyển sang phần nhập thông tin
+người dùng.
+Thông tin hợp lệ
+Nhập đầy đủ họ tên, mật khẩu, xác nhận mật khẩu trùng khớp → Đăng ký
+thành công
+Thiếu thông tin bắt buộc
+Bỏ trống 1 hoặc nhiều trường → Hiển
+thị thông báo yêu cầu nhập đầy đủ
+Mật khẩu quá ngắn
+Nhập mật khẩu ít hơn số ký tự tối thiểu (vd: < 6 ký tự) → Hiển thị thông
+báo “Mật khẩu quá ngắn”
+Mật khẩu xác nhận không trùng
+Nhập mật khẩu và xác nhận mật khẩu khác nhau → Hiển thị thông báo “Mật
+khẩu không khớp”
+Bảng 17. Kiểm thử form đăng nhập
+Thuộc tính
+Kiểm thử
+Email
+Không được để trống, đúng định dạng email, email tồn tại trên hệ
+thống.
+Mật khẩu
+Không để trống, ít nhất 6 ký tự, khớp với tài khoản đã đăng ký trên hệ
+thống.
+Bảng 18. Kiểm thử chức năng thêm giỏ hàng
+Thuộc tính
+Kiểm thử
+Sản phẩm còn hàng
+Nhấn “Thêm vào giỏ hàng” → Sản phẩm được thêm, hiện thông báo
+thành công
+Sản phẩm hết hàng
+Nhấn “Thêm vào giỏ hàng” → Hiện thông báo lỗi: “Sản phẩm đã hết
+hàng”
+Sản phẩm đã có
+Nhấn “Thêm vào giỏ hàng” với sản phẩm đã có → Tăng số lượng trong
+giỏ
+Người dùng chưa đăng nhập
+Nhấn “Thêm vào giỏ hàng” → Hiển
+thị yêu cầu đăng nhập
+Bảng 19. Kiểm thử chức năng thêm sản phẩm vào yêu thích
+Thuộc tính
+Kiểm thử
+Sản phẩm chưa có trong danh sách yêu
+thích
+Nhấn “Thêm vào yêu thích” → Sản phẩm được thêm, hiện thông báo
+thành công
+Sản phẩm đã có trong danh sách yêu
+thích
+Nhấn “Thêm vào yêu thích” với sản phẩm đã có → Hiện thông báo “Sản phẩm đã có trong danh sách yêu
+thích”.
+Người dùng chưa đăng nhập
+Nhấn “Thêm vào yêu thích” → Hiển
+thị yêu cầu đăng nhập.
+Xóa sản phẩm khỏi danh sách yêu
+thích
+Trong danh sách yêu thích, nhấn
+“Xóa” → Sản phẩm biến mất khỏi danh sách, hiện thông báo thành công
+Bảng 20. Kiểm thử chức năng tìm kiếm sản phẩm
+Thuộc tính
+Kiểm thử
+Tìm kiếm với từ khóa chính xác
+Nhập tên sản phẩm đầy đủ (ví dụ: "Serum dưỡng sáng mắt Vitamin C")
+→ Hiển thị đúng sản phẩm khớp
+100% với từ khóa
+Tìm kiếm với từ khóa một phần
+Nhập từ khóa không đầy đủ (ví dụ: "sữa") → Hiển thị danh sách sản
+phẩm chứa từ khóa
+Bảng 21. Kiểm thử chức năng thanh toán
+Thuộc tính
+Kiểm thử
+Thanh toán khi giỏ hàng có sản phẩm
+Thêm sản phẩm vào giỏ hàng → Chọn “Thanh toán” → Chuyển sang trang nhập thông tin giao hàng &
+phương thức thanh toán
+Thanh toán khi giỏ hàng trống
+Nhấn “Thanh toán” khi không có sản
+phẩm → Hiển thị thông báo “Giỏ hàng của bạn đang trống”
+Người dùng chưa đăng nhập
+Nhấn “Thanh toán” khi chưa đăng
+nhập → Hệ thống yêu cầu đăng nhập
+Nhập thông tin giao hàng hợp lệ
+Nhập đầy đủ Họ tên, Số điện thoại, Địa chỉ, Email hợp lệ → Cho phép sang bước chọn phương thức thanh
+toán
+Thếu thông tin giao hàng
+Bỏ trống một hoặc nhiều trường bắt
+buộc → Hiển thị thông báo lỗi yêu cầu nhập đầy đủ
+Số điện thoại/email không hợp lệ
+Nhập sai định dạng (ví dụ: “abc” cho
+SĐT) → Hiển thị thông báo lỗi
+Chọn thanh toán COD
+Hoàn tất thanh toán với phương thức COD → Hiển thị thông báo đặt hàng thành công, đơn hàng ở trạng thái
+“Chờ xác nhận”
+Chọn thanh toán qua MoMo/VNPAY
+thành công
+Hoàn tất giao dịch → Hiển thị thông báo đặt hàng thành công, trạng thái
+thanh toán là “paid”
+Thanh toán qua VNPAY thất bại/hủy giao dịch
+Hệ thống hiển thị thông báo lỗi hoặc
+quay về giỏ hàng để người dùng chọn phương thức khác
+Số tiền thanh toán đúng
+Kiểm tra tổng tiền hiển thị trong
+bước thanh toán bằng với tổng tiền trong giỏ hàng
+Mã giảm giá hợp lệ
+Nhập mã giảm giá còn hạn → Hệ
+thống trừ tiền chính xác
+Mã giảm giá không hợp lệ/hết hạn
+Không trừ tiền
+Kiểm thử phía admin
+Bảng 22. Kiểm thử chức năng quản lý người dùng
+Thuộc tính
+Xem
+Thêm
+Sửa
+Xóa
+ID Người
+dùng
+Hiển thị danh sách người dùng
+, thanh tìm
+kiếm
+Tự động tạo
+Không cho
+phép sửa
+Xóa người
+dùng
+Tên Người
+dùng
+Không được để trống
+Hiển thị dữ liệu đã lưu và không để
+trống
+Email
+Không được để trống, đúng định dạng email.
+Hiển thị dữ liệu đã lưu và đúng định
+dạng email
+Số điện thoại
+Không để trống, nhập số.
+Hiển thị dữ liệu đã lưu và không để
+trống
+Vai trò
+Chọn mục
+(Admin/Customer)
+Hiển thị dữ liệu đã lưu
+và chọn mục
+Trạng thái
+Chọn mục (Hoạt động/Không hoạt
+động)
+Hiển thị dữ liệu đã lưu
+và chọn mục
+Bảng 23. Kiểm thử chức năng quản lý danh mục sản phẩm
+Thuộc tính
+Xem
+Thêm
+Sửa
+Xóa
+ID
+Hiển thị danh mục sản phẩm, thanh tìm kiếm
+Tự động tạo
+Không cho
+phép sửa
+Xóa danh
+mục
+Danh mục
+Không để trống
+Hiển thị dữ liệu đã lưu và không để
+trống
+Slug
+Không để trống, không chứa khoảng trắng, đúng định dạng
+URL
+Hiển thị dữ liệu đã lưu và đúng định dạng URL
+Mô tả
+Có thể để trống hoặc nhập mô tả
+chi tiết
+Hiển thị dữ liệu đã lưu
+Bảng 24. Kiểm thử chức năng quản lý mã giảm giá
+Thuộc tính
+Xem
+Thêm
+Sửa
+Xóa
+Mã Voucher
+Hiển thị danh sách mã giảm giá, thanh tìm kiếm
+Mã voucher,tên( mô tả), loại giảm giá, giá trị, ngày hiệu lực, ngày hết
+hạn
+Không cho
+phép sửa
+Xóa danh
+mục
+Tên Voucher
+Không để trống
+Hiển thị danh sách mã giảm
+giá
+Giá trị
+Chọn giá trị phần trăm, hoặc theo số
+tiền (VNĐ)
+Hiển thị giá trị trong danh sách
+Ngày hết hạn
+Hiển thị từ ngày bắt đầu cho đến hết hạn sử dụng
+Gia hạn ngày sử dụng cho mã giảm giá hoặc hết hạn sử
+dụng
+Trạng thái
+Hiển thị trạng thái hoạt động/ chưa hoạt động, hết hạn
+Hiển thị trạng thái trong ngày/tháng/nă m đến ngày/tháng/nă
+m hết hạn
+Bảng 25. Kiểm thử danh mục quản lý sản phẩm
+Thuộc tính
+Xem
+Thêm
+Sửa
+Xoá
+Tên sản
+phẩm
+Hiển thị danh sách, thanh tìm kiếm
+Không để
+trống
+Hiển thị dữ liệu đã lưu
+và không để trống
+Xoá sản phẩm
+Mô tả ngắn
+Không để
+trống
+Hiển thị dữ liệu đã lưu
+và không để trống
+Mô tả dài
+Không để
+trống
+Hiển thị dữ liệu đã lưu
+và không để trống
+Thành phần
+Không để
+trống
+Hiển thị dữ liệu đã lưu
+và không để trống
+Hướng dẫn
+Không để
+trống
+Hiển thị dữ liệu đã lưu
+và không để trống
+Giá
+Không để trống, nhập
+số
+Không để trống, nhập số hợp lệ
+Số lượng
+Không để trống, nhập
+số
+Không để trống, nhập số hợp lệ
+Ảnh
+Tải file lên, có thể để
+trống
+Tải file
+Danh mục
+Chọn mục
+Chọn từ danh sách có
+sẵn
+Thương hiệu
+Chọn mục
+Chọn từ danh sách có sẵn
+Bảng 26. Kiểm thử danh mục quản lý sản phẩm yêu thích
+Thuộc tính
+Xem
+Thêm
+Sửa
+Xoá
+ID Yêu thích
+Hiển thị danh sách, thanh tìm kiếm
+Tự sinh
+Không cho sửa
+Xoá mục sản phẩm yêu thích
+ID Người
+dùng
+Không để trống, nhập số
+Hiển thị dữ liệu đã lưu và
+không để trống
+ID Sản phẩm
+Không để trống, nhập số
+Hiển thị dữ liệu đã lưu và
+không để trống
+Tên sản phẩm
+Không để trống
+Hiển thị dữ liệu đã lưu và
+không để trống
+Giá sản phẩm
+Không để trống, nhập số
+Hiển thị dữ liệu đã lưu và
+không để trống
+Bảng 27. Kiểm thử danh mục quản lý bài viết
+Thuộc tính
+Xem
+Thêm
+Sửa
+Xóa
+ID Bài viết
+Hiển thị danh sách bài viết, thanh tìm kiếm
+Tự động tạo
+Không cho
+sửa
+Xóa bài viết
+Tiêu đề
+Không để trống
+Hiển thị dữ liệu đã lưu và không để
+trống
+Slug
+Không để trống, không trùng
+Hiển thị dữ liệu đã lưu, không để trống, không
+trùng
+ID Tác giả
+Không để trống, nhập số
+Hiển thị dữ liệu đã lưu và không để
+trống
+Ngày tạo
+Tự động tạo hoặc nhập đúng định dạng
+Hiển thị dữ liệu đã lưu, đúng định
+dạng
+Ảnh
+Không để trống,
+định dạng hợp lệ
+Tải file
+Bảng 28. Kiểm thử danh mục quản lý đánh giá sản phẩm
+Thuộc tính
+Xem
+Thêm
+Sửa
+Xóa
+ID Đánh giá
+Hiển thị danh sách đánh giá, thanh tìm kiếm
+Tự sinh
+Không cho sửa
+Xóa mục
+Sản phẩm
+Không để trống
+Hiển thị dữ liệu
+đã lưu và không để trống
+Khách hàng
+Không để trống
+Hiển thị dữ liệu
+đã lưu và không để trống
+Đánh giá
+(sao)
+Không để trống, nhập giá trị hợp
+lệ (1-5)
+Hiển thị dữ liệu
+đã lưu và không để trống
+Bình luận
+Có thể để trống
+Hiển thị dữ liệu
+đã lưu
+Ngày
+Tự động tạo hoặc nhập đúng định
+dạng
+Hiển thị dữ liệu
+đã lưu, đúng định dạng
+Bảng 29. Kiểm thử quản lý đơn hàng
+Thuộc tính
+Xem
+Thêm
+Sửa
+Xoá
+Mã đơn
+Hiển thị
+Tự động sinh
+Không cho sửa hoặc
+hàng
+danh sách,
+(không nhập
+hiển thị thông tin đã
+cho phép tìm
+tay)
+lưu
+kiếm, sắp
+Xoá đơn
+xếp
+hàng
+Người nhận
+Hiển thị
+Không để
+Hiển thị dữ liệu đã
+trống, chỉ nhập
+lưu, không để trống
+chữ
+SĐT
+Hiển thị
+Không để trống, nhập
+đúng 10 số
+Hiển thị dữ liệu đã lưu, đúng định dạng
+số
+Tổng tiền
+Hiển thị, đúng định dạng tiền tệ
+VNĐ
+Không để trống, nhập số
+Hiển thị dữ liệu đã lưu, nhập số
+Thanh toán
+Hiển thị
+Tự động lấy thời gian hệ thống hoặc
+nhập tay
+Hiển thị dữ liệu đã lưu, cho phép chọn lại
+Trạng thái
+Hiển thị
+Chọn từ danh sách (mới, đang xử lý, hoàn
+thành...)
+Cập nhật trạng thái
+Ngày đặt
+hàng
+Hiển thị
+Tự động tính
+Tự động cập nhật khi
+thay đổi sản phẩm
+Địa chỉ giao
+hàng
+Hiển thị
+Không để trống
+Hiển thị dữ liệu đã
+lưu, không để trống
+Bảng 30. Kiểm thử quản lý thương hiệu
+Thuộc tính
+Xem
+Thêm
+Sửa
+Xoá
+ID
+Hiển thị danh
+Tự động sinh
+Không cho
+sách thương hiệu, thanh tìm
+kiếm
+(không nhập
+tay)
+sửa
+Xoá theo ID
+Tên thương
+Không để
+Hiển thị dữ
+hiệu
+trống, nhập chữ
+liệu đã lưu,
+không để
+trống
+Slug
+Tự động sinh
+Hiển thị dữ
+từ tên hoặc
+liệu đã lưu,
+nhập tay,
+không để
+không để trống
+trống
+Logo
+Chọn và tải file
+Hiển thị dữ
+ảnh, định dạng
+liệu đã lưu,
+hợp lệ (jpg,
+cho thay ảnh
+png…)
+mới
+Mô tả
+Không để trống
+Hiển thị dữ
+liệu đã lưu,
+không để
+trống
+Bảng 31. Kiểm thử chức năng thống kê
+Nội dung kiểm
+lỗi
+Giá trị
+Giá trị mong
+muốn
+Giá trị
+thực tế
+Trạng thái
+Lọc theo từ ngày – đến ngày
+Dữ liệu doanh thu trong ngày/tháng/năm
+Đơn hàng mới 0 đơn Tổng doanh thu: 0đ
+Đơn hàng mới 0 đơn Tổng doanh thu: 0đ
+Thành công
+Có đơn hàng
+trong 7 ngày
+Đơn hàng: 10
+Doanh thu: 5
+triệu
+Đơn hàng: 10 đơn
+Doanh thu: 5
+triệu
+Đơn hàng: 10 đơn Doanh thu:
+5 triệu
+Thành công
+Sản phẩm mới
+Dữ liệu sản phẩm mới 8 sản
+phẩm
+Dữ liệu sản phẩm mới 8
+sản phẩm
+Dữ liệu sản phẩm mới 8
+sản phẩm
+Thành công
+Biểu đồ doanh thu theo từ ngày – đến ngày
+Có dữ liệu đơn hàng, doanh thu, và sản
+phẩm
+Hiển thị biều đồ đường cho sản phẩm
+Hiển thị biểu đồ đường cho
+sản phẩm
+Thành công
+Không dữ liệu đơn hàng, sản phẩm, doanh
+thu
+Hiển thị “không có dữ liệu”
+Hiển thị “không có dữ liệu”
+Thành công
+Sản phẩm bán chạy từ ngày đến ngày
+Có dữ liệu sản phẩm bán chạy là 5 sản phẩm
+Hiển thị sản phẩm bán chạy 5 sản
+phẩm
+Hiển thị sản phẩm và số lần bán
+Thành công
+Đánh giá sản phẩm
+Có dữ liệu đánh giá sản phẩm ưa chuộng
+Hiển thị sản phẩm được đánh giá
+Hiển thị sản phẩm đánh giá nhiều
+nhất
+Thành công
+KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN
+Dự án website bán mỹ phẩm này không chỉ là một sản phẩm tốt nghiệp mà còn là nền tảng vững chắc cho những phát triển tiềm năng trong tương lai. Hành trình từ nghiên cứu, thiết kế, phát triển đến triển khai đã giúp chúng em đạt được nhiều mục tiêu quan trọng và rút ra những bài học quý giá.
+Mục tiêu đã được chinh phục
+Chúng em tự hào khi dự án đã hoàn thành này:
+Chúng em đã thành công xây dựng một không gian mua sắm mỹ phẩm trực tuyến với giao diện tinh tế, thân thiện, nơi mọi chức năng từ quản lý sản phẩm, đơn hàng, đến thanh toán đều vận hành trơn tru. Website không chỉ là một công cụ, mà là một trải nghiệm.
+Khách hàng giờ đây có thể lướt tìm sản phẩm một cách dễ dàng, thêm vào giỏ hàng và hoàn tất thanh toán chỉ trong vài cú click, biến mỗi giao dịch thành một trải nghiệm liền mạch và thú vị.
+Hệ thống quản trị được thiết kế trực quan, giúp người quản lý dễ dàng kiểm soát mọi hoạt động, từ đó tối ưu hóa hiệu suất và nâng cao chất lượng dịch vụ.
+Ưu điểm và nhược điểm của dự án
+Ưu điểm:
+Giao diện người dùng (UI/UX) tối ưu: Từng hình ảnh được chọn lọc tỉ mỉ, tạo nên một không gian mua sắm đẹp mắt, đầy tin cậy, phù hợp tuyệt đối với vẻ đẹp của ngành mỹ phẩm.
+Hành trình mua hàng đơn giản: Chúng em đã đơn giản hóa quy trình thanh toán, tích hợp linh hoạt các phương thức phổ biến như COD và VNPay, giúp khách hàng an tâm và tiết kiệm thời gian.
+Một thư viện kiến thức làm đẹp: Chức năng nơi chia sẻ kiến thức, mẹo vặt làm đẹp cho mọi người.
+Nhược điểm:
+Website vẫn còn thiếu một "người bạn đồng hành" thông minh, có thể hiểu và gợi ý sản phẩm dựa trên sở thích riêng của từng khách hàng.
+Chúng em chưa xây dựng một hệ thống hỗ trợ 24/7, nơi chatbot AI có thể trả lời mọi thắc mắc, giúp khách hàng không bao giờ phải chờ đợi.
+Hướng phát triển
+Chúng em mong muốn trong tương lai có thể được khai thác dự án này chuyên sâu hơn nữa, như:
+Nâng cấp hệ thống chăm sóc khách hàng tự động: Xây dựng chatbot AI thông minh để cung cấp hỗ trợ 24/7, trả lời tức thì các câu hỏi thường gặp về sản phẩm, đơn hàng, và chính sách.
+Phát triển ứng dụng di động: Xây dựng app trên iOS và Android với giao diện thân thiện, đồng bộ dữ liệu với nền tảng web.

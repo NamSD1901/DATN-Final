@@ -46,6 +46,10 @@ namespace MyPetClinic.Infrastructure.Repositories
         public IGenericRepository<ScheduleProfileShift> ScheduleProfileShifts { get; private set; }
         public IGenericRepository<DoctorScheduleProfile> DoctorScheduleProfiles { get; private set; }
         public IGenericRepository<ScheduleException> ScheduleExceptions { get; private set; }
+        public IGenericRepository<Offer> Offers { get; private set; }
+        public IGenericRepository<OfferService> OfferServices { get; private set; }
+        public IGenericRepository<UserOffer> UserOffers { get; private set; }
+        public IGenericRepository<OfferUsageLog> OfferUsageLogs { get; private set; }
         public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
@@ -82,6 +86,10 @@ namespace MyPetClinic.Infrastructure.Repositories
             ScheduleProfileShifts = new GenericRepository<ScheduleProfileShift>(_context);
             DoctorScheduleProfiles = new GenericRepository<DoctorScheduleProfile>(_context);
             ScheduleExceptions = new GenericRepository<ScheduleException>(_context);
+            Offers = new GenericRepository<Offer>(_context);
+            OfferServices = new GenericRepository<OfferService>(_context);
+            UserOffers = new GenericRepository<UserOffer>(_context);
+            OfferUsageLogs = new GenericRepository<OfferUsageLog>(_context);
         }
 
         public async Task<int> SaveChangesAsync()

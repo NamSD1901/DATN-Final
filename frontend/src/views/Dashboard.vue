@@ -81,6 +81,9 @@
           <li :class="{ 'active': activeTab === 'reviews-admin' }">
             <a href="#" @click.prevent="activeTab = 'reviews-admin'"><i class="bi bi-star-fill text-warning opacity-75"></i> Quản lý Đánh giá</a>
           </li>
+          <li :class="{ 'active': activeTab === 'offers-admin' }">
+            <a href="#" @click.prevent="activeTab = 'offers-admin'"><i class="bi bi-ticket-perforated-fill text-warning opacity-75"></i> Quản lý Khuyến mãi</a>
+          </li>
           <li :class="{ 'active': activeTab === 'blog-admin' }">
             <a href="#" @click.prevent="activeTab = 'blog-admin'"><i class="bi bi-journal-text text-warning opacity-75"></i> Quản lý bài viết</a>
           </li>
@@ -102,6 +105,7 @@
           <li :class="{ 'active': activeTab === 'my-services-invoices' }">
             <a href="#" @click.prevent="activeTab = 'my-services-invoices'"><i class="bi bi-receipt text-warning opacity-75"></i> {{ $t('sidebar.myInvoices') }}</a>
           </li>
+
         </template>
       </ul>
 
@@ -294,7 +298,7 @@
 
           <!-- tab: Pet Profile (Customer) -->
           <div v-else-if="activeTab === 'pet-profile'" class="container-fluid p-0">
-            <PetProfile :pet-id="viewingPetId" @go-back="activeTab = 'my-pets'" />
+            <PetProfile :pet-id="viewingPetId || undefined" @go-back="activeTab = 'my-pets'" />
           </div>
 
           <!-- tab: My Appointments Tab (Customer) -->
@@ -310,6 +314,11 @@
           <!-- tab: My Services & Invoices Tab (Customer) -->
           <div v-else-if="activeTab === 'my-services-invoices'" class="container-fluid p-0">
             <MyServicesInvoicesTab />
+          </div>
+
+          <!-- tab: Customer Offers Tab -->
+          <div v-else-if="activeTab === 'customer-offers'" class="container-fluid p-0">
+            <CustomerOffersTab />
           </div>
 
           <!-- tab: Doctor Cases Tab -->
@@ -365,6 +374,11 @@
           <!-- tab: Reviews Admin Tab -->
           <div v-else-if="activeTab === 'reviews-admin'" class="container-fluid p-0">
             <ReviewsAdminTab />
+          </div>
+
+          <!-- tab: Offers Admin Tab -->
+          <div v-else-if="activeTab === 'offers-admin'" class="container-fluid p-0">
+            <OffersAdminTab />
           </div>
 
         </Transition>
@@ -445,18 +459,14 @@ import SchedulesAdminTab from '../components/dashboard/SchedulesAdminTab.vue';
 import ReportsAdminTab from '../components/dashboard/ReportsAdminTab.vue';
 import BlogAdminTab from '../components/dashboard/BlogAdminTab.vue';
 import ReviewsAdminTab from '../components/dashboard/ReviewsAdminTab.vue';
+import OffersAdminTab from '../components/dashboard/OffersAdminTab.vue';
+import CustomerOffersTab from '../components/dashboard/CustomerOffersTab.vue';
 import SettingsTab from '../components/dashboard/SettingsTab.vue';
 
 const router = useRouter();
 const route = useRoute();
 
 const { t, locale } = useI18n();
-const currentLocale = computed(() => locale.value);
-
-const switchLanguage = (lang: string) => {
-  locale.value = lang;
-  localStorage.setItem('user_locale', lang);
-};
 
 // Tab state: 'overview' | 'profile' | 'queue' | 'customers' | 'appointments' | 'invoices'
 const activeTab = ref<string>('overview');
@@ -520,6 +530,7 @@ const getTitle = computed(() => {
     if (activeTab.value === 'my-appointments') return t('pageTitle.myAppointments');
     if (activeTab.value === 'my-history') return t('pageTitle.myHistory');
     if (activeTab.value === 'my-services-invoices') return t('pageTitle.myServicesInvoices');
+    if (activeTab.value === 'customer-offers') return 'Kho Voucher của tôi';
     if (activeTab.value === 'settings') return t('common.settings');
   } else {
     if (activeTab.value === 'overview') return 'Tổng quan hệ thống';
@@ -540,6 +551,7 @@ const getTitle = computed(() => {
   if (activeTab.value === 'schedules-admin') return 'Quản lý Ca trực Bác sĩ';
   if (activeTab.value === 'reports-admin') return 'Báo cáo Doanh thu & Hiệu suất';
   if (activeTab.value === 'reviews-admin') return 'Quản lý Đánh giá';
+  if (activeTab.value === 'offers-admin') return 'Quản lý Khuyến mãi (Voucher)';
   if (activeTab.value === 'blog-admin') return 'Quản trị Bài viết & Tin tức';
   return role.value === 'customer' ? t('pageTitle.dashboard') : 'Bảng điều khiển';
 });

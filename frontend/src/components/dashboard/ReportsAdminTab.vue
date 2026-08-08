@@ -84,10 +84,10 @@
     <!-- Charts and Tables -->
     <div class="row g-4">
       <!-- Chart section -->
-      <div class="col-lg-8">
-        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+      <div class="col-lg-8" style="min-width: 0;">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100 overflow-hidden">
           <h5 class="fw-bold text-dark mb-4"><i class="bi bi-activity text-success me-2"></i>Biểu Đồ Doanh Thu Theo Ngày</h5>
-          <div class="chart-wrapper" style="overflow-x: auto; overflow-y: hidden;">
+          <div class="chart-wrapper w-100" style="overflow-x: auto; overflow-y: hidden;">
             <div class="chart-container" :style="{ width: chartDynamicWidth, height: '350px', minWidth: '100%' }">
               <canvas ref="revenueChartCanvas"></canvas>
             </div>

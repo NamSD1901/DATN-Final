@@ -79,9 +79,7 @@
           </button>
         </div>
         <div v-else class="glass-panel p-4 h-100 position-relative overflow-hidden d-flex flex-column">
-          <div class="position-absolute top-0 end-0 p-3 opacity-10">
-             <i class="bi bi-calendar-check-fill" style="font-size: 8rem;"></i>
-          </div>
+
           <div class="d-flex align-items-center gap-3 mb-4 position-relative z-index-1">
              <div class="pet-avatar-img-wrapper" style="width: 60px; height: 60px; border-radius: 12px; overflow: hidden; border: 2px solid rgba(245, 158, 11, 0.2);">
                 <img :src="getSpeciesImageUrl(nextAppointment.petSpecies)" alt="Pet Avatar" style="width: 100%; height: 100%; object-fit: cover;" />

@@ -39,6 +39,10 @@ namespace MyPetClinic.Application.Interfaces.Repositories
         IGenericRepository<ScheduleProfileShift> ScheduleProfileShifts { get; }
         IGenericRepository<DoctorScheduleProfile> DoctorScheduleProfiles { get; }
         IGenericRepository<ScheduleException> ScheduleExceptions { get; }
+        IGenericRepository<Offer> Offers { get; }
+        IGenericRepository<OfferService> OfferServices { get; }
+        IGenericRepository<UserOffer> UserOffers { get; }
+        IGenericRepository<OfferUsageLog> OfferUsageLogs { get; }
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();
         Task BeginTransactionAsync(System.Data.IsolationLevel isolationLevel);

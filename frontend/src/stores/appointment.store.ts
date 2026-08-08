@@ -18,7 +18,7 @@ export const useAppointmentStore = defineStore('appointment', {
         this.eligibleDoctors = response.data;
       } catch (err: any) {
         this.error = err.response?.data?.message || 'Lỗi khi tải danh sách bác sĩ phù hợp';
-        Swal.fire('Lỗi', this.error, 'error');
+        Swal.fire('Lỗi', this.error || 'Lỗi không xác định', 'error');
       } finally {
         this.isLoadingDoctors = false;
       }
@@ -37,7 +37,7 @@ export const useAppointmentStore = defineStore('appointment', {
         if (this.error?.includes('đang trong thời gian nghỉ phép') || this.error?.includes('đã có lịch hẹn')) {
            throw err;
         } else {
-           Swal.fire('Lỗi', this.error, 'error');
+           Swal.fire('Lỗi', this.error || 'Lỗi không xác định', 'error');
         }
         return false;
       } finally {

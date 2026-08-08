@@ -264,9 +264,26 @@
                 <span>{{ formatCurrency(selectedInvoice.medicineFee) }}</span>
               </div>
               
+              <!-- Voucher selection for pending invoices -->
+              <div v-if="selectedInvoice.status === 'pending'" class="mt-3 mb-3 p-3 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-25 cursor-pointer hover-bg-light-opacity" @click="showOfferModal = true">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-ticket-perforated text-warning fs-5"></i>
+                    <span class="small fw-bold">{{ appliedVoucherCode ? `Mã: ${appliedVoucherCode}` : 'Chọn mã khuyến mãi' }}</span>
+                  </div>
+                  <i class="bi bi-chevron-right small opacity-50"></i>
+                </div>
+              </div>
+
+              <!-- Discount display -->
+              <div class="d-flex justify-content-between mb-2 small text-warning fw-bold" v-if="discountAmount > 0">
+                <span>Voucher giảm giá</span>
+                <span>-{{ formatCurrency(discountAmount) }}</span>
+              </div>
+              
               <div class="border-top border-secondary border-opacity-50 pt-3 mb-4 d-flex justify-content-between align-items-center">
                 <span class="small opacity-75 text-uppercase">Tổng cộng</span>
-                <h3 class="fw-bold mb-0 text-white">{{ formatCurrency(selectedInvoice.totalAmount) }}</h3>
+                <h3 class="fw-bold mb-0 text-white">{{ formatCurrency(Math.max(0, selectedInvoice.totalAmount - discountAmount)) }}</h3>
               </div>
               
               <div class="bg-white bg-opacity-10 rounded-3 p-3 d-flex align-items-center gap-3">
@@ -283,6 +300,15 @@
         </div>
       </div>
     </div>
+
+    <!-- Voucher Selector Modal -->
+    <OfferSelectorModal 
+      :show="showOfferModal" 
+      :order-amount="selectedInvoice?.totalAmount || 0"
+      :current-selected-code="appliedVoucherCode"
+      @close="showOfferModal = false"
+      @apply="handleApplyVoucher"
+    />
   </div>
 </template>
 
@@ -290,6 +316,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import api from '../../services/api';
+import OfferSelectorModal from '../shared/OfferSelectorModal.vue';
 
 const { t, locale } = useI18n();
 
@@ -322,10 +349,7 @@ const selectedInvoice = ref<InvoiceMock | null>(null);
 const invoices = ref<InvoiceMock[]>([]);
 const totalSpent = computed(() => invoices.value.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.totalAmount, 0));
 const invoiceCount = computed(() => invoices.value.length);
-const petCount = computed(() => {
-  const pets = new Set(invoices.value.map(i => i.petName));
-  return pets.size;
-});
+const petCount = ref(0);
 
 const filterStatus = ref<'all' | 'paid' | 'cancelled'>('all');
 
@@ -377,8 +401,16 @@ const fetchInvoices = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   fetchInvoices();
+  try {
+    const res = await api.get('/mypets');
+    if (res.data && Array.isArray(res.data)) {
+      petCount.value = res.data.length;
+    }
+  } catch (err) {
+    console.error('Failed to fetch pets', err);
+  }
 });
 
 // --- Mock Data ---
@@ -396,12 +428,40 @@ const getPaymentIcon = (method: string | undefined): string => {
 
 const openInvoiceDetail = (inv: InvoiceMock) => {
   selectedInvoice.value = inv;
+  appliedVoucherCode.value = '';
+  discountAmount.value = 0;
   showDetailModal.value = true;
 };
 
 const closeInvoiceDetail = () => {
   showDetailModal.value = false;
-  setTimeout(() => selectedInvoice.value = null, 300);
+  setTimeout(() => {
+    selectedInvoice.value = null;
+    appliedVoucherCode.value = '';
+    discountAmount.value = 0;
+  }, 300);
+};
+
+// --- Voucher Logic ---
+const showOfferModal = ref(false);
+const appliedVoucherCode = ref('');
+const discountAmount = ref(0);
+
+const handleApplyVoucher = async (code: string) => {
+  try {
+    const res = await api.post('/offers/validate', {
+      code,
+      orderAmount: selectedInvoice.value?.totalAmount || 0,
+      serviceIds: [] 
+    });
+    if (res.data.success) {
+      appliedVoucherCode.value = code;
+      discountAmount.value = res.data.data.discountAmount;
+      showOfferModal.value = false;
+    }
+  } catch (err: any) {
+    alert(err.response?.data?.message || 'Mã không hợp lệ hoặc không đủ điều kiện');
+  }
 };
 
 // --- Computed ---

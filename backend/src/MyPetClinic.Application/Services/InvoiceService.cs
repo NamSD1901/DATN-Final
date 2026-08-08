@@ -337,7 +337,7 @@ namespace MyPetClinic.Application.Services
             return await GetInvoiceWithDetailsAsync(invoiceId);
         }
 
-        public async Task<bool> ProcessPaymentAsync(long invoiceId, string paymentMethod, decimal discountAmount)
+        public async Task<bool> ProcessPaymentAsync(long invoiceId, string paymentMethod, decimal discountAmount, string? voucherCode = null)
         {
             var invoice = await _unitOfWork.Invoices.GetFirstOrDefaultWithIncludesAsync(
                 i => i.Id == invoiceId,
@@ -376,6 +376,33 @@ namespace MyPetClinic.Application.Services
                     {
                         medicine.StockQuantity -= item.Quantity;
                         if (medicine.StockQuantity < 0) medicine.StockQuantity = 0; // prevent negative stock
+                    }
+                }
+            }
+
+            // Consume Voucher if provided
+            if (!string.IsNullOrEmpty(voucherCode))
+            {
+                var offer = await _unitOfWork.Offers.Query().FirstOrDefaultAsync(o => o.Code == voucherCode);
+                if (offer != null)
+                {
+                    offer.UsedQuantity++;
+                    
+                    if (invoice.Appointment != null)
+                    {
+                        var customerUser = await _unitOfWork.Users.Query().FirstOrDefaultAsync(u => u.CustomerId == invoice.Appointment.CustomerId);
+                        if (customerUser != null)
+                        {
+                            await _unitOfWork.OfferUsageLogs.AddAsync(new MyPetClinic.Domain.Entities.OfferUsageLog
+                            {
+                                OfferId = offer.Id,
+                                UserId = customerUser.Id,
+                                AppliedAt = DateTime.UtcNow,
+                                Status = "APPLIED",
+                                InvoiceId = invoice.Id,
+                                DiscountApplied = discountAmount
+                            });
+                        }
                     }
                 }
             }

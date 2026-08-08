@@ -11,7 +11,7 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 | **Tổng số Sprints kế hoạch** | 17 Sprints (34 tuần) | Đang thực thi rà soát & tối ưu hóa |
 | **Tài liệu thiết kế (Specs)** | 12/12 đặc tả chi tiết | `✅ DONE` |
 | **Tiến độ Code của các Sprint** | Hoàn thành nâng cấp chất lượng & tái cấu trúc Sprint 5 | `✅ CODE DONE` |
-| **Mốc Sprint hiện tại** | Sprint 6 (Đặt lịch & Ca trực) | `✅ READY` |
+| **Mốc Sprint hiện tại** | Sprint 18 (Voucher & Khuyến mãi) | `✅ READY` |
 
 ---
 
@@ -214,3 +214,14 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 *   **Trạng thái chung:** `✅ CODE DONE` (T51, T52, T53, T57, T58).
 *   **Chi tiết:**
     *   T58: Tích hợp Background Email Notifications (`✅ CODE DONE` - Xây dựng EmailQueue Worker chạy ngầm, gửi email tự động khi Duyệt đặt lịch, Hủy lịch, Dời lịch và Cảm ơn khi thanh toán hóa đơn).
+
+---
+
+### 🎯 Sprint 18: Quản Lý Khuyến Mãi (Voucher & Promotions)
+*   **Mục tiêu:** Hệ thống mã giảm giá linh hoạt, áp dụng theo phần trăm hoặc số tiền cố định, giới hạn lượt dùng an toàn chống concurrency.
+*   **Trạng thái chung:** `✅ CODE DONE`
+*   **Chi tiết:**
+    *   Backend Database & Logic (`✅ CODE DONE` - Bảng `Offers`, `OfferUsageLogs`, Service & Controller hoàn chỉnh, RowVersion xmin concurrency).
+    *   Test bao phủ (`✅ CODE DONE` - xUnit Mock & Integration check giới hạn dùng).
+    *   Admin UI (`✅ CODE DONE` - Quản lý Voucher, Glassmorphism UI, Store Pinia).
+    *   Customer UI (`✅ CODE DONE` - `OfferSelectorModal.vue`, `CustomerOffersTab.vue` cho trải nghiệm chọn mã thân thiện, tính toán giảm trừ hóa đơn).

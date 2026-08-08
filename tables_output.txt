@@ -1,0 +1,788 @@
+--- Table 0 ---
+Họ và tên | MSSV | Vai trò
+Tạ Ngọc Nam | TD01188 | Trưởng nhóm
+Ngô Tường Lâm | TD01177 | Thành viên
+Cao Hà Phương | TD01108 | Thành viên
+Ngô Thị Hạnh | TD01293 | Thành viên
+
+--- Table 1 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+role_id | bigint | Mã vai trò (PK)
+name | varchar | Tên vai trò (Ví dụ: Admin, User, Manager...)
+
+--- Table 2 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+user_id | uuid | Mã người dùng (PK)
+role_id | bigint | Mã định vai trò (FK)
+full_name | varchar | Họ và tên người dùng
+email | varchar | Địa chỉ email người dùng (Unique)
+phone | varchar | Số điện thoại người dùng
+password_hash | text | Mật khẩu (đã mã hóa)
+avatar | text | Đường dẫn ảnh đại diện
+gender | smallint | Giới tính
+date_of_birth | date | Ngày sinh người dùng
+address | text | Địa chỉ người dùng
+is_active | boolean | Trạng thái hoạt động (Kích hoạt / Khóa)
+created_at | timestamptz | Thời gian tạo tài khoản
+deleted_at | timestamptz | Thời gian xóa tài khoản (Xóa mềm)
+customerId | uuid | Mã khách hàng (FK)
+
+--- Table 3 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+customer_id | uuid | Mã khách hàng (PK)
+customer_code | varchar | Mã khách hàng (VD: KH0001)
+full_name | varchar | Họ và tên khách hàng
+email | varchar | Email khách hàng (UNIQUE)
+phone | varchar | Số điện thoại
+avatar | text | Ảnh đại diện
+gender | smallint | Giới tính
+date_of_birth | date | Ngày sinh
+address | text | Địa chỉ
+has_account | boolean | Đã liên kết tài khoản đăng nhập hay chưa
+status | varchar(50) | Trạng thái
+created_at | timestamptz | Thời gian tạo
+updated_at | timestamptz | Thời gian cập nhật
+deleted_at | timestamptz | Thời gian xoá (xoá mềm)
+AccountId | uuid | Mã tài khoản (FK)
+
+--- Table 4 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+employee_profile_id | uuid | Mã hồ sơ (PK)
+user_id | uuid | Liên kết tài khoản nhân viên (FK, UNIQUE)
+identity_card | varchar(50) | Căn cước công dân
+position | varchar(100) | Chức vụ
+is_resigned | boolean | Trạng thái nghỉ việc
+created_at | timestamptz | Thời gian tạo
+deleted_at | timestamptz | Thời gian xóa (Soft delete)
+
+--- Table 5 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+invitation_id | uuid | Mã lời mời (PK)
+user_id | uuid | Người được mời (FK)
+token | varchar(255) | Chuỗi xác thực lời mời
+expire_at | timestamptz | Thời hạn lời mời
+is_used | boolean | Đã sử dụng hay chưa
+created_at | timestamptz | Thời gian tạo
+
+--- Table 6 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+pet_id | bigint | Mã thú cưng (PK)
+owner_id | uuid | Mã chủ nuôi (FK)
+name | varchar(255) | Tên của thú cưng
+species | varchar(100) | Loài thú cưng (Vd: chó, mèo, chim,…)
+breed | varchar(100) | Giống thú cưng (Vd: poodle, golden, corgi,…)
+gender | smallint | Giới tính thú cưng
+birth_date | date | Ngày sinh của thú cưng
+weight | Numeric | Cân nặng của thú cưng
+color | varchar(100) | Màu lông/Màu sắc của thú cưng
+blood_type | varchar(20) | Nhóm máu của thú cưng
+sterilized | boolean | Trạng thai triệt sản (Đã triệt sản/Chưa)
+microchip_code | varchar(100) | Mã số định danh microchip (nếu có)
+allergy_note | text | Ghi chú về các dị ứng của thú cưng
+avatar | text | Ảnh đại diện
+is_deceased | boolean | Trạng thái còn sống hay đã mất (Not null)
+IsAggressive | boolean | Trạng thái hung hăn (Not null)
+ChronicDisease | text | Bệnh mãn tính
+CurrentDiet | text | Chế độ ăn hiện tại
+Created_at | timestamptz | Thời gian hồ sơ thú cưng được tạo
+Deleted_at | timestamptz | Thời gian hồ sơ thú cưng bị xoá (Xoá mềm)
+
+--- Table 7 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+service_id | bigint | Mã lịch hẹn (PK)
+category_id | bigint | Mã dịch vụ (FK)
+name | varchar(255) | Tên dịch vụ
+price | numeric(12,2) | Giá tiền của dịch vụ
+duration_minutes | int | Thời lượng thực hiện dịch vụ (tính bằng phút)
+description | text | Mô tả chi tiết về dịch vụ
+is_active | boolean | Trạng thái hoặt động của dịch vụ (Đang áp dụng/Ngưng áp dụng)
+deleted_at | timestamptz | Thời gian xoá dịch vụ (Xoá mềm)
+
+--- Table 8 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+service_catorgory_id | bigint | Mã danh mục dịch vụ (PK)
+name | varchar(255) | Tên danh mục dịch vụ (Vd: khám bệnh, tiêm phòng, phẫu thuật,...
+deleted_at | timestamptz | Thời gian xoá danh mục dịch vụ (Xoá mềm)
+
+--- Table 9 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+doctor_schedule_id | bigint | Mã lịch làm việc (PK)
+doctor_id | uuid | Mã bác sĩ (FK)
+work_date | date | Ngày làm việc
+start_time | time | Thời gian bắt đầu ca làm việc
+end_time | time | Thời gian kết thúc ca làm việc
+max_appointments | int | Số lượng lịch hẹn tối đa có thể tiếp nhận trong ca
+is_available | boolean | Trạng thái trống lịch (Còn nhận lịch hẹn/Đã đầy hoặc bận)
+deleted_at | timestamptz | Thời gian xoá ca làm việc (Xoá mềm)
+
+--- Table 10 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+appointment_id | bigint | Mã lịch làm việc (PK)
+pet_id | bigint | Mã thú cưng (FK)
+customer_id | uuid | Mã khách hàng/chủ nuôi (FK)
+doctor_id | uuid | Mã bác sĩ phụ trách (FK)
+appointment_date | date | Ngày hẹn
+start_time | time | Thời gian bắt đầu lịch hẹn 
+end_time | time | Thời gian kết thúc lịch hẹn dự kiến 
+status | varchar(50) | Trạng thái lịch hẹn (Vd: đang chờ, đã xác nhận,…)
+symptom | text | Triệu chứng mô tả trước
+note | text | Ghi chú của khách hàng
+created_by | uuid | Người tạo lịch hẹn (FK)
+created_at | timestamptz | Thời gian tạo lịch
+deleted_at | timestamptz | Thời gian xoá lịch hẹn (xoá mềm)
+cancellation_reason | text | Lý do huỷ lịch hẹn
+cancel_reason | text | Mô tả chi tiết lý do huỷ
+cancelled_by_role | varchar | Vai trò người huỷ lịch hẹn
+service_id | bigint | Mã dịch vụ sử dụng (FK)
+vaccine_id | bigint | Mã vaccine (FK)
+is_emergency | boolean | Lịch cấp cứu
+is_walk_in | boolean | Khách vãng lai đến trực tiếp (không đặt trước)
+queue_number | int | Số thứ tự xếp hàng
+qr_token | text | Mã QR check-in
+check_in_time | timestamptz | Thời gian check-in
+check_out_time | timestamptz | Thời gian check-out
+
+--- Table 11 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+medical_record_id | bigint | Mã bệnh án (PK)
+appointment_id | bigint | Khóa ngoại liên kết lịch hẹn (FK, UNIQUE)
+doctor_id | uuid | Bác sĩ khám (FK)
+pet_id | bigint | Mã thú cưng (FK)
+record_type | varchar(50) | Loại bệnh án (Consultation...)
+medical_history | text | Tiền sử bệnh lý
+weight | numeric | Cân nặng (kg)
+temperature | numeric | Nhiệt độ (°C)
+clinical_signs | text | Dấu hiệu lâm sàng
+diagnosis | text | Chẩn đoán của bác sĩ
+treatment_plan | text | Kế hoạch điều trị
+doctor_notes | text | Ghi chú thêm của bác sĩ
+follow_up_date | date | Ngày tái khám
+Deleted_at | timestamptz | Xóa mềm
+
+--- Table 12 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+medicine_category_id | bigint | Mã danh mục thuốc (PK)
+name | varchar | Tên danh mục thuốc (Not null)
+description | text | Mô tả danh mục thuốc
+
+--- Table 13 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+medicine_id | bigint | Mã thuốc (PK)
+category_id | bigint | Danh mục thuốc (FK)
+name | varchar(255) | Tên thuốc
+unit | varchar(50) | Đơn vị tính (Viên, Lọ...)
+medicine_code | varchar(50) | Mã số thuốc (UNIQUE)
+import_price | numeric | Giá nhập
+sell_price | numeric | Giá bán
+min_stock_level | int | Số lượng tồn kho tối thiểu cảnh báo
+description | text | Mô tả thuốc
+is_active | boolean | Đang kinh doanh
+deleted_at | timestamptz | Thời gian xóa (xoá mềm)
+
+--- Table 14 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+medicine_batches | bigint | Khóa chính (PK)
+batch_number | character varying | Thông tin batch number
+medicine_id | bigint | Mã liên kết (FK)
+manufacture_date | timestamp without time zone | Thông tin manufacture date
+expiry_date | timestamp without time zone | Thông tin expiry date
+initial_quantity | integer | Thông tin initial quantity
+current_quantity | integer | Thông tin current quantity
+
+--- Table 15 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+inventory_transaction_id | bigint | Mã giao dịch kho (PK)
+medicine_id | bigint | Mã thuốc (FK, Not null)
+batch_id | bigint | Mã lô hàng (FK)
+created_by_user_id | uuid | Mã người tạo giao dịch (FK, Not null)
+transaction_date | timestamp | Ngày thực hiện giao dịch (Not null, Default)
+type | integer | Loại giao dịch (Not null)
+quantity_change | integer | Số lượng thay đổi (Not null)
+reference_code | varchar | Mã tham chiếu giao dịch
+notes | text | Ghi chú giao dịch
+
+--- Table 16 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+prescription_id | bigint | Mã đơn thuốc (PK)
+medical_record_id | bigint | Mã hồ sơ bệnh án (FK)
+doctor_id | uuid | Mã bác sĩ (FK)
+note | text | Ghi chú đơn thuốc
+create_at | timestamptz | Thời gian tạo đơn thuốc
+deleted_at | timestamptz | Thời gian xoá đơn thuốc (Xoá mềm)
+
+--- Table 17 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+vaccine_id | bigint | Mã (PK)
+name | varchar(255) | Tên
+manufacturer | varchar(255) | Nhà sản xuất
+description | text | Mô tả
+deleted_at | timestamptz | Thời gian xóa (xoá mềm)
+stock_quantity | int | Tồn kho
+target_species | varchar(50) | Loài chỉ định
+min_age_weeks | int | Số tuần tuổi tối thiểu
+interval_days | int | Khoảng cách giữa 2 mũi (ngày)
+
+--- Table 18 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+vaccine_batch_id | bigint | Mã (PK)
+vaccine_id | bigint | Mã liên kết (FK)
+batch_number | varchar(100) | Thông tin batch number
+expiration_date | timestamp | Thông tin expiration date
+import_date | timestamp | Thông tin import date
+stock_quantity | int | Thông tin stock quantity
+import_price | numeric | Thông tin import price
+selling_price | numeric | Thông tin selling price
+
+--- Table 19 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+prescription_item_id | bigint | Mã chi tiết đơn thuốc (PK)
+prescription_id | bigint | Mã đơn thuốc (FK)
+medicine_id | bigint | Mã thuốc (FK)
+dosage | varchar(100) | Liều lượng thuốc
+frequency | varchar(100) | Tần suất sử dụng thuốc
+duration_days | int | Số ngày sử dụng thuốc
+quantity | int | Số lượng thuốc
+instrustion | text | Hướng dẫn sử dụng thuốc
+
+--- Table 20 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+vaccination_record_id | bigint | Mã lịch sử tiêm chủng (PK)
+pet_id | bigint | Mã thú cưng (FK)
+vaccine_id | bigint | Mã vaccine (FK)
+appointment_id | bigint | Mã lịch hẹn (FK)
+doctor_id | uuid | Mã bác sĩ (FK)
+vaccine_batch_id | bigint | Mã lô vaccine (FK)
+injection_date | date | Ngày tiêm vaccine
+next_due_date | date | Ngày tiêm nhắc lại tiếp theo
+weight | decimal | Cân nặng thú cưng tại thời điểm tiêm (Not null)
+temperature | decimal | Nhiệt độ cơ thể
+heart_rate | integer | Nhịp tim
+respiratory_rate | integer | Nhịp thở
+dehydration_percent | integer | Tỷ lệ mất nước
+dose | decimal | Liều lượng vaccine
+is_allergic | boolean | Trạng thái dị ứng (Not null)
+has_previous_reaction | boolean | Có phản ứng với vaccine trước đó (Not null)
+has_cough_or_sneeze | boolean | Có ho hoặc hắt hơi (Not null)
+has_vomiting_or_diarrhea | boolean | Có nôn mửa hoặc tiêu chảy (Not null)
+is_under_treatment | boolean | Đang trong quá trình điều trị (Not null)
+reaction_note | varchar | Ghi chú phản ứng sau tiêm
+allergy_details | varchar | Chi tiết dị ứng
+previous_reaction_details | varchar | Chi tiết phản ứng trước đó
+previous_vaccine_history | varchar | Lịch sử tiêm vaccine trước đó
+clinical_assessment | varchar | Đánh giá lâm sàng
+mental_status | varchar | Trạng thái tinh thần
+mucosa_status | varchar | Trạng thái niêm mạc
+lymph_node_status | varchar | Trạng thái hạch bạch huyết
+eating_status | varchar | Trạng thái ăn uống
+eye_nose_ear_status | varchar | Trạng thái mắt, mũi, tai
+injection_site | varchar | Vị trí tiêm
+route | varchar | Đường tiêm
+reason_for_visit | varchar | Lý do đến khám
+owner_notes | varchar | Ghi chú của chủ thú cưng
+doctor_remarks | varchar | Nhận xét của bác sĩ
+follow_up_instructions | varchar | Hướng dẫn theo dõi sau tiêm
+Treatment_details | Varchar | Chi tiết điều trị
+Created_at | timestamp | Thời gian tạo (Not null)
+Deleted_at | timestamptz | Thời gian xoá (xoá mềm)
+
+--- Table 21 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+invoice_id | bigint | Mã hóa đơn (PK)
+appointment_id | bigint | Mã lịch hẹn (FK)
+subtotal | numeric(12,2) | Tổng tiền trước khi giảm giá
+discount_amount | numeric(12,2) | Số tiền được giảm giá
+total_amount | numeric(12,2) | Tổng tiền sau khi giảm giá
+payment_status | varchar(50) | Trạng thái thanh toán
+payment_method | varchar(50) | Phương thức thanh toán
+paid_at | timestamptz | Thời gian thanh toán
+created_at | timestamptz | Thời gian tạo hóa đơn
+deleted_at | timestamptz | Thời gian xoá hóa đơn (Xoá mềm)
+
+--- Table 22 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+invoice_item_id | bigint | Mã chi tiết hóa đơn (PK)
+invoice_id | bigint | Mã hóa đơn (FK)
+item_type | varchar | Loại dịch vụ (thuốc, vaccine, dịch vụ,...)
+item_id | bigint | Mã của từng loại dịch vụ
+item_name | varchar | Tên dịch vụ hoặc sản phẩm
+quantity | integer | Số lượng
+unit_price | decimal | Đơn giá
+total_price | decimal | Thành tiền
+
+--- Table 23 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+clinic_operating_shift_id | integer | Mã ca làm việc (PK)
+clinic_operating_day_id | integer | Mã ngày hoạt động của phòng khám (FK, Not null)
+start_time | interval | Thời gian bắt đầu ca (Not null)
+end_time | interval | Thời gian kết thúc ca (Not null)
+
+--- Table 24 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+clinic_operating_days | integer | Mã ngày hoạt động (PK)
+day_of_week | integer | Ngày trong tuần (Not null, Default)
+is_open | boolean | Trạng thái mở cửa (Not null, Default)
+
+--- Table 25 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+clinic_holidays_id | integer | Mã ngày nghỉ lễ (PK)
+created_by | uuid | Mã người tạo
+name | varchar | Tên ngày nghỉ lễ (Not null)
+start_date | timestamp | Ngày bắt đầu nghỉ lễ (Not null)
+end_date | timestamp | Ngày kết thúc nghỉ lễ (Not null)
+is_active | boolean | Trạng thái áp dụng (Not null, Default)
+created_at | timestamp | Thời gian tạo (Not null, Default)
+
+--- Table 26 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+review_id | bigint | Mã đánh giá (PK)
+customer_id | uuid | Mã khách hàng (FK)
+appointment_id | bigint | Mã lịch hẹn (FK)
+rating | smallint | Điểm đánh giá
+comment | text | Nội dung nhận xét
+created_at | timestamptz | Thời gian tạo đánh giá
+deleted_at | timestamptz | Thời gian xoá đánh giá (Xoá mềm)
+
+--- Table 27 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+post_id | bigint | Mã bài viết (PK)
+author_id | uuid | Mã tác giả (FK)
+category_id | bigint | Mã danh mục bài viết (FK)
+updated_by | uuid | Mã người cập nhật (FK)
+title | varchar | Tiêu đề bài viết (Not null)
+slug | varchar | Đường dẫn URL bài viết (UNIQUE, Not null)
+thumbnail | text | Ảnh đại diện bài viết
+content | text | Nội dung bài viết
+summary | varchar | Tóm tắt bài viết
+status | varchar | Trạng thái bài viết
+keywords | varchar | Từ khoá bài viết
+meta_title | varchar | Tiêu đề SEO
+meta_description | varchar | Mô tả SEO
+view_count | integer | Số lượt xem (Not null)
+published_at | timestamp | Thời gian xuất bản
+row_version | bytea | Phiên bản hàng dữ liệu (Not null)
+created_at | timestamptz | Thời gian tạo
+updated_at | timestamp | Thời gian cập nhật
+deleted_at | timestamptz | Thời gian xoá (Xoá mềm)
+
+--- Table 28 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+post_catorgory_id | bigint | Mã danh mục bài viết (PK)
+parent_id | bigint | Mã danh mục cha (FK)
+name | varchar | Tên danh mục (Not null)
+slug | varchar | Đường dẫn URL danh mục (Not null)
+description | varchar | Mô tả danh mục
+is_active | boolean | Trạng thái hoạt động (Not null, Default)
+
+--- Table 29 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+notification_id | bigint | Mã thông báo (PK)
+user_id | uuid | Mã người dùng (FK)
+title | varchar(255) | Tiêu đề thông báo (Not null)
+content | text | Nội dung thông báo (Not null)
+is_read | boolean | Trạng thái đã đọc (Not null)
+type | varchar(50) | Loại thông báo (Not null)
+created_at | timestamptz | Thời gian tạo thông báo (Not null)
+
+--- Table 30 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+MigrationId | varchar | Mã migration (PK, Not null)
+ProductVersion | varchar | Phiên bản Entity Framework (Not null)
+
+--- Table 31 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+block_time_id | uuid | Mã thời gian chặn (PK)
+doctor_id | uuid | Mã bác sĩ (FK → users.user_id) (Not null)
+start_time | timestamptz | Thời gian bắt đầu chặn (Not null)
+end_time | timestamptz | Thời gian kết thúc chặn (Not null)
+block_type | text | Loại chặn lịch (Not null)
+reason | text | Lý do chặn lịch
+background_color | text | Màu hiển thị trên lịch
+
+--- Table 32 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+Schedule_exception_id | bigint | Mã ngoại lệ lịch làm việc (PK)
+doctor_id | uuid | Mã bác sĩ (FK → users.user_id) (Not null)
+type | varchar | Loại ngoại lệ (Nghỉ phép, Nghỉ bệnh, Công tác,...) (Not null)
+start_date | timestamp | Thời gian bắt đầu ngoại lệ (Not null)
+end_date | timestamp | Thời gian kết thúc ngoại lệ (Not null)
+substitute_doctor_id | uuid | Mã bác sĩ thay thế (FK → users.user_id)
+reason | varchar | Lý do ngoại lệ
+status | varchar | Trạng thái phê duyệt (Mặc định: Approved) (Not null)
+
+--- Table 33 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+Schedule_profile_shift_id | bigint | Mã ca làm việc của mẫu lịch (PK)
+profile_id | profile_id | Mã mẫu lịch (FK → schedule_profiles.schedule_profile_id) (Not null)
+day_of_week | integer | Thứ trong tuần (1–7) (Not null)
+start_time | interval | Thời gian bắt đầu ca làm việc (Not null)
+ |  | 
+end_time | interval | Thời gian kết thúc ca làm việc (Not null)
+ |  | 
+is_day_off | boolean | 
+ |  | Đánh dấu ngày nghỉ (Mặc định: false) (Not null)
+
+--- Table 34 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+schedule_profile_id | bigint | Mã mẫu lịch làm việc (PK)
+name | varchar | Tên mẫu lịch làm việc (Not null)
+description | text | Mô tả mẫu lịch làm việc
+is_active | boolean | Trạng thái hoạt động của mẫu lịch (Not null)
+created_at | timestamp | Thời gian tạo mẫu lịch (Not null)
+
+--- Table 35 ---
+Thuộc tính | Kiểu dữ liệu | Mô tả
+doctor_schedule_profile_id | bigint | Mã phân công mẫu lịch (PK)
+doctor_id | uuid | Mã bác sĩ (FK → users.user_id) (Not null)
+profile_id | bigint | Mã mẫu lịch (FK → schedule_profiles.schedule_profile_id) (Not null)
+effective_date | timestamp | Ngày bắt đầu áp dụng mẫu lịch (Not null)
+end_date | timestamp | Ngày kết thúc áp dụng mẫu lịch
+
+--- Table 36 ---
+Tên cột | Kiểu dữ liệu | Ràng buộc | Mô tả
+user_id | BIGINT | PRIMARY KEY,AUTO_INCREMENT | Mã người dùng
+full_name | VARCHAR(60) | NOT NULL | Họ tên người dùng
+email | VARCHAR(255) | UNIQUE, NOTNULL | Email đăng ký (duynhất)
+phone_number | VARCHAR(15) | UNIQUE, NOTNULL | Số điện thoại ngườidùng (VN)
+password_hash | VARCHAR(255) | NOT NULL | Mật khẩu đã mã hóa
+gender | ENUM('Nam','Nữ', 'Khác') | DEFAULT 'Khác' | Giới tính
+date_of_birth | DATE |  | Ngày sinh
+address | TEXT |  | Địa chỉ chi tiết
+ward | VARCHAR(100) |  | Phường/Xã
+district | VARCHAR(100) |  | Quận/Huyện
+province | VARCHAR(100) |  | Tỉnh/Thành phố
+role | ENUM('customer','admin') | DEFAULT 'customer' | Vai trò người dùng
+status | ENUM('active', 'inactive','banned') | DEFAULT 'active' | Trạng thái tài khoản
+is_email_verified | tinyint(1) | DEFAULT 0 | Đã xác thực email haychưa
+google_id | varchar(255) | NULL | ID tài khoản Google (nếu đăng nhập bằng Google)
+
+--- Table 37 ---
+Tên cột | Kiểu dữ liệu | Ràng buộc | Mô tả
+address_id | VARCHAR(36) | PRIMARY KEY, NOT NULL | Mã địa chỉ, là khóa chính để định danhđịa chỉ duy nhất
+user_id | BIGINT(20) | NOT NULL, UNSIGNED, FOREIGN KEY→ users(user_id) | Mã người dùng sở hữu địa chỉ này
+full_name | VARCHAR(60) | NOT NULL | Họ tên người nhậnhàng
+phone_number | VARCHAR(15) | NOT NULL | Số điện thoạingười nhận hàng
+province | VARCHAR(100) | NOT NULL | Tên tỉnh/thành phố
+district | VARCHAR(100) | NOT NULL | Tên quận/huyện
+ward | VARCHAR(100) | NOT NULL | Tên phường/xã
+address_line | VARCHAR(100) | NOT NULL | Địa chỉ chi tiết (số nhà, tên đường,khu phố...)
+is_default | TINYINT(1) | DEFAULT 0 | Địa chỉ mặc định của người dùng (0= không, 1 = có)
+
+--- Table 38 ---
+Tên cột | Kiểu dữ liệu | Ràng buộc | Mô tả
+product_id | BIGINT(20) | PRIMARY KEY,AUTO_INCREMENT | Mã sảnphẩm
+name | VARCHAR(255) | NOT NULL | Tên sảnphẩm
+description | TEXT | NULL | Mô tả chitiết
+short_description | TEXT | NULL | Mô tảngắn gọn
+price | DECIMAL(10,2) | NOT NULL | Giá gốc
+discount_price | DECIMAL(10,2) | NULL | Giá saugiảm
+stock_quantity | INT(11) | DEFAULT 0 | Tổng số lượngnhập kho
+sold | INT(11) | DEFAULT 0 | Số lượngđã bán
+category_id | BIGINT(20) | NOT NULL | ID danhmục sản phẩm
+brand_id | BIGINT(20) | NULL | IDthương hiệu
+thumbnail | VARCHAR(255) | NULL | Ảnh đạidiện sản phẩm
+ingredients | TEXT | NULL | 
+
+--- Table 39 ---
+ |  |  | Thành phần sản phẩm
+usage_instructions | TEXT | NULL | Hướng dẫn sử dụng sảnphẩm
+created_at | DATETIME | DEFAULTCURRENT_TIMESTAMP | Ngày tạo
+updated_at | DATETIME | DEFAULT CURRENT_TIMESTAMP ON UPDATECURRENT_TIMESTAMP | Ngày cập nhật
+
+--- Table 40 ---
+Tên cột | Kiểu dữ liệu | Ràng buộc | Mô tả
+image_id | BIGINT | PK,AUTO_INCREMENT | Mã ảnh tự tăng
+product_id | BIGINT | NOT NULL, FK | Liên kết với sản phẩm
+image_url | VARCHAR(255) | NOT NULL | Đường dẫn tới ảnh sảnphẩm
+
+--- Table 41 ---
+Tên cột | Thuộc tính | Ràng buộc | Mô tả
+category_id | BIGINT | PK, NOT NULL, AUTO_INCREMENT | Mã danhmục (khóachính)
+category_name | VARCHAR(100) | NOT NULL | Tên danhmục
+
+--- Table 42 ---
+slug | VARCHAR(150) | NOT NULL,UNIQUE INDEX | Đường dẫn
+description | TEXT | NULL | Mô tả
+
+--- Table 43 ---
+Tên cột | Thuộc tính | Ràng buộc | Mô tả
+brand_id | BIGINT | PK, NOT NULL,AUTO_INCREMENT | Mã thươnghiệu
+brand_name | VARCHAR(100) | NOT NULL | Tên thươnghiệu
+slug | VARCHAR(150) | NULL | Đường dẫn
+logo | VARCHAR(255) | NULL | Logo thươnghiệu
+description | TEXT | NULL | Mô tả thươnghiệu
+
+--- Table 44 ---
+Tên cột | Kiểu dữ liệu | Ràng buộc | Mô tả
+order_id | INT | PRIMARY KEY | Mã đơn hàng
+user_id | BIGINT | NOT NULL | ID ngườidùng đặt hàng
+order_code | VARCHAR(30) | NULL | Mã đơn hànghiển thị
+recipient_name | VARCHAR(100) | NOT NULL | Tên ngườinhận
+recipient_phone | VARCHAR(15) | NOT NULL | SĐT ngườinhận
+
+--- Table 45 ---
+total_amount | DECIMAL(12,2) | NOT NULL | Tổng tiền đơnhàng
+payment_method | VARCHAR(20) | NOT NULL,DEFAULT 'cash' | Phương thứcthanh toán
+payment_status | VARCHAR(20) | DEFAULT'pending' | Trạng tháithanh toán
+order_status | VARCHAR(20) | DEFAULT'pending' | Trạng thái đơn hàng
+address_id | VARCHAR(100) | NULL | ID địa chỉgiao hàng
+shipping_address_line | VARCHAR(255) | NULL | Địa chỉ chi tiết giao hàng
+shipping_fee | DECIMAL(10,2) | NULL | Phí vận chuyển
+discount_amount | INT(11) | DEFAULT 0 | Tiền giảm giá
+coupon_code | VARCHAR(50) | NULL | Mã giảm giá (nếu có)
+created_at | DATETIME | DEFAULTCURRENT_TIMES TAMP | Ngày tạo đơnhàng
+updated_at | DATETIME | DEFAULT CURRENT_TIMES TAMP ON UPDATE CURRENT_TIMESTAMP | Ngày cập nhật đơn
+
+--- Table 46 ---
+Tên cột | Kiểu dữ liệu | Ràng buộc | Mô tả
+order_detail_id | INT | PRIMARY KEY, NOT NULL,AUTO_INCREMENT | Mã chi tiết đơn hàng(khóa chính)
+order_id | INT | NOT NULL | Mã đơn hàng
+product_id | BIGINT | NOT NULL | Mã sản phẩm
+quantity | INT | NOT NULL | Số lượng sản phẩm trongđơn hàng
+price | DECIMAL | NOT NULL | Giá tại thời điểm đặthàng
+
+--- Table 47 ---
+Tên cột | Kiểu dữliệu | Ràng buộc | Mô tả
+favorite_id | BIGINT | PRIMARY KEY, AUTO_INCREMENT | Mã dòng yêu thích (khóachính)
+user_id | BIGINT | NOT NULL | Người dùng nàoyêu thích sản phẩm
+product_id | BIGINT | NOT NULL | Mã sản phẩmđược yêu thích
+
+--- Table 48 ---
+Tên cột | Kiểu dữ liệu | Ràng buộc | Mô tả
+review_id | BIGINT | PK, AUTO_INCREMENT | Mã đánh giá(khóa chính)
+user_id | BIGINT | FK → users(user_id), NOTNULL | Khách hàng đánh giá (khóa ngoại liên kết bảngusers)
+product_id | BIGINT | FK → products(product_id),NOT NULL | Sản phẩm được đánh giá (khóa ngoại liên kếtbảng products)
+rating | INT | NOT NULL, CHECK (ratingBETWEEN 1 AND 5) | Điểm đánh giá(1–5 sao)
+comment | TEXT | NULL | Nội dung bìnhluận
+created_at | TIMESTAMP | DEFAULTCURRENT_TIMESTAMP | Ngày đánh giá
+
+--- Table 49 ---
+Tên cột | Kiểu dữ liệu | Ràng buộc | Mô tả
+post_id | BIGINT | PRIMARY KEY,AUTO_INCREMENT | Mã bài viết (khóachính)
+title | VARCHAR(255) | NOT NULL | Tiêu đề bài viết
+content | TEXT | NOT NULL | Nội dung chi tiết
+thumbnail | VARCHAR(255) | NULL | Ảnh đại diện bàiviết
+author_id | INT | NOT NULL | Mã người viết
+
+--- Table 50 ---
+slug | VARCHAR(255) | NOT NULL, UNIQUE | Đường dẫn
+created_at | DATETIME | NOT NULL, DEFAULTCURRENT_TIMESTAMP | Thời điểm tạo
+updated_at | DATETIME | DEFAULT NULL | Thời điểm cậpnhật gần nhất
+
+--- Table 51 ---
+Tên Cột | Kiểu Dữ Liệu | Ràng Buộc | Mô Tả
+code_id | BIGINT | PRIMARY KEY,AUTO_INCREMENT | ID tự tăng,khóa chính
+code | VARCHAR(50) | UNIQUE, NOT NULL | Mã giảm giá
+description | TEXT | NULL | Mô tả mã giảmgiá
+discount_percent | DECIMAL(5,2) | NULL | % giảm giá
+discount_amount | DECIMAL(10,2) | NULL | Giảm giá theosố tiền (VND)
+start_date | DATETIME | NOT NULL | Ngày bắt đầuhiệu lực
+end_date | DATETIME | NOT NULL | Ngày hết hạn
+
+--- Table 52 ---
+Tên Cột | Kiểu Dữ Liệu | Ràng Buộc | Mô Tả
+cart_id | INT(11) | PRIMARY KEY,AUTO_INCREMENT | Mã giỏ hàng
+user_id | BIGINTUNSIGNED | FOREIGN KEY →users(user_id) | Mã ngườidùng
+product_id | BIGINT(20) | FOREIGN KEY →products(product_id) | Mã sản phẩm
+quantity | INT(11) | NOT NULL, DEFAULT 1 | Số lượng sảnphẩm
+
+--- Table 53 ---
+Tên Cột | Kiểu Dữ Liệu | Ràng Buộc | Mô Tả
+id | BIGINT | PRIMARY KEY,AUTO_INCREMENT | Mã liên hệ
+name | VARCHAR(255) | NULL | Tên ngườidùng
+phone | VARCHAR(20) | NOT NULL | Mã sản phẩm
+email | TEXT | NOT NULL | Email ngườidùng
+message | TIMESTAMP | NOT NULL | Nội dung liên hệ
+status | VARCHAR(20) | NOT NULL | Trạng thái
+
+--- Table 54 ---
+Tên Cột | Kiểu Dữ Liệu | Ràng Buộc | Mô Tả
+id | BIGINT | PRIMARY KEY,AUTO_INCREMENT | Mã OTP
+email | VARCHAR(255) | NOT NULL, UNIQUE | Email ngườinhận mã
+otp | VARCHAR(10) | NOT NULL | Mã xác thựcOTP
+expires_at | TIMESTAMP | NOT NULL | Thời điểmOTP hết hạn
+verified | BOOLEAN | NOT NULL, DEFAULT FALSE | Đã xác thựcOTP haychưa
+created_at | TIMESTAMP | NOT NULL, DEFAULTCURRENT_TIMESTAMP | Thời điểmtạo OTP
+
+--- Table 55 ---
+Thuộc tính | Kiểm thử
+Email hợp lệ, chưa tồn tại | Nhập email đúng định dạng và chưa đăng ký → Hệ thống gửi mã OTP đếnemail → Hiển thị form nhập OTP
+Email sai định dạng | Nhập email không đúng chuẩn (vd: abc@, abc.com) → Hiển thị thông báo“Email không hợp lệ”
+Email đã tồn tại | Nhập email đã được đăng ký → Hiển thị thông báo “Email này đã đượcđăng kí và xác minh”
+
+--- Table 56 ---
+OTP đúng và trong thời hạn | Nhập OTP chính xác trong thời gian quy định → Chuyển sang bước nhậpthông tin cá nhân
+OTP sai | Nhập OTP không trùng với mã đã gửi→ Hiển thị thông báo “Mã OTP không chính xác”
+OTP hết hạn | Nhập OTP đúng nhưng quá thời gianhiệu lực → Hiển thị thông báo “Mã OTP đã hết hạn” và nút gửi lại mã
+Không nhập OTP | Để trống trường OTP → Hiển thịthông báo yêu cầu nhập OTP
+Gửi lại mã OTP | Nhấn nút gửi lại mã → Hệ thống gửi OTP mới và hiển thị thông báo thành công. chuyển sang phần nhập thông tinngười dùng.
+Thông tin hợp lệ | Nhập đầy đủ họ tên, mật khẩu, xác nhận mật khẩu trùng khớp → Đăng kýthành công
+Thiếu thông tin bắt buộc | Bỏ trống 1 hoặc nhiều trường → Hiểnthị thông báo yêu cầu nhập đầy đủ
+Mật khẩu quá ngắn | Nhập mật khẩu ít hơn số ký tự tối thiểu (vd: < 6 ký tự) → Hiển thị thôngbáo “Mật khẩu quá ngắn”
+Mật khẩu xác nhận không trùng | Nhập mật khẩu và xác nhận mật khẩu khác nhau → Hiển thị thông báo “Mậtkhẩu không khớp”
+
+--- Table 57 ---
+Thuộc tính | Kiểm thử
+Email | Không được để trống, đúng định dạng email, email tồn tại trên hệthống.
+Mật khẩu | Không để trống, ít nhất 6 ký tự, khớp với tài khoản đã đăng ký trên hệthống.
+
+--- Table 58 ---
+Thuộc tính | Kiểm thử
+Sản phẩm còn hàng | Nhấn “Thêm vào giỏ hàng” → Sản phẩm được thêm, hiện thông báothành công
+Sản phẩm hết hàng | Nhấn “Thêm vào giỏ hàng” → Hiện thông báo lỗi: “Sản phẩm đã hếthàng”
+Sản phẩm đã có | Nhấn “Thêm vào giỏ hàng” với sản phẩm đã có → Tăng số lượng tronggiỏ
+Người dùng chưa đăng nhập | Nhấn “Thêm vào giỏ hàng” → Hiểnthị yêu cầu đăng nhập
+
+--- Table 59 ---
+Thuộc tính | Kiểm thử
+Sản phẩm chưa có trong danh sách yêuthích | Nhấn “Thêm vào yêu thích” → Sản phẩm được thêm, hiện thông báothành công
+
+--- Table 60 ---
+Sản phẩm đã có trong danh sách yêuthích | Nhấn “Thêm vào yêu thích” với sản phẩm đã có → Hiện thông báo “Sản phẩm đã có trong danh sách yêuthích”.
+Người dùng chưa đăng nhập | Nhấn “Thêm vào yêu thích” → Hiểnthị yêu cầu đăng nhập.
+Xóa sản phẩm khỏi danh sách yêuthích | Trong danh sách yêu thích, nhấn“Xóa” → Sản phẩm biến mất khỏi danh sách, hiện thông báo thành công
+
+--- Table 61 ---
+Thuộc tính | Kiểm thử
+Tìm kiếm với từ khóa chính xác | Nhập tên sản phẩm đầy đủ (ví dụ: "Serum dưỡng sáng mắt Vitamin C")→ Hiển thị đúng sản phẩm khớp100% với từ khóa
+Tìm kiếm với từ khóa một phần | Nhập từ khóa không đầy đủ (ví dụ: "sữa") → Hiển thị danh sách sảnphẩm chứa từ khóa
+
+--- Table 62 ---
+Thuộc tính | Kiểm thử
+Thanh toán khi giỏ hàng có sản phẩm | Thêm sản phẩm vào giỏ hàng → Chọn “Thanh toán” → Chuyển sang trang nhập thông tin giao hàng &phương thức thanh toán
+Thanh toán khi giỏ hàng trống | Nhấn “Thanh toán” khi không có sảnphẩm → Hiển thị thông báo “Giỏ hàng của bạn đang trống”
+
+--- Table 63 ---
+Người dùng chưa đăng nhập | Nhấn “Thanh toán” khi chưa đăngnhập → Hệ thống yêu cầu đăng nhập
+Nhập thông tin giao hàng hợp lệ | Nhập đầy đủ Họ tên, Số điện thoại, Địa chỉ, Email hợp lệ → Cho phép sang bước chọn phương thức thanhtoán
+Thếu thông tin giao hàng | Bỏ trống một hoặc nhiều trường bắtbuộc → Hiển thị thông báo lỗi yêu cầu nhập đầy đủ
+Số điện thoại/email không hợp lệ | Nhập sai định dạng (ví dụ: “abc” choSĐT) → Hiển thị thông báo lỗi
+Chọn thanh toán COD | Hoàn tất thanh toán với phương thức COD → Hiển thị thông báo đặt hàng thành công, đơn hàng ở trạng thái“Chờ xác nhận”
+Chọn thanh toán qua MoMo/VNPAYthành công | Hoàn tất giao dịch → Hiển thị thông báo đặt hàng thành công, trạng tháithanh toán là “paid”
+Thanh toán qua VNPAY thất bại/hủy giao dịch | Hệ thống hiển thị thông báo lỗi hoặcquay về giỏ hàng để người dùng chọn phương thức khác
+Số tiền thanh toán đúng | Kiểm tra tổng tiền hiển thị trongbước thanh toán bằng với tổng tiền trong giỏ hàng
+Mã giảm giá hợp lệ | Nhập mã giảm giá còn hạn → Hệthống trừ tiền chính xác
+Mã giảm giá không hợp lệ/hết hạn | Không trừ tiền
+
+--- Table 64 ---
+Thuộc tính | Xem | Thêm | Sửa | Xóa
+ID Ngườidùng | Hiển thị danh sách người dùng, thanh tìmkiếm | Tự động tạo | Không chophép sửa | Xóa ngườidùng
+Tên Ngườidùng |  | Không được để trống | Hiển thị dữ liệu đã lưu và không đểtrống | 
+Email |  | Không được để trống, đúng định dạng email. | Hiển thị dữ liệu đã lưu và đúng địnhdạng email | 
+Số điện thoại |  | Không để trống, nhập số. | Hiển thị dữ liệu đã lưu và không đểtrống | 
+Vai trò |  | Chọn mục(Admin/Customer) | Hiển thị dữ liệu đã lưuvà chọn mục | 
+Trạng thái |  | Chọn mục (Hoạt động/Không hoạtđộng) | Hiển thị dữ liệu đã lưuvà chọn mục | 
+
+--- Table 65 ---
+Thuộc tính | Xem | Thêm | Sửa | Xóa
+ID | Hiển thị danh mục sản phẩm, thanh tìm kiếm | Tự động tạo | Không chophép sửa | Xóa danhmục
+Danh mục |  | Không để trống | Hiển thị dữ liệu đã lưu và không đểtrống | 
+Slug |  | Không để trống, không chứa khoảng trắng, đúng định dạngURL | Hiển thị dữ liệu đã lưu và đúng định dạng URL | 
+Mô tả |  | Có thể để trống hoặc nhập mô tảchi tiết | Hiển thị dữ liệu đã lưu | 
+
+--- Table 66 ---
+Thuộc tính | Xem | Thêm | Sửa | Xóa
+Mã Voucher | Hiển thị danh sách mã giảm giá, thanh tìm kiếm | Mã voucher,tên( mô tả), loại giảm giá, giá trị, ngày hiệu lực, ngày hếthạn | Không chophép sửa | Xóa danhmục
+
+--- Table 67 ---
+Tên Voucher |  | Không để trống | Hiển thị danh sách mã giảmgiá | 
+Giá trị |  | Chọn giá trị phần trăm, hoặc theo sốtiền (VNĐ) | Hiển thị giá trị trong danh sách | 
+Ngày hết hạn |  | Hiển thị từ ngày bắt đầu cho đến hết hạn sử dụng | Gia hạn ngày sử dụng cho mã giảm giá hoặc hết hạn sửdụng | 
+Trạng thái |  | Hiển thị trạng thái hoạt động/ chưa hoạt động, hết hạn | Hiển thị trạng thái trong ngày/tháng/nă m đến ngày/tháng/năm hết hạn | 
+
+--- Table 68 ---
+Thuộc tính | Xem | Thêm | Sửa | Xoá
+Tên sảnphẩm | Hiển thị danh sách, thanh tìm kiếm | Không đểtrống | Hiển thị dữ liệu đã lưuvà không để trống | Xoá sản phẩm
+Mô tả ngắn |  | Không đểtrống | Hiển thị dữ liệu đã lưuvà không để trống | 
+Mô tả dài |  | Không đểtrống | Hiển thị dữ liệu đã lưuvà không để trống | 
+Thành phần |  | Không đểtrống | Hiển thị dữ liệu đã lưuvà không để trống | 
+
+--- Table 69 ---
+Hướng dẫn |  | Không đểtrống | Hiển thị dữ liệu đã lưuvà không để trống | 
+Giá |  | Không để trống, nhậpsố | Không để trống, nhập số hợp lệ | 
+Số lượng |  | Không để trống, nhậpsố | Không để trống, nhập số hợp lệ | 
+Ảnh |  | Tải file lên, có thể đểtrống | Tải file | 
+Danh mục |  | Chọn mục | Chọn từ danh sách cósẵn | 
+Thương hiệu |  | Chọn mục | Chọn từ danh sách có sẵn | 
+
+--- Table 70 ---
+Thuộc tính | Xem | Thêm | Sửa | Xoá
+ID Yêu thích | Hiển thị danh sách, thanh tìm kiếm | Tự sinh | Không cho sửa | Xoá mục sản phẩm yêu thích
+ID Ngườidùng |  | Không để trống, nhập số | Hiển thị dữ liệu đã lưu vàkhông để trống | 
+ID Sản phẩm |  | Không để trống, nhập số | Hiển thị dữ liệu đã lưu vàkhông để trống | 
+Tên sản phẩm |  | Không để trống | Hiển thị dữ liệu đã lưu vàkhông để trống | 
+
+--- Table 71 ---
+Giá sản phẩm |  | Không để trống, nhập số | Hiển thị dữ liệu đã lưu vàkhông để trống | 
+
+--- Table 72 ---
+Thuộc tính | Xem | Thêm | Sửa | Xóa
+ID Bài viết | Hiển thị danh sách bài viết, thanh tìm kiếm | Tự động tạo | Không chosửa | Xóa bài viết
+Tiêu đề |  | Không để trống | Hiển thị dữ liệu đã lưu và không đểtrống | 
+Slug |  | Không để trống, không trùng | Hiển thị dữ liệu đã lưu, không để trống, khôngtrùng | 
+ID Tác giả |  | Không để trống, nhập số | Hiển thị dữ liệu đã lưu và không đểtrống | 
+Ngày tạo |  | Tự động tạo hoặc nhập đúng định dạng | Hiển thị dữ liệu đã lưu, đúng địnhdạng | 
+Ảnh |  | Không để trống,định dạng hợp lệ | Tải file | 
+
+--- Table 73 ---
+Thuộc tính | Xem | Thêm | Sửa | Xóa
+ID Đánh giá | Hiển thị danh sách đánh giá, thanh tìm kiếm | Tự sinh | Không cho sửa | Xóa mục
+Sản phẩm |  | Không để trống | Hiển thị dữ liệuđã lưu và không để trống | 
+Khách hàng |  | Không để trống | Hiển thị dữ liệuđã lưu và không để trống | 
+Đánh giá(sao) |  | Không để trống, nhập giá trị hợplệ (1-5) | Hiển thị dữ liệuđã lưu và không để trống | 
+Bình luận |  | Có thể để trống | Hiển thị dữ liệuđã lưu | 
+Ngày |  | Tự động tạo hoặc nhập đúng địnhdạng | Hiển thị dữ liệuđã lưu, đúng định dạng | 
+
+--- Table 74 ---
+Thuộc tính | Xem | Thêm | Sửa | Xoá
+Mã đơn | Hiển thị | Tự động sinh | Không cho sửa hoặc | 
+hàng | danh sách, | (không nhập | hiển thị thông tin đã | 
+ | cho phép tìm | tay) | lưu | 
+ | kiếm, sắp |  |  | Xoá đơn
+ | xếp |  |  | hàng
+Người nhận | Hiển thị | Không để | Hiển thị dữ liệu đã | 
+ |  | trống, chỉ nhập | lưu, không để trống | 
+ |  | chữ |  | 
+
+--- Table 75 ---
+SĐT | Hiển thị | Không để trống, nhậpđúng 10 số | Hiển thị dữ liệu đã lưu, đúng định dạngsố | 
+Tổng tiền | Hiển thị, đúng định dạng tiền tệVNĐ | Không để trống, nhập số | Hiển thị dữ liệu đã lưu, nhập số | 
+Thanh toán | Hiển thị | Tự động lấy thời gian hệ thống hoặcnhập tay | Hiển thị dữ liệu đã lưu, cho phép chọn lại | 
+Trạng thái | Hiển thị | Chọn từ danh sách (mới, đang xử lý, hoànthành...) | Cập nhật trạng thái | 
+Ngày đặthàng | Hiển thị | Tự động tính | Tự động cập nhật khithay đổi sản phẩm | 
+Địa chỉ giaohàng | Hiển thị | Không để trống | Hiển thị dữ liệu đãlưu, không để trống | 
+
+--- Table 76 ---
+Thuộc tính | Xem | Thêm | Sửa | Xoá
+ID | Hiển thị danh | Tự động sinh | Không cho | 
+ | sách thương hiệu, thanh tìmkiếm | (không nhậptay) | sửa | Xoá theo ID
+Tên thương |  | Không để | Hiển thị dữ | 
+hiệu |  | trống, nhập chữ | liệu đã lưu, | 
+
+--- Table 77 ---
+ |  |  | không để | 
+ |  |  | trống | 
+Slug |  | Tự động sinh | Hiển thị dữ | 
+ |  | từ tên hoặc | liệu đã lưu, | 
+ |  | nhập tay, | không để | 
+ |  | không để trống | trống | 
+Logo |  | Chọn và tải file | Hiển thị dữ | 
+ |  | ảnh, định dạng | liệu đã lưu, | 
+ |  | hợp lệ (jpg, | cho thay ảnh | 
+ |  | png…) | mới | 
+Mô tả |  | Không để trống | Hiển thị dữ | 
+ |  |  | liệu đã lưu, | 
+ |  |  | không để | 
+ |  |  | trống | 
+
+--- Table 78 ---
+Nội dung kiểmlỗi | Giá trị | Giá trị mongmuốn | Giá trịthực tế | Trạng thái
+Lọc theo từ ngày – đến ngày | Dữ liệu doanh thu trong ngày/tháng/năm | Đơn hàng mới 0 đơn Tổng doanh thu: 0đ | Đơn hàng mới 0 đơn Tổng doanh thu: 0đ | Thành công
+Có đơn hàngtrong 7 ngày | Đơn hàng: 10Doanh thu: 5triệu | Đơn hàng: 10 đơnDoanh thu: 5triệu | Đơn hàng: 10 đơn Doanh thu:5 triệu | Thành công
+Sản phẩm mới | Dữ liệu sản phẩm mới 8 sảnphẩm | Dữ liệu sản phẩm mới 8sản phẩm | Dữ liệu sản phẩm mới 8sản phẩm | Thành công
+
+--- Table 79 ---
+Biểu đồ doanh thu theo từ ngày – đến ngày | Có dữ liệu đơn hàng, doanh thu, và sảnphẩm | Hiển thị biều đồ đường cho sản phẩm | Hiển thị biểu đồ đường chosản phẩm | Thành công
+ | Không dữ liệu đơn hàng, sản phẩm, doanhthu | Hiển thị “không có dữ liệu” | Hiển thị “không có dữ liệu” | Thành công
+Sản phẩm bán chạy từ ngày đến ngày | Có dữ liệu sản phẩm bán chạy là 5 sản phẩm | Hiển thị sản phẩm bán chạy 5 sảnphẩm | Hiển thị sản phẩm và số lần bán | Thành công
+Đánh giá sản phẩm | Có dữ liệu đánh giá sản phẩm ưa chuộng | Hiển thị sản phẩm được đánh giá | Hiển thị sản phẩm đánh giá nhiềunhất | Thành công
+

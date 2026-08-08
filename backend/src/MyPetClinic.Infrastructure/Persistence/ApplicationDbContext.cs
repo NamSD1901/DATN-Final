@@ -62,6 +62,11 @@ namespace MyPetClinic.Infrastructure.Persistence
         public DbSet<DoctorScheduleProfile> DoctorScheduleProfiles { get; set; }
         public DbSet<ScheduleException> ScheduleExceptions { get; set; }
 
+        // Voucher Module
+        public DbSet<Offer> Offers { get; set; }
+        public DbSet<OfferService> OfferServices { get; set; }
+        public DbSet<UserOffer> UserOffers { get; set; }
+        public DbSet<OfferUsageLog> OfferUsageLogs { get; set; }
         protected override void ConfigureConventions(ModelConfigurationBuilder builder)
         {
             builder.Properties<DateTime>().HaveConversion<DateTimeUtcConverter>();
@@ -741,6 +746,84 @@ namespace MyPetClinic.Infrastructure.Persistence
 
                 entity.HasOne(d => d.Doctor).WithMany().HasForeignKey(d => d.DoctorId).OnDelete(DeleteBehavior.Cascade);
                 entity.HasOne(d => d.SubstituteDoctor).WithMany().HasForeignKey(d => d.SubstituteDoctorId).OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // offers
+            modelBuilder.Entity<Offer>(entity =>
+            {
+                entity.ToTable("offers");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+                entity.Property(e => e.Code).HasColumnName("code").IsRequired().HasMaxLength(50);
+                entity.HasIndex(e => e.Code).IsUnique();
+                entity.Property(e => e.Name).HasColumnName("name").IsRequired().HasMaxLength(255);
+                entity.Property(e => e.Description).HasColumnName("description");
+                entity.Property(e => e.DiscountType).HasColumnName("discount_type").IsRequired().HasMaxLength(20);
+                entity.Property(e => e.DiscountValue).HasColumnName("discount_value").HasColumnType("decimal(18,2)");
+                entity.Property(e => e.MaxDiscount).HasColumnName("max_discount").HasColumnType("decimal(18,2)");
+                entity.Property(e => e.MinOrderValue).HasColumnName("min_order_value").HasColumnType("decimal(18,2)").HasDefaultValue(0);
+                entity.Property(e => e.TotalQuantity).HasColumnName("total_quantity");
+                entity.Property(e => e.UsedQuantity).HasColumnName("used_quantity").HasDefaultValue(0);
+                entity.Property(e => e.UsageLimitPerUser).HasColumnName("usage_limit_per_user").HasDefaultValue(1);
+                entity.Property(e => e.StartDate).HasColumnName("start_date");
+                entity.Property(e => e.EndDate).HasColumnName("end_date");
+                entity.Property(e => e.Status).HasColumnName("status").HasDefaultValue("ACTIVE").HasMaxLength(20);
+                entity.Property(e => e.IsPublic).HasColumnName("is_public").HasDefaultValue(true);
+                
+                entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+                entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+                
+                // Concurrency token for PostgreSQL xmin approach or Entity Framework RowVersion
+                entity.Property(e => e.RowVersion).HasColumnName("xmin").HasColumnType("xid").ValueGeneratedOnAddOrUpdate().IsConcurrencyToken();
+
+                entity.HasOne(d => d.Creator).WithMany().HasForeignKey(d => d.CreatedBy).OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // offer_services
+            modelBuilder.Entity<OfferService>(entity =>
+            {
+                entity.ToTable("offer_services");
+                entity.HasKey(e => new { e.OfferId, e.ServiceId });
+                entity.Property(e => e.OfferId).HasColumnName("offer_id");
+                entity.Property(e => e.ServiceId).HasColumnName("service_id");
+
+                entity.HasOne(d => d.Offer).WithMany(p => p.OfferServices).HasForeignKey(d => d.OfferId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(d => d.Service).WithMany().HasForeignKey(d => d.ServiceId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // user_offers
+            modelBuilder.Entity<UserOffer>(entity =>
+            {
+                entity.ToTable("user_offers");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.OfferId).HasColumnName("offer_id");
+                entity.Property(e => e.CollectedAt).HasColumnName("collected_at").HasDefaultValueSql("NOW()");
+                entity.Property(e => e.IsUsed).HasColumnName("is_used").HasDefaultValue(false);
+
+                entity.HasOne(d => d.User).WithMany().HasForeignKey(d => d.UserId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(d => d.Offer).WithMany(p => p.UserOffers).HasForeignKey(d => d.OfferId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // offer_usage_logs
+            modelBuilder.Entity<OfferUsageLog>(entity =>
+            {
+                entity.ToTable("offer_usage_logs");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+                entity.Property(e => e.OfferId).HasColumnName("offer_id");
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.InvoiceId).HasColumnName("invoice_id");
+                entity.Property(e => e.DiscountApplied).HasColumnName("discount_applied").HasColumnType("decimal(18,2)");
+                entity.Property(e => e.AppliedAt).HasColumnName("applied_at").HasDefaultValueSql("NOW()");
+                entity.Property(e => e.IpAddress).HasColumnName("ip_address").HasMaxLength(50);
+                entity.Property(e => e.Status).HasColumnName("status").HasDefaultValue("APPLIED").HasMaxLength(20);
+
+                entity.HasOne(d => d.Offer).WithMany(p => p.OfferUsageLogs).HasForeignKey(d => d.OfferId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(d => d.User).WithMany().HasForeignKey(d => d.UserId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(d => d.Invoice).WithMany().HasForeignKey(d => d.InvoiceId).OnDelete(DeleteBehavior.Restrict);
             });
 
         }

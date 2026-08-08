@@ -17,7 +17,7 @@ export const useBlockTimeStore = defineStore('blockTime', {
         this.blockTimes = response.data;
       } catch (err: any) {
         this.error = err.response?.data?.message || 'Lỗi khi tải danh sách block time';
-        Swal.fire('Lỗi', this.error, 'error');
+        Swal.fire('Lỗi', this.error || 'Lỗi không xác định', 'error');
       } finally {
         this.isLoading = false;
       }
@@ -35,7 +35,7 @@ export const useBlockTimeStore = defineStore('blockTime', {
           || (errorData?.errors ? Object.values(errorData.errors).flat().join(', ') : null) 
           || err.message
           || 'Lỗi khi thêm block time';
-        Swal.fire('Lỗi', this.error, 'error');
+        Swal.fire('Lỗi', this.error || 'Lỗi không xác định', 'error');
         return false;
       } finally {
         this.isLoading = false;
@@ -54,7 +54,7 @@ export const useBlockTimeStore = defineStore('blockTime', {
           || (errorData?.errors ? Object.values(errorData.errors).flat().join(', ') : null) 
           || err.message
           || 'Lỗi khi cập nhật block time';
-        Swal.fire('Lỗi', this.error, 'error');
+        Swal.fire('Lỗi', this.error || 'Lỗi không xác định', 'error');
         return false;
       } finally {
         this.isLoading = false;
@@ -69,7 +69,7 @@ export const useBlockTimeStore = defineStore('blockTime', {
         return true;
       } catch (err: any) {
         this.error = err.response?.data?.message || 'Không thể xóa block time';
-        Swal.fire('Lỗi', this.error, 'error');
+        Swal.fire('Lỗi', this.error || 'Lỗi không xác định', 'error');
         return false;
       } finally {
         this.isLoading = false;

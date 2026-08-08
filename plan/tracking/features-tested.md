@@ -167,3 +167,15 @@ Dưới đây là nhật ký ghi nhận các tính năng đã được kiểm th
   - `SendVaccineReminders_ShouldSendEmail_OnlyWhenNextDueDateIsExactlyThreeDaysAhead`: Kiểm thử logic quét và tự động gửi email nhắc lịch tiêm chủng vắc-xin trước đúng 3 ngày, bỏ qua các mũi tiêm chưa đến hạn hoặc đã quá hạn.
 - **Trạng thái:** `✅ PASSED`
 - [x] **ReviewService**: Th�m Unit Tests cho CreateReview, UpdateReview, SoftDeleteReview
+
+---
+
+## Phase: Voucher & Promotions
+
+### 1. OfferService (Voucher Service)
+- **Tệp kiểm thử:** [OfferServiceTests.cs](file:///e:/DATN/MyPetClinic/backend/tests/MyPetClinic.Tests/OfferServiceTests.cs)
+- **Kịch bản kiểm thử:**
+  - ApplyOfferAsync_ShouldThrowError_WhenConcurrencyIssueOccurs: Ngăn chặn Race Condition, giới hạn số lượng vượt mức.
+  - ApplyOfferAsync_ShouldDecreaseTotalQuantity_WhenOfferIsApplied: Tính toán giảm giá thành công.
+  - ValidateOfferAsync_ShouldReturnError_WhenMinOrderValueNotMet: Chặn áp dụng khi chưa đủ giá trị tối thiểu.
+- **Trạng thái:** ✅ PASSED

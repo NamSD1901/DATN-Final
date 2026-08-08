@@ -184,17 +184,24 @@
                   <span class="fw-bold text-dark">{{ formatCurrency(invoice.subtotal) }}</span>
                 </div>
                 
-                <div class="d-flex justify-content-between mb-3 align-items-center">
-                  <span class="small text-muted">Giảm giá (đ):</span>
-                  <input 
-                    type="number" 
-                    v-model.number="discountAmount" 
-                    @input="recalculateTotal"
-                    class="form-control form-control-sm text-end fw-bold text-danger border-danger border-opacity-25" 
-                    style="width: 130px;"
-                  />
+                <div class="mb-3">
+                  <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" placeholder="Mã giảm giá (nếu có)" v-model="voucherCode">
+                    <button class="btn btn-outline-warning" @click="applyVoucher" :disabled="!voucherCode || loadingVoucher">
+                      <span v-if="loadingVoucher" class="spinner-border spinner-border-sm"></span>
+                      <span v-else>Áp dụng</span>
+                    </button>
+                  </div>
+                  <div v-if="voucherMessage" class="small mt-1" :class="voucherError ? 'text-danger' : 'text-success'">
+                    {{ voucherMessage }}
+                  </div>
                 </div>
 
+                <div v-if="discountAmount > 0" class="d-flex justify-content-between mb-2 small text-danger">
+                  <span>Giảm giá (Voucher):</span>
+                  <span class="fw-bold">-{{ formatCurrency(discountAmount) }}</span>
+                </div>
+                
                 <hr class="my-3">
 
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -202,56 +209,18 @@
                   <span class="fw-extrabold text-primary fs-4">{{ formatCurrency(finalTotal) }}</span>
                 </div>
 
-                <!-- Payment Method Selectors -->
-                <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;">Hình thức thanh toán</h6>
-                <div class="row g-2 mb-3">
-                  <div class="col-6">
-                    <div 
-                      class="payment-method-card p-2 text-center" 
-                      :class="{ 'active-method': paymentMethod === 'cash' }"
-                      @click="paymentMethod = 'cash'"
-                    >
-                      <i class="bi bi-cash-stack fs-4 text-success d-block mb-1"></i>
-                      <span class="small fw-bold">Tiền mặt</span>
-                    </div>
+                <!-- Cash received thối tiền -->
+                <div class="p-3 bg-white rounded-3 border mb-4 text-start">
+                  <label class="form-label small fw-bold text-success mb-1">Số tiền khách đưa (đ):</label>
+                  <input 
+                    type="number" 
+                    v-model.number="cashReceived" 
+                    class="form-control text-center fw-bold text-success fs-5 border-success mb-2" 
+                  />
+                  <div class="d-flex justify-content-between p-2 bg-success bg-opacity-10 text-success rounded fw-bold small">
+                    <span>Tiền thừa thối khách:</span>
+                    <span>{{ formatCurrency(cashChange) }}</span>
                   </div>
-                  <div class="col-6">
-                    <div 
-                      class="payment-method-card p-2 text-center" 
-                      :class="{ 'active-method': paymentMethod === 'qr' }"
-                      @click="paymentMethod = 'qr'"
-                    >
-                      <i class="bi bi-qr-code-scan fs-4 text-primary d-block mb-1"></i>
-                      <span class="small fw-bold">VietQR</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Dynamic helper content based on selected method -->
-                <div class="p-3 bg-white rounded-3 border mb-4 text-center">
-                  <!-- Cash received thối tiền -->
-                  <div v-if="paymentMethod === 'cash'" class="text-start">
-                    <label class="form-label small fw-bold text-success mb-1">Số tiền khách đưa (đ):</label>
-                    <input 
-                      type="number" 
-                      v-model.number="cashReceived" 
-                      class="form-control text-center fw-bold text-success fs-5 border-success mb-2" 
-                    />
-                    <div class="d-flex justify-content-between p-2 bg-success bg-opacity-10 text-success rounded fw-bold small">
-                      <span>Tiền thừa thối khách:</span>
-                      <span>{{ formatCurrency(cashChange) }}</span>
-                    </div>
-                  </div>
-
-                  <!-- VietQR Dynamic image -->
-                  <div v-else-if="paymentMethod === 'qr'">
-                    <p class="text-muted small mb-2">Quét mã QR để chuyển khoản nhanh:</p>
-                    <div class="qr-code-border p-2 bg-white d-inline-block shadow-sm rounded-3">
-                      <img :src="vietQrUrl" class="img-fluid" style="max-height: 160px; width: auto;" alt="VietQR" />
-                    </div>
-                    <div class="mt-2 text-primary small fw-bold"><i class="bi bi-bank me-1"></i>Vietcombank - 990123456789</div>
-                  </div>
-
                 </div>
 
                 <!-- Print Options -->
@@ -270,8 +239,8 @@
                 </div>
 
                 <!-- Action Button -->
-                <button class="btn btn-premium btn-lg w-100 rounded-pill py-2.5 fw-bold shadow-sm" @click="confirmPayment" :disabled="!printInvoiceOpt && !printMedicalRecordOpt">
-                  <i class="bi bi-printer-fill me-2"></i> Thanh Toán & In Tài Liệu
+                <button class="btn btn-premium btn-lg w-100 rounded-pill py-2.5 fw-bold shadow-sm" @click="confirmPayment">
+                  <i class="bi bi-wallet-fill me-2"></i> Thanh toán
                 </button>
               </div>
             </div>
@@ -306,6 +275,11 @@ const catalogResult = ref<any[]>([]);
 const discountAmount = ref<number>(0);
 const paymentMethod = ref<'cash' | 'qr'>('cash');
 const cashReceived = ref<number>(0);
+
+const voucherCode = ref('');
+const voucherMessage = ref('');
+const voucherError = ref(false);
+const loadingVoucher = ref(false);
 
 const printInvoiceOpt = ref<boolean>(true);
 const printMedicalRecordOpt = ref<boolean>(false);
@@ -348,11 +322,28 @@ const selectAppointment = async (apptId: number) => {
   invoice.value = null;
   catalogQuery.value = '';
   catalogResult.value = [];
+  voucherCode.value = '';
+  voucherMessage.value = '';
+  voucherError.value = false;
+  
   try {
     const res = await api.get(`/invoice/${apptId}`);
     invoice.value = res.data;
     discountAmount.value = invoice.value.discountAmount || 0;
-    cashReceived.value = invoice.value.subtotal - discountAmount.value;
+    
+    // Auto-extract voucher from Appointment note
+    try {
+      const apptRes = await api.get(`/appointment/${apptId}`);
+      if (apptRes.data?.note) {
+        const match = apptRes.data.note.match(/\[Áp dụng voucher:\s*([^\]]+)\]/i);
+        if (match) {
+          voucherCode.value = match[1].trim();
+          await applyVoucher();
+        }
+      }
+    } catch (e) { }
+
+    cashReceived.value = finalTotal.value;
   } catch (err: any) {
     console.error(err);
     Swal.fire({ 
@@ -475,6 +466,42 @@ const recalculateTotal = () => {
     discountAmount.value = invoice.value.subtotal;
   }
   cashReceived.value = finalTotal.value;
+  
+  // Re-validate voucher if items changed
+  if (voucherCode.value && !voucherError.value) {
+    applyVoucher();
+  }
+};
+
+const applyVoucher = async () => {
+  if (!voucherCode.value || !invoice.value) return;
+  loadingVoucher.value = true;
+  voucherMessage.value = 'Đang kiểm tra...';
+  voucherError.value = false;
+  try {
+    const serviceIds = invoice.value.items.filter((i: any) => i.itemType === 'service').map((i: any) => i.itemId);
+    const res = await api.post('/offers/validate', {
+      code: voucherCode.value.trim(),
+      orderAmount: invoice.value.subtotal,
+      serviceIds: serviceIds
+    });
+    
+    if (res.data.success && res.data.data.isValid) {
+      discountAmount.value = res.data.data.discountAmount;
+      voucherMessage.value = `Áp dụng thành công (-${formatCurrency(discountAmount.value)})`;
+    } else {
+      voucherError.value = true;
+      discountAmount.value = 0;
+      voucherMessage.value = res.data.data?.message || res.data.message || 'Mã giảm giá không hợp lệ.';
+    }
+  } catch (err: any) {
+    voucherError.value = true;
+    discountAmount.value = 0;
+    voucherMessage.value = err.response?.data?.message || 'Lỗi khi kiểm tra mã.';
+  } finally {
+    loadingVoucher.value = false;
+    cashReceived.value = finalTotal.value;
+  }
 };
 
 // Process transaction
@@ -501,7 +528,8 @@ const confirmPayment = async () => {
   try {
     const res = await api.post(`/invoice/${invoice.value.id}/process-payment`, {
       paymentMethod: paymentMethod.value,
-      discountAmount: discountAmount.value
+      discountAmount: discountAmount.value,
+      voucherCode: voucherCode.value ? voucherCode.value.trim() : null
     });
     
     if (res.data.success) {
@@ -651,7 +679,7 @@ const printInvoiceWindow = (inv: any, appt: any, soap: any, optInvoice: boolean,
 
           <div class="clinical-item" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
             <div class="clinical-label">Kết luận chẩn đoán:</div>
-            <div class="clinical-text" style="font-weight:600; color:#b91c1c; font-size: 1rem;">${appt?.note || '<span style="color:#94a3b8;font-weight:400;font-style:italic;">Đang theo dõi thêm</span>'}</div>
+            <div class="clinical-text" style="font-weight:600; color:#b91c1c; font-size: 1rem;">${(appt?.note ? appt.note.replace(/\[(Á|A)p d(ụ|\?)ng voucher:\s*.*?\]/i, '').trim() : '') || '<span style="color:#94a3b8;font-weight:400;font-style:italic;">Đang theo dõi thêm</span>'}</div>
           </div>
           `}
         </div>

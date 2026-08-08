@@ -11,7 +11,7 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<InvoiceDto> AddInvoiceItemAsync(long invoiceId, string itemType, long itemId, int quantity);
         Task<InvoiceDto> RemoveInvoiceItemAsync(long itemId);
         Task<InvoiceDto> UpdateInvoiceItemQtyAsync(long itemId, int quantity);
-        Task<bool> ProcessPaymentAsync(long invoiceId, string paymentMethod, decimal discountAmount);
+        Task<bool> ProcessPaymentAsync(long invoiceId, string paymentMethod, decimal discountAmount, string? voucherCode = null);
         Task<IEnumerable<InvoiceCatalogItemDto>> GetCatalogItemsAsync(string query);
         Task<IEnumerable<InvoiceDto>> GetCustomerInvoicesAsync(System.Guid customerId);
     }
