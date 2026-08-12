@@ -255,64 +255,77 @@
                 <div v-if="filteredMedicalRecords.length === 0" class="text-center py-5 text-muted glass-card border">
                   Không tìm thấy bệnh án nào.
                 </div>
-                <div v-else class="timeline-container position-relative ps-4 ms-2 mt-4">
-                  <!-- Vertical Line -->
-                  <div class="position-absolute h-100" style="left: 0; top: 0; width: 2px; background-color: rgba(245, 158, 11, 0.3);"></div>
+                <div v-else>
+                  <div class="timeline-container position-relative ps-4 ms-2 mt-4 mb-4">
+                    <!-- Vertical Line -->
+                    <div class="position-absolute h-100" style="left: 0; top: 0; width: 2px; background-color: rgba(245, 158, 11, 0.3);"></div>
 
-                  <div v-for="(rec, index) in filteredMedicalRecords" :key="rec.id" class="position-relative mb-4">
-                    <!-- Dot -->
-                    <div class="position-absolute rounded-circle" :style="`width: 14px; height: 14px; left: -30px; top: 24px; background-color: ${rec.followUpDate ? 'var(--primary-gold)' : '#0284c7'}; border: 3px solid white; box-shadow: 0 0 0 1px ${rec.followUpDate ? 'var(--primary-gold)' : '#0284c7'};`"></div>
-                    
-                    <!-- Card -->
-                    <div class="glass-card overflow-hidden" :style="`border-left: 4px solid ${rec.followUpDate ? 'var(--primary-gold)' : '#0284c7'} !important;`">
-                      <div class="panel-body p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                           <div class="d-flex align-items-center flex-wrap gap-3">
-                             <h5 class="fw-bold mb-0 text-dark">{{ rec.serviceName || 'Khám tổng quát' }}</h5>
-                             <span class="badge rounded-pill px-3 py-1" :class="rec.followUpDate ? 'bg-warning-subtle text-warning' : 'bg-info-subtle text-info'" style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;">
-                               {{ rec.followUpDate ? 'CẦN TÁI KHÁM' : 'ĐÃ HOÀN THÀNH' }}
-                             </span>
-                           </div>
-                           <div class="fw-bold text-dark" style="font-size: 1.1rem;">{{ formatDateShort(rec.visitDate || rec.createdAt) }}</div>
-                        </div>
-                        
-                        <div class="d-flex gap-4 small text-muted mb-4 fw-medium">
-                          <div class="d-flex align-items-center"><i class="bi bi-calendar3 me-1"></i> Ngày khám: {{ formatDate(rec.visitDate || rec.createdAt) }}</div>
-                          <div class="d-flex align-items-center" v-if="rec.doctorName"><i class="bi bi-person-badge me-1"></i> Bác sĩ: {{ rec.doctorName }}</div>
-                        </div>
-
-                        <!-- SUMMARY (Compact) -->
-                        <div class="d-flex flex-column gap-2 mb-3">
-                          <div class="d-flex align-items-center text-dark small">
-                            <i class="bi bi-clipboard2-pulse text-warning me-2 fs-6"></i>
-                            <span class="fw-bold me-1">Chẩn đoán:</span> 
-                            <span class="text-truncate" style="max-width: 250px;" :title="rec.diagnosis">{{ rec.diagnosis || 'Chưa có' }}</span>
+                    <div v-for="(rec, index) in paginatedMedicalRecords" :key="rec.id" class="position-relative mb-4">
+                      <!-- Dot -->
+                      <div class="position-absolute rounded-circle" :style="`width: 14px; height: 14px; left: -30px; top: 24px; background-color: ${rec.followUpDate ? 'var(--primary-gold)' : '#0284c7'}; border: 3px solid white; box-shadow: 0 0 0 1px ${rec.followUpDate ? 'var(--primary-gold)' : '#0284c7'};`"></div>
+                      
+                      <!-- Card -->
+                      <div class="glass-card overflow-hidden" :style="`border-left: 4px solid ${rec.followUpDate ? 'var(--primary-gold)' : '#0284c7'} !important;`">
+                        <div class="panel-body p-4">
+                          <div class="d-flex justify-content-between align-items-start mb-2">
+                             <div class="d-flex align-items-center flex-wrap gap-3">
+                               <h5 class="fw-bold mb-0 text-dark">{{ rec.serviceName || 'Khám tổng quát' }}</h5>
+                               <span class="badge rounded-pill px-3 py-1" :class="rec.followUpDate ? 'bg-warning-subtle text-warning' : 'bg-info-subtle text-info'" style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;">
+                                 {{ rec.followUpDate ? 'CẦN TÁI KHÁM' : 'ĐÃ HOÀN THÀNH' }}
+                               </span>
+                             </div>
+                             <div class="fw-bold text-dark" style="font-size: 1.1rem;">{{ formatDateShort(rec.visitDate || rec.createdAt) }}</div>
                           </div>
                           
-                          <div class="d-flex align-items-center gap-3 small text-muted">
-                            <span v-if="rec.prescribedMedicines && rec.prescribedMedicines.length > 0">
-                              <i class="bi bi-capsule-pill text-success me-1"></i> Kê {{ rec.prescribedMedicines.length }} loại thuốc
-                            </span>
-                            <span v-else>
-                              <i class="bi bi-capsule-pill text-secondary me-1"></i> Không thuốc
-                            </span>
-                            
-                            <span v-if="rec.clinicalSigns">
-                              <i class="bi bi-activity text-info me-1"></i> Dấu hiệu lâm sàng
-                            </span>
+                          <div class="d-flex gap-4 small text-muted mb-4 fw-medium">
+                            <div class="d-flex align-items-center"><i class="bi bi-calendar3 me-1"></i> Ngày khám: {{ formatDate(rec.visitDate || rec.createdAt) }}</div>
+                            <div class="d-flex align-items-center" v-if="rec.doctorName"><i class="bi bi-person-badge me-1"></i> Bác sĩ: {{ rec.doctorName }}</div>
                           </div>
-                        </div>
 
-                        <div class="d-flex gap-2 flex-wrap mt-2">
-                          <button v-if="rec.followUpDate" class="btn-premium px-3 py-1 hover-arrow" style="font-size: 0.8rem;">
-                            Tái khám <i class="bi bi-arrow-right"></i>
-                          </button>
-                          <button @click="openMedicalRecordModal(rec)" class="btn btn-sm btn-outline-secondary px-3 py-1 rounded-pill fw-bold" style="font-size: 0.8rem;">
-                            <i class="bi bi-eye"></i> Chi tiết
-                          </button>
+                          <!-- SUMMARY (Compact) -->
+                          <div class="d-flex flex-column gap-2 mb-3">
+                            <div class="d-flex align-items-center text-dark small">
+                              <i class="bi bi-clipboard2-pulse text-warning me-2 fs-6"></i>
+                              <span class="fw-bold me-1">Chẩn đoán:</span> 
+                              <span class="text-truncate" style="max-width: 250px;" :title="rec.diagnosis">{{ rec.diagnosis || 'Chưa có' }}</span>
+                            </div>
+                            
+                            <div class="d-flex align-items-center gap-3 small text-muted">
+                              <span v-if="rec.prescribedMedicines && rec.prescribedMedicines.length > 0">
+                                <i class="bi bi-capsule-pill text-success me-1"></i> Kê {{ rec.prescribedMedicines.length }} loại thuốc
+                              </span>
+                              <span v-else>
+                                <i class="bi bi-capsule-pill text-secondary me-1"></i> Không thuốc
+                              </span>
+                              
+                              <span v-if="rec.clinicalSigns">
+                                <i class="bi bi-activity text-info me-1"></i> Dấu hiệu lâm sàng
+                              </span>
+                            </div>
+                          </div>
+
+                          <div class="d-flex gap-2 flex-wrap mt-2">
+                            <button v-if="rec.followUpDate" class="btn-premium px-3 py-1 hover-arrow" style="font-size: 0.8rem;">
+                              Tái khám <i class="bi bi-arrow-right"></i>
+                            </button>
+                            <button @click="openMedicalRecordModal(rec)" class="btn btn-sm btn-outline-secondary px-3 py-1 rounded-pill fw-bold" style="font-size: 0.8rem;">
+                              <i class="bi bi-eye"></i> Chi tiết
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
+                  </div>
+                  
+                  <!-- Pagination controls -->
+                  <div class="d-flex justify-content-center align-items-center mt-3 gap-2" v-if="totalMedicalHistoryPages > 0">
+                    <button class="btn btn-outline-primary btn-sm rounded-circle" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;" :disabled="medicalHistoryPage === 1" @click="medicalHistoryPage--">
+                      <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <span class="text-muted small fw-bold mx-2">Trang {{ medicalHistoryPage }} / {{ totalMedicalHistoryPages }}</span>
+                    <button class="btn btn-outline-primary btn-sm rounded-circle" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;" :disabled="medicalHistoryPage === totalMedicalHistoryPages" @click="medicalHistoryPage++">
+                      <i class="bi bi-chevron-right"></i>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -547,80 +560,99 @@
                     <i class="bi bi-clock-history text-success fs-5 me-2"></i>
                     <h6 class="fw-bold mb-0 text-dark">Lịch sử tiêm chủng</h6>
                   </div>
-                  <button class="btn btn-sm btn-light text-primary fw-bold rounded-pill px-3" style="background: transparent;">
-                    <i class="bi bi-filter me-1"></i>Lọc
-                  </button>
+                  <div class="dropdown position-relative">
+                    <button class="btn btn-sm btn-light text-primary fw-bold rounded-pill px-3" type="button" @click="isVaccineFilterOpen = !isVaccineFilterOpen">
+                      <i class="bi bi-funnel me-1"></i> Lọc: {{ vaccineFilterLabel }} <i class="bi bi-chevron-down ms-1"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" :class="{ 'show': isVaccineFilterOpen }" style="position: absolute; top: 100%; right: 0; z-index: 1000;" @click="isVaccineFilterOpen = false">
+                      <li><a class="dropdown-item" href="#" @click.prevent="vaccineFilter = 'all'">Tất cả</a></li>
+                      <li><a class="dropdown-item" href="#" @click.prevent="vaccineFilter = 'hasDue'">Có hẹn tái chủng</a></li>
+                    </ul>
+                  </div>
                 </div>
 
                 <div v-if="historyVaccines.length === 0" class="p-5 text-center rounded-4 border bg-white shadow-sm">
                   <p class="text-muted mb-0">Chưa có dữ liệu tiêm phòng.</p>
                 </div>
                 
-                <div v-else class="d-flex flex-column gap-3">
-                  <div v-for="vac in historyVaccines" :key="'hist-' + vac.id" class="vaccine-card history-card p-4 rounded-4 bg-white border d-flex gap-4">
-                    <div class="vac-icon-wrap">
-                      <div class="vac-icon bg-success-subtle text-success d-flex align-items-center justify-content-center rounded-circle" style="width: 48px; height: 48px;">
-                        <i class="bi bi-bandaid fs-4"></i>
-                      </div>
-                    </div>
-                    <div class="flex-grow-1">
-                      <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                          <h5 class="fw-bold text-dark mb-1">{{ vac.vaccineName }}</h5>
-                          <div class="small text-muted mb-3">{{ vac.reasonForVisit || vac.note || 'Mũi tiêm định kỳ' }}</div>
-                        </div>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-bold">
-                          <i class="bi bi-check-circle-fill me-1"></i>Đã tiêm
-                        </span>
-                      </div>
-                      
-                      <!-- Lịch sử tiêm chủng - Thông tin chi tiết -->
-                      <div class="p-3 bg-light rounded-3">
-                        <div class="row g-3">
-                          <div class="col-sm-6 col-md-4">
-                            <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Ngày tiêm</div>
-                            <div class="fw-medium text-dark">{{ formatDate(vac.injectionDate || vac.administeredAt || vac.createdAt) }}</div>
-                          </div>
-                          <div class="col-sm-6 col-md-4">
-                            <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Bác sĩ phụ trách</div>
-                            <div class="fw-medium text-dark">{{ vac.doctorName || 'Bs. Thú y' }}</div>
-                          </div>
-                          <div class="col-sm-6 col-md-4" v-if="vac.batchNumber">
-                            <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Số lô</div>
-                            <div class="fw-medium text-dark">{{ vac.batchNumber }}</div>
-                          </div>
-                          <div class="col-sm-6 col-md-4" v-if="vac.route">
-                            <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Đường tiêm</div>
-                            <div class="fw-medium text-dark">{{ vac.route }}</div>
-                          </div>
-                          <div class="col-sm-6 col-md-4" v-if="vac.injectionSite">
-                            <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Vị trí tiêm</div>
-                            <div class="fw-medium text-dark">{{ vac.injectionSite }}</div>
-                          </div>
-                          <div class="col-sm-6 col-md-4" v-if="vac.nextDueDate">
-                            <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Hẹn tái chủng</div>
-                            <div class="fw-medium text-primary">{{ formatDate(vac.nextDueDate) }}</div>
-                          </div>
+                <div v-else>
+                  <div class="d-flex flex-column gap-3 mb-4">
+                    <div v-for="vac in paginatedHistoryVaccines" :key="'hist-' + vac.id" class="vaccine-card history-card p-4 rounded-4 bg-white border d-flex gap-4">
+                      <div class="vac-icon-wrap">
+                        <div class="vac-icon bg-success-subtle text-success d-flex align-items-center justify-content-center rounded-circle" style="width: 48px; height: 48px;">
+                          <i class="bi bi-bandaid fs-4"></i>
                         </div>
                       </div>
+                      <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                          <div>
+                            <h5 class="fw-bold text-dark mb-1">{{ vac.vaccineName }}</h5>
+                            <div class="small text-muted mb-3">{{ vac.reasonForVisit || vac.note || 'Mũi tiêm định kỳ' }}</div>
+                          </div>
+                          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-bold">
+                            <i class="bi bi-check-circle-fill me-1"></i>Đã tiêm
+                          </span>
+                        </div>
+                        
+                        <!-- Lịch sử tiêm chủng - Thông tin chi tiết -->
+                        <div class="p-3 bg-light rounded-3">
+                          <div class="row g-3">
+                            <div class="col-sm-6 col-md-4">
+                              <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Ngày tiêm</div>
+                              <div class="fw-medium text-dark">{{ formatDate(vac.injectionDate || vac.administeredAt || vac.createdAt) }}</div>
+                            </div>
+                            <div class="col-sm-6 col-md-4">
+                              <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Bác sĩ phụ trách</div>
+                              <div class="fw-medium text-dark">{{ vac.doctorName || 'Bs. Thú y' }}</div>
+                            </div>
+                            <div class="col-sm-6 col-md-4" v-if="vac.batchNumber">
+                              <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Số lô</div>
+                              <div class="fw-medium text-dark">{{ vac.batchNumber }}</div>
+                            </div>
+                            <div class="col-sm-6 col-md-4" v-if="vac.route">
+                              <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Đường tiêm</div>
+                              <div class="fw-medium text-dark">{{ vac.route }}</div>
+                            </div>
+                            <div class="col-sm-6 col-md-4" v-if="vac.injectionSite">
+                              <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Vị trí tiêm</div>
+                              <div class="fw-medium text-dark">{{ vac.injectionSite }}</div>
+                            </div>
+                            <div class="col-sm-6 col-md-4" v-if="vac.nextDueDate">
+                              <div class="small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.7rem;">Hẹn tái chủng</div>
+                              <div class="fw-medium text-primary">{{ formatDate(vac.nextDueDate) }}</div>
+                            </div>
+                          </div>
+                        </div>
 
-                      <div class="mt-3 p-3 rounded-3" style="background-color: #fffbeb;" v-if="vac.clinicalAssessment || vac.doctorRemarks || vac.notes || vac.reactionNote">
-                         <div class="row g-2">
-                           <div class="col-12" v-if="vac.clinicalAssessment">
-                             <span class="small fw-bold text-warning me-2">Kết luận lâm sàng:</span>
-                             <span class="small text-dark">{{ vac.clinicalAssessment }}</span>
+                        <div class="mt-3 p-3 rounded-3" style="background-color: #fffbeb;" v-if="vac.clinicalAssessment || vac.doctorRemarks || vac.notes || vac.reactionNote">
+                           <div class="row g-2">
+                             <div class="col-12" v-if="vac.clinicalAssessment">
+                               <span class="small fw-bold text-warning me-2">Kết luận lâm sàng:</span>
+                               <span class="small text-dark">{{ vac.clinicalAssessment }}</span>
+                             </div>
+                             <div class="col-12" v-if="vac.doctorRemarks || vac.notes">
+                               <span class="small fw-bold text-warning me-2">Ghi chú BS:</span>
+                               <span class="small text-dark">{{ vac.doctorRemarks || vac.notes }}</span>
+                             </div>
+                             <div class="col-12" v-if="vac.reactionNote">
+                               <span class="small fw-bold text-danger me-2">Lưu ý phản ứng:</span>
+                               <span class="small text-dark">{{ vac.reactionNote }}</span>
+                             </div>
                            </div>
-                           <div class="col-12" v-if="vac.doctorRemarks || vac.notes">
-                             <span class="small fw-bold text-warning me-2">Ghi chú BS:</span>
-                             <span class="small text-dark">{{ vac.doctorRemarks || vac.notes }}</span>
-                           </div>
-                           <div class="col-12" v-if="vac.reactionNote">
-                             <span class="small fw-bold text-danger me-2">Lưu ý phản ứng:</span>
-                             <span class="small text-dark">{{ vac.reactionNote }}</span>
-                           </div>
-                         </div>
+                        </div>
                       </div>
                     </div>
+                  </div>
+                  
+                  <!-- Pagination controls -->
+                  <div class="d-flex justify-content-center align-items-center mt-3 gap-2" v-if="totalVaccineHistoryPages > 0">
+                    <button class="btn btn-outline-primary btn-sm rounded-circle" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;" :disabled="vaccineHistoryPage === 1" @click="vaccineHistoryPage--">
+                      <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <span class="text-muted small fw-bold mx-2">Trang {{ vaccineHistoryPage }} / {{ totalVaccineHistoryPages }}</span>
+                    <button class="btn btn-outline-primary btn-sm rounded-circle" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;" :disabled="vaccineHistoryPage === totalVaccineHistoryPages" @click="vaccineHistoryPage++">
+                      <i class="bi bi-chevron-right"></i>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1030,6 +1062,23 @@ const filteredMedicalRecords = computed(() => {
   return medicalRecords.value;
 });
 
+// Pagination for Medical History
+const medicalHistoryPage = ref(1);
+const medicalHistoryPerPage = ref(5);
+
+watch(historyFilter, () => {
+  medicalHistoryPage.value = 1; // Reset to page 1 when filter changes
+});
+
+const paginatedMedicalRecords = computed(() => {
+  const start = (medicalHistoryPage.value - 1) * medicalHistoryPerPage.value;
+  const end = start + medicalHistoryPerPage.value;
+  return filteredMedicalRecords.value.slice(start, end);
+});
+const totalMedicalHistoryPages = computed(() => {
+  return Math.ceil(filteredMedicalRecords.value.length / medicalHistoryPerPage.value) || 1;
+});
+
 const filterPrescriptionStatus = ref('all');
 const filterPrescriptionTime = ref('6m');
 
@@ -1087,8 +1136,37 @@ const upcomingVaccines = computed(() => {
   return vaccinations.value.filter((v: any) => v.nextDueDate && (isVaccineOverdue(v.nextDueDate) || isSoonDue(v.nextDueDate)));
 });
 
+const vaccineFilter = ref<string>('all');
+const isVaccineFilterOpen = ref<boolean>(false);
+const vaccineFilterLabel = computed(() => {
+  switch (vaccineFilter.value) {
+    case 'hasDue': return 'Có hẹn tái chủng';
+    default: return 'Tất cả';
+  }
+});
+
 const historyVaccines = computed(() => {
-  return [...vaccinations.value].sort((a: any, b: any) => new Date(b.administeredAt).getTime() - new Date(a.administeredAt).getTime());
+  let filtered = [...vaccinations.value];
+  if (vaccineFilter.value === 'hasDue') {
+    filtered = filtered.filter(v => v.nextDueDate);
+  }
+  return filtered.sort((a: any, b: any) => new Date(b.administeredAt || b.injectionDate || b.createdAt).getTime() - new Date(a.administeredAt || a.injectionDate || a.createdAt).getTime());
+});
+
+// Pagination for Vaccines
+const vaccineHistoryPage = ref(1);
+const vaccineHistoryPerPage = ref(5);
+
+watch(vaccineFilter, () => {
+  vaccineHistoryPage.value = 1;
+});
+const paginatedHistoryVaccines = computed(() => {
+  const start = (vaccineHistoryPage.value - 1) * vaccineHistoryPerPage.value;
+  const end = start + vaccineHistoryPerPage.value;
+  return historyVaccines.value.slice(start, end);
+});
+const totalVaccineHistoryPages = computed(() => {
+  return Math.ceil(historyVaccines.value.length / vaccineHistoryPerPage.value) || 1;
 });
 
 const nextAppointment = computed(() => {

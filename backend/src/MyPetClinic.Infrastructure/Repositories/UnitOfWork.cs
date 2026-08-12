@@ -18,6 +18,7 @@ namespace MyPetClinic.Infrastructure.Repositories
         public IGenericRepository<Customer> Customers { get; private set; }
         public IGenericRepository<Role> Roles { get; private set; }
         public IGenericRepository<Pet> Pets { get; private set; }
+        public IGenericRepository<ServiceCategory> ServiceCategories { get; private set; }
         public IGenericRepository<Service> Services { get; private set; }
         public IGenericRepository<Invoice> Invoices { get; private set; }
         public IGenericRepository<InvoiceItem> InvoiceItems { get; private set; }
@@ -48,7 +49,6 @@ namespace MyPetClinic.Infrastructure.Repositories
         public IGenericRepository<ScheduleException> ScheduleExceptions { get; private set; }
         public IGenericRepository<Offer> Offers { get; private set; }
         public IGenericRepository<OfferService> OfferServices { get; private set; }
-        public IGenericRepository<UserOffer> UserOffers { get; private set; }
         public IGenericRepository<OfferUsageLog> OfferUsageLogs { get; private set; }
         public UnitOfWork(ApplicationDbContext context)
         {
@@ -58,6 +58,7 @@ namespace MyPetClinic.Infrastructure.Repositories
             Customers = new GenericRepository<Customer>(_context);
             Roles = new GenericRepository<Role>(_context);
             Pets = new GenericRepository<Pet>(_context);
+            ServiceCategories = new GenericRepository<ServiceCategory>(_context);
             Services = new GenericRepository<Service>(_context);
             Invoices = new GenericRepository<Invoice>(_context);
             InvoiceItems = new GenericRepository<InvoiceItem>(_context);
@@ -88,7 +89,6 @@ namespace MyPetClinic.Infrastructure.Repositories
             ScheduleExceptions = new GenericRepository<ScheduleException>(_context);
             Offers = new GenericRepository<Offer>(_context);
             OfferServices = new GenericRepository<OfferService>(_context);
-            UserOffers = new GenericRepository<UserOffer>(_context);
             OfferUsageLogs = new GenericRepository<OfferUsageLog>(_context);
         }
 

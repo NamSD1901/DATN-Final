@@ -39,7 +39,9 @@
 
       <!-- Featured Image -->
       <section v-if="post.thumbnail" class="container mt-n5 position-relative" style="z-index: 10;">
-        <img :src="post.thumbnail" :alt="post.title" class="img-fluid rounded-4 shadow w-100 object-fit-cover" style="max-height: 500px;" />
+        <div class="post-image-wrapper shadow-lg mx-auto bg-light">
+          <img :src="post.thumbnail" :alt="post.title" class="post-hero-img w-100 h-100 object-fit-cover" />
+        </div>
       </section>
 
       <!-- Article Content -->
@@ -252,5 +254,23 @@ onMounted(() => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.post-image-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+}
+
+.post-hero-img {
+  object-position: center;
+  transition: transform 0.7s ease;
+}
+
+.post-image-wrapper:hover .post-hero-img {
+  transform: scale(1.03);
 }
 </style>

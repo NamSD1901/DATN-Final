@@ -11,6 +11,7 @@ namespace MyPetClinic.Application.Interfaces.Repositories
         IGenericRepository<Customer> Customers { get; }
         IGenericRepository<Role> Roles { get; }
         IGenericRepository<Pet> Pets { get; }
+        IGenericRepository<ServiceCategory> ServiceCategories { get; }
         IGenericRepository<Service> Services { get; }
         IGenericRepository<Invoice> Invoices { get; }
         IGenericRepository<InvoiceItem> InvoiceItems { get; }
@@ -41,7 +42,6 @@ namespace MyPetClinic.Application.Interfaces.Repositories
         IGenericRepository<ScheduleException> ScheduleExceptions { get; }
         IGenericRepository<Offer> Offers { get; }
         IGenericRepository<OfferService> OfferServices { get; }
-        IGenericRepository<UserOffer> UserOffers { get; }
         IGenericRepository<OfferUsageLog> OfferUsageLogs { get; }
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();

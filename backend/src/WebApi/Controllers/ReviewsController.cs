@@ -336,14 +336,14 @@ namespace WebApi.Controllers
         /// <summary>
         /// Đánh dấu một đánh giá là hữu ích (Like)
         /// </summary>
-        [AllowAnonymous]
+        [Authorize(Roles = "customer")]
         [HttpPost("{id:long}/helpful")]
         public async Task<IActionResult> MarkHelpful(long id)
         {
             try
             {
-                var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-                var cacheKey = $"LikedReview_{id}_{ip}";
+                var customerId = await GetCurrentCustomerIdAsync();
+                var cacheKey = $"LikedReview_{id}_{customerId}";
 
                 if (_cache.TryGetValue(cacheKey, out _))
                 {
@@ -368,14 +368,14 @@ namespace WebApi.Controllers
         /// <summary>
         /// Bỏ đánh dấu hữu ích (Unlike)
         /// </summary>
-        [AllowAnonymous]
+        [Authorize(Roles = "customer")]
         [HttpPost("{id:long}/unhelpful")]
         public async Task<IActionResult> UnmarkHelpful(long id)
         {
             try
             {
-                var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-                var cacheKey = $"LikedReview_{id}_{ip}";
+                var customerId = await GetCurrentCustomerIdAsync();
+                var cacheKey = $"LikedReview_{id}_{customerId}";
 
                 if (!_cache.TryGetValue(cacheKey, out _))
                 {

@@ -33,7 +33,9 @@
             </div>
 
             <!-- Article Image -->
-            <img :src="article.image" class="img-fluid rounded-4 mb-4 w-100 shadow-sm article-hero-img" :alt="article.title" />
+            <div class="article-image-wrapper mb-5">
+              <img :src="article.image" class="img-fluid article-hero-img" :alt="article.title" />
+            </div>
 
             <!-- Article Content -->
             <div class="article-content text-muted lh-lg fs-5" v-html="article.content"></div>
@@ -428,10 +430,26 @@ const suggestions = computed(() => {
   vertical-align: middle;
 }
 
+.article-image-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  background-color: #f8fafc;
+}
+
 .article-hero-img {
-  max-height: 500px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: var(--radius-md);
+  object-position: center;
+  transition: transform 0.7s ease;
+}
+
+.article-image-wrapper:hover .article-hero-img {
+  transform: scale(1.03);
 }
 
 .article-content {

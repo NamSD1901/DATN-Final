@@ -306,6 +306,7 @@
       :show="showOfferModal" 
       :order-amount="selectedInvoice?.totalAmount || 0"
       :current-selected-code="appliedVoucherCode"
+      :service-ids="selectedInvoice?.items?.filter((i: any) => i.itemType === 'service').map((i: any) => i.itemId) || []"
       @close="showOfferModal = false"
       @apply="handleApplyVoucher"
     />
@@ -392,7 +393,9 @@ const fetchInvoices = async () => {
           icon: i.itemType === 'service' ? 'bi bi-heart-pulse' : 'bi bi-capsule',
           qty: i.quantity,
           price: i.unitPrice,
-          total: i.totalPrice
+          total: i.totalPrice,
+          itemType: i.itemType,
+          itemId: i.itemId
         }))
       };
     });
@@ -449,10 +452,20 @@ const discountAmount = ref(0);
 
 const handleApplyVoucher = async (code: string) => {
   try {
+    const serviceItems = selectedInvoice.value?.items?.filter((i: any) => i.itemType === 'service') || [];
+    const serviceIds = serviceItems.map((i: any) => i.itemId).filter(Boolean);
+    const servicePrices: Record<number, number> = {};
+    serviceItems.forEach((i: any) => {
+      if (i.itemId) {
+        servicePrices[i.itemId] = i.total;
+      }
+    });
+
     const res = await api.post('/offers/validate', {
       code,
       orderAmount: selectedInvoice.value?.totalAmount || 0,
-      serviceIds: [] 
+      serviceIds: serviceIds,
+      servicePrices: servicePrices
     });
     if (res.data.success) {
       appliedVoucherCode.value = code;

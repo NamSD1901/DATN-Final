@@ -113,6 +113,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import Swal from 'sweetalert2';
 import type { ReviewDto } from '../../services/review.service';
 import ReviewService from '../../services/review.service';
 
@@ -120,6 +122,7 @@ const props = defineProps<{
   review: ReviewDto
 }>();
 
+const router = useRouter();
 const isExpanded = ref(false);
 const hasLiked = ref(false);
 const isAnimating = ref(false);
@@ -164,13 +167,42 @@ const handleLike = async () => {
       isAnimating.value = false;
     }, 400);
 
-    const likedReviews = JSON.parse(localStorage.getItem('likedReviews') || '[]');
-    if (!likedReviews.includes(props.review.id)) {
-      likedReviews.push(props.review.id);
-      localStorage.setItem('likedReviews', JSON.stringify(likedReviews));
+  } catch (error: any) {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      Swal.fire({
+        title: 'Chưa đăng nhập!',
+        text: 'Vui lòng đăng nhập với tài khoản khách hàng để thả tim đánh giá này.',
+        icon: 'info',
+        iconColor: '#f59e0b',
+        showCancelButton: true,
+        confirmButtonText: 'Đăng nhập ngay',
+        cancelButtonText: 'Để sau',
+        confirmButtonColor: '#f59e0b',
+        cancelButtonColor: '#f3f4f6',
+        background: '#ffffff',
+        customClass: {
+          popup: 'rounded-4 shadow-lg border-0',
+          title: 'fw-bold text-dark fs-4 mb-2',
+          htmlContainer: 'text-muted mb-4',
+          confirmButton: 'btn btn-warning rounded-pill px-4 fw-bold shadow-sm me-2',
+          cancelButton: 'btn btn-light rounded-pill px-4 fw-bold shadow-sm border text-muted'
+        },
+        buttonsStyling: false
+      }).then((result) => {
+        if (result.isConfirmed) {
+          router.push('/login');
+        }
+      });
+    } else {
+      console.error('Failed to mark helpful', error);
+      Swal.fire({
+        title: 'Lỗi',
+        text: error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại sau.',
+        icon: 'error'
+      });
     }
-  } catch (error) {
-    console.error('Failed to mark helpful', error);
+  } finally {
+    isAnimating.value = false;
   }
 };
 

@@ -95,6 +95,47 @@ namespace WebApi.Controllers
             catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
         }
 
+        // ================= SERVICE CATEGORY MANAGEMENT =================
+        [HttpGet("services/categories")]
+        public async Task<IActionResult> GetServiceCategories()
+        {
+            var categories = await _adminService.GetServiceCategoriesAsync();
+            return Ok(categories);
+        }
+
+        [HttpPost("services/categories")]
+        public async Task<IActionResult> CreateServiceCategory([FromBody] CreateServiceCategoryDto dto)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var category = await _adminService.CreateServiceCategoryAsync(dto, currentUserId!);
+            return Ok(new { success = true, category });
+        }
+
+        [HttpPut("services/categories/{id}")]
+        public async Task<IActionResult> UpdateServiceCategory(long id, [FromBody] CreateServiceCategoryDto dto)
+        {
+            try
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var category = await _adminService.UpdateServiceCategoryAsync(id, dto, currentUserId!);
+                return Ok(new { success = true, category });
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        }
+
+        [HttpDelete("services/categories/{id}")]
+        public async Task<IActionResult> DeleteServiceCategory(long id)
+        {
+            try
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                await _adminService.DeleteServiceCategoryAsync(id, currentUserId!);
+                return Ok(new { success = true });
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+        }
+
         // ================= MEDICINES MANAGEMENT =================
         [HttpGet("medicines")]
         public async Task<IActionResult> GetMedicines()

@@ -188,6 +188,8 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
 ### 🎯 Sprint 14: Quản Trị Hệ Thống & Cấu Hình Dịch Vụ
 *   **Mục tiêu:** Quản trị viên quản lý người dùng, danh mục dịch vụ và khung giờ.
 *   **Trạng thái chung:** `✅ CODE DONE` (T45, T46, T49).
+*   **Chi tiết:**
+    *   Cập nhật: Bổ sung tính năng Quản lý danh mục dịch vụ (Thêm/Sửa/Xóa động qua API thay vì hardcode) - `✅ CODE DONE`.
 
 ---
 

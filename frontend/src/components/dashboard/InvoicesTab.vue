@@ -479,11 +479,20 @@ const applyVoucher = async () => {
   voucherMessage.value = 'Đang kiểm tra...';
   voucherError.value = false;
   try {
-    const serviceIds = invoice.value.items.filter((i: any) => i.itemType === 'service').map((i: any) => i.itemId);
+    const serviceItems = invoice.value.items.filter((i: any) => i.itemType === 'service');
+    const serviceIds = serviceItems.map((i: any) => i.itemId);
+    
+    // Create a dictionary of ServiceId -> TotalPrice for that service
+    const servicePrices: Record<number, number> = {};
+    serviceItems.forEach((i: any) => {
+      servicePrices[i.itemId] = i.totalPrice;
+    });
+
     const res = await api.post('/offers/validate', {
       code: voucherCode.value.trim(),
       orderAmount: invoice.value.subtotal,
-      serviceIds: serviceIds
+      serviceIds: serviceIds,
+      servicePrices: servicePrices
     });
     
     if (res.data.success && res.data.data.isValid) {

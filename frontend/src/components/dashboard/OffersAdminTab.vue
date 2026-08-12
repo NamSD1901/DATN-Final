@@ -184,6 +184,27 @@
                   <label class="form-label fw-bold">Ngày kết thúc</label>
                   <input type="datetime-local" class="form-control rounded-3" v-model="formData.endDate" required>
                 </div>
+
+                <!-- Add Service Selection -->
+                <div class="col-12 mt-2">
+                  <label class="form-label fw-bold">Dịch vụ áp dụng</label>
+                  <div class="card border-0 bg-light p-3 rounded-3">
+                    <div class="row g-2">
+                      <div class="col-md-6" v-for="svc in availableServices" :key="svc.id">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" :value="svc.id" :id="'svc-'+svc.id" v-model="formData.appliedServiceIds">
+                          <label class="form-check-label text-dark" :for="'svc-'+svc.id">
+                            {{ svc.name }}
+                          </label>
+                        </div>
+                      </div>
+                      <div v-if="availableServices.length === 0" class="text-muted small w-100">
+                        Đang tải danh sách dịch vụ...
+                      </div>
+                    </div>
+                  </div>
+                  <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle me-1"></i> Bỏ trống tất cả nếu muốn mã này có thể áp dụng cho mọi dịch vụ.</small>
+                </div>
               </div>
             </form>
           </div>
@@ -204,6 +225,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useOfferStore } from '../../stores/offerStore';
+import api from '../../services/api';
 
 const offerStore = useOfferStore();
 const searchQuery = ref('');
@@ -213,6 +235,7 @@ let searchTimeout: any = null;
 const showOfferModal = ref(false);
 const isEditing = ref(false);
 const currentEditId = ref('');
+const availableServices = ref<any[]>([]);
 
 const formData = ref({
   code: '',
@@ -232,7 +255,17 @@ const formData = ref({
 
 onMounted(() => {
   fetchOffers();
+  fetchServices();
 });
+
+const fetchServices = async () => {
+  try {
+    const res = await api.get('/service');
+    availableServices.value = res.data;
+  } catch (error) {
+    console.error("Failed to fetch services", error);
+  }
+};
 
 const closeModal = () => {
   showOfferModal.value = false;
@@ -255,6 +288,12 @@ const changePage = (page: number) => {
   }
 };
 
+const toLocalDatetimeString = (date: string | Date) => {
+  const d = new Date(date);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 const openCreateModal = () => {
   isEditing.value = false;
   formData.value = {
@@ -267,8 +306,8 @@ const openCreateModal = () => {
     minOrderValue: 0,
     totalQuantity: null,
     usageLimitPerUser: 1,
-    startDate: new Date().toISOString().slice(0, 16),
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+    startDate: toLocalDatetimeString(new Date()),
+    endDate: toLocalDatetimeString(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
     isPublic: true,
     appliedServiceIds: []
   };
@@ -288,8 +327,8 @@ const openEditModal = (offer: any) => {
     minOrderValue: offer.minOrderValue,
     totalQuantity: offer.totalQuantity,
     usageLimitPerUser: offer.usageLimitPerUser,
-    startDate: new Date(offer.startDate).toISOString().slice(0, 16),
-    endDate: new Date(offer.endDate).toISOString().slice(0, 16),
+    startDate: toLocalDatetimeString(offer.startDate),
+    endDate: toLocalDatetimeString(offer.endDate),
     isPublic: offer.isPublic,
     appliedServiceIds: offer.appliedServiceIds || []
   };
@@ -302,6 +341,10 @@ const saveOffer = async () => {
     const payload = { ...formData.value };
     if (payload.totalQuantity === "") payload.totalQuantity = null;
     if (payload.maxDiscount === "") payload.maxDiscount = null;
+    
+    // Convert local datetime-local string to UTC ISO string before sending
+    payload.startDate = new Date(formData.value.startDate).toISOString();
+    payload.endDate = new Date(formData.value.endDate).toISOString();
 
     if (isEditing.value) {
       await offerStore.updateOffer(currentEditId.value, payload);

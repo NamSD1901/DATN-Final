@@ -137,10 +137,10 @@
                 <td class="ps-4 text-muted">{{ category.id }}</td>
                 <td class="fw-bold text-dark">{{ category.name }}</td>
                 <td class="text-center">
-                  <button class="btn btn-sm btn-outline-warning rounded-pill px-3 me-2" @click="openCategoryModal">
+                  <button class="btn btn-sm btn-outline-warning rounded-pill px-3 me-2" @click="openCategoryEditModal(category)">
                     <i class="bi bi-pencil-fill me-1"></i>Sửa
                   </button>
-                  <button class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-3" @click="handleDeleteCategory(category.id)">
                     <i class="bi bi-trash-fill me-1"></i>Xóa
                   </button>
                 </td>
@@ -156,17 +156,21 @@
       <div class="zalo-modal-card max-w-500">
         <div class="zalo-modal-header bg-warning text-dark">
           <h5 class="modal-title fw-bold">
-            <i class="bi bi-tags-fill me-2"></i> Danh Mục Dịch Vụ
+            <i class="bi bi-tags-fill me-2"></i> {{ isCategoryEdit ? 'Cập Nhật Danh Mục' : 'Thêm Danh Mục Dịch Vụ' }}
           </h5>
           <button class="modal-close text-dark border-0 bg-transparent" @click="showCategoryModal = false"><i class="bi bi-x-lg fs-5"></i></button>
         </div>
         <div class="zalo-modal-body text-start">
-          <div class="alert alert-info">
-            Tính năng đang được nâng cấp. Sẽ sớm hỗ trợ thêm/sửa danh mục động qua API.
-          </div>
-          <div class="text-end">
-            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" @click="showCategoryModal = false">Đóng</button>
-          </div>
+          <form @submit.prevent="submitCategoryForm">
+            <div class="mb-3">
+              <label class="form-label text-muted small fw-bold">Tên danh mục *</label>
+              <input type="text" v-model="categoryForm.name" class="form-control input-premium" required placeholder="Tên danh mục..." />
+            </div>
+            <div class="mt-4 pt-3 border-top text-end">
+              <button type="button" class="btn btn-outline-secondary rounded-pill px-4 me-2" @click="showCategoryModal = false">Hủy</button>
+              <button type="submit" class="btn btn-premium rounded-pill px-4">Lưu lại</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -199,11 +203,7 @@
             <div class="mb-3">
               <label class="form-label text-muted small fw-bold">Nhóm danh mục *</label>
               <select v-model="form.categoryId" class="form-select border-warning" required>
-                <option :value="1">Khám bệnh</option>
-                <option :value="2">Tiêm phòng</option>
-                <option :value="3">Xét nghiệm & Siêu âm</option>
-                <option :value="4">Phẫu thuật</option>
-                <option :value="5">Grooming & Spa</option>
+                <option v-for="cat in categoriesList" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
               </select>
             </div>
             <div class="mb-3">
@@ -237,16 +237,25 @@ const showCategoryModal = ref(false);
 const isEdit = ref(false);
 const currentServiceId = ref<number | null>(null);
 
-const categoriesList = ref([
-  { id: 1, name: 'Khám bệnh' },
-  { id: 2, name: 'Tiêm phòng' },
-  { id: 3, name: 'Xét nghiệm & Siêu âm' },
-  { id: 4, name: 'Phẫu thuật' },
-  { id: 5, name: 'Grooming & Spa' }
-]);
+const categoriesList = ref<any[]>([]);
 const searchCategoryKeyword = ref('');
+const isCategoryEdit = ref(false);
+const currentCategoryId = ref<number | null>(null);
+const categoryForm = ref({
+  name: ''
+});
 
 const openCategoryModal = () => {
+  isCategoryEdit.value = false;
+  currentCategoryId.value = null;
+  categoryForm.value.name = '';
+  showCategoryModal.value = true;
+};
+
+const openCategoryEditModal = (category: any) => {
+  isCategoryEdit.value = true;
+  currentCategoryId.value = category.id;
+  categoryForm.value.name = category.name;
   showCategoryModal.value = true;
 };
 
@@ -280,6 +289,15 @@ const loadServices = async () => {
     console.error('Lỗi tải danh sách dịch vụ:', err);
   } finally {
     loading.value = false;
+  }
+};
+
+const loadCategories = async () => {
+  try {
+    const res = await api.get('/admin/services/categories');
+    categoriesList.value = res.data || [];
+  } catch (err) {
+    console.error('Lỗi tải danh mục dịch vụ:', err);
   }
 };
 
@@ -348,12 +366,52 @@ const handleDelete = async (id: number) => {
   }
 };
 
+const submitCategoryForm = async () => {
+  try {
+    if (isCategoryEdit.value && currentCategoryId.value) {
+      await api.put(`/admin/services/categories/${currentCategoryId.value}`, categoryForm.value);
+      Swal.fire({ icon: 'success', title: 'Thành công', text: 'Cập nhật danh mục thành công!', timer: 2000, showConfirmButton: false });
+    } else {
+      await api.post('/admin/services/categories', categoryForm.value);
+      Swal.fire({ icon: 'success', title: 'Thành công', text: 'Tạo danh mục thành công!', timer: 2000, showConfirmButton: false });
+    }
+    showCategoryModal.value = false;
+    await loadCategories();
+  } catch (err: any) {
+    Swal.fire({ icon: 'error', title: 'Lỗi', text: err.response?.data?.message || 'Lỗi khi lưu danh mục.' });
+  }
+};
+
+const handleDeleteCategory = async (id: number) => {
+  const result = await Swal.fire({
+    title: 'Xác nhận xóa?',
+    text: 'Bạn có chắc muốn xóa danh mục này?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Đồng ý',
+    cancelButtonText: 'Hủy'
+  });
+  
+  if (!result.isConfirmed) return;
+  
+  try {
+    await api.delete(`/admin/services/categories/${id}`);
+    Swal.fire({ icon: 'success', title: 'Thành công', text: 'Xóa danh mục thành công!', timer: 2000, showConfirmButton: false });
+    await loadCategories();
+  } catch (err: any) {
+    Swal.fire({ icon: 'error', title: 'Lỗi', text: err.response?.data?.message || 'Lỗi khi xóa danh mục.' });
+  }
+};
+
 const formatCurrency = (val: number) => {
   if (!val) return '0 đ';
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 };
 
 onMounted(() => {
+  loadCategories();
   loadServices();
 });
 </script>

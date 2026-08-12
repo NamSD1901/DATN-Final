@@ -394,6 +394,7 @@
         :order-amount="selectedService?.price || 0"
         :current-selected-code="appliedVoucherCode"
         :customer-id="selectedCustomer?.id"
+        :service-id="selectedService?.id"
         @close="showOfferModal = false"
         @apply="handleApplyVoucher"
       />

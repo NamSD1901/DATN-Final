@@ -40,5 +40,14 @@ namespace MyPetClinic.Application.DTOs
         public string? Description { get; set; }
     }
 
+    public class ServiceCategoryDto
+    {
+        public long Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
 
+    public class CreateServiceCategoryDto
+    {
+        public string Name { get; set; } = string.Empty;
+    }
 }

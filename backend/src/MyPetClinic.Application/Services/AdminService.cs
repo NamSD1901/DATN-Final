@@ -157,6 +157,67 @@ namespace MyPetClinic.Application.Services
             await _auditLogService.LogActionAsync(currentUserId, "DeleteService", $"Khóa dịch vụ ID {id}");
         }
 
+        public async Task<IEnumerable<ServiceCategoryDto>> GetServiceCategoriesAsync()
+        {
+            var categories = await _unitOfWork.ServiceCategories.GetAllAsync();
+            return categories.Select(c => new ServiceCategoryDto
+            {
+                Id = c.Id,
+                Name = c.Name
+            });
+        }
+
+        public async Task<ServiceCategoryDto> CreateServiceCategoryAsync(CreateServiceCategoryDto dto, string currentUserId)
+        {
+            var category = new ServiceCategory
+            {
+                Name = dto.Name
+            };
+
+            await _unitOfWork.ServiceCategories.AddAsync(category);
+            await _unitOfWork.SaveChangesAsync();
+
+            await _auditLogService.LogActionAsync(currentUserId, "CreateServiceCategory", $"Tạo danh mục dịch vụ mới: {dto.Name}");
+            return new ServiceCategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name
+            };
+        }
+
+        public async Task<ServiceCategoryDto> UpdateServiceCategoryAsync(long id, CreateServiceCategoryDto dto, string currentUserId)
+        {
+            var category = await _unitOfWork.ServiceCategories.GetByIdAsync(id) ?? throw new KeyNotFoundException("Không tìm thấy danh mục dịch vụ.");
+
+            category.Name = dto.Name;
+
+            _unitOfWork.ServiceCategories.Update(category);
+            await _unitOfWork.SaveChangesAsync();
+
+            await _auditLogService.LogActionAsync(currentUserId, "UpdateServiceCategory", $"Cập nhật danh mục dịch vụ ID {id}: {dto.Name}");
+            return new ServiceCategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name
+            };
+        }
+
+        public async Task DeleteServiceCategoryAsync(long id, string currentUserId)
+        {
+            var category = await _unitOfWork.ServiceCategories.GetByIdAsync(id) ?? throw new KeyNotFoundException("Không tìm thấy danh mục dịch vụ.");
+
+            var services = await _unitOfWork.Services.FindAsync(s => s.CategoryId == id);
+            if (services.Any())
+            {
+                throw new InvalidOperationException("Không thể xoá danh mục đã có dịch vụ.");
+            }
+
+            _unitOfWork.ServiceCategories.Remove(category);
+            await _unitOfWork.SaveChangesAsync();
+
+            await _auditLogService.LogActionAsync(currentUserId, "DeleteServiceCategory", $"Xoá danh mục dịch vụ ID {id}");
+        }
+
         public async Task<IEnumerable<MedicineDto>> GetMedicinesAsync()
         {
             // Sử dụng GetMedicinesWithStockAsync để Include(Batches)

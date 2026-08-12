@@ -709,6 +709,7 @@
       :show="showOfferModal" 
       :order-amount="getSelectedServicePrice()"
       :current-selected-code="appliedVoucherCode"
+      :service-id="bookForm.serviceId"
       @close="showOfferModal = false"
       @apply="handleApplyVoucher"
     />

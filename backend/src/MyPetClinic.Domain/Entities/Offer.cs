@@ -29,7 +29,6 @@ namespace MyPetClinic.Domain.Entities
 
         public User? Creator { get; set; }
         public ICollection<OfferService> OfferServices { get; set; } = new List<OfferService>();
-        public ICollection<UserOffer> UserOffers { get; set; } = new List<UserOffer>();
         public ICollection<OfferUsageLog> OfferUsageLogs { get; set; } = new List<OfferUsageLog>();
     }
 }

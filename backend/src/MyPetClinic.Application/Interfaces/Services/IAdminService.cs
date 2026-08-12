@@ -19,6 +19,13 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<ServiceDto> UpdateServiceAsync(long id, CreateServiceDto dto, string currentUserId);
         Task DeleteServiceAsync(long id, string currentUserId);
 
+        // Service Categories
+        Task<IEnumerable<ServiceCategoryDto>> GetServiceCategoriesAsync();
+        Task<ServiceCategoryDto> CreateServiceCategoryAsync(CreateServiceCategoryDto dto, string currentUserId);
+        Task<ServiceCategoryDto> UpdateServiceCategoryAsync(long id, CreateServiceCategoryDto dto, string currentUserId);
+        Task DeleteServiceCategoryAsync(long id, string currentUserId);
+
+
         // Medicines
         Task<IEnumerable<MedicineDto>> GetMedicinesAsync();
         Task<object> GetMedicineWarningsAsync();

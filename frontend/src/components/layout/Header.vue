@@ -81,11 +81,7 @@
                 <ChevronDown class="dropdown-chevron" />
               </a>
               <ul class="dropdown-menu" :class="{ 'show-mobile': activeDropdowns.knowledge }">
-                <li>
-                  <router-link to="/news" class="dropdown-item" @click="closeMobileMenu">
-                    <Newspaper class="dropdown-icon" /> Tin tức sự kiện
-                  </router-link>
-                </li>
+
                 <li>
                   <router-link to="/services/suc-khoe" class="dropdown-item" @click="closeMobileMenu">
                     <BookOpen class="dropdown-icon" /> Sức khỏe thú cưng

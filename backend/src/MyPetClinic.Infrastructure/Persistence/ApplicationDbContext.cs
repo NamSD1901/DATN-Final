@@ -65,7 +65,6 @@ namespace MyPetClinic.Infrastructure.Persistence
         // Voucher Module
         public DbSet<Offer> Offers { get; set; }
         public DbSet<OfferService> OfferServices { get; set; }
-        public DbSet<UserOffer> UserOffers { get; set; }
         public DbSet<OfferUsageLog> OfferUsageLogs { get; set; }
         protected override void ConfigureConventions(ModelConfigurationBuilder builder)
         {
@@ -792,20 +791,7 @@ namespace MyPetClinic.Infrastructure.Persistence
                 entity.HasOne(d => d.Service).WithMany().HasForeignKey(d => d.ServiceId).OnDelete(DeleteBehavior.Cascade);
             });
 
-            // user_offers
-            modelBuilder.Entity<UserOffer>(entity =>
-            {
-                entity.ToTable("user_offers");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
-                entity.Property(e => e.UserId).HasColumnName("user_id");
-                entity.Property(e => e.OfferId).HasColumnName("offer_id");
-                entity.Property(e => e.CollectedAt).HasColumnName("collected_at").HasDefaultValueSql("NOW()");
-                entity.Property(e => e.IsUsed).HasColumnName("is_used").HasDefaultValue(false);
 
-                entity.HasOne(d => d.User).WithMany().HasForeignKey(d => d.UserId).OnDelete(DeleteBehavior.Cascade);
-                entity.HasOne(d => d.Offer).WithMany(p => p.UserOffers).HasForeignKey(d => d.OfferId).OnDelete(DeleteBehavior.Cascade);
-            });
 
             // offer_usage_logs
             modelBuilder.Entity<OfferUsageLog>(entity =>

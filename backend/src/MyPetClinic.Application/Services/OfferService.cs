@@ -27,7 +27,19 @@ namespace MyPetClinic.Application.Services
 
             if (!string.IsNullOrEmpty(status))
             {
-                query = query.Where(o => o.Status == status);
+                var now = DateTime.UtcNow;
+                if (status == "EXPIRED")
+                {
+                    query = query.Where(o => o.Status == "ACTIVE" && o.EndDate < now);
+                }
+                else if (status == "ACTIVE")
+                {
+                    query = query.Where(o => o.Status == "ACTIVE" && o.EndDate >= now);
+                }
+                else
+                {
+                    query = query.Where(o => o.Status == status);
+                }
             }
 
             if (!string.IsNullOrEmpty(search))
@@ -254,12 +266,20 @@ namespace MyPetClinic.Application.Services
                 return new ValidateOfferResponseDto { IsValid = false, Message = $"Đơn hàng chưa đạt giá trị tối thiểu {offer.MinOrderValue:N0}đ." };
             }
 
+            decimal applicableAmount = request.OrderAmount;
             if (offer.OfferServices.Any())
             {
                 var requiredServiceIds = offer.OfferServices.Select(os => os.ServiceId).ToList();
                 if (!request.ServiceIds.Any(sid => requiredServiceIds.Contains(sid)))
                 {
                     return new ValidateOfferResponseDto { IsValid = false, Message = "Mã giảm giá không áp dụng cho các dịch vụ trong đơn hàng này." };
+                }
+
+                if (request.ServicePrices != null && request.ServicePrices.Any())
+                {
+                    applicableAmount = request.ServicePrices
+                        .Where(sp => requiredServiceIds.Contains(sp.Key))
+                        .Sum(sp => sp.Value);
                 }
             }
 
@@ -294,7 +314,7 @@ namespace MyPetClinic.Application.Services
             decimal discountAmount = 0;
             if (offer.DiscountType == "PERCENTAGE")
             {
-                discountAmount = request.OrderAmount * (offer.DiscountValue / 100);
+                discountAmount = applicableAmount * (offer.DiscountValue / 100);
                 if (offer.MaxDiscount.HasValue && discountAmount > offer.MaxDiscount.Value)
                 {
                     discountAmount = offer.MaxDiscount.Value;
@@ -303,6 +323,7 @@ namespace MyPetClinic.Application.Services
             else
             {
                 discountAmount = offer.DiscountValue;
+                if (discountAmount > applicableAmount) discountAmount = applicableAmount;
             }
 
             if (discountAmount > request.OrderAmount) discountAmount = request.OrderAmount;
@@ -386,6 +407,12 @@ namespace MyPetClinic.Application.Services
 
         private static OfferDto MapToDto(Offer o)
         {
+            var displayStatus = o.Status;
+            if (displayStatus == "ACTIVE" && o.EndDate < DateTime.UtcNow)
+            {
+                displayStatus = "EXPIRED";
+            }
+
             return new OfferDto
             {
                 Id = o.Id,
@@ -401,7 +428,7 @@ namespace MyPetClinic.Application.Services
                 UsageLimitPerUser = o.UsageLimitPerUser,
                 StartDate = o.StartDate,
                 EndDate = o.EndDate,
-                Status = o.Status,
+                Status = displayStatus,
                 IsPublic = o.IsPublic,
                 CreatedAt = o.CreatedAt,
                 AppliedServiceIds = o.OfferServices.Select(os => os.ServiceId).ToList()
