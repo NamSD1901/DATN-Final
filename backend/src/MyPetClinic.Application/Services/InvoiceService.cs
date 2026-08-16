@@ -519,10 +519,10 @@ namespace MyPetClinic.Application.Services
 
         public async Task<bool> ProcessSePayWebhookAsync(SePayWebhookDto payload)
         {
-            if (string.IsNullOrEmpty(payload.TransactionContent)) return false;
+            if (string.IsNullOrEmpty(payload.Content)) return false;
 
             // Dùng Regex tìm MPC + Id hóa đơn (VD: MPC12345)
-            var match = System.Text.RegularExpressions.Regex.Match(payload.TransactionContent, @"MPC(\d+)");
+            var match = System.Text.RegularExpressions.Regex.Match(payload.Content, @"MPC(\d+)");
             if (!match.Success) return false;
 
             if (!long.TryParse(match.Groups[1].Value, out long invoiceId)) return false;
@@ -539,7 +539,7 @@ namespace MyPetClinic.Application.Services
             if (invoice.PaymentStatus == "paid") return true;
 
             // Kiểm tra số tiền chuyển phải >= tổng cần thanh toán (TotalAmount)
-            if (payload.AmountIn < invoice.TotalAmount)
+            if (payload.TransferAmount < invoice.TotalAmount)
             {
                 // Có thể lưu log ở đây nếu khách chuyển thiếu
                 return false;

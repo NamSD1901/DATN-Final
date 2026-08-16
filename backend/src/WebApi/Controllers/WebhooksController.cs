@@ -43,7 +43,7 @@ namespace WebApi.Controllers
             if (success)
             {
                 // Bóc tách InvoiceId để gửi SignalR cho Frontend
-                var match = Regex.Match(payload.TransactionContent ?? "", @"MPC(\d+)");
+                var match = Regex.Match(payload.Content ?? "", @"MPC(\d+)");
                 if (match.Success && long.TryParse(match.Groups[1].Value, out long invoiceId))
                 {
                     await _hubContext.Clients.All.SendAsync("ReceiveSePayPayment", new 
@@ -78,13 +78,13 @@ namespace WebApi.Controllers
                 TransactionDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 AccountNumber = "00001562694",
                 Code = null,
-                Body = $"MPC{invoiceId}",
-                AmountIn = 0,
-                AmountOut = 0,
+                Content = $"MPC{invoiceId}",
+                TransferAmount = 1000000,
+                TransferType = "in",
                 Accumulated = 0,
                 SubAccount = null,
-                ReferenceNumber = $"SIMULATE-{invoiceId}",
-                TransactionContent = $"THANH TOAN MPC{invoiceId}"
+                ReferenceCode = $"SIMULATE-{invoiceId}",
+                Description = $"THANH TOAN MPC{invoiceId}"
             };
 
             bool success = await _invoiceService.ProcessSePayWebhookAsync(fakePayload);
