@@ -14,5 +14,6 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<bool> ProcessPaymentAsync(long invoiceId, string paymentMethod, decimal discountAmount, string? voucherCode = null);
         Task<IEnumerable<InvoiceCatalogItemDto>> GetCatalogItemsAsync(string query);
         Task<IEnumerable<InvoiceDto>> GetCustomerInvoicesAsync(System.Guid customerId);
+        Task<bool> ProcessSePayWebhookAsync(SePayWebhookDto payload);
     }
 }

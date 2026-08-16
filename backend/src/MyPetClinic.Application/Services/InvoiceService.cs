@@ -517,6 +517,101 @@ namespace MyPetClinic.Application.Services
             return MapToDto(invoice);
         }
 
+        public async Task<bool> ProcessSePayWebhookAsync(SePayWebhookDto payload)
+        {
+            if (string.IsNullOrEmpty(payload.TransactionContent)) return false;
+
+            // Dùng Regex tìm MPC + Id hóa đơn (VD: MPC12345)
+            var match = System.Text.RegularExpressions.Regex.Match(payload.TransactionContent, @"MPC(\d+)");
+            if (!match.Success) return false;
+
+            if (!long.TryParse(match.Groups[1].Value, out long invoiceId)) return false;
+
+            var invoice = await _unitOfWork.Invoices.GetFirstOrDefaultWithIncludesAsync(
+                i => i.Id == invoiceId,
+                i => i.Appointment!,
+                i => i.InvoiceItems
+            );
+
+            if (invoice == null) return false;
+            
+            // Nếu đã thanh toán rồi thì thôi (trường hợp webhook gọi lại)
+            if (invoice.PaymentStatus == "paid") return true;
+
+            // Kiểm tra số tiền chuyển phải >= tổng cần thanh toán (TotalAmount)
+            if (payload.AmountIn < invoice.TotalAmount)
+            {
+                // Có thể lưu log ở đây nếu khách chuyển thiếu
+                return false;
+            }
+
+            // Thanh toán thành công
+            invoice.PaymentStatus = "paid";
+            invoice.PaymentMethod = "VietQR";
+            invoice.PaidAt = DateTime.UtcNow;
+
+            if (invoice.Appointment != null)
+            {
+                invoice.Appointment.Status = "completed";
+                invoice.Appointment.CheckOutTime = DateTime.UtcNow;
+            }
+
+            // Trừ kho
+            var invoiceItems = await _unitOfWork.InvoiceItems.FindAsync(
+                ii => ii.InvoiceId == invoiceId && ii.ItemType == "medicine"
+            );
+
+            foreach (var item in invoiceItems)
+            {
+                if (item.ItemId.HasValue)
+                {
+                    var medicine = await _unitOfWork.Medicines.GetByIdAsync(item.ItemId.Value);
+                    if (medicine != null)
+                    {
+                        medicine.StockQuantity -= item.Quantity;
+                        if (medicine.StockQuantity < 0) medicine.StockQuantity = 0;
+                    }
+                }
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+
+            // Gửi email
+            try
+            {
+                var customerId = invoice.Appointment?.CustomerId;
+                if (customerId.HasValue)
+                {
+                    var customerUser = _unitOfWork.Users.Query().FirstOrDefault(u => u.CustomerId == customerId.Value && u.IsActive == true);
+                    if (customerUser != null && !string.IsNullOrEmpty(customerUser.Email))
+                    {
+                        string invoiceCode = "INV-" + invoice.Id.ToString("D5");
+                        var itemsDto = invoice.InvoiceItems?.Select(ii => (ii.ItemName ?? "", ii.Quantity, ii.TotalPrice)) 
+                                       ?? new List<(string, int, decimal)>();
+
+                        var emailHtml = MyPetClinic.Application.Utils.EmailTemplateBuilder.BuildThankYouInvoiceEmail(
+                            customerName: customerUser.FullName ?? invoice.Appointment?.Customer?.FullName ?? "Khách hàng",
+                            invoiceCode: invoiceCode,
+                            totalAmount: invoice.TotalAmount,
+                            petName: invoice.Appointment?.Pet?.Name,
+                            doctorName: invoice.Appointment?.Doctor?.FullName,
+                            appointmentDate: invoice.Appointment?.AppointmentDate,
+                            items: itemsDto
+                        );
+                        await _emailQueue.QueueEmailAsync(new MyPetClinic.Application.DTOs.Notification.EmailMessageDto
+                        {
+                            ToEmail = customerUser.Email,
+                            Subject = $"MyPetClinic - Cảm ơn bạn đã sử dụng dịch vụ ({invoiceCode})",
+                            BodyHtml = emailHtml
+                        });
+                    }
+                }
+            }
+            catch { /* Ignore */ }
+
+            return true;
+        }
+
         private static InvoiceDto MapToDto(Invoice invoice)
         {
             return new InvoiceDto
