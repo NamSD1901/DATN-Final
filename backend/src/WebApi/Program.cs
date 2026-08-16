@@ -100,6 +100,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<WebApi.Hubs.NotificationHub>("/hubs/notification");
 
 using (var scope = app.Services.CreateScope())
 {
