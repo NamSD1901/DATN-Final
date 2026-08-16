@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://localhost:7284/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://localhost:7284/api',
   withCredentials: true, // Quan trọng để gửi nhận Cookie Session
   headers: {
     'Content-Type': 'application/json',

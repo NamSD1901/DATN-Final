@@ -9,8 +9,8 @@ export const useNotificationStore = defineStore('notification', {
     unreadCount: 0,
     hubConnection: null,
     isConnected: false,
-    apiUrl: 'https://localhost:7284/api/notifications',
-    hubUrl: 'https://localhost:7284/hubs/notification'
+    apiUrl: (import.meta.env.VITE_API_BASE_URL || 'https://localhost:7284/api') + '/notifications',
+    hubUrl: (import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'https://localhost:7284') + '/hubs/notification'
   }),
 
   actions: {
