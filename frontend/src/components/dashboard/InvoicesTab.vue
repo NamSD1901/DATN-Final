@@ -268,6 +268,20 @@
                     Mã GD: <strong class="text-primary bg-primary bg-opacity-10 px-1 rounded">MPC{{ invoice.id }}</strong><br>
                     Khách quét xong hệ thống sẽ tự động xuất hóa đơn.
                   </div>
+
+                  <!-- Nút giả lập - chỉ hiện khi test local (Development) -->
+                  <div v-if="isDev" class="mt-3 pt-3 border-top border-dashed">
+                    <button 
+                      class="btn btn-sm btn-outline-secondary w-100 rounded-pill fw-bold" 
+                      style="font-size: 0.75rem; border-style: dashed;"
+                      @click="simulatePayment"
+                      :disabled="simulatingPayment"
+                    >
+                      <span v-if="simulatingPayment"><i class="bi bi-arrow-repeat spin me-1"></i> Đang xử lý...</span>
+                      <span v-else><i class="bi bi-bug me-1"></i> [🧪 Dev] Giả lập thanh toán thành công</span>
+                    </button>
+                    <div class="text-muted mt-1" style="font-size: 0.65rem;">Chỉ hiện ở chế độ lập trình (localhost)</div>
+                  </div>
                 </div>
 
                 <!-- Print Options -->
@@ -313,6 +327,10 @@ const props = defineProps<{
 }>();
 
 const notificationStore = useNotificationStore();
+
+// Chỉ hiện nút giả lập khi chạy local (localhost)
+const isDev = ref(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const simulatingPayment = ref(false);
 
 // State
 const loadingQueue = ref(false);
@@ -396,6 +414,20 @@ watch(() => notificationStore.lastSePayEvent, async (newVal) => {
     await loadPendingCheckouts();
   }
 }, { deep: true });
+
+// Giả lập thanh toán (chỉ môi trường Development)
+const simulatePayment = async () => {
+  if (!invoice.value) return;
+  simulatingPayment.value = true;
+  try {
+    await api.post(`/Webhooks/simulate/${invoice.value.id}`);
+    // SignalR sẽ tự khởi động watch và xử lý tiếp — không cần làm gì thêm
+  } catch (err: any) {
+    Swal.fire({ icon: 'error', title: 'Lỗi giả lập', text: err.response?.data?.message || 'Không thể gọi simulate endpoint.', confirmButtonColor: '#f59e0b' });
+  } finally {
+    simulatingPayment.value = false;
+  }
+};
 
 // Methods
 const loadPendingCheckouts = async () => {

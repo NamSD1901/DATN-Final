@@ -46,8 +46,6 @@ namespace WebApi.Controllers
                 var match = Regex.Match(payload.TransactionContent ?? "", @"MPC(\d+)");
                 if (match.Success && long.TryParse(match.Groups[1].Value, out long invoiceId))
                 {
-                    // Gửi SignalR tới toàn bộ client đang kết nối (hoặc có thể gửi vào group Receptionist nếu cấu hình)
-                    // Ở đây gửi thông báo tới tất cả client, client nào đang mở Hóa đơn đó sẽ tự refresh
                     await _hubContext.Clients.All.SendAsync("ReceiveSePayPayment", new 
                     { 
                         invoiceId = invoiceId,
@@ -58,6 +56,48 @@ namespace WebApi.Controllers
 
             // Luôn trả về 200 OK để SePay không gửi lại webhook
             return Ok(new { success = true });
+        }
+
+        /// <summary>
+        /// [CHỈ DÙNG ĐỂ TEST] Giả lập thanh toán thành công cho một hóa đơn.
+        /// Endpoint này tự động bị vô hiệu hóa ở môi trường Production (Render).
+        /// </summary>
+        [HttpPost("simulate/{invoiceId}")]
+        public async Task<IActionResult> SimulatePayment(long invoiceId)
+        {
+            // Bảo vệ: Chỉ cho phép chạy ở môi trường Development
+            if (!HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
+            {
+                return NotFound(); // Ẩn hoàn toàn trên Production
+            }
+
+            var fakePayload = new SePayWebhookDto
+            {
+                Id = 999999,
+                Gateway = "TPBank",
+                TransactionDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                AccountNumber = "00001562694",
+                Code = null,
+                Content = $"MPC{invoiceId}",
+                TransferType = "in",
+                TransferAmount = 0,
+                Accumulated = 0,
+                SubAccount = null,
+                ReferenceCode = $"SIMULATE-{invoiceId}",
+                Description = $"MPC{invoiceId}",
+                TransactionContent = $"THANH TOAN MPC{invoiceId}"
+            };
+
+            bool success = await _invoiceService.ProcessSePayWebhookAsync(fakePayload);
+
+            // Gửi SignalR ngay lập tức để Frontend cập nhật
+            await _hubContext.Clients.All.SendAsync("ReceiveSePayPayment", new
+            {
+                invoiceId = invoiceId,
+                message = $"[GIẢ LẬP] Hóa đơn MPC{invoiceId} đã được thanh toán thành công!"
+            });
+
+            return Ok(new { success = true, simulated = true, invoiceId = invoiceId });
         }
     }
 }
