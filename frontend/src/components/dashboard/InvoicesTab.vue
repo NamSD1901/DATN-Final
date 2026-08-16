@@ -242,9 +242,21 @@
                 </div>
 
                 <!-- Giao diện quét mã QR tự động -->
-                <div v-if="paymentMethod === 'qr'" class="p-3 bg-white rounded-4 border border-primary mb-4 text-center animate-fade-in shadow-sm position-relative overflow-hidden">
-                  <div class="position-absolute top-0 start-0 w-100 bg-primary bg-opacity-10 py-1 fw-bold text-primary small">
-                    <i class="bi bi-lightning-charge-fill me-1 animate-pulse"></i> Tự động nhận diện thanh toán
+                <div v-if="paymentMethod === 'qr'" class="p-3 bg-white rounded-4 mb-4 text-center animate-fade-in shadow-sm position-relative overflow-hidden"
+                  :class="notificationStore.isConnected ? 'border border-success' : 'border border-warning'"
+                >
+                  <!-- Header LIVE indicator -->
+                  <div class="position-absolute top-0 start-0 w-100 py-1 fw-bold small d-flex align-items-center justify-content-center gap-2"
+                    :class="notificationStore.isConnected ? 'bg-success bg-opacity-10 text-success' : 'bg-warning bg-opacity-10 text-warning'"
+                  >
+                    <span v-if="notificationStore.isConnected" class="d-flex align-items-center gap-1">
+                      <span class="live-dot"></span>
+                      <span>LIVE — Đang chờ thanh toán tự động</span>
+                    </span>
+                    <span v-else class="d-flex align-items-center gap-1">
+                      <i class="bi bi-exclamation-triangle-fill"></i>
+                      <span>Mất kết nối realtime — Đang thử lại...</span>
+                    </span>
                   </div>
                   <div class="mt-4 mb-2 mx-auto bg-light rounded-4 p-2" style="width: 220px; height: 220px; border: 2px dashed #93c5fd;">
                     <img v-if="vietQrUrl" :src="vietQrUrl" alt="VietQR" class="w-100 h-100 object-fit-contain rounded-3" />
@@ -1276,5 +1288,22 @@ export default {
   border-bottom: 1px solid #0f172a;
   height: 40px;
   margin: 8px 0;
+}
+
+/* ── LIVE dot realtime indicator ── */
+.live-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: #16a34a;
+  box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.6);
+  animation: live-pulse 1.6s ease-out infinite;
+  flex-shrink: 0;
+}
+@keyframes live-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+  70%  { box-shadow: 0 0 0 8px rgba(22, 163, 74, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
 }
 </style>
