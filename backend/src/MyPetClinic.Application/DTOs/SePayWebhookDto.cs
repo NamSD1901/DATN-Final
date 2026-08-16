@@ -20,25 +20,25 @@ namespace MyPetClinic.Application.DTOs
         [JsonPropertyName("subAccount")]
         public string? SubAccount { get; set; }
 
-        [JsonPropertyName("amountIn")]
-        public decimal AmountIn { get; set; }
+        [JsonPropertyName("code")]
+        public string? Code { get; set; }
 
-        [JsonPropertyName("amountOut")]
-        public decimal AmountOut { get; set; }
+        [JsonPropertyName("content")]
+        public string? Content { get; set; }
+
+        [JsonPropertyName("transferType")]
+        public string? TransferType { get; set; }
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("transferAmount")]
+        public decimal TransferAmount { get; set; }
 
         [JsonPropertyName("accumulated")]
         public decimal Accumulated { get; set; }
 
-        [JsonPropertyName("code")]
-        public string? Code { get; set; }
-
-        [JsonPropertyName("transactionContent")]
-        public string? TransactionContent { get; set; }
-
-        [JsonPropertyName("referenceNumber")]
-        public string? ReferenceNumber { get; set; }
-
-        [JsonPropertyName("body")]
-        public string? Body { get; set; }
+        [JsonPropertyName("referenceCode")]
+        public string? ReferenceCode { get; set; }
     }
 }
