@@ -74,9 +74,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     })
     .AddGoogle(googleOptions =>
     {
-        googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? "";
-        googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? "";
-        // You can also add options.CallbackPath = "/signin-google"; if you want to explicitly map it, but it's the default.
+        googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? "DUMMY_CLIENT_ID_TO_PREVENT_CRASH";
+        googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? "DUMMY_SECRET";
     });
 
 var app = builder.Build();
