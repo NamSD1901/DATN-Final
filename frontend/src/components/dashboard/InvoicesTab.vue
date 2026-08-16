@@ -378,12 +378,13 @@ const vietQrUrl = computed(() => {
 watch(() => notificationStore.lastSePayEvent, async (newVal) => {
   if (newVal && invoice.value && newVal.invoiceId === invoice.value.id) {
     // We received a successful payment webhook for THIS invoice!
-    Swal.fire({ 
+    await Swal.fire({ 
       title: 'Tuyệt vời!', 
       text: newVal.message || `Khách hàng vừa thanh toán thành công qua mã QR!`, 
       icon: 'success', 
-      timer: 2500, 
-      showConfirmButton: false,
+      showConfirmButton: true,
+      confirmButtonText: '<i class="bi bi-printer me-1"></i> Đóng & In hóa đơn ngay',
+      confirmButtonColor: '#3b82f6',
       backdrop: `
         rgba(0,0,123,0.4)
         url("/fireworks.gif")
