@@ -377,14 +377,44 @@ const vietQrUrl = computed(() => {
 // Watch for automatic SePay payment events
 watch(() => notificationStore.lastSePayEvent, async (newVal) => {
   if (newVal && invoice.value && newVal.invoiceId === invoice.value.id) {
-    // We received a successful payment webhook for THIS invoice!
-    await Swal.fire({ 
-      title: 'Tuyệt vời!', 
-      text: newVal.message || `Khách hàng vừa thanh toán thành công qua mã QR!`, 
+    // 1. Lưu snapshot toàn bộ dữ liệu TRƯỚC KHI Swal mở (tránh race condition khi invoice.value bị null sau đó)
+    const invoiceSnapshot = { ...invoice.value, items: [...(invoice.value.items || [])] };
+    const apptIdSnapshot = selectedAppointmentId.value;
+
+    // 2. Fetch dữ liệu bổ sung ngay bây giờ (khi dữ liệu còn đầy đủ)
+    let apptData = null;
+    let soapData = null;
+    if (printMedicalRecordOpt.value && apptIdSnapshot) {
+      try {
+        const apptRes = await api.get(`/appointment/${apptIdSnapshot}`);
+        apptData = apptRes.data;
+        const soapRes = await api.get(`/medical-records/soap/appointment/${apptIdSnapshot}`);
+        soapData = soapRes.data;
+      } catch (err) { }
+    }
+
+    // 3. Hiển thị Swal thông báo thành công với nút xác nhận - chờ người dùng bấm
+    const result = await Swal.fire({ 
+      title: '🎉 Thanh toán thành công!', 
+      html: `
+        <div style="font-size:1rem; color:#374151;">
+          ${newVal.message || 'Khách hàng vừa thanh toán thành công qua chuyển khoản QR!'}
+        </div>
+        <div style="margin-top:12px; padding:10px; background:#f0fdf4; border-radius:8px; font-size:0.85rem; color:#166534;">
+          <i class="bi bi-check-circle-fill me-1"></i>
+          Hóa đơn đã được ghi nhận tự động vào hệ thống
+        </div>
+      `,
       icon: 'success', 
       showConfirmButton: true,
-      confirmButtonText: '<i class="bi bi-printer me-1"></i> Đóng & In hóa đơn ngay',
+      confirmButtonText: 'In hóa đơn & Hoàn tất',
       confirmButtonColor: '#3b82f6',
+      showCancelButton: true,
+      cancelButtonText: 'Bỏ qua, không in',
+      cancelButtonColor: '#9ca3af',
+      timer: 30000,
+      timerProgressBar: true,
+      allowOutsideClick: false,
       backdrop: `
         rgba(0,0,123,0.4)
         url("/fireworks.gif")
@@ -393,23 +423,12 @@ watch(() => notificationStore.lastSePayEvent, async (newVal) => {
       `
     });
 
-    // Auto complete the payment in the UI (Server already marked it paid, we just need to print & refresh)
-    // Actually we should call confirmPayment() to generate the medical record and invoice print templates
-    // But since server already processed it, calling process-payment again might fail if we don't allow double payment.
-    // Assuming backend returns success or already paid message. We will just bypass process and print directly:
-    
-    let apptData = null;
-    let soapData = null;
-    if (printMedicalRecordOpt.value && selectedAppointmentId.value) {
-      try {
-        const apptRes = await api.get(`/appointment/${selectedAppointmentId.value}`);
-        apptData = apptRes.data;
-        const soapRes = await api.get(`/medical-records/soap/appointment/${selectedAppointmentId.value}`);
-        soapData = soapRes.data;
-      } catch (err) { }
+    // 4. In hóa đơn nếu người dùng bấm xác nhận (không bấm Cancel / không để timeout)
+    if (result.isConfirmed) {
+      printInvoiceWindow(invoiceSnapshot, apptData, soapData, printInvoiceOpt.value, printMedicalRecordOpt.value);
     }
-    printInvoiceWindow(invoice.value, apptData, soapData, printInvoiceOpt.value, printMedicalRecordOpt.value);
     
+    // 5. Dọn dẹp UI sau khi người dùng đã bấm (dù Confirm hay Cancel)
     selectedAppointmentId.value = null;
     invoice.value = null;
     await loadPendingCheckouts();
