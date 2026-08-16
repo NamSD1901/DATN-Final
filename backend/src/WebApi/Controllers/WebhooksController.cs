@@ -78,13 +78,12 @@ namespace WebApi.Controllers
                 TransactionDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 AccountNumber = "00001562694",
                 Code = null,
-                Content = $"MPC{invoiceId}",
-                TransferType = "in",
-                TransferAmount = 0,
+                Body = $"MPC{invoiceId}",
+                AmountIn = 0,
+                AmountOut = 0,
                 Accumulated = 0,
                 SubAccount = null,
-                ReferenceCode = $"SIMULATE-{invoiceId}",
-                Description = $"MPC{invoiceId}",
+                ReferenceNumber = $"SIMULATE-{invoiceId}",
                 TransactionContent = $"THANH TOAN MPC{invoiceId}"
             };
 
