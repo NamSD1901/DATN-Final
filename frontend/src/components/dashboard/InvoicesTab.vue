@@ -249,8 +249,9 @@
                   <div class="mt-4 mb-2 mx-auto bg-light rounded-4 p-2" style="width: 220px; height: 220px; border: 2px dashed #93c5fd;">
                     <img v-if="vietQrUrl" :src="vietQrUrl" alt="VietQR" class="w-100 h-100 object-fit-contain rounded-3" />
                   </div>
-                  <div class="small fw-bold text-dark mb-1">Ngân hàng: <span class="text-primary">Vietcombank</span></div>
-                  <div class="small fw-bold text-dark mb-1">Chủ thẻ: <span class="text-primary">MYPET CLINIC</span></div>
+                  <div class="small fw-bold text-dark mb-1">Ngân hàng: <span class="text-primary">TPBank</span></div>
+                  <div class="small fw-bold text-dark mb-1">STK: <span class="text-primary fw-bolder">00001562694</span></div>
+                  <div class="small fw-bold text-dark mb-1">Chủ tài khoản: <span class="text-primary">CAO HA PHUONG</span></div>
                   <div class="small text-muted mt-2" style="font-size: 0.75rem;">
                     Mã GD: <strong class="text-primary bg-primary bg-opacity-10 px-1 rounded">MPC{{ invoice.id }}</strong><br>
                     Khách quét xong hệ thống sẽ tự động xuất hóa đơn.
@@ -336,9 +337,9 @@ const cashChange = computed(() => {
 
 const vietQrUrl = computed(() => {
   if (!invoice.value) return '';
-  const bankId = "VCB";
-  const accountNo = "990123456789"; // Replace with real account if needed
-  const accountName = "MYPET CLINIC";
+  const bankId = "TPB"; // TPBank
+  const accountNo = "00001562694";
+  const accountName = "CAO HA PHUONG";
   const addInfo = encodeURIComponent(`MPC${invoice.value.id}`);
   return `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${finalTotal.value}&addInfo=${addInfo}&accountName=${encodeURIComponent(accountName)}`;
 });
