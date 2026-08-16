@@ -9,6 +9,7 @@ export const useNotificationStore = defineStore('notification', {
     unreadCount: 0,
     hubConnection: null,
     isConnected: false,
+    lastSePayEvent: null,
     apiUrl: (import.meta.env.VITE_API_BASE_URL || 'https://localhost:7284/api') + '/notifications',
     hubUrl: (import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'https://localhost:7284') + '/hubs/notification'
   }),
@@ -99,6 +100,10 @@ export const useNotificationStore = defineStore('notification', {
 
         // Tự động fetch lại danh sách khi có thông báo mới
         this.fetchNotifications();
+      });
+
+      this.hubConnection.on('ReceiveSePayPayment', (data) => {
+        this.lastSePayEvent = { ...data, timestamp: Date.now() };
       });
 
       this.hubConnection.start()

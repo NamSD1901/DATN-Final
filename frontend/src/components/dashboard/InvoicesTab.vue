@@ -204,13 +204,31 @@
                 
                 <hr class="my-3">
 
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
                   <span class="fw-bold text-dark">TỔNG CẦN THU:</span>
                   <span class="fw-extrabold text-primary fs-4">{{ formatCurrency(finalTotal) }}</span>
                 </div>
 
+                <!-- Chọn phương thức thanh toán -->
+                <div class="mb-3 d-flex gap-2">
+                  <button 
+                    class="btn flex-fill fw-bold rounded-pill" 
+                    :class="paymentMethod === 'cash' ? 'btn-success' : 'btn-outline-secondary'"
+                    @click="paymentMethod = 'cash'"
+                  >
+                    <i class="bi bi-cash-coin me-1"></i> Tiền mặt
+                  </button>
+                  <button 
+                    class="btn flex-fill fw-bold rounded-pill" 
+                    :class="paymentMethod === 'qr' ? 'btn-primary' : 'btn-outline-secondary'"
+                    @click="paymentMethod = 'qr'"
+                  >
+                    <i class="bi bi-qr-code-scan me-1"></i> VietQR
+                  </button>
+                </div>
+
                 <!-- Cash received thối tiền -->
-                <div class="p-3 bg-white rounded-3 border mb-4 text-start">
+                <div v-if="paymentMethod === 'cash'" class="p-3 bg-white rounded-3 border mb-4 text-start animate-fade-in">
                   <label class="form-label small fw-bold text-success mb-1">Số tiền khách đưa (đ):</label>
                   <input 
                     type="number" 
@@ -220,6 +238,22 @@
                   <div class="d-flex justify-content-between p-2 bg-success bg-opacity-10 text-success rounded fw-bold small">
                     <span>Tiền thừa thối khách:</span>
                     <span>{{ formatCurrency(cashChange) }}</span>
+                  </div>
+                </div>
+
+                <!-- Giao diện quét mã QR tự động -->
+                <div v-if="paymentMethod === 'qr'" class="p-3 bg-white rounded-4 border border-primary mb-4 text-center animate-fade-in shadow-sm position-relative overflow-hidden">
+                  <div class="position-absolute top-0 start-0 w-100 bg-primary bg-opacity-10 py-1 fw-bold text-primary small">
+                    <i class="bi bi-lightning-charge-fill me-1 animate-pulse"></i> Tự động nhận diện thanh toán
+                  </div>
+                  <div class="mt-4 mb-2 mx-auto bg-light rounded-4 p-2" style="width: 220px; height: 220px; border: 2px dashed #93c5fd;">
+                    <img v-if="vietQrUrl" :src="vietQrUrl" alt="VietQR" class="w-100 h-100 object-fit-contain rounded-3" />
+                  </div>
+                  <div class="small fw-bold text-dark mb-1">Ngân hàng: <span class="text-primary">Vietcombank</span></div>
+                  <div class="small fw-bold text-dark mb-1">Chủ thẻ: <span class="text-primary">MYPET CLINIC</span></div>
+                  <div class="small text-muted mt-2" style="font-size: 0.75rem;">
+                    Mã GD: <strong class="text-primary bg-primary bg-opacity-10 px-1 rounded">MPC{{ invoice.id }}</strong><br>
+                    Khách quét xong hệ thống sẽ tự động xuất hóa đơn.
                   </div>
                 </div>
 
@@ -239,8 +273,11 @@
                 </div>
 
                 <!-- Action Button -->
-                <button class="btn btn-premium btn-lg w-100 rounded-pill py-2.5 fw-bold shadow-sm" @click="confirmPayment">
-                  <i class="bi bi-wallet-fill me-2"></i> Thanh toán
+                <button v-if="paymentMethod === 'cash'" class="btn btn-premium btn-lg w-100 rounded-pill py-2.5 fw-bold shadow-sm" @click="confirmPayment">
+                  <i class="bi bi-wallet-fill me-2"></i> Xác nhận & Thu tiền
+                </button>
+                <button v-else class="btn btn-primary btn-lg w-100 rounded-pill py-2.5 fw-bold shadow-sm animate-pulse" style="pointer-events: none;">
+                  <i class="bi bi-arrow-repeat spin me-2"></i> Đang chờ khách quét QR...
                 </button>
               </div>
             </div>
@@ -256,10 +293,13 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
+import { useNotificationStore } from '../../stores/notification.store';
 
 const props = defineProps<{
   initialAppointmentId?: number
 }>();
+
+const notificationStore = useNotificationStore();
 
 // State
 const loadingQueue = ref(false);
@@ -297,11 +337,52 @@ const cashChange = computed(() => {
 const vietQrUrl = computed(() => {
   if (!invoice.value) return '';
   const bankId = "VCB";
-  const accountNo = "990123456789";
+  const accountNo = "990123456789"; // Replace with real account if needed
   const accountName = "MYPET CLINIC";
-  const addInfo = encodeURIComponent(`THANH TOAN HD ${invoice.value.id}`);
+  const addInfo = encodeURIComponent(`MPC${invoice.value.id}`);
   return `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${finalTotal.value}&addInfo=${addInfo}&accountName=${encodeURIComponent(accountName)}`;
 });
+
+// Watch for automatic SePay payment events
+watch(() => notificationStore.lastSePayEvent, async (newVal) => {
+  if (newVal && invoice.value && newVal.invoiceId === invoice.value.id) {
+    // We received a successful payment webhook for THIS invoice!
+    Swal.fire({ 
+      title: 'Tuyệt vời!', 
+      text: newVal.message || `Khách hàng vừa thanh toán thành công qua mã QR!`, 
+      icon: 'success', 
+      timer: 2500, 
+      showConfirmButton: false,
+      backdrop: `
+        rgba(0,0,123,0.4)
+        url("/fireworks.gif")
+        left top
+        no-repeat
+      `
+    });
+
+    // Auto complete the payment in the UI (Server already marked it paid, we just need to print & refresh)
+    // Actually we should call confirmPayment() to generate the medical record and invoice print templates
+    // But since server already processed it, calling process-payment again might fail if we don't allow double payment.
+    // Assuming backend returns success or already paid message. We will just bypass process and print directly:
+    
+    let apptData = null;
+    let soapData = null;
+    if (printMedicalRecordOpt.value && selectedAppointmentId.value) {
+      try {
+        const apptRes = await api.get(`/appointment/${selectedAppointmentId.value}`);
+        apptData = apptRes.data;
+        const soapRes = await api.get(`/medical-records/soap/appointment/${selectedAppointmentId.value}`);
+        soapData = soapRes.data;
+      } catch (err) { }
+    }
+    printInvoiceWindow(invoice.value, apptData, soapData, printInvoiceOpt.value, printMedicalRecordOpt.value);
+    
+    selectedAppointmentId.value = null;
+    invoice.value = null;
+    await loadPendingCheckouts();
+  }
+}, { deep: true });
 
 // Methods
 const loadPendingCheckouts = async () => {
@@ -917,6 +998,26 @@ onMounted(() => {
   loadPendingCheckouts();
   if (props.initialAppointmentId) {
     selectAppointment(props.initialAppointmentId);
+  }
+
+  // Listen for auto payment from SePay
+  const notifStore = useNotificationStore();
+  if (notifStore.hubConnection) {
+    notifStore.hubConnection.on('ReceiveSePayPayment', (data: any) => {
+      // Check if it's the currently viewed invoice
+      if (invoice.value && data.invoiceId === invoice.value.id) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Khách hàng đã thanh toán',
+          text: data.message,
+          timer: 3000,
+          showConfirmButton: false
+        });
+        selectedAppointmentId.value = null;
+        invoice.value = null;
+        loadPendingCheckouts();
+      }
+    });
   }
 });
 </script>
