@@ -223,7 +223,7 @@
                     :class="paymentMethod === 'qr' ? 'btn-primary' : 'btn-outline-secondary'"
                     @click="paymentMethod = 'qr'"
                   >
-                    <i class="bi bi-qr-code-scan me-1"></i> VietQR
+                    <i class="bi bi-qr-code-scan me-1"></i> Chuyển khoản
                   </button>
                 </div>
 
