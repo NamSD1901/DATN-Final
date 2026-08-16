@@ -1065,25 +1065,6 @@ onMounted(() => {
     selectAppointment(props.initialAppointmentId);
   }
 
-  // Listen for auto payment from SePay
-  const notifStore = useNotificationStore();
-  if (notifStore.hubConnection) {
-    notifStore.hubConnection.on('ReceiveSePayPayment', (data: any) => {
-      // Check if it's the currently viewed invoice
-      if (invoice.value && data.invoiceId === invoice.value.id) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Khách hàng đã thanh toán',
-          text: data.message,
-          timer: 3000,
-          showConfirmButton: false
-        });
-        selectedAppointmentId.value = null;
-        invoice.value = null;
-        loadPendingCheckouts();
-      }
-    });
-  }
 });
 </script>
 
