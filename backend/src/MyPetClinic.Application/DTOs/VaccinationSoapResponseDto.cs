@@ -54,5 +54,6 @@ namespace MyPetClinic.Application.DTOs
         public DateTime? NextDueDate { get; set; }
         public string? FollowUpInstructions { get; set; }
         public string? ReactionNote { get; set; }
+        public List<string> Attachments { get; set; } = new();
     }
 }

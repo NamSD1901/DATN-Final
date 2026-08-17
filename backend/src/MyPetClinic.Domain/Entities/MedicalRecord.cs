@@ -22,6 +22,7 @@ namespace MyPetClinic.Domain.Entities
         public decimal Weight { get; set; }
         public decimal Temperature { get; set; }
         public string ClinicalSigns { get; set; } = string.Empty; // Triệu chứng hoặc Kết quả sàng lọc
+        public string? Attachments { get; set; } // Danh sách URL ảnh cận lâm sàng (JSON string)
 
         // A - Assessment (Đánh giá)
         public string Diagnosis { get; set; } = string.Empty; // Chẩn đoán (hoặc "Đủ ĐK tiêm"/"Không đủ ĐK tiêm")

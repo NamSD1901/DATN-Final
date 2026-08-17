@@ -35,6 +35,7 @@ namespace MyPetClinic.Domain.Entities
         public string? EyeNoseEarStatus { get; set; }
         public string? LymphNodeStatus { get; set; }
         public int? DehydrationPercent { get; set; }
+        public string? Attachments { get; set; } // Danh sách URL ảnh cận lâm sàng (JSON string)
         
         // Vaccine Plan Specifics
         public decimal? Dose { get; set; }

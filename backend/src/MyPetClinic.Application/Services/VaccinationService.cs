@@ -5,6 +5,7 @@ using MyPetClinic.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace MyPetClinic.Application.Services
@@ -156,7 +157,10 @@ namespace MyPetClinic.Application.Services
 
                 NextDueDate = request.NextDueDate,
                 FollowUpInstructions = request.FollowUpInstructions,
-                ReactionNote = request.ReactionNote
+                ReactionNote = request.ReactionNote,
+                Attachments = request.Attachments != null && request.Attachments.Any() 
+                    ? JsonSerializer.Serialize(request.Attachments) 
+                    : null
             };
         }
 
@@ -292,7 +296,10 @@ namespace MyPetClinic.Application.Services
                 InjectionDate = r.InjectionDate,
                 NextDueDate = r.NextDueDate,
                 FollowUpInstructions = r.FollowUpInstructions,
-                ReactionNote = r.ReactionNote
+                ReactionNote = r.ReactionNote,
+                Attachments = string.IsNullOrWhiteSpace(r.Attachments) 
+                    ? new List<string>() 
+                    : JsonSerializer.Deserialize<List<string>>(r.Attachments) ?? new List<string>()
             };
         }
 

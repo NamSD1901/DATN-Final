@@ -48,7 +48,7 @@
         <form v-else @submit.prevent="submitForm">
           <!-- Patient Quick Info -->
           <div class="row mb-4 bg-light rounded-4 p-3 mx-0">
-            <div class="col-md-3 border-end">
+            <div class="col-md-6 border-end">
               <div class="d-flex align-items-center gap-3">
                 <div class="pet-avatar-large bg-white shadow-sm" style="width:50px;height:50px;font-size:1.8rem">🐾</div>
                 <div>
@@ -57,17 +57,9 @@
                 </div>
               </div>
             </div>
-            <div class="col-md-3 border-end">
+            <div class="col-md-6">
               <div class="small text-muted mb-1">Chủ nuôi</div>
               <div class="fw-bold text-dark">{{ activePatient.customerName }}</div>
-            </div>
-            <div class="col-md-3 border-end">
-              <div class="small text-muted mb-1">Cân nặng (kg) <span class="text-danger">*</span></div>
-              <input type="number" step="0.1" v-model="form.weight" class="form-control form-control-sm border-warning rounded-3 bg-white" placeholder="VD: 5.2" required>
-            </div>
-            <div class="col-md-3">
-              <div class="small text-muted mb-1">Nhiệt độ (°C) <span class="text-danger">*</span></div>
-              <input type="number" step="0.1" v-model="form.temperature" class="form-control form-control-sm border-warning rounded-3 bg-white" placeholder="VD: 38.5" required>
             </div>
           </div>
 
@@ -225,6 +217,66 @@
                         </div>
                         <input v-if="!(form.objective as any)[key].isNormal" type="text" v-model="(form.objective as any)[key].note" class="form-control form-control-sm" placeholder="Ghi chú triệu chứng...">
                       </div>
+
+                      <!-- ===== HÌNH ẢNH CẬN LÂM SÀNG ===== -->
+                      <div class="col-12 mt-4">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                          <i class="bi bi-camera-fill text-primary fs-5"></i>
+                          <h6 class="fw-bold text-dark mb-0">Hình Ảnh Cận Lâm Sàng</h6>
+                          <span class="badge bg-primary bg-opacity-10 text-primary small ms-1">X-Quang · Siêu âm · Ảnh lâm sàng</span>
+                        </div>
+
+                        <!-- Drag & Drop Zone -->
+                        <div
+                          class="upload-dropzone rounded-4 text-center p-4 position-relative"
+                          :class="{ 'dragging': isDragging }"
+                          @dragover.prevent="isDragging = true"
+                          @dragleave.prevent="isDragging = false"
+                          @drop.prevent="onFileDrop"
+                          @click="triggerFileInput"
+                        >
+                          <input
+                            ref="fileInputRef"
+                            type="file"
+                            multiple
+                            accept="image/jpeg,image/png,image/gif"
+                            class="d-none"
+                            @change="onFileSelected"
+                          />
+                          <div v-if="selectedFiles.length === 0" class="py-2">
+                            <i class="bi bi-cloud-arrow-up-fill text-primary opacity-50" style="font-size:2.5rem"></i>
+                            <p class="fw-bold text-secondary mb-1 mt-2">Kéo &amp; thả ảnh vào đây</p>
+                            <p class="small text-muted mb-0">hoặc <span class="text-primary fw-bold">bấm để chọn ảnh</span> · JPG, PNG, GIF · Tối đa 5MB/ảnh</p>
+                          </div>
+                          <div v-else class="d-flex align-items-center gap-2 flex-wrap justify-content-center">
+                            <span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>{{ selectedFiles.length }} ảnh đã chọn</span>
+                            <span class="text-muted small">· Bấm để thêm ảnh khác</span>
+                          </div>
+                        </div>
+
+                        <!-- Preview Grid -->
+                        <div v-if="previewUrls.length > 0" class="mt-3">
+                          <div class="d-flex flex-wrap gap-2">
+                            <div
+                              v-for="(url, idx) in previewUrls"
+                              :key="idx"
+                              class="img-preview-wrapper position-relative"
+                            >
+                              <img :src="url" class="img-preview rounded-3 shadow-sm" @click.stop="openLightbox(previewUrls, idx)" title="Bấm để xem ảnh to" />
+                              <button
+                                type="button"
+                                class="btn-remove-img position-absolute top-0 end-0"
+                                @click.stop="removePreviewImage(idx)"
+                              >
+                                <i class="bi bi-x-lg"></i>
+                              </button>
+                            </div>
+                          </div>
+                          <p class="text-muted small mt-2 mb-0"><i class="bi bi-info-circle me-1"></i>Ảnh sẽ được tải lên khi bạn nhấn "Hoàn thành &amp; Lưu bệnh án"</p>
+                        </div>
+                      </div>
+                      <!-- ===== END HÌNH ẢNH CẬN LÂM SÀNG ===== -->
+
                     </div>
                   </div>
 
@@ -266,38 +318,40 @@
                           <button type="button" class="btn btn-sm btn-success rounded-pill px-3" @click="addPrescriptionLine"><i class="bi bi-plus-lg me-1"></i> Thêm thuốc</button>
                         </div>
                         <div v-if="form.plan.prescriptions.length === 0" class="text-center text-muted small py-3 bg-light rounded-4 border border-dashed">Chưa có thuốc được chỉ định</div>
-                        <div v-else class="row g-3">
-                          <div v-for="(pres, idx) in form.plan.prescriptions" :key="idx" class="col-md-6">
-                            <div class="bg-light p-3 rounded-4 border position-relative h-100">
-                              <button type="button" class="btn-close position-absolute top-0 end-0 m-2" @click="removePrescriptionLine(idx)"></button>
-                              <div class="position-relative mb-2 w-100">
-                                <div class="input-group input-group-sm">
-                                  <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                                  <input type="text" class="form-control fw-bold" placeholder="Tìm kiếm thuốc (chỉ hiển thị còn hàng)..." v-model="pres.searchQuery" @focus="pres.showDropdown = true" @blur="hideDropdown(pres)" @input="handleSearchInput(pres)" />
-                                </div>
-                                <div v-if="pres.showDropdown && filteredMedicines(pres.searchQuery).length > 0" class="position-absolute w-100 bg-white border rounded shadow-lg mt-1" style="max-height: 250px; overflow-y: auto; z-index: 1050;">
-                                  <div v-for="med in filteredMedicines(pres.searchQuery)" :key="med.id" class="px-3 py-2 border-bottom autocomplete-item cursor-pointer" @mousedown.prevent="selectMedicine(idx, med)">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                      <div class="fw-bold text-dark">{{ med.name }}</div>
-                                      <span class="badge bg-success rounded-pill">Tồn: {{ med.stockQuantity }}</span>
+                        <div v-else class="pe-2 overflow-auto" style="max-height: 450px; overflow-x: hidden;">
+                          <div class="row g-3">
+                            <div v-for="(pres, idx) in form.plan.prescriptions" :key="idx" class="col-md-6">
+                              <div class="bg-light p-3 pt-4 rounded-4 border position-relative h-100">
+                                <button type="button" class="btn-close position-absolute top-0 end-0 m-2 bg-white shadow-sm border" style="z-index: 10;" @click="removePrescriptionLine(idx)"></button>
+                                <div class="position-relative mb-2 w-100">
+                                  <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                                    <input type="text" class="form-control fw-bold" placeholder="Tìm kiếm thuốc (chỉ hiển thị còn hàng)..." v-model="pres.searchQuery" @focus="pres.showDropdown = true" @blur="hideDropdown(pres)" @input="handleSearchInput(pres)" />
+                                  </div>
+                                  <div v-if="pres.showDropdown && filteredMedicines(pres.searchQuery).length > 0" class="position-absolute w-100 bg-white border rounded shadow-lg mt-1" style="max-height: 250px; overflow-y: auto; z-index: 1050;">
+                                    <div v-for="med in filteredMedicines(pres.searchQuery)" :key="med.id" class="px-3 py-2 border-bottom autocomplete-item cursor-pointer" @mousedown.prevent="selectMedicine(idx, med)">
+                                      <div class="d-flex justify-content-between align-items-center">
+                                        <div class="fw-bold text-dark">{{ med.name }}</div>
+                                        <span class="badge bg-success rounded-pill">Tồn: {{ med.stockQuantity }}</span>
+                                      </div>
+                                      <div class="small text-muted mt-1">{{ med.unit }} - {{ med.sellPrice ? med.sellPrice.toLocaleString() : 0 }}đ</div>
                                     </div>
-                                    <div class="small text-muted mt-1">{{ med.unit }} - {{ med.sellPrice ? med.sellPrice.toLocaleString() : 0 }}đ</div>
+                                  </div>
+                                  <div v-if="pres.showDropdown && pres.searchQuery && filteredMedicines(pres.searchQuery).length === 0" class="position-absolute w-100 bg-white border rounded shadow-lg mt-1 px-3 py-3 small text-center text-muted" style="z-index: 1050;">
+                                    <i class="bi bi-x-circle d-block fs-4 text-danger mb-2"></i>
+                                    Không tìm thấy thuốc hoặc đã hết hàng.
                                   </div>
                                 </div>
-                                <div v-if="pres.showDropdown && pres.searchQuery && filteredMedicines(pres.searchQuery).length === 0" class="position-absolute w-100 bg-white border rounded shadow-lg mt-1 px-3 py-3 small text-center text-muted" style="z-index: 1050;">
-                                  <i class="bi bi-x-circle d-block fs-4 text-danger mb-2"></i>
-                                  Không tìm thấy thuốc hoặc đã hết hàng.
+                                <div class="row g-2">
+                                  <div class="col-4"><label class="small text-muted" style="font-size:0.7rem">Số lượng</label><input type="number" min="1" v-model.number="pres.quantity" class="form-control form-control-sm"></div>
+                                  <div class="col-8"><label class="small text-muted" style="font-size:0.7rem">Liều lượng</label><input type="text" v-model="pres.dosage" class="form-control form-control-sm"></div>
+                                  <div class="col-12"><label class="small text-muted" style="font-size:0.7rem">Cách dùng</label><input type="text" v-model="pres.frequency" class="form-control form-control-sm"></div>
                                 </div>
-                              </div>
-                              <div class="row g-2">
-                                <div class="col-4"><label class="small text-muted" style="font-size:0.7rem">Số lượng</label><input type="number" min="1" v-model.number="pres.quantity" class="form-control form-control-sm"></div>
-                                <div class="col-8"><label class="small text-muted" style="font-size:0.7rem">Liều lượng</label><input type="text" v-model="pres.dosage" class="form-control form-control-sm"></div>
-                                <div class="col-12"><label class="small text-muted" style="font-size:0.7rem">Cách dùng</label><input type="text" v-model="pres.frequency" class="form-control form-control-sm"></div>
-                              </div>
-                              <div v-if="pres.medicineId" class="mt-2 text-end">
-                                <span v-if="pres.stockQuantity === 0" class="text-danger small fw-bold"><i class="bi bi-x-circle"></i> Hết hàng</span>
-                                <span v-else-if="pres.quantity > pres.stockQuantity" class="text-danger small fw-bold"><i class="bi bi-exclamation-triangle"></i> Kho không đủ ({{ pres.stockQuantity }})</span>
-                                <span v-else class="text-success small fw-semibold"><i class="bi bi-check2-circle"></i> Tồn kho: {{ pres.stockQuantity }}</span>
+                                <div v-if="pres.medicineId" class="mt-2 text-end">
+                                  <span v-if="pres.stockQuantity === 0" class="text-danger small fw-bold"><i class="bi bi-x-circle"></i> Hết hàng</span>
+                                  <span v-else-if="pres.quantity > pres.stockQuantity" class="text-danger small fw-bold"><i class="bi bi-exclamation-triangle"></i> Kho không đủ ({{ pres.stockQuantity }})</span>
+                                  <span v-else class="text-success small fw-semibold"><i class="bi bi-check2-circle"></i> Tồn kho: {{ pres.stockQuantity }}</span>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -307,10 +361,18 @@
                       <div class="col-md-6">
                         <label class="small fw-bold text-secondary">Hướng xử lý (Treatment Directions)</label>
                         <div class="d-flex gap-2 mt-2 flex-wrap">
-                          <label class="btn btn-outline-primary btn-sm rounded-pill"><input type="checkbox" class="d-none" value="Truyền dịch" v-model="form.plan.treatmentDirections"> Truyền dịch</label>
-                          <label class="btn btn-outline-primary btn-sm rounded-pill"><input type="checkbox" class="d-none" value="Tiêm kháng sinh" v-model="form.plan.treatmentDirections"> Tiêm kháng sinh</label>
-                          <label class="btn btn-outline-primary btn-sm rounded-pill"><input type="checkbox" class="d-none" value="Phẫu thuật" v-model="form.plan.treatmentDirections"> Phẫu thuật</label>
-                          <label class="btn btn-outline-primary btn-sm rounded-pill"><input type="checkbox" class="d-none" value="Xét nghiệm máu" v-model="form.plan.treatmentDirections"> Xét nghiệm máu</label>
+                          <label class="btn btn-sm rounded-pill" :class="form.plan.treatmentDirections.includes('Truyền dịch') ? 'btn-primary' : 'btn-outline-primary'">
+                            <input type="checkbox" class="d-none" value="Truyền dịch" v-model="form.plan.treatmentDirections"> Truyền dịch
+                          </label>
+                          <label class="btn btn-sm rounded-pill" :class="form.plan.treatmentDirections.includes('Tiêm kháng sinh') ? 'btn-primary' : 'btn-outline-primary'">
+                            <input type="checkbox" class="d-none" value="Tiêm kháng sinh" v-model="form.plan.treatmentDirections"> Tiêm kháng sinh
+                          </label>
+                          <label class="btn btn-sm rounded-pill" :class="form.plan.treatmentDirections.includes('Phẫu thuật') ? 'btn-primary' : 'btn-outline-primary'">
+                            <input type="checkbox" class="d-none" value="Phẫu thuật" v-model="form.plan.treatmentDirections"> Phẫu thuật
+                          </label>
+                          <label class="btn btn-sm rounded-pill" :class="form.plan.treatmentDirections.includes('Xét nghiệm máu') ? 'btn-primary' : 'btn-outline-primary'">
+                            <input type="checkbox" class="d-none" value="Xét nghiệm máu" v-model="form.plan.treatmentDirections"> Xét nghiệm máu
+                          </label>
                         </div>
                       </div>
                       <div class="col-md-6">
@@ -694,6 +756,58 @@
       </div>
     </div>
   </div>
+    <!-- ===== LIGHTBOX MODAL ===== -->
+    <Teleport to="body">
+      <Transition name="lightbox-fade">
+        <div
+          v-if="lightbox.visible"
+          class="lightbox-overlay"
+          @click.self="closeLightbox"
+          @keydown.esc="closeLightbox"
+          tabindex="0"
+          ref="lightboxRef"
+        >
+          <!-- Close button -->
+          <button class="lightbox-close" @click="closeLightbox" title="Đóng (Esc)">
+            <i class="bi bi-x-lg"></i>
+          </button>
+
+          <!-- Prev button -->
+          <button
+            v-if="lightbox.urls.length > 1"
+            class="lightbox-nav lightbox-prev"
+            @click.stop="lightboxNav(-1)"
+            title="Ảnh trước"
+          >
+            <i class="bi bi-chevron-left"></i>
+          </button>
+
+          <!-- Image -->
+          <div class="lightbox-img-wrapper">
+            <img
+              :src="lightbox.urls[lightbox.index]"
+              class="lightbox-img"
+              alt="Ảnh cận lâm sàng"
+            />
+            <div class="lightbox-counter" v-if="lightbox.urls.length > 1">
+              {{ lightbox.index + 1 }} / {{ lightbox.urls.length }}
+            </div>
+          </div>
+
+          <!-- Next button -->
+          <button
+            v-if="lightbox.urls.length > 1"
+            class="lightbox-nav lightbox-next"
+            @click.stop="lightboxNav(1)"
+            title="Ảnh sau"
+          >
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </Transition>
+    </Teleport>
+    <!-- ===== END LIGHTBOX MODAL ===== -->
+
 </template>
 
 <script setup lang="ts">
@@ -791,7 +905,8 @@ const form = ref({
     mouth: { isNormal: true, note: '' },
     skinCoat: { isNormal: true, note: '' },
     gastrointestinal: { isNormal: true, note: '' },
-    respiratory: { isNormal: true, note: '' }
+    respiratory: { isNormal: true, note: '' },
+    attachments: [] as string[]
   },
   assessment: {
     tentativeDiagnosis: '',
@@ -1097,6 +1212,71 @@ const onMedicineChange = (idx: number, medicineId: number | null) => {
   }
 };
 
+// ===== Image Upload State =====
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const selectedFiles = ref<File[]>([]);
+const previewUrls = ref<string[]>([]);
+const isDragging = ref(false);
+
+// ===== Lightbox =====
+const lightboxRef = ref<HTMLElement | null>(null);
+const lightbox = ref<{ visible: boolean; urls: string[]; index: number }>({
+  visible: false,
+  urls: [],
+  index: 0
+});
+
+const openLightbox = (urls: string[], index: number) => {
+  lightbox.value = { visible: true, urls, index };
+  // Focus the overlay so Esc key works
+  setTimeout(() => lightboxRef.value?.focus(), 50);
+};
+
+const closeLightbox = () => {
+  lightbox.value.visible = false;
+};
+
+const lightboxNav = (dir: number) => {
+  const len = lightbox.value.urls.length;
+  lightbox.value.index = (lightbox.value.index + dir + len) % len;
+};
+
+const triggerFileInput = () => fileInputRef.value?.click();
+
+const addFiles = (files: FileList) => {
+  for (const file of Array.from(files)) {
+    if (file.size > 5 * 1024 * 1024) { alert(`File ${file.name} vượt quá 5MB.`); continue; }
+    selectedFiles.value.push(file);
+    previewUrls.value.push(URL.createObjectURL(file));
+  }
+};
+
+const onFileSelected = (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  if (input.files) addFiles(input.files);
+};
+
+const onFileDrop = (e: DragEvent) => {
+  isDragging.value = false;
+  if (e.dataTransfer?.files) addFiles(e.dataTransfer.files);
+};
+
+const removePreviewImage = (idx: number) => {
+  URL.revokeObjectURL(previewUrls.value[idx]);
+  previewUrls.value.splice(idx, 1);
+  selectedFiles.value.splice(idx, 1);
+};
+
+const uploadImages = async (): Promise<string[]> => {
+  if (selectedFiles.value.length === 0) return [];
+  const formData = new FormData();
+  for (const file of selectedFiles.value) formData.append('files', file);
+  const res = await api.post('/upload/medical-images', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return res.data.urls || [];
+};
+
 // Form submission & cancellation
 const submitForm = async () => {
   if (!form.value.appointmentId) {
@@ -1126,6 +1306,18 @@ const submitForm = async () => {
   errorMessage.value = '';
 
   try {
+    // Step 1: Upload images first if any
+    let uploadedUrls: string[] = [];
+    if (selectedFiles.value.length > 0) {
+      try {
+        uploadedUrls = await uploadImages();
+      } catch (uploadErr) {
+        errorMessage.value = 'Lỗi tải ảnh lên. Vui lòng thử lại.';
+        submitting.value = false;
+        return;
+      }
+    }
+
     const finalFollowUpDate = (form.value.plan.createFollowUpAppointment && followUpDateOnly.value && followUpTimeOnly.value)
       ? `${followUpDateOnly.value}T${followUpTimeOnly.value}:00`
       : null;
@@ -1134,7 +1326,7 @@ const submitForm = async () => {
       appointmentId: form.value.appointmentId,
       petId: form.value.petId,
       subjective: form.value.subjective,
-      objective: form.value.objective,
+      objective: { ...form.value.objective, attachments: uploadedUrls },
       assessment: form.value.assessment,
       plan: {
         treatmentDirections: form.value.plan.treatmentDirections,
@@ -1191,6 +1383,151 @@ const formatDate = (dateStr: string): string => {
 </script>
 
 <style scoped>
+/* ===== Image Upload Widget ===== */
+.upload-dropzone {
+  border: 2px dashed #c7d2fe;
+  background: linear-gradient(135deg, #f0f4ff, #fafbff);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.upload-dropzone:hover,
+.upload-dropzone.dragging {
+  border-color: #6366f1;
+  background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
+  transform: scale(1.005);
+}
+.img-preview-wrapper {
+  width: 100px;
+  height: 100px;
+}
+.img-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: zoom-in;
+}
+.img-preview:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+.btn-remove-img {
+  background: rgba(220, 38, 38, 0.9);
+  border: none;
+  color: white;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  cursor: pointer;
+  transform: translate(6px, -6px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: background 0.2s;
+}
+.btn-remove-img:hover {
+  background: rgba(185, 28, 28, 1);
+}
+
+/* ===== Lightbox ===== */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+.lightbox-img-wrapper {
+  position: relative;
+  max-width: 90vw;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.lightbox-img {
+  max-width: 88vw;
+  max-height: 82vh;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  user-select: none;
+}
+.lightbox-counter {
+  margin-top: 12px;
+  color: rgba(255,255,255,0.75);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.lightbox-close {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 10000;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: white;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  backdrop-filter: blur(4px);
+}
+.lightbox-close:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.1);
+}
+.lightbox-nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10000;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  backdrop-filter: blur(4px);
+}
+.lightbox-nav:hover {
+  background: rgba(255,255,255,0.28);
+  transform: translateY(-50%) scale(1.1);
+}
+.lightbox-prev { left: 20px; }
+.lightbox-next { right: 20px; }
+
+/* Lightbox fade transition */
+.lightbox-fade-enter-active,
+.lightbox-fade-leave-active {
+  transition: opacity 0.22s ease;
+}
+.lightbox-fade-enter-from,
+.lightbox-fade-leave-to {
+  opacity: 0;
+}
+
+
 /* ===== Time Slot Buttons ===== */
 .time-slot-btn {
   position: relative;

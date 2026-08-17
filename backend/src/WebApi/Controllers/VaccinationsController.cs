@@ -29,7 +29,7 @@ namespace WebApi.Controllers
             var record = await _vaccinationService.GetSoapRecordByAppointmentAsync(appointmentId, currentUserId);
             if (record == null) return NotFound(new { message = "Không tìm thấy hồ sơ bệnh án." });
 
-            return Ok(new { success = true, data = record });
+            return Ok(record);
         }
 
         [HttpPost("appointments/{appointmentId}")]

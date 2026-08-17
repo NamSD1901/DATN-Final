@@ -61,6 +61,8 @@ namespace MyPetClinic.Application.DTOs
         public SystemExamDto SkinCoat { get; set; } = new();
         public SystemExamDto Gastrointestinal { get; set; } = new();
         public SystemExamDto Respiratory { get; set; } = new();
+        
+        public List<string> Attachments { get; set; } = new();
     }
 
     public class SystemExamDto

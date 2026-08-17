@@ -240,6 +240,64 @@
                 </div>
               </div>
 
+              <!-- Hình Ảnh Cận Lâm Sàng -->
+              <div class="p-4 rounded-4 bg-light border shadow-sm position-relative">
+                <span class="position-absolute top-0 start-0 translate-middle" style="width:35px;height:35px;line-height:22px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center">
+                  <i class="bi bi-camera-fill text-white" style="font-size:0.9rem"></i>
+                </span>
+                <h6 class="fw-bold mb-3 ms-2 border-bottom pb-2" style="color:#6366f1">Hình Ảnh Cận Lâm Sàng</h6>
+                <span class="badge mb-3 d-inline-block" style="background:rgba(99,102,241,0.1);color:#6366f1;font-size:0.7rem">X-Quang · Siêu âm · Ảnh lâm sàng</span>
+
+                <!-- Drag & Drop Zone -->
+                <div
+                  class="upload-dropzone rounded-4 text-center p-4 position-relative"
+                  :class="{ 'dragging': isDraggingVacc }"
+                  @dragover.prevent="isDraggingVacc = true"
+                  @dragleave.prevent="isDraggingVacc = false"
+                  @drop.prevent="onVaccFileDrop"
+                  @click="triggerVaccFileInput"
+                >
+                  <input
+                    ref="vaccFileInputRef"
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/png,image/gif"
+                    class="d-none"
+                    @change="onVaccFileSelected"
+                  />
+                  <div v-if="vaccSelectedFiles.length === 0" class="py-2">
+                    <i class="bi bi-cloud-arrow-up-fill opacity-50" style="font-size:2.5rem;color:#6366f1"></i>
+                    <p class="fw-bold text-secondary mb-1 mt-2">Kéo &amp; thả ảnh vào đây</p>
+                    <p class="small text-muted mb-0">hoặc <span class="fw-bold" style="color:#6366f1">bấm để chọn ảnh</span> · JPG, PNG, GIF · Tối đa 5MB/ảnh</p>
+                  </div>
+                  <div v-else class="d-flex align-items-center gap-2 flex-wrap justify-content-center">
+                    <span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>{{ vaccSelectedFiles.length }} ảnh đã chọn</span>
+                    <span class="text-muted small">· Bấm để thêm ảnh khác</span>
+                  </div>
+                </div>
+
+                <!-- Preview Grid -->
+                <div v-if="vaccPreviewUrls.length > 0" class="mt-3">
+                  <div class="d-flex flex-wrap gap-2">
+                    <div
+                      v-for="(url, idx) in vaccPreviewUrls"
+                      :key="idx"
+                      class="img-preview-wrapper position-relative"
+                    >
+                      <img :src="url" class="img-preview rounded-3 shadow-sm" @click.stop="openVaccLightbox(vaccPreviewUrls, idx)" title="Bấm để xem ảnh to" />
+                      <button
+                        type="button"
+                        class="btn-remove-img position-absolute top-0 end-0"
+                        @click.stop="removeVaccPreviewImage(idx)"
+                      >
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <p class="text-muted small mt-2 mb-0"><i class="bi bi-info-circle me-1"></i>Ảnh sẽ được tải lên khi bạn nhấn "Lưu Bệnh Án SOAP"</p>
+                </div>
+              </div>
+
               <!-- P - Plan -->
               <div class="p-4 rounded-4 bg-light border shadow-sm position-relative">
                 <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-warning text-dark fs-5" style="width:35px;height:35px;line-height:22px">P</span>
@@ -302,6 +360,7 @@
                 <th>Bác sĩ</th>
                 <th>Đánh giá</th>
                 <th>Ngày Nhắc Lại</th>
+                <th>Hình ảnh</th>
               </tr>
             </thead>
             <tbody>
@@ -316,6 +375,20 @@
                   <span class="badge" :class="record.clinicalAssessment === 'Đủ điều kiện' ? 'bg-success' : 'bg-danger'">{{ record.clinicalAssessment }}</span>
                 </td>
                 <td class="fw-bold text-warning">{{ record.nextDueDate ? formatDate(record.nextDueDate) : '---' }}</td>
+                <td>
+                  <div v-if="record.attachments && record.attachments.length > 0" class="d-flex gap-1 flex-wrap">
+                    <img
+                      v-for="(imgUrl, imgIdx) in record.attachments"
+                      :key="imgIdx"
+                      :src="getImageUrl(imgUrl)"
+                      class="history-thumb"
+                      :alt="`Ảnh ${imgIdx + 1}`"
+                      @click="openVaccLightbox(record.attachments.map((u: string) => getImageUrl(u)), imgIdx)"
+                      title="Bấm để xem ảnh to"
+                    />
+                  </div>
+                  <span v-else class="text-muted small">—</span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -323,10 +396,56 @@
       </div>
     </div>
   </div>
+
+  <!-- ===== LIGHTBOX MODAL (VACCINATION) ===== -->
+  <Teleport to="body">
+    <Transition name="lightbox-fade">
+      <div
+        v-if="vaccLightbox.visible"
+        class="lightbox-overlay"
+        @click.self="closeVaccLightbox"
+        @keydown.esc="closeVaccLightbox"
+        tabindex="0"
+        ref="vaccLightboxRef"
+      >
+        <button class="lightbox-close" @click="closeVaccLightbox" title="Đóng (Esc)">
+          <i class="bi bi-x-lg"></i>
+        </button>
+        <button
+          v-if="vaccLightbox.urls.length > 1"
+          class="lightbox-nav lightbox-prev"
+          @click.stop="vaccLightboxNav(-1)"
+          title="Ảnh trước"
+        >
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <div class="lightbox-img-wrapper">
+          <img
+            :src="vaccLightbox.urls[vaccLightbox.index]"
+            class="lightbox-img"
+            alt="Ảnh cận lâm sàng tiêm chủng"
+          />
+          <div class="lightbox-counter" v-if="vaccLightbox.urls.length > 1">
+            {{ vaccLightbox.index + 1 }} / {{ vaccLightbox.urls.length }}
+          </div>
+        </div>
+        <button
+          v-if="vaccLightbox.urls.length > 1"
+          class="lightbox-nav lightbox-next"
+          @click.stop="vaccLightboxNav(1)"
+          title="Ảnh sau"
+        >
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    </Transition>
+  </Teleport>
+  <!-- ===== END LIGHTBOX MODAL ===== -->
+
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import api from '../../services/api';
 
 const emit = defineEmits<{
@@ -375,7 +494,8 @@ const form = ref({
   doctorRemarks: '',
   nextDueDate: '',
   followUpInstructions: '',
-  reactionNote: ''
+  reactionNote: '',
+  attachments: [] as string[]
 });
 
 const availableVaccines = ref<any[]>([]);
@@ -384,6 +504,60 @@ const vaccinationHistory = ref<any[]>([]);
 const loadingHistory = ref(false);
 const submitting = ref(false);
 const errorMessage = ref('');
+
+// ===== Image Upload =====
+const vaccFileInputRef = ref<HTMLInputElement | null>(null);
+const vaccSelectedFiles = ref<File[]>([]);
+const vaccPreviewUrls = ref<string[]>([]);
+const isDraggingVacc = ref(false);
+
+// ===== Lightbox =====
+const vaccLightboxRef = ref<HTMLElement | null>(null);
+const vaccLightbox = ref<{ visible: boolean; urls: string[]; index: number }>({
+  visible: false,
+  urls: [],
+  index: 0
+});
+
+const openVaccLightbox = (urls: string[], index: number) => {
+  vaccLightbox.value = { visible: true, urls, index };
+  nextTick(() => vaccLightboxRef.value?.focus());
+};
+
+const closeVaccLightbox = () => {
+  vaccLightbox.value.visible = false;
+};
+
+const vaccLightboxNav = (dir: number) => {
+  const len = vaccLightbox.value.urls.length;
+  vaccLightbox.value.index = (vaccLightbox.value.index + dir + len) % len;
+};
+
+const triggerVaccFileInput = () => vaccFileInputRef.value?.click();
+
+const addVaccFiles = (files: FileList) => {
+  for (const file of Array.from(files)) {
+    if (file.size > 5 * 1024 * 1024) { alert(`File ${file.name} vượt quá 5MB.`); continue; }
+    vaccSelectedFiles.value.push(file);
+    vaccPreviewUrls.value.push(URL.createObjectURL(file));
+  }
+};
+
+const onVaccFileSelected = (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  if (input.files) addVaccFiles(input.files);
+};
+
+const onVaccFileDrop = (e: DragEvent) => {
+  isDraggingVacc.value = false;
+  if (e.dataTransfer?.files) addVaccFiles(e.dataTransfer.files);
+};
+
+const removeVaccPreviewImage = (idx: number) => {
+  URL.revokeObjectURL(vaccPreviewUrls.value[idx]);
+  vaccPreviewUrls.value.splice(idx, 1);
+  vaccSelectedFiles.value.splice(idx, 1);
+};
 
 const selectedVaccineBatches = computed(() => {
   if (!form.value.vaccineId) return [];
@@ -460,8 +634,19 @@ const submitForm = async () => {
   errorMessage.value = '';
 
   try {
+    // Upload ảnh trước nếu có
+    let uploadedUrls: string[] = [];
+    if (vaccSelectedFiles.value.length > 0) {
+      const formData = new FormData();
+      vaccSelectedFiles.value.forEach(f => formData.append('files', f));
+      const uploadRes = await api.post('/upload/medical-images', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (uploadRes.data.success) uploadedUrls = uploadRes.data.urls || [];
+    }
+
     // Xử lý logic VR03, VR04, VR06 trước khi gửi
-    const payload = { ...form.value };
+    const payload = { ...form.value, attachments: uploadedUrls };
     
     if (payload.clinicalAssessment === 'Hoãn tiêm') {
       payload.vaccineId = null;
@@ -509,6 +694,12 @@ const cancelTreatment = () => {
   emit('switch-tab', 'doctor-cases');
 };
 
+const getImageUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5062'}${url}`;
+};
+
 const formatDate = (dateStr: string | null): string => {
   if (!dateStr) return '';
   return new Date(dateStr).toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' });
@@ -553,5 +744,156 @@ const formatDate = (dateStr: string | null): string => {
 .btn-save:disabled {
   cursor: not-allowed;
   transform: none;
+}
+
+/* ===== Image Upload Zone ===== */
+.upload-dropzone {
+  border: 2px dashed #c7d2fe;
+  background: rgba(99, 102, 241, 0.03);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.upload-dropzone:hover, .upload-dropzone.dragging {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+/* ===== Preview Images ===== */
+.img-preview-wrapper {
+  width: 90px;
+  height: 90px;
+  overflow: visible;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  flex-shrink: 0;
+}
+.img-preview {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  cursor: zoom-in;
+  border-radius: 10px;
+  display: block;
+  transition: transform 0.2s ease;
+}
+.img-preview:hover { transform: scale(1.05); }
+.btn-remove-img {
+  background: rgba(220, 38, 38, 0.85);
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-size: 0.6rem;
+  transition: background 0.2s;
+  transform: translate(30%, -30%);
+  z-index: 2;
+}
+.btn-remove-img:hover { background: #dc2626; }
+
+/* ===== Lightbox ===== */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 5, 15, 0.92);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+}
+.lightbox-img-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lightbox-img {
+  max-width: 88vw;
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.lightbox-close {
+  position: fixed;
+  top: 22px;
+  right: 28px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  font-size: 1.2rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  z-index: 10000;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.25); }
+.lightbox-nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  font-size: 1.4rem;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  z-index: 10000;
+}
+.lightbox-nav:hover { background: rgba(255,255,255,0.28); }
+.lightbox-prev { left: 24px; }
+.lightbox-next { right: 24px; }
+.lightbox-counter {
+  position: absolute;
+  bottom: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.15);
+  color: white;
+  font-size: 0.8rem;
+  padding: 3px 14px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+}
+
+/* Lightbox Transition */
+.lightbox-fade-enter-active, .lightbox-fade-leave-active { transition: opacity 0.25s ease; }
+.lightbox-fade-enter-from, .lightbox-fade-leave-to { opacity: 0; }
+
+/* History table image thumbs */
+.history-thumb {
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: zoom-in;
+  border: 2px solid #e0e7ff;
+  transition: transform 0.2s, border-color 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+.history-thumb:hover {
+  transform: scale(1.15);
+  border-color: #6366f1;
 }
 </style>

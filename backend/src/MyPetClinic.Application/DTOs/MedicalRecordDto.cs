@@ -12,15 +12,20 @@ namespace MyPetClinic.Application.DTOs
         public DateTime VisitDate { get; set; }
         public string RecordType { get; set; } = "Consultation";
         public string MedicalHistory { get; set; } = string.Empty;
+        public string? RawMedicalHistory { get; set; }
         public decimal Weight { get; set; }
         public decimal Temperature { get; set; }
         public string ClinicalSigns { get; set; } = string.Empty;
+        public string? RawClinicalSigns { get; set; }
         public string Diagnosis { get; set; } = string.Empty;
+        public string? RawDiagnosis { get; set; }
         public string TreatmentPlan { get; set; } = string.Empty;
+        public string? RawTreatmentPlan { get; set; }
         public string DoctorNotes { get; set; } = string.Empty;
         public string DoctorName { get; set; } = string.Empty;
         public string DoctorId { get; set; } = string.Empty;
         public DateTime? FollowUpDate { get; set; }
+        public List<string> Attachments { get; set; } = new List<string>();
         public List<PrescribedMedicineDto> PrescribedMedicines { get; set; } = new List<PrescribedMedicineDto>();
         
         // Financial Visibility
@@ -91,6 +96,7 @@ namespace MyPetClinic.Application.DTOs
         public string CareInstructions { get; set; } = string.Empty;
         public DateTime? FollowUpDate { get; set; }
         
+        public List<string> Attachments { get; set; } = new();
         public List<PrescribedMedicineDto> Prescriptions { get; set; } = new();
 
         public long? InvoiceId { get; set; }

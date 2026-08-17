@@ -49,6 +49,7 @@ namespace MyPetClinic.Application.DTOs
         public string? EyeNoseEarStatus { get; set; }
         public string? LymphNodeStatus { get; set; }
         public int? DehydrationPercent { get; set; }
+        public List<string> Attachments { get; set; } = new();
         
         // Vaccine info
         public long? VaccineId { get; set; }

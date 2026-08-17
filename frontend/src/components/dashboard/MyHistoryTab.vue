@@ -67,11 +67,10 @@
         </div>
       </div>
 
-      <!-- Timeline records (Accordion Style) -->
+      <!-- Timeline records -->
       <h5 class="fw-semibold mb-4"><i class="bi bi-clock-history me-2 text-success"></i>Dòng thời gian y khoa</h5>
       <div class="medical-history-timeline mt-2" id="medical-records-export-area">
-        <div class="timeline-container accordion" id="historyAccordion">
-          
+        <div class="timeline-container" id="historyTimeline">
           <div v-for="(record, index) in records" :key="record.recordId" class="timeline-item">
             <!-- Timeline dot -->
             <div class="timeline-badge" :class="record.recordType === 'Vaccination' ? 'bg-success' : 'bg-primary'">
@@ -81,186 +80,30 @@
               </div>
             </div>
             
-            <!-- Timeline content card (Glassmorphism + Accordion) -->
-            <div class="timeline-card accordion-item border-0 bg-transparent">
-              <h2 class="accordion-header card-header-main" :id="'heading' + record.recordId">
-                <button 
-                  class="accordion-button shadow-none bg-white rounded-top-4" 
-                  :class="{ 'collapsed': !expandedRecords.includes(record.recordId) }"
-                  type="button" 
-                  @click="toggleRecord(record.recordId)"
-                >
-                  <div class="d-flex flex-column w-100 pe-3">
-                    <div class="d-flex justify-content-between align-items-center w-100 mb-1">
-                      <span class="visit-date fw-bold text-dark">
-                        {{ formatDateFull(record.visitDate) }}
-                      </span>
-                      <span class="badge rounded-pill" :class="record.recordType === 'Vaccination' ? 'bg-success' : 'bg-primary'">
-                        {{ record.serviceName || (record.recordType === 'Vaccination' ? 'Tiêm phòng' : 'Khám bệnh') }}
-                      </span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                      <span class="doctor-badge mb-0 text-muted small">
-                        <i class="bi bi-person-badge me-1"></i>BS: <span class="fw-semibold text-dark">{{ record.doctorName || 'Chưa rõ' }}</span>
-                      </span>
-                      <span v-if="record.diagnosis" class="text-truncate text-muted small ms-2" style="max-width: 200px;">
-                        {{ record.diagnosis }}
-                      </span>
-                    </div>
+            <!-- Timeline card - click to open modal -->
+            <div
+              class="timeline-card card border-0 bg-transparent mb-3 shadow-sm"
+              style="cursor: pointer;"
+              @click="openRecordModal(record)"
+            >
+              <div class="card-body bg-white rounded-4 p-3 border timeline-card-hover">
+                <div class="d-flex flex-column w-100">
+                  <div class="d-flex justify-content-between align-items-center w-100 mb-1">
+                    <span class="visit-date fw-bold text-dark">
+                      {{ formatDateFull(record.visitDate) }}
+                    </span>
+                    <span class="badge rounded-pill" :class="record.recordType === 'Vaccination' ? 'bg-success' : 'bg-primary'">
+                      {{ record.serviceName || (record.recordType === 'Vaccination' ? 'Tiêm phòng' : 'Khám bệnh') }}
+                    </span>
                   </div>
-                </button>
-              </h2>
-
-              <div 
-                :id="'collapse' + record.recordId" 
-                class="accordion-collapse collapse" 
-                :class="{ 'show': expandedRecords.includes(record.recordId) }"
-              >
-                <div class="accordion-body card-body-main bg-white border-top border-light rounded-bottom-4 shadow-sm" :id="'record-content-' + record.recordId">
-                  
-                  <!-- Action Bar -->
-                  <div class="d-flex justify-content-end mb-3 action-bar hide-on-print">
-                    <button @click="downloadPDF(record.recordId)" class="btn btn-sm btn-outline-danger me-2">
-                      <i class="bi bi-file-pdf me-1"></i>Xuất PDF
-                    </button>
-                    <div v-if="record.invoiceId" class="badge bg-light text-dark border d-flex align-items-center px-3">
-                      <i class="bi bi-receipt me-2 text-secondary"></i>
-                      <span class="me-2">Hóa đơn: <strong>#INV-{{ record.invoiceId }}</strong></span>
-                      <span v-if="record.invoiceStatus === 'paid'" class="badge bg-success">Đã thanh toán</span>
-                      <span v-else class="badge bg-warning text-dark">Chờ thanh toán</span>
-                    </div>
+                  <div class="d-flex justify-content-between align-items-center w-100">
+                    <span class="doctor-badge mb-0 text-muted small">
+                      <i class="bi bi-person-badge me-1"></i>BS: <span class="fw-semibold text-dark">{{ record.doctorName || 'Chưa rõ' }}</span>
+                    </span>
+                    <span v-if="record.diagnosis" class="text-truncate text-muted small ms-2" style="max-width: 220px;">
+                      {{ record.diagnosis }}
+                    </span>
                   </div>
-
-                  <!-- PDF Header (Only visible in PDF) -->
-                  <div class="pdf-header d-none mb-4 text-center">
-                    <h2 class="text-primary fw-bold mb-1">MYPET CLINIC</h2>
-                    <p class="mb-0">Hồ Sơ Bệnh Án Điện Tử</p>
-                    <hr>
-                  </div>
-
-                  <!-- Vitals Row -->
-                  <div class="vitals-grid mb-3">
-                    <div class="vital-card">
-                      <span class="vital-icon">⚖️</span>
-                      <span class="vital-label">Cân nặng</span>
-                      <span class="vital-val">{{ record.weight ? `${record.weight} kg` : '—' }}</span>
-                    </div>
-                    <div class="vital-card">
-                      <span class="vital-icon">🌡️</span>
-                      <span class="vital-label">Nhiệt độ</span>
-                      <span class="vital-val">{{ record.temperature ? `${record.temperature} °C` : '—' }}</span>
-                    </div>
-                  </div>
-
-                  <!-- Premium Comprehensive Medical Details (SOAP) -->
-                  <div class="medical-details-premium mb-4">
-                    
-                    <!-- Subjective (S) -->
-                    <div v-if="record.medicalHistory" class="soap-block mb-4">
-                      <div class="soap-header text-primary mb-2">
-                        <i class="bi bi-file-earmark-medical-fill me-2"></i>Tiền sử & Lý do khám (S)
-                      </div>
-                      <div class="soap-body bg-primary bg-opacity-10 border-start border-primary border-4 p-3 rounded-end-3">
-                        <div class="d-flex flex-wrap gap-2">
-                          <div v-for="(item, idx) in parseSoapField(record.medicalHistory, '|')" :key="idx" 
-                               class="soap-badge" v-html="formatSoapItem(item)">
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <!-- Objective (O) -->
-                    <div v-if="record.clinicalSigns" class="soap-block mb-4">
-                      <div class="soap-header text-success mb-2">
-                        <i class="bi bi-heart-pulse-fill me-2"></i>Khám lâm sàng (O)
-                      </div>
-                      <div class="soap-body bg-success bg-opacity-10 border-start border-success border-4 p-3 rounded-end-3">
-                        <div class="d-flex flex-wrap gap-2">
-                          <div v-for="(item, idx) in parseSoapField(record.clinicalSigns, ',')" :key="idx" 
-                               class="soap-badge" v-html="formatSoapItem(item)">
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Assessment (A) -->
-                    <div class="soap-block mb-4">
-                      <div class="soap-header text-danger mb-2">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Chẩn đoán của bác sĩ (A)
-                      </div>
-                      <div class="soap-body bg-danger bg-opacity-10 border-start border-danger border-4 p-3 rounded-end-3">
-                        <div class="d-flex flex-column gap-2">
-                          <div v-for="(item, idx) in parseSoapField(record.diagnosis || 'Chưa có chẩn đoán', '|')" :key="idx" 
-                               class="soap-badge fs-6 py-2 px-3" v-html="formatSoapItem(item)" style="border-left: 3px solid #ef4444;">
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <!-- Plan (P) -->
-                    <div v-if="record.treatmentPlan" class="soap-block mb-4">
-                      <div class="soap-header text-info text-opacity-75 mb-2" style="color: #0dcaf0 !important;">
-                        <i class="bi bi-capsule me-2"></i>Kế hoạch điều trị (P)
-                      </div>
-                      <div class="soap-body bg-info bg-opacity-10 border-start border-info border-4 p-3 rounded-end-3">
-                        <div class="d-flex flex-wrap gap-2">
-                          <div v-for="(item, idx) in parseSoapField(record.treatmentPlan, ',')" :key="idx" 
-                               class="soap-badge" v-html="formatSoapItem(item)">
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Note -->
-                    <div v-if="record.careInstructions || record.doctorNotes" class="soap-block mt-4">
-                      <div class="soap-header text-warning-emphasis mb-2">
-                        <i class="bi bi-info-circle-fill me-2"></i>Lời dặn dò chăm sóc
-                      </div>
-                      <div class="soap-body bg-warning bg-opacity-10 border-start border-warning border-4 p-3 rounded-end-3">
-                        <div class="text-dark fw-medium" style="line-height: 1.6;">{{ record.careInstructions || record.doctorNotes }}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Prescribed Medicine Detailed -->
-                  <div v-if="record.prescribedMedicines && record.prescribedMedicines.length > 0" class="medicine-section mb-4">
-                    <span class="detail-label mb-2"><i class="bi bi-capsule text-primary me-1"></i>Đơn thuốc chỉ định:</span>
-                    <div class="table-responsive">
-                      <table class="table table-sm table-bordered medicine-table">
-                        <thead class="table-light">
-                          <tr>
-                            <th>Tên thuốc</th>
-                            <th>Số lượng</th>
-                            <th>Liều dùng</th>
-                            <th>Cách dùng</th>
-                            <th>Lời dặn</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr v-for="(med, mIndex) in record.prescribedMedicines" :key="mIndex">
-                            <td class="fw-semibold text-primary">{{ med.medicineName }}</td>
-                            <td>{{ med.quantity || '-' }}</td>
-                            <td>{{ med.dosage || '-' }}</td>
-                            <td>{{ med.frequency || '-' }} ({{ med.durationDays ? med.durationDays + ' ngày' : '-' }})</td>
-                            <td class="text-muted small">{{ med.instruction || '-' }}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  <!-- Note -->
-                  <div v-if="record.doctorNotes" class="detail-block note-block mb-3">
-                    <span class="detail-label text-muted"><i class="bi bi-journal-text me-1"></i>Ghi chú của bác sĩ:</span>
-                    <p class="detail-content text-muted mb-0 small">{{ record.doctorNotes }}</p>
-                  </div>
-
-                  <!-- Follow Up -->
-                  <div v-if="record.followUpDate" class="detail-block bg-warning bg-opacity-10 border-warning mt-3">
-                    <span class="detail-label text-dark-gold"><i class="bi bi-calendar-event me-1"></i>Ngày hẹn tái khám:</span>
-                    <p class="detail-content text-dark fw-bold mb-0 small">{{ formatDateFull(record.followUpDate) }}</p>
-                  </div>
-                  
                 </div>
               </div>
             </div>
@@ -268,11 +111,183 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Chi Tiết Lịch Sử Y Tế -->
+    <div class="modal fade" id="medicalRecordModal" tabindex="-1" aria-labelledby="medicalRecordModalLabel" aria-hidden="true" ref="medicalRecordModalRef">
+      <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-4" v-if="selectedRecord">
+          <div class="modal-header bg-light rounded-top-4 pb-2" style="border-bottom: 1px solid #e2e8f0;">
+            <h5 class="modal-title fw-bold text-dark" id="medicalRecordModalLabel">
+              <i class="bi bi-journal-text text-primary me-2"></i>Chi Tiết Hồ Sơ Y Tế
+            </h5>
+            <button type="button" class="btn-close shadow-none" @click="closeModal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4 bg-white" :id="'record-content-' + selectedRecord.recordId">
+
+            <!-- Action Bar -->
+            <div v-if="selectedRecord.invoiceId" class="d-flex justify-content-end mb-3 action-bar hide-on-print">
+              <div class="badge bg-light text-dark border d-flex align-items-center px-3 py-2 rounded-3">
+                <i class="bi bi-receipt me-2 text-secondary"></i>
+                <span class="me-2">Hóa đơn: <strong>#INV-{{ selectedRecord.invoiceId }}</strong></span>
+                <span v-if="selectedRecord.invoiceStatus === 'paid'" class="badge bg-success">Đã thanh toán</span>
+                <span v-else class="badge bg-warning text-dark">Chờ thanh toán</span>
+              </div>
+            </div>
+
+            <!-- PDF Header (Only visible in PDF) -->
+            <div class="pdf-header d-none mb-4 text-center">
+              <h2 class="text-primary fw-bold mb-1">MYPET CLINIC</h2>
+              <p class="mb-0">Hồ Sơ Bệnh Án Điện Tử</p>
+              <hr>
+            </div>
+            
+            <!-- Patient Info Summary -->
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3" style="border-bottom: 1px solid #f1f5f9;">
+              <div>
+                <h5 class="fw-bold mb-1 text-primary">{{ myPets.find(p => p.id === selectedPetId)?.name || 'Thú cưng' }}</h5>
+                <div class="text-muted small">Ngày khám: {{ formatDateFull(selectedRecord.visitDate) }} | BS: {{ selectedRecord.doctorName || 'Chưa rõ' }}</div>
+              </div>
+              <div>
+                <span class="badge rounded-pill px-3 py-2" :class="selectedRecord.recordType === 'Vaccination' ? 'bg-success' : 'bg-primary'">
+                  {{ selectedRecord.serviceName || (selectedRecord.recordType === 'Vaccination' ? 'Tiêm phòng' : 'Khám bệnh') }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Vitals Row -->
+            <div class="vitals-grid mb-4">
+              <div class="vital-card shadow-sm">
+                <span class="vital-icon">⚖️</span>
+                <span class="vital-label">Cân nặng</span>
+                <span class="vital-val">{{ selectedRecord.weight ? selectedRecord.weight + ' kg' : '—' }}</span>
+              </div>
+              <div class="vital-card shadow-sm">
+                <span class="vital-icon">🌡️</span>
+                <span class="vital-label">Nhiệt độ</span>
+                <span class="vital-val">{{ selectedRecord.temperature ? selectedRecord.temperature + ' °C' : '—' }}</span>
+              </div>
+            </div>
+
+            <!-- SOAP Details -->
+            <div class="medical-details-premium mb-4">
+              
+              <!-- Subjective (S) -->
+              <div v-if="selectedRecord.medicalHistory" class="soap-block mb-4">
+                <div class="soap-header text-primary mb-2">
+                  <i class="bi bi-file-earmark-medical-fill me-2"></i>Tiền sử &amp; Lý do khám (S)
+                </div>
+                <div class="soap-body bg-primary bg-opacity-10 border-start border-primary border-4 p-3 rounded-end-3">
+                  <div class="d-flex flex-wrap gap-2">
+                    <div v-for="(item, idx) in parseSoapField(selectedRecord.medicalHistory, '|')" :key="idx"
+                         class="soap-badge" v-html="formatSoapItem(item)">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Objective (O) -->
+              <div v-if="selectedRecord.clinicalSigns" class="soap-block mb-4">
+                <div class="soap-header text-success mb-2">
+                  <i class="bi bi-heart-pulse-fill me-2"></i>Khám lâm sàng (O)
+                </div>
+                <div class="soap-body bg-success bg-opacity-10 border-start border-success border-4 p-3 rounded-end-3">
+                  <div class="d-flex flex-wrap gap-2">
+                    <div v-for="(item, idx) in parseSoapField(selectedRecord.clinicalSigns, ',')" :key="idx"
+                         class="soap-badge" v-html="formatSoapItem(item)">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Assessment (A) -->
+              <div class="soap-block mb-4">
+                <div class="soap-header text-danger mb-2">
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i>Chẩn đoán của bác sĩ (A)
+                </div>
+                <div class="soap-body bg-danger bg-opacity-10 border-start border-danger border-4 p-3 rounded-end-3">
+                  <div class="d-flex flex-column gap-2">
+                    <div v-for="(item, idx) in parseSoapField(selectedRecord.diagnosis || 'Chưa có chẩn đoán', '|')" :key="idx"
+                         class="soap-badge fs-6 py-2 px-3" v-html="formatSoapItem(item)" style="border-left: 3px solid #ef4444;">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Plan (P) -->
+              <div v-if="selectedRecord.treatmentPlan" class="soap-block mb-4">
+                <div class="soap-header mb-2" style="color: #0891b2 !important;">
+                  <i class="bi bi-capsule me-2"></i>Kế hoạch điều trị (P)
+                </div>
+                <div class="soap-body bg-info bg-opacity-10 border-start border-info border-4 p-3 rounded-end-3">
+                  <div class="d-flex flex-wrap gap-2">
+                    <div v-for="(item, idx) in parseSoapField(selectedRecord.treatmentPlan, ',')" :key="idx"
+                         class="soap-badge" v-html="formatSoapItem(item)">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Care Instructions -->
+              <div v-if="selectedRecord.careInstructions || selectedRecord.doctorNotes" class="soap-block mt-4">
+                <div class="soap-header text-warning-emphasis mb-2">
+                  <i class="bi bi-info-circle-fill me-2"></i>Lời dặn dò chăm sóc
+                </div>
+                <div class="soap-body bg-warning bg-opacity-10 border-start border-warning border-4 p-3 rounded-end-3">
+                  <div class="text-dark fw-medium" style="line-height: 1.6;">{{ selectedRecord.careInstructions || selectedRecord.doctorNotes }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Prescribed Medicines -->
+            <div v-if="selectedRecord.prescribedMedicines && selectedRecord.prescribedMedicines.length > 0" class="medicine-section mb-4">
+              <span class="detail-label mb-2"><i class="bi bi-capsule text-primary me-1"></i>Đơn thuốc chỉ định:</span>
+              <div class="table-responsive mt-2">
+                <table class="table table-sm table-bordered medicine-table">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Tên thuốc</th>
+                      <th>Số lượng</th>
+                      <th>Liều dùng</th>
+                      <th>Cách dùng</th>
+                      <th>Lời dặn</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(med, mIndex) in selectedRecord.prescribedMedicines" :key="mIndex">
+                      <td class="fw-semibold text-primary">{{ med.medicineName }}</td>
+                      <td>{{ med.quantity || '-' }}</td>
+                      <td>{{ med.dosage || '-' }}</td>
+                      <td>{{ med.frequency || '-' }} ({{ med.durationDays ? med.durationDays + ' ngày' : '-' }})</td>
+                      <td class="text-muted small">{{ med.instruction || '-' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Doctor Notes -->
+            <div v-if="selectedRecord.doctorNotes" class="detail-block note-block mb-3">
+              <span class="detail-label text-muted"><i class="bi bi-journal-text me-1"></i>Ghi chú của bác sĩ:</span>
+              <p class="detail-content text-muted mb-0 small">{{ selectedRecord.doctorNotes }}</p>
+            </div>
+
+            <!-- Follow Up -->
+            <div v-if="selectedRecord.followUpDate" class="detail-block bg-warning bg-opacity-10 border-warning mt-3">
+              <span class="detail-label" style="color: #92400e;"><i class="bi bi-calendar-event me-1"></i>Ngày hẹn tái khám:</span>
+              <p class="detail-content text-dark fw-bold mb-0 small">{{ formatDateFull(selectedRecord.followUpDate) }}</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
+import { Modal } from 'bootstrap';
 import api from '../../services/api';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
@@ -338,37 +353,26 @@ const records = ref<MedicalRecord[]>([]);
 const loading = ref(false);
 const errorMsg = ref('');
 
-const expandedRecords = ref<number[]>([]);
-const toggleRecord = (recordId: number) => {
-  const index = expandedRecords.value.indexOf(recordId);
-  if (index > -1) {
-    expandedRecords.value.splice(index, 1);
-  } else {
-    expandedRecords.value.push(recordId);
+// Modal state
+const medicalRecordModalRef = ref<HTMLElement | null>(null);
+const selectedRecord = ref<MedicalRecord | null>(null);
+let modalInstance: Modal | null = null;
+
+const openRecordModal = async (record: MedicalRecord) => {
+  // Guard: only open if record has meaningful content
+  if (!record || (!record.medicalHistory && !record.clinicalSigns && !record.diagnosis && !record.treatmentPlan && !record.prescribedMedicines?.length)) {
+    return;
   }
+  selectedRecord.value = record;
+  await nextTick();
+  if (!modalInstance && medicalRecordModalRef.value) {
+    modalInstance = new Modal(medicalRecordModalRef.value, { backdrop: true });
+  }
+  modalInstance?.show();
 };
 
-
-
-const formatDiagnosis = (diag: string) => {
-  if (!diag) return 'Không';
-  try {
-    if (diag.trim().startsWith('{')) {
-      const parsed = JSON.parse(diag);
-      const mainDiag = parsed.definitiveDiagnosis || parsed.tentativeDiagnosis;
-      let result = mainDiag ? mainDiag : '';
-      if (parsed.differentialDiagnosis && parsed.differentialDiagnosis !== 'Không') {
-        result += result ? ` | Phân biệt: ${parsed.differentialDiagnosis}` : `Phân biệt: ${parsed.differentialDiagnosis}`;
-      }
-      if (parsed.diseaseSeverity && parsed.diseaseSeverity !== 'Nhẹ') {
-        result += result ? ` | Mức độ: ${parsed.diseaseSeverity}` : `Mức độ: ${parsed.diseaseSeverity}`;
-      }
-      return result || 'Không';
-    }
-  } catch (e) {
-    // Ignore error
-  }
-  return diag;
+const closeModal = () => {
+  modalInstance?.hide();
 };
 
 const parseSoapField = (text: string | undefined, separator: string = '|') => {
@@ -424,7 +428,6 @@ const selectPet = async (petId: number) => {
 
 // ===== Chart Logic =====
 const chartData = computed(() => {
-  // Sort records chronologically for the chart
   const sorted = [...records.value].reverse();
   const labels = sorted.map(r => new Date(r.visitDate).toLocaleDateString('vi-VN'));
   const weights = sorted.map(r => r.weight || null);
@@ -483,17 +486,14 @@ const downloadPDF = (recordId: number) => {
   const element = document.getElementById(`record-content-${recordId}`);
   if (!element) return;
   
-  // Clone element to modify for print
   const clone = element.cloneNode(true) as HTMLElement;
   
-  // Show PDF headers, hide action bars
   const pdfHeader = clone.querySelector('.pdf-header');
   if (pdfHeader) pdfHeader.classList.remove('d-none');
   
   const actionBar = clone.querySelector('.hide-on-print');
   if (actionBar) actionBar.remove();
 
-  // Create temporary container
   const tempDiv = document.createElement('div');
   tempDiv.appendChild(clone);
   tempDiv.style.padding = '20px';
@@ -510,7 +510,6 @@ const downloadPDF = (recordId: number) => {
 
   html2pdf().set(opt).from(tempDiv).save();
 };
-
 
 // ===== Helpers =====
 const getSpeciesEmoji = (species: string | null): string => {
@@ -529,7 +528,12 @@ const formatDateFull = (dateStr: string): string => {
 };
 
 // ===== Lifecycle =====
-onMounted(fetchPets);
+onMounted(() => {
+  fetchPets();
+  if (medicalRecordModalRef.value) {
+    modalInstance = new Modal(medicalRecordModalRef.value, { backdrop: 'static' });
+  }
+});
 </script>
 
 <style scoped>
@@ -646,6 +650,15 @@ onMounted(fetchPets);
   font-size: 0.8rem;
 }
 
+.timeline-card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.timeline-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
 /* ===== Vitals ===== */
 .vitals-grid {
   display: grid;
@@ -705,16 +718,6 @@ onMounted(fetchPets);
   color: #1f2937;
   line-height: 1.5;
   margin-bottom: 0;
-}
-
-.diagnosis-block {
-  background: rgba(239, 68, 68, 0.03);
-  border-left: 3px solid #ef4444;
-}
-
-.treatment-block {
-  background: rgba(16, 185, 129, 0.03);
-  border-left: 3px solid #10b981;
 }
 
 .note-block {

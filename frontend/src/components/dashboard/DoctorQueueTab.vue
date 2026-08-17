@@ -82,8 +82,12 @@
                        :class="[getBorderClass(evt.extendedProps?.status), { 'emergency-pulse': evt.extendedProps?.isEmergency }]">
                     
                     <div class="d-flex justify-content-between align-items-start mb-1">
-                      <strong class="text-primary d-block text-truncate fw-bolder fs-6" style="letter-spacing: -0.2px;" :title="'Giờ thực tế: ' + getActualTime(evt.start)">
-                        <i class="bi bi-heptagon-fill text-warning me-1 small" style="font-size: 0.7rem;"></i><span class="text-danger opacity-75 small">[{{ getActualTime(evt.start) }}]</span> {{ evt.extendedProps?.petName || 'Thú cưng' }}
+                      <strong class="text-primary d-flex align-items-center text-truncate fw-bolder fs-6" style="letter-spacing: -0.2px;" :title="'Giờ thực tế: ' + getActualTime(evt.start)">
+                        <i class="bi bi-circle-fill text-warning me-2" style="font-size: 0.5rem;"></i>
+                        <span class="badge bg-light text-secondary border rounded-pill px-2 py-1 me-2 shadow-sm fw-medium d-flex align-items-center" style="font-size: 0.65rem; letter-spacing: 0.5px;">
+                          <i class="bi bi-clock me-1" style="font-size: 0.6rem;"></i>{{ getActualTime(evt.start) }}
+                        </span>
+                        <span class="text-truncate">{{ evt.extendedProps?.petName || 'Thú cưng' }}</span>
                       </strong>
                       <div class="d-flex gap-1">
                         <span v-if="evt.extendedProps?.isEmergency" class="badge bg-danger shadow-sm rounded-pill px-2 py-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">CẤP CỨU</span>

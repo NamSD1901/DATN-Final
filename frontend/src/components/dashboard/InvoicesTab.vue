@@ -691,6 +691,7 @@ const confirmPayment = async () => {
       // Lấy dữ liệu bệnh án nếu người dùng có chọn in bệnh án
       let apptData = null;
       let soapData = null;
+      let isVaccinationRecord = false;
       if (printMedicalRecordOpt.value && selectedAppointmentId.value) {
         try {
           const apptRes = await api.get(`/appointment/${selectedAppointmentId.value}`);
@@ -698,15 +699,25 @@ const confirmPayment = async () => {
         } catch (err) {
           console.error('Không thể lấy chi tiết bệnh án', err);
         }
+        // Thử lấy SOAP khám bệnh trước
         try {
           const soapRes = await api.get(`/medical-records/soap/appointment/${selectedAppointmentId.value}`);
           soapData = soapRes.data;
-        } catch (err) {
-          console.error('Không thể lấy chi tiết SOAP', err);
+        } catch {
+          // Nếu không có SOAP khám bệnh → thử SOAP tiêm chủng
+          try {
+            const vaccRes = await api.get(`/vaccinations/appointments/${selectedAppointmentId.value}`);
+            if (vaccRes.data) {
+              soapData = vaccRes.data;
+              isVaccinationRecord = true;
+            }
+          } catch {
+            console.warn('Không tìm thấy dữ liệu SOAP (cả khám bệnh lẫn tiêm chủng)');
+          }
         }
       }
 
-      printInvoiceWindow(invoice.value, apptData, soapData, printInvoiceOpt.value, printMedicalRecordOpt.value);
+      printInvoiceWindow(invoice.value, apptData, soapData, printInvoiceOpt.value, printMedicalRecordOpt.value, isVaccinationRecord);
       
       Swal.fire({ icon: 'success', title: 'Thanh toán thành công!', text: 'Đang xử lý in tài liệu.', timer: 2000, showConfirmButton: false });
       selectedAppointmentId.value = null;
@@ -720,8 +731,8 @@ const confirmPayment = async () => {
   }
 };
 
-// ─── Print: open isolated window with full HTML ───────────────────
-const printInvoiceWindow = (inv: any, appt: any, soap: any, optInvoice: boolean, optMedical: boolean) => {
+// ─── Print: open isolated window with full HTML ─────────────────────
+const printInvoiceWindow = (inv: any, appt: any, soap: any, optInvoice: boolean, optMedical: boolean, isVaccination: boolean = false) => {
   if (!inv) return;
   const discount = discountAmount.value;
   const total = Math.max(0, inv.subtotal - discount);
@@ -749,17 +760,250 @@ const printInvoiceWindow = (inv: any, appt: any, soap: any, optInvoice: boolean,
     const medicines = (inv.items || []).filter((i: any) => i.itemType === 'medicine');
     const services = (inv.items || []).filter((i: any) => i.itemType === 'service');
     
-    const prescriptionsHtml = medicines.map((m: any, idx: number) => `
+    const prescriptionsHtml = medicines.map((m: any, idx: number) => {
+      const pDetail = soap?.plan?.prescriptions?.find((p: any) => p.medicineId === m.itemId);
+      let detailsHtml = '';
+      if (pDetail) {
+        detailsHtml = `
+          <div style="font-size: 0.78rem; color: #475569; margin-top: 6px; border-top: 1px dashed #e2e8f0; padding-top: 6px;">
+            ${pDetail.dosage ? `<div style="margin-bottom: 2px;">Liều dùng: <strong style="color: #0f172a;">${pDetail.dosage}</strong></div>` : ''}
+            ${pDetail.frequency ? `<div style="margin-bottom: 2px;">Tần suất: <strong style="color: #0f172a;">${pDetail.frequency}</strong></div>` : ''}
+            ${pDetail.durationDays ? `<div style="margin-bottom: 2px;">Liệu trình: <strong style="color: #0f172a;">${pDetail.durationDays} ngày</strong></div>` : ''}
+            ${pDetail.instruction ? `<div><em>${pDetail.instruction}</em></div>` : ''}
+          </div>
+        `;
+      }
+      return `
       <div class="rx-item">
         <div class="rx-name">${idx + 1}. ${m.itemName}</div>
-        <div class="rx-qty">Số lượng: <strong>${m.quantity}</strong></div>
-      </div>`).join('');
+        <div class="rx-qty">Cấp phát: <strong>${m.quantity}</strong></div>
+        ${detailsHtml}
+      </div>`;
+    }).join('');
 
     const servicesHtml = services.map((s: any, idx: number) => `
       <div style="font-size: 0.85rem; color: #334155; margin-bottom: 4px;">
         <i class="bi bi-check2-circle text-success me-1"></i> ${s.itemName}
       </div>`).join('');
 
+    // Attachments (Images)
+    let imagesHtml = '';
+    if (soap?.objective?.attachments && soap.objective.attachments.length > 0) {
+      const baseUrl = api.defaults.baseURL?.replace('/api', '') || '';
+      const imgs = soap.objective.attachments.map((url: string) => `
+        <img src="${baseUrl}${url}" style="width: 140px; height: 140px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.05);" />
+      `).join('');
+      imagesHtml = `
+      <div class="clinical-item" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
+        <div class="clinical-label" style="margin-bottom: 8px;"><i class="bi bi-images"></i> Hình ảnh Cận lâm sàng:</div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">${imgs}</div>
+      </div>
+      `;
+    }
+
+    // System Exams (Objective)
+    let sysExamsHtml = '';
+    if (soap?.objective) {
+      const exams = [
+        { key: 'eyes', label: 'Mắt' }, { key: 'ears', label: 'Tai' }, { key: 'nose', label: 'Mũi' },
+        { key: 'mouth', label: 'Miệng/Răng' }, { key: 'skinCoat', label: 'Da & Lông' },
+        { key: 'gastrointestinal', label: 'Tiêu hóa' }, { key: 'respiratory', label: 'Hô hấp' }
+      ];
+      const abnormalExams = exams.filter(e => soap.objective[e.key] && !soap.objective[e.key].isNormal);
+      if (abnormalExams.length > 0) {
+        sysExamsHtml = `
+          <div style="margin-top: 8px; font-size: 0.85rem;">
+            <div class="clinical-label" style="font-size: 0.75rem; margin-bottom: 4px;">Phát hiện bất thường:</div>
+            <ul style="margin: 0; padding-left: 20px; color: #b91c1c;">
+              ${abnormalExams.map(e => `<li><strong>${e.label}:</strong> ${soap.objective[e.key].note || 'Có bất thường'}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+    }
+
+    // =================== VACCINATION RECORD TEMPLATE ===================
+    if (isVaccination && soap) {
+      const baseUrl = api.defaults.baseURL?.replace('/api', '') || '';
+      const vaccWeight = soap.weight || appt?.weight;
+      const vaccAttachments = (soap.attachments || []);
+      const vaccImagesHtml = vaccAttachments.length > 0 ? `
+        <div class="premium-box" style="border-left: 4px solid #6366f1; background: #f5f3ff;">
+          <div class="section-title" style="color:#4f46e5;">&#128247; Hình Ảnh Cận Lâm Sàng</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            ${vaccAttachments.map((u: string) => `<img src="${baseUrl}${u}" style="width:140px;height:140px;object-fit:cover;border-radius:8px;border:1px solid #c7d2fe;box-shadow:0 2px 6px rgba(99,102,241,0.15);" />`).join('')}
+          </div>
+        </div>` : '';
+
+      const allergySummary = soap.isAllergic ? `<div style="color:#b91c1c; font-weight:600; margin-top:4px;">&#9888; Dị ứng: ${soap.allergyDetails || 'Có'}</div>` : '';
+      const reactionSummary = soap.hasPreviousReaction ? `<div style="color:#b91c1c; font-size:0.82rem; margin-top:4px;">Phản ứng tiêm cũ: ${soap.previousReactionDetails || 'Có'}</div>` : '';
+      const vomitingSummary = soap.hasVomitingOrDiarrhea ? `<span style="background:#fee2e2;color:#b91c1c;border-radius:4px;padding:2px 8px;font-size:0.75rem;margin-right:4px;">Nôn / Tiêu chảy</span>` : '';
+      const coughSummary = soap.hasCoughOrSneeze ? `<span style="background:#fee2e2;color:#b91c1c;border-radius:4px;padding:2px 8px;font-size:0.75rem;">Ho / Hắt hơi</span>` : '';
+
+      medicalRecordHtml = `
+      <div class="medical-record-page" style="${optInvoice ? 'page-break-after: always;' : ''}">
+        <div class="header">
+          <div class="logo-block">
+            <div class="logo-circle">&#128062;</div>
+            <div>
+              <div class="clinic-name">MYPET CLINIC</div>
+              <div class="clinic-sub">Hệ thống phòng khám thú y cao cấp</div>
+            </div>
+          </div>
+          <div>
+            <div class="inv-title" style="color:#6366f1;">PHIẼU TIÊM CHỦNG</div>
+            <div class="inv-meta">Ngày tiêm: ${soap.injectionDate ? new Date(soap.injectionDate).toLocaleDateString('vi-VN') : now}</div>
+          </div>
+        </div>
+
+        <!-- Patient Info -->
+        <div class="premium-box patient-info-box" style="border-color:#c7d2fe; background:#eef2ff;">
+          <div style="flex:1;">
+            <div class="info-label">THÔNG TIN BỆNH NHÂN</div>
+            <div class="info-value text-xl">${inv.petName || '—'} <span class="species-badge" style="background:#e0e7ff;color:#4338ca;">${inv.petSpecies || 'Khác'}</span></div>
+            <div style="display:flex; flex-wrap:wrap; gap:14px; font-size:0.85rem; color:#475569; margin-top:6px;">
+              <div>Giống: <strong>${appt?.breed || '—'}</strong></div>
+              ${vaccWeight ? `<div>Cân nặng: <strong>${vaccWeight} kg</strong></div>` : ''}
+              ${soap.temperature ? `<div>Nhiệt độ: <strong>${soap.temperature}°C</strong></div>` : ''}
+              ${soap.heartRate ? `<div>Nhịp tim: <strong>${soap.heartRate} bpm</strong></div>` : ''}
+              ${soap.respiratoryRate ? `<div>Nhịp thở: <strong>${soap.respiratoryRate} l/p</strong></div>` : ''}
+            </div>
+            <div class="info-meta" style="margin-top:8px;">Chủ nuôi: <strong>${inv.customerName || '—'}</strong> (${inv.customerPhone || 'N/A'})</div>
+          </div>
+          <div style="text-align:right; border-left:1px dashed #c7d2fe; padding-left:20px;">
+            <div class="info-label">BÁC SĨ THỰC HIỆN</div>
+            <div class="info-value text-lg" style="color:#4338ca; margin-bottom:8px;">Bs. ${(soap.doctorName || inv.doctorName || '—').replace(/^Bs\.?\s*/i,'')}</div>
+            <div style="font-size:0.75rem; background:white; padding:4px 10px; border-radius:6px; display:inline-block; color:#0f172a; border:1px solid #e0e7ff;">Dịch vụ: <strong>Tiêm phòng</strong></div>
+          </div>
+        </div>
+
+        <!-- S: Subjective -->
+        <div class="premium-box" style="border-left:4px solid #3b82f6; background:#eff6ff;">
+          <div class="section-title" style="color:#1d4ed8;">S — Thông tin chủ quan (Khách hàng cung cấp)</div>
+          <div class="clinical-grid">
+            <div class="clinical-item">
+              <div class="clinical-label">Lý do tiêm:</div>
+              <div class="clinical-text">${soap.reasonForVisit || 'Tiêm định kỳ'}</div>
+            </div>
+            ${soap.eatingStatus ? `<div class="clinical-item" style="margin-top:8px;">
+              <div class="clinical-label">Tình trạng ăn uống:</div>
+              <div class="clinical-text">${soap.eatingStatus}</div>
+            </div>` : ''}
+            ${(soap.hasVomitingOrDiarrhea || soap.hasCoughOrSneeze) ? `<div class="clinical-item" style="margin-top:8px;">
+              <div class="clinical-label">Triệu chứng hiện tại:</div>
+              <div style="margin-top:4px;">${vomitingSummary}${coughSummary}</div>
+            </div>` : ''}
+            ${soap.previousVaccineHistory ? `<div class="clinical-item" style="margin-top:8px;">
+              <div class="clinical-label">Tiền sử vắc-xin:</div>
+              <div class="clinical-text" style="font-style:italic;color:#475569;">${soap.previousVaccineHistory}</div>
+            </div>` : ''}
+            ${allergySummary || reactionSummary ? `<div class="clinical-item" style="margin-top:8px;">${allergySummary}${reactionSummary}</div>` : ''}
+            ${soap.ownerNotes ? `<div class="clinical-item" style="margin-top:8px;">
+              <div class="clinical-label">Ghi chú của chủ nuôi:</div>
+              <div class="clinical-text" style="font-style:italic;color:#475569;">${soap.ownerNotes}</div>
+            </div>` : ''}
+          </div>
+        </div>
+
+        <!-- O: Objective -->
+        <div class="premium-box" style="border-left:4px solid #06b6d4; background:#ecfeff;">
+          <div class="section-title" style="color:#0891b2;">O — Khám lâm sàng (Bác sĩ)</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div>
+              <div class="clinical-label">Tinh thần:</div>
+              <div class="clinical-text">${soap.mentalStatus || 'Linh hoạt'}</div>
+            </div>
+            <div>
+              <div class="clinical-label">Niêm mạc:</div>
+              <div class="clinical-text">${soap.mucosaStatus || 'Hồng hào'}</div>
+            </div>
+            ${soap.eyeNoseEarStatus ? `<div style="grid-column:span 2;">
+              <div class="clinical-label">Mắt / Mũi / Tai:</div>
+              <div class="clinical-text">${soap.eyeNoseEarStatus}</div>
+            </div>` : ''}
+            ${soap.lymphNodeStatus ? `<div style="grid-column:span 2;">
+              <div class="clinical-label">Hạch bạch huyết:</div>
+              <div class="clinical-text">${soap.lymphNodeStatus}</div>
+            </div>` : ''}
+            ${soap.dehydrationPercent != null ? `<div>
+              <div class="clinical-label">Mất nước:</div>
+              <div class="clinical-text">${soap.dehydrationPercent}%</div>
+            </div>` : ''}
+          </div>
+        </div>
+
+        ${vaccImagesHtml}
+
+        <!-- A: Assessment + Vaccine -->
+        <div class="premium-box" style="border-left:4px solid #10b981; background:#ecfdf5;">
+          <div class="section-title" style="color:#047857;">A — Đánh giá &amp; Thông tin Vắc-xin</div>
+          <div class="clinical-grid">
+            <div class="clinical-item">
+              <div class="clinical-label">Kết luận lâm sàng:</div>
+              <div>
+                <span style="display:inline-block; padding:3px 12px; border-radius:20px; font-weight:600; font-size:0.82rem;
+                  background:${soap.clinicalAssessment === 'Đủ điều kiện' ? '#d1fae5' : '#fee2e2'};
+                  color:${soap.clinicalAssessment === 'Đủ điều kiện' ? '#065f46' : '#b91c1c'};
+                  border:1px solid ${soap.clinicalAssessment === 'Đủ điều kiện' ? '#6ee7b7' : '#fca5a5'};
+                ">${soap.clinicalAssessment || 'Đủ điều kiện'}</span>
+              </div>
+              ${soap.doctorRemarks ? `<div class="clinical-text" style="margin-top:6px;font-style:italic;color:#475569;">${soap.doctorRemarks}</div>` : ''}
+            </div>
+            ${soap.vaccineName ? `<div class="clinical-item" style="margin-top:10px;padding-top:10px;border-top:1px dashed #a7f3d0;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div>
+                  <div class="clinical-label">Vắc-xin đã tiêm:</div>
+                  <div class="clinical-text" style="font-weight:700;color:#065f46;">${soap.vaccineName}</div>
+                  ${soap.batchNumber ? `<div style="font-size:0.75rem;color:#64748b;">Lô: ${soap.batchNumber}</div>` : ''}
+                </div>
+                <div>
+                  <div class="clinical-label">Đường tiêm / Vị trí:</div>
+                  <div class="clinical-text">${[soap.route, soap.injectionSite].filter(Boolean).join(' — ') || '—'}</div>
+                  ${soap.dose != null ? `<div style="font-size:0.75rem;color:#64748b;">Liều: ${soap.dose} ml</div>` : ''}
+                </div>
+              </div>
+            </div>` : ''}
+          </div>
+        </div>
+
+        <!-- P: Plan -->
+        <div class="premium-box" style="border-left:4px solid #f59e0b; background:#fffbeb;">
+          <div class="section-title" style="color:#b45309;">P — Kế hoạch &amp; Dặn dò</div>
+          <div class="clinical-grid">
+            ${soap.nextDueDate ? `<div class="clinical-item">
+              <div class="clinical-label">Ngày tiêm nhắc lại dự kiến:</div>
+              <div>
+                <span style="display:inline-block;background:#fef3c7;padding:4px 12px;border-radius:6px;border:1px solid #f59e0b;color:#b45309;font-size:0.85rem;font-weight:600;">
+                  &#128197; ${new Date(soap.nextDueDate).toLocaleDateString('vi-VN')}
+                </span>
+              </div>
+            </div>` : ''}
+            <div class="clinical-item" style="margin-top:10px;padding-top:10px;border-top:1px dashed #fde68a;">
+              <div class="clinical-label">Lời dặn dò:</div>
+              <div class="clinical-text" style="line-height:1.7;">${soap.followUpInstructions || '- Kiêng tắm 7 ngày sau tiêm.<br>- Theo dõi nhiệt độ và biểu hiện dị ứng trong 24 giờ đầu.<br>- Tái khám ngay nếu có sốt, sưng nơi tiêm, bỏ ăn.'}</div>
+            </div>
+            ${soap.reactionNote ? `<div class="clinical-item" style="margin-top:8px;padding:8px;background:#fef2f2;border-radius:8px;border:1px solid #fca5a5;">
+              <div class="clinical-label" style="color:#b91c1c;">&#9888; Ghi chú phản ứng sau tiêm:</div>
+              <div class="clinical-text" style="color:#b91c1c;">${soap.reactionNote}</div>
+            </div>` : ''}
+          </div>
+        </div>
+
+        <div class="footer sign-area">
+          <div style="flex:1;"></div>
+          <div style="width:200px;text-align:center;">
+            <div style="font-weight:700;margin-bottom:4px;">Chữ ký Bác sĩ</div>
+            <div class="sign-line"></div>
+            <div style="font-size:0.85rem;color:#0f172a;font-weight:700;">Bs. ${(soap.doctorName || inv.doctorName || '').replace(/^Bs\.?\s*/i,'')}</div>
+          </div>
+        </div>
+        <div style="text-align:center; font-size:0.7rem; color:#94a3b8; margin-top:30px; border-top:1px solid #f1f5f9; padding-top:10px;">
+          * Phiếu tiêm chủng điện tử — Hệ thống MyPetClinic. Mã hồ sơ: #${String(appt?.id || inv.id).padStart(5,'0')} *
+        </div>
+      </div>`;
+
+    } else {
+    // =================== MEDICAL RECORD TEMPLATE ===================
     medicalRecordHtml = `
     <div class="medical-record-page" style="${optInvoice ? 'page-break-after: always;' : ''}">
       <div class="header">
@@ -780,16 +1024,17 @@ const printInvoiceWindow = (inv: any, appt: any, soap: any, optInvoice: boolean,
         <div style="flex:1;">
           <div class="info-label">THÔNG TIN BỆNH NHÂN</div>
           <div class="info-value text-xl">${inv.petName || '—'} <span class="species-badge">${inv.petSpecies || 'Khác'}</span></div>
-          <div style="display:flex; gap: 20px; font-size: 0.85rem; color: #475569; margin-top: 6px;">
-            <div>Giống: <strong>${appt?.breed || '—'}</strong></div>
-            <div>Cân nặng: <strong>${soap?.objective?.weight || appt?.weight ? (soap?.objective?.weight || appt?.weight) + ' kg' : '—'}</strong></div>
-            ${soap?.objective?.temperature ? `<div>Nhiệt độ: <strong>${soap.objective.temperature}°C</strong></div>` : ''}
+          <div style="display:flex; flex-wrap: wrap; gap: 15px; font-size: 0.85rem; color: #475569; margin-top: 6px;">
+            <div style="white-space: nowrap;">Giống: <strong>${appt?.breed || '—'}</strong></div>
+            <div style="white-space: nowrap;">Cân nặng: <strong>${soap?.objective?.weight || appt?.weight ? (soap?.objective?.weight || appt?.weight) + ' kg' : '—'}</strong></div>
+            ${soap?.objective?.temperature ? `<div style="white-space: nowrap;">Nhiệt độ: <strong>${soap.objective.temperature}°C</strong></div>` : ''}
+            ${soap?.objective?.heartRate ? `<div style="white-space: nowrap;">Nhịp tim: <strong>${soap.objective.heartRate} bpm</strong></div>` : ''}
           </div>
           <div class="info-meta" style="margin-top: 8px;">Chủ nuôi: <strong>${inv.customerName || '—'}</strong> (${inv.customerPhone || 'N/A'})</div>
         </div>
         <div style="text-align:right; border-left: 1px dashed #bfdbfe; padding-left: 20px;">
           <div class="info-label">BÁC SĨ ĐIỀU TRỊ</div>
-          <div class="info-value text-lg" style="color:#2563eb; margin-bottom: 8px;">BS. ${inv.doctorName || '—'}</div>
+          <div class="info-value text-lg" style="color:#2563eb; margin-bottom: 8px;">${inv.doctorName || '—'}</div>
           ${appt?.serviceName ? `<div style="font-size: 0.75rem; background: white; padding: 4px 8px; border-radius: 6px; display: inline-block; color: #0f172a; border: 1px solid #e2e8f0;">Dịch vụ: <strong>${appt.serviceName}</strong></div>` : ''}
         </div>
       </div>
@@ -802,23 +1047,34 @@ const printInvoiceWindow = (inv: any, appt: any, soap: any, optInvoice: boolean,
           <div class="clinical-item">
             <div class="clinical-label">S - Chủ quan (Triệu chứng & Lý do khám):</div>
             <div class="clinical-text">${soap.subjective?.chiefComplaint || 'Không ghi nhận'}</div>
-            ${soap.subjective?.petOwnerNotes ? `<div class="clinical-text" style="font-size: 0.8rem; color:#64748b; margin-top: 4px; font-style:italic;">* Ghi chú từ chủ: ${soap.subjective.petOwnerNotes}</div>` : ''}
+            <div style="font-size: 0.8rem; color: #475569; margin-top: 4px; display: flex; gap: 16px; flex-wrap: wrap;">
+              ${soap.subjective?.appetite && soap.subjective.appetite !== 'Bình thường' ? `<div><span>Ăn uống:</span> <strong>${soap.subjective.appetite}</strong></div>` : ''}
+              ${soap.subjective?.hasVomiting ? `<div style="color: #b91c1c;"><span>Nôn mửa:</span> <strong>Có</strong> (${soap.subjective.vomitingDetails || ''})</div>` : ''}
+              ${soap.subjective?.hasDiarrhea ? `<div style="color: #b91c1c;"><span>Tiêu chảy:</span> <strong>Có</strong> (${soap.subjective.diarrheaDetails || ''})</div>` : ''}
+              ${soap.subjective?.activityLevel && soap.subjective.activityLevel !== 'Bình thường' ? `<div><span>Vận động:</span> <strong>${soap.subjective.activityLevel}</strong></div>` : ''}
+            </div>
+            ${soap.subjective?.petOwnerNotes ? `<div class="clinical-text" style="font-size: 0.8rem; color:#64748b; margin-top: 6px; font-style:italic;">* Ghi chú từ chủ: ${soap.subjective.petOwnerNotes}</div>` : ''}
           </div>
           <div class="clinical-item" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
             <div class="clinical-label">O - Khách quan (Khám thực thể):</div>
             <div class="clinical-text" style="font-size: 0.85rem;">
-              Thể trạng: ${soap.objective?.bodyConditionScore || 5}/9 | Tri giác: ${soap.objective?.mentation || 'Bình thường'} | Lượng giá nước: ${soap.objective?.hydration || 'Bình thường'}
+              Thể trạng (BCS): <strong>${soap.objective?.bodyConditionScore || 5}/9</strong> | Tri giác: <strong>${soap.objective?.mentation || 'Bình thường'}</strong> | Mức mất nước: <strong>${soap.objective?.hydration || 'Bình thường'}</strong>
             </div>
+            ${sysExamsHtml}
             ${services.length > 0 ? `
-            <div style="margin-top: 8px;">
+            <div style="margin-top: 10px;">
               <div class="clinical-label" style="font-size: 0.75rem; margin-bottom: 4px;">Chỉ định cận lâm sàng:</div>
               ${servicesHtml}
             </div>` : ''}
           </div>
+          
+          ${imagesHtml}
+
           <div class="clinical-item" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
             <div class="clinical-label">A - Chẩn đoán:</div>
             <div class="clinical-text" style="font-weight:600; color:#b91c1c; font-size: 1rem;">${soap.assessment?.definitiveDiagnosis || soap.assessment?.tentativeDiagnosis || 'Chưa có chẩn đoán cuối cùng'}</div>
-            <div class="clinical-text" style="font-size: 0.8rem; color:#64748b; margin-top: 4px;">Tiên lượng: <strong>${soap.assessment?.prognosis || 'Tốt'}</strong> | Mức độ bệnh: <strong>${soap.assessment?.diseaseSeverity || 'Nhẹ'}</strong></div>
+            ${soap.assessment?.differentialDiagnosis ? `<div style="font-size: 0.8rem; color: #475569; margin-top: 2px;">Chẩn đoán phân biệt: <em>${soap.assessment.differentialDiagnosis}</em></div>` : ''}
+            <div class="clinical-text" style="font-size: 0.8rem; color:#64748b; margin-top: 6px;">Tiên lượng: <strong style="color: #0f172a;">${soap.assessment?.prognosis || 'Tốt'}</strong> &nbsp;|&nbsp; Mức độ bệnh: <strong style="color: #0f172a;">${soap.assessment?.diseaseSeverity || 'Nhẹ'}</strong></div>
           </div>
           ` : `
           <div class="clinical-item">
@@ -841,34 +1097,49 @@ const printInvoiceWindow = (inv: any, appt: any, soap: any, optInvoice: boolean,
       </div>
 
       <div class="premium-box rx-box">
-        <div class="section-title"><i class="bi bi-capsule"></i> 2. ĐƠN THUỐC & ĐIỀU TRỊ</div>
-        ${medicines.length > 0 ? `<div class="rx-list">${prescriptionsHtml}</div>` : '<div style="color:#64748b; font-style:italic; padding: 10px 0;">Không có chỉ định sử dụng thuốc tại nhà.</div>'}
+        <div class="section-title"><i class="bi bi-capsule"></i> 2. KẾT QUẢ ĐIỀU TRỊ & KÊ ĐƠN THUỐC (PLAN)</div>
+        
+        <div style="margin-bottom: 12px;">
+          <div class="clinical-label" style="margin-bottom: 6px;">Đơn thuốc:</div>
+          ${medicines.length > 0 ? `<div class="rx-list">${prescriptionsHtml}</div>` : '<div style="color:#64748b; font-style:italic;">Không có chỉ định thuốc mang về.</div>'}
+        </div>
+
+        <div style="border-top: 1px dashed #e2e8f0; padding-top: 12px; margin-top: 12px;">
+          <div class="clinical-label" style="margin-bottom: 4px;">Dặn dò chăm sóc:</div>
+          <div style="color:#334155; line-height: 1.6; font-size: 0.85rem;">
+            ${soap?.plan?.careInstructions ? soap.plan.careInstructions.replace(/\\n/g, '<br>') : `
+            - Vui lòng cho thú cưng uống thuốc đúng liều lượng (nếu có).<br>
+            - Tái khám ngay nếu thú cưng có biểu hiện bất thường (nôn mửa, bỏ ăn).<br>
+            - Đảm bảo môi trường sống sạch sẽ, thoáng mát.`}
+          </div>
+          
+          ${soap?.plan?.followUpDate ? `
+          <div style="margin-top: 12px;">
+            <span style="background-color: #fef3c7; padding: 4px 10px; border-radius: 6px; border: 1px solid #f59e0b; color: #b45309; font-size: 0.85rem;">
+              <i class="bi bi-calendar-event me-1"></i> Lịch tái khám: <strong>${new Date(soap.plan.followUpDate).toLocaleDateString('vi-VN')}</strong> 
+              ${soap.plan.followUpNote ? `(${soap.plan.followUpNote})` : ''}
+            </span>
+          </div>` : ''}
+        </div>
       </div>
 
       <div class="footer sign-area">
         <div style="flex:1;">
-          <div style="font-weight:700;margin-bottom:4px">P - Kế hoạch & Dặn dò (Plan):</div>
-          <div style="color:#334155; line-height: 1.8;">
-            ${soap?.plan?.careInstructions ? soap.plan.careInstructions.replace(/\\n/g, '<br>') : `
-            - Vui lòng cho thú cưng uống thuốc đúng liều lượng.<br>
-            - Tái khám ngay nếu thú cưng có biểu hiện bất thường (nôn mửa, bỏ ăn).<br>
-            - Đảm bảo môi trường sống sạch sẽ, thoáng mát.`}
-            ${soap?.plan?.followUpDate ? `<br><br><span style="background-color: #fef3c7; padding: 2px 6px; border-radius: 4px; border: 1px solid #f59e0b; color: #b45309;"><i class="bi bi-calendar-event me-1"></i> Lịch tái khám: <strong>${new Date(soap.plan.followUpDate).toLocaleDateString('vi-VN')}</strong> ${soap.plan.followUpNote ? `(${soap.plan.followUpNote})` : ''}</span>` : ''}
-          </div>
         </div>
         <div style="width:200px;text-align:center">
           <div style="font-weight:700;margin-bottom:4px">Chữ ký Bác sĩ</div>
           <div class="sign-line"></div>
-          <div style="font-size:0.85rem;color:#0f172a;font-weight:700;">BS. ${inv.doctorName || ''}</div>
+          <div style="font-size:0.85rem;color:#0f172a;font-weight:700;">${inv.doctorName || ''}</div>
         </div>
       </div>
       
       <div style="text-align:center; font-size: 0.7rem; color: #94a3b8; margin-top: 40px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
         * Tài liệu được trích xuất tự động từ hệ thống quản lý MyPetClinic. Mã hồ sơ: #${String(appt?.id || inv.id).padStart(5, '0')} *
       </div>
-    </div>
-    `;
-  }
+      </div>
+    `; // end medicalRecordHtml (medical record)
+    } // end else (not vaccination)
+    } // end if (optMedical && appt)
 
   // Generate Invoice Section HTML
   let invoiceHtml = '';
@@ -986,17 +1257,18 @@ const printInvoiceWindow = (inv: any, appt: any, soap: any, optInvoice: boolean,
     .total-final td { font-weight: 800; font-size: 1rem; color: #0f172a; border-top: 2px solid #0f172a; padding-top: 8px !important; }
     
     /* Medical Record Specific (Premium) */
-    .premium-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+    .premium-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 16px; page-break-inside: avoid; }
     .patient-info-box { display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #3b82f6; background: #eff6ff; border-color: #bfdbfe; }
     .info-value.text-xl { font-size: 1.25rem; font-weight: 700; color: #1e3a8a; margin: 4px 0; }
     .info-value.text-lg { font-size: 1.1rem; font-weight: 700; }
     .species-badge { background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; vertical-align: middle; }
     .section-title { font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; }
     .clinical-grid { display: flex; flex-direction: column; gap: 12px; }
+    .clinical-item { page-break-inside: avoid; }
     .clinical-label { font-size: 0.75rem; font-weight: 600; color: #64748b; }
     .clinical-text { font-size: 0.9rem; color: #0f172a; margin-top: 2px; }
     .rx-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .rx-item { background: white; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .rx-item { background: white; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); page-break-inside: avoid; }
     .rx-name { font-weight: 700; color: #0f172a; font-size: 0.85rem; }
     .rx-qty { font-size: 0.75rem; color: #475569; margin-top: 4px; }
     .sign-area { margin-top: 30px; }

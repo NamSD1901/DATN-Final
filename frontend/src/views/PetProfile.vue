@@ -287,12 +287,12 @@
                             <div class="d-flex align-items-center text-dark small">
                               <i class="bi bi-clipboard2-pulse text-warning me-2 fs-6"></i>
                               <span class="fw-bold me-1">Chẩn đoán:</span> 
-                              <span class="text-truncate" style="max-width: 250px;" :title="rec.diagnosis">{{ rec.diagnosis || 'Chưa có' }}</span>
+                              <span class="text-truncate" style="max-width: 250px;" :title="formatDiagnosisText(rec.diagnosis)">{{ formatDiagnosisText(rec.diagnosis) || 'Chưa có' }}</span>
                             </div>
                             
                             <div class="d-flex align-items-center gap-3 small text-muted">
-                              <span v-if="rec.prescribedMedicines && rec.prescribedMedicines.length > 0">
-                                <i class="bi bi-capsule-pill text-success me-1"></i> Kê {{ rec.prescribedMedicines.length }} loại thuốc
+                              <span v-if="rec.prescriptions && rec.prescriptions.length > 0">
+                                <i class="bi bi-capsule-pill text-success me-1"></i> Kê {{ rec.prescriptions.length }} loại thuốc
                               </span>
                               <span v-else>
                                 <i class="bi bi-capsule-pill text-secondary me-1"></i> Không thuốc
@@ -733,7 +733,7 @@
                               <td class="py-3 text-end fw-bold text-dark">{{ med.quantity }} {{ med.unit }}</td>
                             </tr>
                           </tbody>
-                        </table>
+                      </table>
                       </div>
                     </div>
 
@@ -761,7 +761,7 @@
 
       <!-- Medical Record Detail Modal -->
       <div v-if="showMedicalRecordModal" class="custom-modal-overlay" @click.self="closeMedicalRecordModal">
-        <div class="custom-modal-card max-w-800">
+        <div class="custom-modal-card max-w-900">
           <div class="custom-modal-header bg-light">
             <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2">
               <i class="bi bi-file-medical text-primary"></i> Chi tiết bệnh án
@@ -770,113 +770,205 @@
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
-          <div class="custom-modal-body p-4" v-if="selectedMedicalRecord">
-            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+          <div class="custom-modal-body p-4" style="max-height: 80vh; overflow-y: auto;" v-if="selectedMedicalRecord">
+            
+            <!-- Header: Service + Doctor -->
+            <div class="d-flex justify-content-between align-items-start mb-4 pb-3 border-bottom">
               <div>
                 <h4 class="fw-bold text-dark mb-1">{{ selectedMedicalRecord.serviceName || 'Khám tổng quát' }}</h4>
                 <div class="text-muted small"><i class="bi bi-calendar-check me-1"></i> {{ formatDate(selectedMedicalRecord.visitDate || selectedMedicalRecord.createdAt) }}</div>
               </div>
               <div class="text-end">
-                <div class="fw-bold text-dark"><i class="bi bi-person-badge text-primary me-1"></i> Bs. {{ selectedMedicalRecord.doctorName }}</div>
+                <div class="fw-bold text-dark"><i class="bi bi-person-badge text-primary me-1"></i> {{ selectedMedicalRecord.doctorName }}</div>
                 <span class="badge bg-success-subtle text-success mt-1" v-if="!selectedMedicalRecord.followUpDate">Đã hoàn thành</span>
                 <span class="badge bg-warning-subtle text-warning mt-1" v-else>Hẹn tái khám: {{ formatDateShort(selectedMedicalRecord.followUpDate) }}</span>
               </div>
             </div>
 
-            <div class="row g-4">
-              <!-- Cột S O -->
-              <div class="col-md-6">
-                <div class="bg-light p-3 rounded-3 h-100">
-                  <h6 class="fw-bold text-primary mb-3"><i class="bi bi-chat-left-text me-2"></i>S.O (Chủ quan & Khách quan)</h6>
-                  
-                  <div class="mb-3">
-                    <div class="small fw-bold text-muted mb-1">Bệnh sử & Lý do khám:</div>
-                    <div v-if="safeParseJSON(selectedMedicalRecord.medicalHistory)" class="mt-2 p-2 bg-info bg-opacity-10 rounded-3 small">
-                      <div class="row g-2">
-                        <div class="col-12" v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).chiefComplaint"><span class="text-muted fw-semibold">Lý do khám:</span> {{safeParseJSON(selectedMedicalRecord.medicalHistory).chiefComplaint}}</div>
-                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).appetite"><span class="text-muted">Ăn uống:</span> {{safeParseJSON(selectedMedicalRecord.medicalHistory).appetite}}</div>
-                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).urinationIssues"><span class="text-muted">Tiêu tiểu:</span> {{safeParseJSON(selectedMedicalRecord.medicalHistory).urinationIssues}}</div>
-                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).activityLevel"><span class="text-muted">Hoạt động:</span> {{safeParseJSON(selectedMedicalRecord.medicalHistory).activityLevel}}</div>
-                      </div>
-                    </div>
-                    <div v-else class="text-dark">{{ selectedMedicalRecord.medicalHistory || 'Không ghi nhận' }}</div>
-                  </div>
-                  
-                  <div>
-                    <div class="small fw-bold text-muted mb-1">Dấu hiệu lâm sàng:</div>
-                    <div class="d-flex gap-2 mb-2">
-                      <span class="badge bg-white text-dark border">Nhiệt độ: {{ selectedMedicalRecord.temperature ? selectedMedicalRecord.temperature + '°C' : '--' }}</span>
-                      <span class="badge bg-white text-dark border">Cân nặng: {{ selectedMedicalRecord.weight ? selectedMedicalRecord.weight + ' kg' : '--' }}</span>
-                    </div>
-                    <div v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns)" class="mt-2 bg-warning bg-opacity-10 p-2 rounded-3 small">
-                      <div class="row g-2">
-                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns).heartRate"><span class="text-muted">Nhịp tim:</span> {{safeParseJSON(selectedMedicalRecord.clinicalSigns).heartRate}} bpm</div>
-                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns).respiratoryRate"><span class="text-muted">Nhịp thở:</span> {{safeParseJSON(selectedMedicalRecord.clinicalSigns).respiratoryRate}} l/p</div>
-                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns).mentation"><span class="text-muted">Tinh thần:</span> {{safeParseJSON(selectedMedicalRecord.clinicalSigns).mentation}}</div>
-                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns).hydration"><span class="text-muted">Mất nước:</span> {{safeParseJSON(selectedMedicalRecord.clinicalSigns).hydration}}</div>
-                        <div class="col-6" v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns).bodyConditionScore"><span class="text-muted">BCS:</span> {{safeParseJSON(selectedMedicalRecord.clinicalSigns).bodyConditionScore}}/9</div>
-                      </div>
-                    </div>
-                    <div v-else class="text-dark small">{{ selectedMedicalRecord.clinicalSigns || 'Bình thường' }}</div>
-                  </div>
-                </div>
-              </div>
+            <!-- Vitals Row -->
+            <div class="d-flex flex-wrap gap-2 mb-4">
+              <span class="badge bg-white text-dark border px-3 py-2 rounded-3 shadow-sm">
+                <i class="bi bi-thermometer-half text-danger me-1"></i>Nhiệt độ: <strong>{{ selectedMedicalRecord.temperature ? selectedMedicalRecord.temperature + '°C' : '—' }}</strong>
+              </span>
+              <span class="badge bg-white text-dark border px-3 py-2 rounded-3 shadow-sm">
+                <i class="bi bi-speedometer text-primary me-1"></i>Cân nặng: <strong>{{ selectedMedicalRecord.weight ? selectedMedicalRecord.weight + ' kg' : '—' }}</strong>
+              </span>
+              <span v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns)?.heartRate" class="badge bg-white text-dark border px-3 py-2 rounded-3 shadow-sm">
+                <i class="bi bi-heart-pulse text-danger me-1"></i>Nhịp tim: <strong>{{ safeParseJSON(selectedMedicalRecord.clinicalSigns).heartRate }} bpm</strong>
+              </span>
+              <span v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns)?.respiratoryRate" class="badge bg-white text-dark border px-3 py-2 rounded-3 shadow-sm">
+                <i class="bi bi-lungs text-info me-1"></i>Nhịp thở: <strong>{{ safeParseJSON(selectedMedicalRecord.clinicalSigns).respiratoryRate }} l/p</strong>
+              </span>
+            </div>
 
-              <!-- Cột A P -->
-              <div class="col-md-6">
-                <div class="bg-light p-3 rounded-3 h-100">
-                  <h6 class="fw-bold text-warning mb-3"><i class="bi bi-clipboard2-pulse me-2"></i>A.P (Đánh giá & Kế hoạch)</h6>
-                  
-                  <div class="mb-3">
-                    <div class="small fw-bold text-muted mb-1">Chẩn đoán:</div>
-                    <div v-if="safeParseJSON(selectedMedicalRecord.diagnosis)" class="mt-2 p-2 bg-danger bg-opacity-10 rounded-3 small">
-                      <div v-if="safeParseJSON(selectedMedicalRecord.diagnosis).tentativeDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ sơ bộ:</span> {{safeParseJSON(selectedMedicalRecord.diagnosis).tentativeDiagnosis}}</div>
-                      <div v-if="safeParseJSON(selectedMedicalRecord.diagnosis).definitiveDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ xác định:</span> <span class="fw-bold text-danger">{{safeParseJSON(selectedMedicalRecord.diagnosis).definitiveDiagnosis}}</span></div>
-                      <div v-if="safeParseJSON(selectedMedicalRecord.diagnosis).differentialDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ phân biệt:</span> {{safeParseJSON(selectedMedicalRecord.diagnosis).differentialDiagnosis}}</div>
-                      <div class="d-flex gap-3 mt-2">
-                        <span v-if="safeParseJSON(selectedMedicalRecord.diagnosis).diseaseSeverity" class="badge bg-white text-dark border">Mức độ: {{safeParseJSON(selectedMedicalRecord.diagnosis).diseaseSeverity}}</span>
-                        <span v-if="safeParseJSON(selectedMedicalRecord.diagnosis).prognosis" class="badge bg-white text-dark border">Tiên lượng: {{safeParseJSON(selectedMedicalRecord.diagnosis).prognosis}}</span>
-                      </div>
-                    </div>
-                    <div v-else class="text-dark fw-bold">{{ selectedMedicalRecord.diagnosis || 'Chưa có chẩn đoán' }}</div>
+            <!-- S - Subjective -->
+            <div class="soap-section mb-3">
+              <div class="soap-section-title text-primary">
+                <i class="bi bi-file-earmark-medical-fill me-2"></i>S — Tiền sử &amp; Lý do khám
+              </div>
+              <div class="soap-section-body bg-primary bg-opacity-10 border-start border-primary border-3 p-3 rounded-end-3">
+                <template v-if="safeParseJSON(selectedMedicalRecord.medicalHistory)">
+                  <div class="d-flex flex-wrap gap-2">
+                    <span v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).chiefComplaint" class="soap-chip">
+                      <span class="text-muted fw-semibold me-1">Lý do:</span>{{ safeParseJSON(selectedMedicalRecord.medicalHistory).chiefComplaint }}
+                    </span>
+                    <span v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).onsetDuration" class="soap-chip">
+                      <span class="text-muted fw-semibold me-1">Thời gian:</span>{{ safeParseJSON(selectedMedicalRecord.medicalHistory).onsetDuration }}
+                    </span>
+                    <span v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).appetite && safeParseJSON(selectedMedicalRecord.medicalHistory).appetite !== 'Bình thường'" class="soap-chip">
+                      <span class="text-muted fw-semibold me-1">Ăn uống:</span>{{ safeParseJSON(selectedMedicalRecord.medicalHistory).appetite }}
+                    </span>
+                    <span v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).activityLevel && safeParseJSON(selectedMedicalRecord.medicalHistory).activityLevel !== 'Bình thường'" class="soap-chip">
+                      <span class="text-muted fw-semibold me-1">Hoạt động:</span>{{ safeParseJSON(selectedMedicalRecord.medicalHistory).activityLevel }}
+                    </span>
+                    <span v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).hasVomiting" class="soap-chip border-danger text-danger">
+                      <span class="fw-semibold me-1">Nôn mửa:</span>Có {{ safeParseJSON(selectedMedicalRecord.medicalHistory).vomitingDetails ? '(' + safeParseJSON(selectedMedicalRecord.medicalHistory).vomitingDetails + ')' : '' }}
+                    </span>
+                    <span v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).hasDiarrhea" class="soap-chip border-danger text-danger">
+                      <span class="fw-semibold me-1">Tiêu chảy:</span>Có {{ safeParseJSON(selectedMedicalRecord.medicalHistory).diarrheaDetails ? '(' + safeParseJSON(selectedMedicalRecord.medicalHistory).diarrheaDetails + ')' : '' }}
+                    </span>
+                    <span v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).symptoms" class="soap-chip">
+                      <span class="text-muted fw-semibold me-1">Triệu chứng:</span>{{ safeParseJSON(selectedMedicalRecord.medicalHistory).symptoms }}
+                    </span>
+                    <span v-if="safeParseJSON(selectedMedicalRecord.medicalHistory).petOwnerNotes" class="soap-chip">
+                      <span class="text-muted fw-semibold me-1">Ghi chú chủ:</span>{{ safeParseJSON(selectedMedicalRecord.medicalHistory).petOwnerNotes }}
+                    </span>
                   </div>
-                  
-                  <div class="mb-3">
-                    <div class="small fw-bold text-muted mb-1">Kế hoạch điều trị:</div>
-                    <ul v-if="Array.isArray(safeParseJSON(selectedMedicalRecord.treatmentPlan)) && safeParseJSON(selectedMedicalRecord.treatmentPlan).length > 0" class="mt-2 mb-0 ps-3 bg-success bg-opacity-10 p-2 rounded-3">
-                      <li v-for="(step, idx) in safeParseJSON(selectedMedicalRecord.treatmentPlan)" :key="idx" class="text-dark small mb-1">{{ step }}</li>
-                    </ul>
-                    <div v-else-if="!safeParseJSON(selectedMedicalRecord.treatmentPlan)" class="text-dark small">{{ selectedMedicalRecord.treatmentPlan || 'Theo dõi thêm' }}</div>
-                    <div v-else class="text-dark small">Chưa ghi nhận</div>
+                </template>
+                <template v-else>
+                  <div class="text-dark">{{ selectedMedicalRecord.medicalHistory || 'Không ghi nhận' }}</div>
+                </template>
+              </div>
+            </div>
+
+            <!-- O - Objective -->
+            <div class="soap-section mb-3">
+              <div class="soap-section-title text-success">
+                <i class="bi bi-heart-pulse-fill me-2"></i>O — Khám lâm sàng (Khách quan)
+              </div>
+              <div class="soap-section-body bg-success bg-opacity-10 border-start border-success border-3 p-3 rounded-end-3">
+                <template v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns)">
+                  <div class="d-flex flex-wrap gap-2">
+                    <span v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns).mentation" class="soap-chip">
+                      <span class="text-muted fw-semibold me-1">Tri giác:</span>{{ safeParseJSON(selectedMedicalRecord.clinicalSigns).mentation }}
+                    </span>
+                    <span v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns).bodyConditionScore" class="soap-chip">
+                      <span class="text-muted fw-semibold me-1">BCS:</span>{{ safeParseJSON(selectedMedicalRecord.clinicalSigns).bodyConditionScore }}/9
+                    </span>
+                    <span v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns).hydration" class="soap-chip">
+                      <span class="text-muted fw-semibold me-1">Mất nước:</span>{{ safeParseJSON(selectedMedicalRecord.clinicalSigns).hydration }}
+                    </span>
+                    <template v-for="sys in ['eyes','ears','nose','mouth','skinCoat','gastrointestinal','respiratory']" :key="sys">
+                      <span v-if="safeParseJSON(selectedMedicalRecord.clinicalSigns)[sys] && !safeParseJSON(selectedMedicalRecord.clinicalSigns)[sys].isNormal" class="soap-chip" style="border-color: #fca5a5; background-color: #fef2f2;">
+                        <span style="color: #dc2626;" class="fw-bold me-1">Bất thường:</span>{{ { eyes:'Mắt', ears:'Tai', nose:'Mũi', mouth:'Miệng', skinCoat:'Da/Lông', gastrointestinal:'Tiêu hóa', respiratory:'Hô hấp' }[sys] }}
+                        {{ safeParseJSON(selectedMedicalRecord.clinicalSigns)[sys].note ? '— ' + safeParseJSON(selectedMedicalRecord.clinicalSigns)[sys].note : '' }}
+                      </span>
+                    </template>
                   </div>
-                  
-                  <div v-if="selectedMedicalRecord.doctorNotes || selectedMedicalRecord.notes" class="p-2 bg-white rounded border-start border-warning border-3">
-                    <div class="small fw-bold text-muted mb-1">Ghi chú thêm:</div>
-                    <div class="text-dark small fst-italic">{{ selectedMedicalRecord.doctorNotes || selectedMedicalRecord.notes }}</div>
-                  </div>
+                </template>
+                <template v-else>
+                  <div class="text-dark small">{{ selectedMedicalRecord.clinicalSigns || 'Bình thường' }}</div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Attachments / Images -->
+            <div v-if="selectedMedicalRecord.attachments && selectedMedicalRecord.attachments.length > 0" class="soap-section mb-3">
+              <div class="soap-section-title" style="color: #7c3aed;">
+                <i class="bi bi-images me-2"></i>Hình ảnh Cận lâm sàng
+              </div>
+              <div class="d-flex flex-wrap align-items-center gap-2 p-2 bg-purple-subtle border-start border-3 rounded-end-3" style="border-color: #7c3aed !important; background: rgba(124,58,237,0.06);">
+                <div v-for="(imgUrl, imgIdx) in selectedMedicalRecord.attachments" :key="imgIdx"
+                     class="attachment-thumb-wrap"
+                     @click="openImageLightbox(selectedMedicalRecord.attachments, imgIdx)">
+                  <img :src="getImageUrl(imgUrl)"
+                       class="attachment-thumb"
+                       :alt="'Ảnh ' + (imgIdx+1)"
+                       style="width: 90px; height: 90px; object-fit: cover; border-radius: 8px; border: 2px solid #e2e8f0; cursor: zoom-in; transition: transform 0.2s;"
+                       @mouseover="($event.target as HTMLImageElement).style.transform='scale(1.07)'"
+                       @mouseout="($event.target as HTMLImageElement).style.transform='scale(1)'"
+                  />
                 </div>
               </div>
             </div>
 
-            <!-- Đơn thuốc -->
-            <div class="mt-4" v-if="selectedMedicalRecord.prescribedMedicines && selectedMedicalRecord.prescribedMedicines.length > 0">
-              <h6 class="fw-bold text-success mb-3"><i class="bi bi-capsule-pill me-2"></i>Đơn thuốc đã kê</h6>
+            <!-- A - Assessment -->
+            <div class="soap-section mb-3">
+              <div class="soap-section-title text-danger">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>A — Chẩn đoán
+              </div>
+              <div class="soap-section-body bg-danger bg-opacity-10 border-start border-danger border-3 p-3 rounded-end-3">
+                <template v-if="safeParseJSON(selectedMedicalRecord.diagnosis)">
+                  <div v-if="safeParseJSON(selectedMedicalRecord.diagnosis).tentativeDiagnosis" class="mb-1 small">
+                    <span class="text-muted fw-semibold me-1">Sơ bộ:</span>{{ safeParseJSON(selectedMedicalRecord.diagnosis).tentativeDiagnosis }}
+                  </div>
+                  <div v-if="safeParseJSON(selectedMedicalRecord.diagnosis).definitiveDiagnosis" class="mb-1">
+                    <span class="text-muted fw-semibold me-1">Xác định:</span><span class="fw-bold text-danger">{{ safeParseJSON(selectedMedicalRecord.diagnosis).definitiveDiagnosis }}</span>
+                  </div>
+                  <div v-if="safeParseJSON(selectedMedicalRecord.diagnosis).differentialDiagnosis" class="mb-1 small">
+                    <span class="text-muted fw-semibold me-1">Phân biệt:</span>{{ safeParseJSON(selectedMedicalRecord.diagnosis).differentialDiagnosis }}
+                  </div>
+                  <div class="d-flex gap-2 mt-2">
+                    <span v-if="safeParseJSON(selectedMedicalRecord.diagnosis).diseaseSeverity" class="badge bg-white text-dark border px-2 py-1">Mức độ: {{ safeParseJSON(selectedMedicalRecord.diagnosis).diseaseSeverity }}</span>
+                    <span v-if="safeParseJSON(selectedMedicalRecord.diagnosis).prognosis" class="badge bg-white text-dark border px-2 py-1">Tiên lượng: {{ safeParseJSON(selectedMedicalRecord.diagnosis).prognosis }}</span>
+                  </div>
+                </template>
+                <template v-else>
+                  <div class="fw-bold text-dark">{{ selectedMedicalRecord.diagnosis || 'Chưa có chẩn đoán' }}</div>
+                </template>
+              </div>
+            </div>
+
+            <!-- P - Plan -->
+            <div class="soap-section mb-3">
+              <div class="soap-section-title" style="color: #0891b2;">
+                <i class="bi bi-capsule me-2"></i>P — Kế hoạch điều trị
+              </div>
+              <div class="soap-section-body bg-info bg-opacity-10 border-start border-info border-3 p-3 rounded-end-3">
+                <template v-if="Array.isArray(safeParseJSON(selectedMedicalRecord.treatmentPlan)) && safeParseJSON(selectedMedicalRecord.treatmentPlan).length > 0">
+                  <ul class="mb-0 ps-3">
+                    <li v-for="(step, idx) in safeParseJSON(selectedMedicalRecord.treatmentPlan)" :key="idx" class="text-dark small mb-1">{{ step }}</li>
+                  </ul>
+                </template>
+                <template v-else>
+                  <div class="text-dark small">{{ selectedMedicalRecord.treatmentPlan || 'Theo dõi thêm' }}</div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Care Instructions -->
+            <div v-if="selectedMedicalRecord.careInstructions || selectedMedicalRecord.doctorNotes" class="soap-section mb-3">
+              <div class="soap-section-title text-warning-emphasis">
+                <i class="bi bi-info-circle-fill me-2"></i>Lời dặn dò chăm sóc
+              </div>
+              <div class="soap-section-body bg-warning bg-opacity-10 border-start border-warning border-3 p-3 rounded-end-3">
+                <div class="text-dark fw-medium" style="line-height: 1.7;">{{ selectedMedicalRecord.careInstructions || selectedMedicalRecord.doctorNotes }}</div>
+              </div>
+            </div>
+
+            <!-- Prescriptions -->
+            <div class="mt-3" v-if="selectedMedicalRecord.prescriptions && selectedMedicalRecord.prescriptions.length > 0">
+              <div class="soap-section-title text-success mb-2">
+                <i class="bi bi-capsule-pill me-2"></i>Đơn thuốc đã kê
+              </div>
               <div class="table-responsive border rounded-3">
-                <table class="table table-hover mb-0 align-middle">
+                <table class="table table-hover mb-0 align-middle" style="font-size: 0.875rem;">
                   <thead class="table-light">
                     <tr>
                       <th>Tên thuốc</th>
-                      <th>Liều lượng</th>
-                      <th>SL</th>
+                      <th>Liều dùng</th>
+                      <th>Tần suất</th>
+                      <th>Liệu trình</th>
                       <th>Cách dùng</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(med, idx) in selectedMedicalRecord.prescribedMedicines" :key="idx">
-                      <td class="fw-bold text-dark">{{ med.medicineName }}</td>
-                      <td>{{ med.dosage }}</td>
-                      <td class="fw-bold">{{ med.quantity }}</td>
-                      <td class="small">{{ med.frequency }} <span v-if="med.instruction" class="fst-italic text-muted d-block">{{ med.instruction }}</span></td>
+                    <tr v-for="(med, idx) in selectedMedicalRecord.prescriptions" :key="idx">
+                      <td class="fw-bold text-primary">{{ med.medicineName }}</td>
+                      <td>{{ med.dosage || '—' }}</td>
+                      <td>{{ med.frequency || '—' }}</td>
+                      <td>{{ med.durationDays ? med.durationDays + ' ngày' : '—' }}</td>
+                      <td class="text-muted small fst-italic">{{ med.instruction || '—' }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -930,6 +1022,25 @@
         </div>
       </transition>
     </teleport>
+
+    <!-- Image Lightbox Modal -->
+    <teleport to="body">
+      <transition name="fade">
+        <div v-if="showLightbox" class="lightbox-overlay" @click.self="closeLightbox">
+          <button class="lightbox-close" @click="closeLightbox"><i class="bi bi-x-lg"></i></button>
+          
+          <button v-if="lightboxIndex > 0" class="lightbox-nav lightbox-prev" @click.stop="prevLightboxImage">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          
+          <img :src="lightboxImages[lightboxIndex]" class="lightbox-image" alt="Preview" @click.stop />
+          
+          <button v-if="lightboxIndex < lightboxImages.length - 1" class="lightbox-nav lightbox-next" @click.stop="nextLightboxImage">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </transition>
+    </teleport>
   </div>
 </template>
 
@@ -957,8 +1068,28 @@ const safeParseJSON = (jsonStr: string | undefined | null): any => {
   }
 };
 
+const getImageUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) return url;
+  const baseUrl = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
+  const path = url.startsWith('/') ? url : `/${url}`;
+  return baseUrl.replace('/api', '') + path;
+};
+
+const openImageLightbox = (attachments: string[], index: number) => {
+  if (!attachments || attachments.length === 0) return;
+  lightboxImages.value = attachments.map(url => getImageUrl(url));
+  lightboxIndex.value = index;
+  showLightbox.value = true;
+};
+
 const formatDiagnosisTitle = (diagnosisStr: string | undefined | null): string => {
-  if (!diagnosisStr) return 'Đơn thuốc';
+  const text = formatDiagnosisText(diagnosisStr);
+  return text || 'Đơn thuốc';
+};
+
+const formatDiagnosisText = (diagnosisStr: string | undefined | null): string => {
+  if (!diagnosisStr) return '';
   if (diagnosisStr.trim().startsWith('{')) {
     const parsed = safeParseJSON(diagnosisStr);
     if (parsed) {
@@ -977,7 +1108,7 @@ const goBack = () => {
   }
 };
 
-const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5150';
+const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7284/api';
 
 // ===== State =====
 const pet = ref<any>(null);
@@ -1345,6 +1476,21 @@ watch(() => activeTab.value, (newTab) => {
 // ===== Helpers =====
 const selectedMedicalRecord = ref<any>(null);
 const showMedicalRecordModal = ref(false);
+const showLightbox = ref(false);
+const lightboxImages = ref<string[]>([]);
+const lightboxIndex = ref(0);
+
+const closeLightbox = () => {
+  showLightbox.value = false;
+};
+
+const prevLightboxImage = () => {
+  if (lightboxIndex.value > 0) lightboxIndex.value--;
+};
+
+const nextLightboxImage = () => {
+  if (lightboxIndex.value < lightboxImages.value.length - 1) lightboxIndex.value++;
+};
 
 const openMedicalRecordModal = (record: any) => {
   selectedMedicalRecord.value = record;
@@ -2098,6 +2244,37 @@ onMounted(() => {
   max-width: 800px;
 }
 
+.max-w-900 {
+  max-width: 920px;
+}
+
+/* SOAP Modal Sections */
+.soap-section { }
+.soap-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 6px;
+}
+.soap-section-body { }
+
+.soap-chip {
+  display: inline-block;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 8px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: transform 0.15s;
+}
+.soap-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+}
+
 .custom-modal-header {
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid #e2e8f0;
@@ -2761,8 +2938,61 @@ onMounted(() => {
   box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.hover-glow:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08);
+
+/* Lightbox Styles */
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
+
+.lightbox-image {
+  max-width: 90%;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  z-index: 10001;
+  transition: transform 0.2s;
+}
+.lightbox-close:hover { transform: scale(1.1); }
+
+.lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.lightbox-nav:hover { background: rgba(255, 255, 255, 0.4); }
+.lightbox-prev { left: 30px; }
+.lightbox-next { right: 30px; }
 </style>

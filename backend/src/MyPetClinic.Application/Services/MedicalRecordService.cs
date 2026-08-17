@@ -397,15 +397,22 @@ namespace MyPetClinic.Application.Services
                     VisitDate = r.CreatedAt,
                     RecordType = r.RecordType,
                     MedicalHistory = ExtractReadableSoap(r.MedicalHistory, "S"),
+                    RawMedicalHistory = r.MedicalHistory,
                     Diagnosis = ExtractReadableSoap(r.Diagnosis, "A"),
+                    RawDiagnosis = r.Diagnosis,
                     TreatmentPlan = ExtractReadableSoap(r.TreatmentPlan, "P"),
+                    RawTreatmentPlan = r.TreatmentPlan,
                     DoctorName = r.Doctor?.FullName ?? string.Empty,
                     DoctorId = r.DoctorId.ToString(),
                     Weight = r.Weight,
                     Temperature = r.Temperature,
                     ClinicalSigns = ExtractReadableSoap(r.ClinicalSigns, "O"),
+                    RawClinicalSigns = r.ClinicalSigns,
                     DoctorNotes = r.DoctorNotes ?? string.Empty,
                     FollowUpDate = r.FollowUpDate,
+                    Attachments = string.IsNullOrWhiteSpace(r.Attachments) 
+                        ? new List<string>() 
+                        : JsonSerializer.Deserialize<List<string>>(r.Attachments) ?? new List<string>(),
                     PrescribedMedicines = prescribedMedicines
                 });
             }
@@ -460,15 +467,22 @@ namespace MyPetClinic.Application.Services
                 VisitDate = record.CreatedAt,
                 RecordType = record.RecordType,
                 MedicalHistory = ExtractReadableSoap(record.MedicalHistory, "S"),
+                RawMedicalHistory = record.MedicalHistory,
                 Diagnosis = ExtractReadableSoap(record.Diagnosis, "A"),
+                RawDiagnosis = record.Diagnosis,
                 TreatmentPlan = ExtractReadableSoap(record.TreatmentPlan, "P"),
+                RawTreatmentPlan = record.TreatmentPlan,
                 DoctorName = record.Doctor?.FullName ?? string.Empty,
                 DoctorId = record.DoctorId.ToString(),
                 Weight = record.Weight,
                 Temperature = record.Temperature,
                 ClinicalSigns = ExtractReadableSoap(record.ClinicalSigns, "O"),
+                RawClinicalSigns = record.ClinicalSigns,
                 DoctorNotes = record.DoctorNotes ?? string.Empty,
                 FollowUpDate = record.FollowUpDate,
+                Attachments = string.IsNullOrWhiteSpace(record.Attachments) 
+                    ? new List<string>() 
+                    : JsonSerializer.Deserialize<List<string>>(record.Attachments) ?? new List<string>(),
                 PrescribedMedicines = prescribedMedicines
             };
         }
@@ -518,7 +532,10 @@ namespace MyPetClinic.Application.Services
                     TreatmentPlan = JsonSerializer.Serialize(dto.Plan.TreatmentDirections, options),
                     DoctorNotes = dto.Plan.CareInstructions,
                     FollowUpDate = dto.Plan.FollowUpDate,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    Attachments = dto.Objective.Attachments != null && dto.Objective.Attachments.Any() 
+                        ? JsonSerializer.Serialize(dto.Objective.Attachments, options) 
+                        : null
                 };
 
                 await _unitOfWork.MedicalRecords.AddAsync(medicalRecord);

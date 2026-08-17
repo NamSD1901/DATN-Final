@@ -13,5 +13,6 @@ namespace MyPetClinic.Application.DTOs
         public DateTime InjectionDate { get; set; }
         public DateTime? NextDueDate { get; set; }
         public string? ReactionNote { get; set; }
+        public List<string> Attachments { get; set; } = new();
     }
 }
