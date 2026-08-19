@@ -86,53 +86,33 @@ namespace MyPetClinic.Application.Services
                     }
 
 
-                    var targetDateUtc = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc);
-
-                    // Kiểm tra xem khách hàng có lịch hẹn trùng giờ không (cách nhau dưới 30 phút)
-                    var customerSameDayApts = _unitOfWork.Appointments.Query()
-                        .Where(a => a.CustomerId == dto.CustomerId
-                                    && a.Status != "cancelled"
-                                    && a.AppointmentDate == targetDateUtc)
-                        .Select(a => a.StartTime)
-                        .ToList();
-
-                    var isCustomerDoubleBooked = customerSameDayApts.Any(startTime => 
-                        Math.Abs((startTime - appointmentDate.TimeOfDay).TotalMinutes) < 30);
-
-                    if (isCustomerDoubleBooked)
-                    {
-                        string msg = createdBy == dto.CustomerId
-                            ? "Bạn đã có lịch hẹn trong khung giờ này. Vui lòng chọn khung giờ khác."
-                            : "Khách hàng này đã có lịch hẹn trong khung giờ này. Vui lòng chọn khung giờ khác.";
-                        throw new InvalidOperationException(msg);
-                    }
-
-                    // Kiểm tra tổng số lịch hẹn đang active (để chống spam)
-                    // var activeAppointmentsCount = _unitOfWork.Appointments.Query()
-                    //     .Count(a => a.CustomerId == dto.CustomerId
-                    //                 && (a.Status == "pending" || a.Status == "confirmed"));
-
-                    // if (activeAppointmentsCount >= 3)
-                    // {
-                    //     string msg = createdBy == dto.CustomerId
-                    //         ? "Bạn đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi đặt lịch mới."
-                    //         : "Khách hàng này đang có 3 lịch hẹn chờ khám. Vui lòng hoàn tất hoặc hủy bớt lịch cũ trước khi tạo thêm lịch.";
-                    //     throw new InvalidOperationException(msg);
-                    // }
-
                     var finalDoctorId = ResolveAndValidateDoctorId(dto.DoctorId, appointmentDate, dto.ServiceId);
 
-                    // Sinh QR Token duy nhất
+                    // Sinh QR Token (Sử dụng lại QR cũ nếu có lịch hẹn cùng khung giờ)
+                    var targetDateUtc = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc);
+                    var existingAppointment = _unitOfWork.Appointments.Query()
+                        .FirstOrDefault(a => a.CustomerId == dto.CustomerId
+                                          && a.Status != "cancelled"
+                                          && a.AppointmentDate == targetDateUtc
+                                          && a.StartTime == appointmentDate.TimeOfDay);
+
                     string qrToken = string.Empty;
-                    bool isQrUnique = false;
-                    for (int q = 0; q < 5 && !isQrUnique; q++)
+                    if (existingAppointment != null && !string.IsNullOrEmpty(existingAppointment.QrToken))
                     {
-                        qrToken = "QR-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
-                        isQrUnique = !_unitOfWork.Appointments.Query().Any(a => a.QrToken == qrToken);
+                        qrToken = existingAppointment.QrToken; // Group QR
                     }
-                    if (!isQrUnique)
+                    else
                     {
-                        throw new InvalidOperationException("Không thể tạo mã QR duy nhất cho lịch hẹn.");
+                        bool isQrUnique = false;
+                        for (int q = 0; q < 5 && !isQrUnique; q++)
+                        {
+                            qrToken = "QR-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+                            isQrUnique = !_unitOfWork.Appointments.Query().Any(a => a.QrToken == qrToken);
+                        }
+                        if (!isQrUnique)
+                        {
+                            throw new InvalidOperationException("Không thể tạo mã QR duy nhất cho lịch hẹn.");
+                        }
                     }
 
                     var appointment = new Appointment
@@ -782,6 +762,8 @@ namespace MyPetClinic.Application.Services
 
             return result;
         }
+
+
 
         private Guid ResolveAndValidateDoctorId(Guid requestedDoctorId, DateTime appointmentDate, long serviceId)
         {

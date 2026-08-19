@@ -159,23 +159,25 @@
           </div>
           
           <!-- Pagination -->
-          <div v-if="totalPages > 1" class="d-flex justify-content-between align-items-center mt-3">
-            <span class="text-muted small">
+          <div v-if="totalPages > 1" class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mt-3">
+            <span class="text-muted small text-center text-md-start">
               Hiển thị {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, detailData.appointments.length) }} trong số {{ detailData.appointments.length }} ca khám
             </span>
-            <div class="btn-group">
+            <div class="btn-group flex-wrap justify-content-center">
               <button class="btn btn-sm btn-outline-secondary" :disabled="currentPage === 1" @click="prevPage">
                 <i class="bi bi-chevron-left"></i> Trước
               </button>
-              <button 
-                v-for="page in totalPages" 
-                :key="page" 
-                class="btn btn-sm" 
-                :class="page === currentPage ? 'btn-secondary text-white' : 'btn-outline-secondary'"
-                @click="currentPage = page"
-              >
-                {{ page }}
-              </button>
+              <template v-for="(page, index) in visiblePages" :key="index">
+                <button 
+                  v-if="typeof page === 'number'"
+                  class="btn btn-sm" 
+                  :class="page === currentPage ? 'btn-secondary text-white' : 'btn-outline-secondary'"
+                  @click="currentPage = page"
+                >
+                  {{ page }}
+                </button>
+                <button v-else class="btn btn-sm btn-outline-secondary" disabled>...</button>
+              </template>
               <button class="btn btn-sm btn-outline-secondary" :disabled="currentPage === totalPages" @click="nextPage">
                 Sau <i class="bi bi-chevron-right"></i>
               </button>
@@ -214,6 +216,30 @@ const paginatedAppointments = computed(() => {
 const totalPages = computed(() => {
   if (!detailData.value || !detailData.value.appointments) return 0;
   return Math.ceil(detailData.value.appointments.length / itemsPerPage);
+});
+
+const visiblePages = computed(() => {
+  const pages: (number | string)[] = [];
+  const current = currentPage.value;
+  const total = totalPages.value;
+
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (current > 3) pages.push('...');
+    
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    
+    if (current < total - 2) pages.push('...');
+    pages.push(total);
+  }
+  return pages;
 });
 
 const nextPage = () => {

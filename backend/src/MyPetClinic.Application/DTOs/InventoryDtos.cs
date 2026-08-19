@@ -67,7 +67,7 @@ namespace MyPetClinic.Application.DTOs
         public string CategoryName { get; set; } = string.Empty;
         public int MinStockLevel { get; set; }
         public bool IsActive { get; set; }
-        public IEnumerable<MedicineBatchDto> Batches { get; set; } = new List<MedicineBatchDto>();
+        public new IEnumerable<MedicineBatchDto> Batches { get; set; } = new List<MedicineBatchDto>();
     }
 
     public class AuditMedicineDto

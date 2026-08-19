@@ -9,4 +9,5 @@ namespace MyPetClinic.Application.DTOs
         public decimal? CurrentWeight { get; set; }
         public bool IsEmergency { get; set; }
     }
+
 }

@@ -134,6 +134,10 @@ Tài liệu này ghi nhận chi tiết tiến trình thực thi, trạng thái c
         *   Cải tiến API lấy hàng đợi thời gian thực.
         *   Tích hợp bộ máy phát âm thanh giọng nói tiếng Việt (Web Speech API) tự động đọc số thứ tự khi bác sĩ kích hoạt khám ca mới.
         *   Đồng bộ định dạng số thứ tự `Q-XXX` (ví dụ `Q-001`) xuyên suốt các giao diện quản lý.
+        *   Bổ sung API hỗ trợ quét mã QR check-in hàng loạt cho khách hàng tới phòng khám (Bulk Check-in).
+        *   **[MỚI]** Tính năng Bulk Check-in qua mã thẻ thành viên `USER-{Guid}`: Lễ tân quét 1 QR → hiển thị toàn bộ lịch hẹn trong ngày → chọn check-in nhiều bé cùng lúc.
+        *   **[MỚI]** Queue Auto-hide: Tự động ẩn các lịch hẹn `waiting` mà giờ hẹn còn cách hiện tại > 60 phút (trừ Walk-in và Cấp cứu), hiển thị badge thông báo số lịch bị ẩn.
+        *   **[MỚI]** Queue Grouping: Gom nhóm lịch hẹn của cùng 1 khách hàng có cùng khung giờ thành 1 Thẻ duy nhất trên Kanban Board, hỗ trợ gọi nhóm vào phòng khám cùng lúc.
 
 
 ---

@@ -161,7 +161,8 @@ namespace WebApi.Controllers
                     return BadRequest(new { success = false, message = "Mã QR không hợp lệ." });
                 }
 
-                var appt = await _appointmentService.CheckInAsync(new CheckInRequestDto { QrToken = req.QrToken });
+                var apptList = await _appointmentService.CheckInAsync(new CheckInBulkRequestDto { QrToken = req.QrToken, Items = new List<CheckInItemDto>() });
+                var appt = apptList?.FirstOrDefault();
                 if (appt == null)
                 {
                     return NotFound(new { success = false, message = "Không tìm thấy lịch hẹn với mã QR này." });

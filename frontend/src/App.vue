@@ -13,6 +13,7 @@ const showChatbot = computed(() => {
   return !route.path.startsWith('/dashboard') && 
          !route.path.startsWith('/login') && 
          !route.path.startsWith('/register') &&
+         !route.path.startsWith('/activate') &&
          !route.path.startsWith('/qr-checkin');
 });
 </script>

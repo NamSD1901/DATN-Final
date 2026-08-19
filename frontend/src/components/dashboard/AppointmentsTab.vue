@@ -921,49 +921,67 @@
           <div v-if="previewAppointment">
             <!-- Preview Card -->
             <div class="text-center mb-4">
-              <div :class="['rounded-circle d-inline-flex align-items-center justify-content-center mb-3', previewAppointment.hasError ? 'bg-danger bg-opacity-10' : 'bg-success bg-opacity-10']" style="width: 70px; height: 70px;">
-                <i :class="['bi fs-1', previewAppointment.hasError ? 'bi-exclamation-triangle-fill text-danger' : 'bi-check-circle-fill text-success']"></i>
+              <div :class="['rounded-circle d-inline-flex align-items-center justify-content-center mb-3', previewAppointment.hasGlobalError ? 'bg-danger bg-opacity-10' : 'bg-success bg-opacity-10']" style="width: 70px; height: 70px;">
+                <i :class="['bi fs-1', previewAppointment.hasGlobalError ? 'bi-exclamation-triangle-fill text-danger' : 'bi-check-circle-fill text-success']"></i>
               </div>
-              <h5 :class="['fw-bold mb-1', previewAppointment.hasError ? 'text-danger' : 'text-success']">
-                {{ previewAppointment.hasError ? 'Mã Không Hợp Lệ!' : 'Mã Hợp Lệ!' }}
+              <h5 :class="['fw-bold mb-1', previewAppointment.hasGlobalError ? 'text-danger' : 'text-success']">
+                {{ previewAppointment.hasGlobalError ? 'Lỗi Check-in!' : 'Quét Thành Công!' }}
               </h5>
               <p class="text-muted small">
-                {{ previewAppointment.hasError ? 'Không thể check-in lúc này.' : 'Vui lòng xác nhận thông tin trước khi đưa vào hàng đợi' }}
+                {{ previewAppointment.hasGlobalError ? 'Không thể check-in lúc này.' : 'Vui lòng xác nhận danh sách và nhập cân nặng (tùy chọn) trước khi đưa vào hàng đợi.' }}
               </p>
             </div>
 
-            <div v-if="previewAppointment.hasError" class="alert alert-danger border-danger border-opacity-25 rounded-3 mb-4 text-start">
-              <i class="bi bi-info-circle-fill me-2"></i> <strong>Lưu ý:</strong> {{ previewAppointment.errorMessage }}
+            <div v-if="previewAppointment.hasGlobalError" class="alert alert-danger border-danger border-opacity-25 rounded-3 mb-4 text-start">
+              <i class="bi bi-info-circle-fill me-2"></i> <strong>Lưu ý:</strong> {{ previewAppointment.globalErrorMessage }}
             </div>
 
-            <div v-if="previewAppointment.appointmentId !== 0" class="card border-0 bg-light rounded-4 mb-4">
-              <div class="card-body p-3">
-                <div class="d-flex justify-content-between mb-2">
-                  <span class="text-muted small">Thời gian hẹn:</span>
-                  <span class="fw-bold text-dark">{{ previewAppointment.startTime ? previewAppointment.startTime.substring(0, 5) : formatTimeOnly(previewAppointment.appointmentDate) }} - {{ formatDate(previewAppointment.appointmentDate) }}</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span class="text-muted small">Khách hàng:</span>
-                  <span class="fw-bold text-dark">{{ previewAppointment.customerName }}</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span class="text-muted small">Thú cưng:</span>
-                  <span class="fw-bold text-dark">{{ previewAppointment.petName }} <span v-if="previewAppointment.petSpecies">({{ previewAppointment.petSpecies }})</span></span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span class="text-muted small">Bác sĩ:</span>
-                  <span class="fw-bold text-dark">{{ previewAppointment.doctorName || 'Tự động xếp' }}</span>
-                </div>
-                <div class="d-flex justify-content-between">
-                  <span class="text-muted small">Dịch vụ:</span>
-                  <span class="fw-bold text-dark">{{ previewAppointment.serviceName || 'Khám bệnh' }}</span>
+            <div v-if="previewAppointment.appointments && previewAppointment.appointments.length > 0" class="mb-4 text-start">
+              <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                <span class="fw-bold text-dark fs-6"><i class="bi bi-person-badge text-primary me-2"></i>{{ previewAppointment.customerName }}</span>
+                <span class="badge bg-primary rounded-pill">{{ previewAppointment.appointments.length }} Lịch Hẹn</span>
+              </div>
+              
+              <div style="max-height: 350px; overflow-y: auto; overflow-x: hidden;" class="pe-2">
+                <div v-for="appt in previewAppointment.appointments" :key="appt.appointmentId" class="card border border-opacity-25 bg-light rounded-4 mb-3" :class="appt.hasError ? 'border-danger' : 'border-success'">
+                  <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <div class="fw-bold text-dark fs-6">{{ appt.petName }} <span v-if="appt.petSpecies" class="text-muted fw-normal" style="font-size: 0.8rem;">({{ appt.petSpecies }})</span></div>
+                      <span v-if="appt.hasError" class="badge bg-danger rounded-pill"><i class="bi bi-x-circle me-1"></i>Lỗi</span>
+                      <span v-else class="badge bg-success rounded-pill"><i class="bi bi-check-circle me-1"></i>Sẵn sàng</span>
+                    </div>
+
+                    <div v-if="appt.hasError" class="text-danger small mb-2"><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ appt.errorMessage }}</div>
+                    
+                    <div class="d-flex justify-content-between mb-1">
+                      <span class="text-muted small">Khung giờ:</span>
+                      <span class="fw-bold text-dark small">{{ appt.startTime ? appt.startTime.substring(0, 5) : formatTimeOnly(appt.appointmentDate) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                      <span class="text-muted small">Bác sĩ:</span>
+                      <span class="fw-bold text-dark small">{{ appt.doctorName || 'Tự động xếp' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                      <span class="text-muted small">Dịch vụ:</span>
+                      <span class="fw-bold text-dark small text-truncate" style="max-width: 150px;" :title="appt.serviceName">{{ appt.serviceName || 'Khám bệnh' }}</span>
+                    </div>
+
+                    <!-- Input Cân Nặng -->
+                    <div class="mt-2" v-if="!appt.hasError">
+                      <label class="form-label small text-muted mb-1 fw-bold">Cân nặng hiện tại (kg)</label>
+                      <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0 text-success"><i class="bi bi-speedometer2"></i></span>
+                        <input type="number" v-model="appt.currentWeight" class="form-control border-start-0" placeholder="0.0" step="0.1" min="0">
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div class="d-flex gap-2">
               <button class="btn btn-light w-50 rounded-pill py-2.5 fw-bold" @click="cancelPreview">Hủy quét</button>
-              <button v-if="!previewAppointment.hasError" class="btn btn-success w-50 rounded-pill py-2.5 fw-bold shadow-sm" @click="confirmCheckIn">Vào Hàng Đợi <i class="bi bi-arrow-right ms-1"></i></button>
+              <button v-if="!previewAppointment.hasGlobalError" class="btn btn-success w-50 rounded-pill py-2.5 fw-bold shadow-sm" @click="confirmCheckIn">Check-in Tất Cả <i class="bi bi-arrow-right ms-1"></i></button>
               <button v-else class="btn btn-danger w-50 rounded-pill py-2.5 fw-bold shadow-sm" @click="closeQrModal">Đóng</button>
             </div>
           </div>

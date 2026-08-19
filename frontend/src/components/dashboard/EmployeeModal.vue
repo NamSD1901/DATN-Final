@@ -87,6 +87,7 @@
 import { ref, watch, computed } from 'vue';
 import type { CreateEmployeeRequest, UpdateEmployeeRequest, EmployeeDto } from '../../services/employee.service';
 import { useEmployeeStore } from '../../stores/employee.store';
+import Swal from 'sweetalert2';
 
 const props = defineProps<{
   show: boolean;
@@ -154,7 +155,16 @@ const handleSubmit = async () => {
         isResigned: form.value.isResigned
       };
       await employeeStore.updateEmployee(props.editData.id, updateData);
-      alert('Cập nhật nhân viên thành công!');
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Cập nhật nhân viên thành công!',
+        showConfirmButton: false,
+        timer: 2500,
+        timerProgressBar: true,
+        customClass: { popup: 'rounded-4' }
+      });
     } else {
       const createData: CreateEmployeeRequest = {
         email: form.value.email,
@@ -167,11 +177,23 @@ const handleSubmit = async () => {
         address: form.value.address
       };
       const res = await employeeStore.createEmployee(createData);
-      alert(res.message);
+      Swal.fire({
+        icon: 'success',
+        title: 'Thành công!',
+        text: res.message || 'Đã thêm nhân viên và gửi email kích hoạt.',
+        confirmButtonColor: '#f59e0b',
+        customClass: { popup: 'rounded-4' }
+      });
     }
     emit('success');
   } catch (error: any) {
-    alert(errorStoreMessage());
+    Swal.fire({
+      icon: 'error',
+      title: 'Lỗi',
+      text: errorStoreMessage(),
+      confirmButtonColor: '#ef4444',
+      customClass: { popup: 'rounded-4' }
+    });
   } finally {
     loading.value = false;
   }

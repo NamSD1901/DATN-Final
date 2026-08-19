@@ -43,39 +43,55 @@
             </div>
             
             <div 
-              v-for="card in filteredWaiting" 
-              :key="card.appointmentId"
-              class="card kanban-card shadow-sm p-3 mb-3 border-0 rounded-4 bg-white"
-              :class="getSlaClass(card)"
+              v-for="(group, gIdx) in groupedWaiting" 
+              :key="'waiting-' + gIdx"
+              class="card shadow-sm mb-2 border-0 rounded-4 overflow-hidden kanban-group-card"
             >
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h6 class="fw-bold text-dark mb-0">
-                  {{ getAnimalEmoji(card.species) }} {{ card.petName }}
-                  <span v-if="card.isEmergency" class="badge bg-danger ms-1 text-white small" style="font-size: 0.65rem;">
-                    <i class="bi bi-exclamation-triangle-fill"></i> CẤP CỨU
-                  </span>
-                </h6>
-                <span class="badge bg-light text-secondary border rounded-pill">{{ formatQueueNumber(card.queueNumber) }}</span>
+              <div class="bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                <div class="fw-bold text-dark d-flex align-items-center" style="font-size: 0.9rem;">
+                   <i class="bi bi-person-circle text-primary me-2"></i>
+                   {{ group.customerName }}
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span v-if="group.isEmergency" class="badge bg-danger text-white rounded-pill" style="font-size: 0.65rem;">CẤP CỨU</span>
+                  <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill" style="font-size: 0.75rem;">{{ group.items.length }} ca</span>
+                </div>
               </div>
-              <div class="text-muted small mb-2"><i class="bi bi-person-circle text-warning me-1"></i>Chủ nuôi: {{ card.customerName || 'Khách vãng lai' }}</div>
-              <div v-if="card.symptom" class="bg-light p-2 rounded text-muted small mb-2">{{ card.symptom }}</div>
-              
-              <!-- SLA Timer Indicator -->
-              <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                <span class="small fw-bold" :class="getSlaTextClass(card)">
-                  <i class="bi bi-clock me-1"></i>{{ getWaitingTimeText(card) }}
-                </span>
-                <span class="small text-muted">Bs. {{ getLastWord(card.doctorName) }}</span>
-              </div>
+              <div class="p-2 bg-white">
+                <div 
+                  v-for="(card, idx) in group.items" 
+                  :key="card.appointmentId"
+                  class="position-relative rounded-3 p-2 mb-2"
+                  :class="{'border-danger bg-danger bg-opacity-10': card.isEmergency, 'bg-light': !card.isEmergency}"
+                  style="border: 1px solid rgba(0,0,0,0.05);"
+                >
+                  <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div class="fw-bold text-dark" style="font-size: 0.85rem;">
+                      {{ getAnimalEmoji(card.species) }} {{ card.petName }}
+                    </div>
+                    <span class="badge bg-white text-secondary border rounded-pill" style="font-size: 0.7rem;">{{ formatQueueNumber(card.queueNumber) }}</span>
+                  </div>
+                  
+                  <div v-if="card.symptom" class="text-muted text-truncate w-100 mb-1" style="font-size: 0.75rem;" :title="card.symptom">
+                    <i class="bi bi-info-circle me-1"></i>{{ card.symptom }}
+                  </div>
+                  
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold" :class="getSlaTextClass(card)" style="font-size: 0.75rem;">
+                      <i class="bi bi-clock me-1"></i>{{ getWaitingTimeText(card) }}
+                    </span>
+                    <span class="text-muted" style="font-size: 0.75rem;">Bs. {{ getLastWord(card.doctorName) }}</span>
+                  </div>
 
-              <!-- Quick Actions -->
-              <div class="d-flex gap-2 mt-3 pt-2 border-top">
-                <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger w-100 rounded-pill py-1 fw-bold" @click="openLinkCustomerModal(card)">
-                  <i class="bi bi-link-45deg"></i> Ghép Hồ Sơ
-                </button>
-                <button class="btn btn-sm btn-warning w-100 rounded-pill py-1 fw-bold text-dark shadow-sm" @click.stop="updateStatus(card.appointmentId, 'in_progress')">
-                  <i class="bi bi-megaphone-fill me-1"></i> Gọi vào phòng khám
-                </button>
+                  <div class="d-flex gap-2">
+                    <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger flex-grow-1 rounded-pill py-1 fw-bold" style="font-size: 0.75rem;" @click="openLinkCustomerModal(card)">
+                      <i class="bi bi-link-45deg"></i> Ghép
+                    </button>
+                    <button class="btn btn-sm btn-warning flex-grow-1 rounded-pill py-1 fw-bold text-dark shadow-sm" style="font-size: 0.75rem;" @click.stop="updateStatus(card.appointmentId, 'in_progress')">
+                      <i class="bi bi-megaphone-fill me-1"></i> Gọi khám
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -99,37 +115,52 @@
             </div>
             
             <div 
-              v-for="card in filteredInProgress" 
-              :key="card.appointmentId"
-              class="card kanban-card shadow-sm p-3 mb-3 border-0 rounded-4 bg-white"
+              v-for="(group, gIdx) in groupedInProgress" 
+              :key="'progress-' + gIdx"
+              class="card shadow-sm mb-2 border-0 rounded-4 overflow-hidden kanban-group-card"
             >
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h6 class="fw-bold text-dark mb-0">
-                  {{ getAnimalEmoji(card.species) }} {{ card.petName }}
-                  <span v-if="card.isEmergency" class="badge bg-danger ms-1 text-white small" style="font-size: 0.65rem;">
-                    <i class="bi bi-exclamation-triangle-fill"></i> CẤP CỨU
-                  </span>
-                </h6>
-                <span class="badge bg-light text-secondary border rounded-pill">{{ formatQueueNumber(card.queueNumber) }}</span>
+              <div class="bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                <div class="fw-bold text-dark d-flex align-items-center" style="font-size: 0.9rem;">
+                   <i class="bi bi-person-circle text-warning me-2"></i>
+                   {{ group.customerName }}
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span v-if="group.isEmergency" class="badge bg-danger text-white rounded-pill" style="font-size: 0.65rem;">CẤP CỨU</span>
+                  <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill" style="font-size: 0.75rem;">{{ group.items.length }} ca</span>
+                </div>
               </div>
-              <div class="text-muted small mb-2"><i class="bi bi-person-circle text-warning me-1"></i>Chủ nuôi: {{ card.customerName || 'Khách vãng lai' }}</div>
-              <div v-if="card.symptom" class="bg-light p-2 rounded text-muted small mb-2">{{ card.symptom }}</div>
-              
-              <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                <span class="small text-muted"><i class="bi bi-clock me-1"></i>Đang trong phòng khám</span>
-                <span class="small fw-bold text-warning">Bs. {{ getLastWord(card.doctorName) }}</span>
-              </div>
+              <div class="p-2 bg-white">
+                <div 
+                  v-for="(card, idx) in group.items" 
+                  :key="card.appointmentId"
+                  class="position-relative rounded-3 p-2 mb-2"
+                  :class="{'border-danger bg-danger bg-opacity-10': card.isEmergency, 'bg-light': !card.isEmergency}"
+                  style="border: 1px solid rgba(0,0,0,0.05);"
+                >
+                  <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div class="fw-bold text-dark" style="font-size: 0.85rem;">
+                      {{ getAnimalEmoji(card.species) }} {{ card.petName }}
+                    </div>
+                    <span class="badge bg-white text-secondary border rounded-pill" style="font-size: 0.7rem;">{{ formatQueueNumber(card.queueNumber) }}</span>
+                  </div>
+                  
+                  <div v-if="card.symptom" class="text-muted text-truncate w-100 mb-1" style="font-size: 0.75rem;" :title="card.symptom">
+                    <i class="bi bi-info-circle me-1"></i>{{ card.symptom }}
+                  </div>
+                  
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted" style="font-size: 0.75rem;"><i class="bi bi-activity me-1 text-warning"></i>Đang khám</span>
+                    <span class="text-muted fw-bold" style="font-size: 0.75rem;">Bs. {{ getLastWord(card.doctorName) }}</span>
+                  </div>
 
-              <!-- Auto-transition notice & Manual Demo Action -->
-              <div class="d-flex flex-column gap-2 mt-3 pt-2 border-top">
-                <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger w-100 rounded-pill py-1 fw-bold" @click="openLinkCustomerModal(card)">
-                  <i class="bi bi-link-45deg"></i> Ghép Hồ Sơ
-                </button>
-                <button class="btn btn-sm btn-success w-100 rounded-pill py-1 fw-bold text-white shadow-sm" @click.stop="updateStatus(card.appointmentId, 'ready_to_pay')">
-                  <i class="bi bi-check-circle me-1"></i> Chuyển Thu Ngân
-                </button>
-                <div class="text-center text-muted" style="font-size: 0.65rem;">
-                  (Hoặc tự động chuyển khi BS khám xong)
+                  <div class="d-flex gap-2">
+                    <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger flex-grow-1 rounded-pill py-1 fw-bold" style="font-size: 0.75rem;" @click="openLinkCustomerModal(card)">
+                      <i class="bi bi-link-45deg"></i> Ghép
+                    </button>
+                    <button class="btn btn-sm btn-success flex-grow-1 rounded-pill py-1 fw-bold text-white shadow-sm" style="font-size: 0.75rem;" @click.stop="updateStatus(card.appointmentId, 'ready_to_pay')">
+                      <i class="bi bi-check-circle me-1"></i> Xong
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -154,35 +185,53 @@
             </div>
             
             <div 
-              v-for="card in filteredReadyToPay" 
-              :key="card.appointmentId"
-              class="card kanban-card shadow-sm p-3 mb-3 border-0 rounded-4 bg-white border-top-success"
+              v-for="(group, gIdx) in groupedReadyToPay" 
+              :key="'ready-' + gIdx"
+              class="card shadow-sm mb-2 border-0 rounded-4 overflow-hidden kanban-group-card"
             >
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h6 class="fw-bold text-dark mb-0">
-                  {{ getAnimalEmoji(card.species) }} {{ card.petName }}
-                  <span v-if="card.isEmergency" class="badge bg-danger ms-1 text-white small" style="font-size: 0.65rem;">
-                    <i class="bi bi-exclamation-triangle-fill"></i> CẤP CỨU
-                  </span>
-                </h6>
-                <span class="badge bg-light text-secondary border rounded-pill">{{ formatQueueNumber(card.queueNumber) }}</span>
+              <div class="bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                <div class="fw-bold text-dark d-flex align-items-center" style="font-size: 0.9rem;">
+                   <i class="bi bi-person-circle text-success me-2"></i>
+                   {{ group.customerName }}
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span v-if="group.isEmergency" class="badge bg-danger text-white rounded-pill" style="font-size: 0.65rem;">CẤP CỨU</span>
+                  <span class="badge bg-success bg-opacity-10 text-success rounded-pill" style="font-size: 0.75rem;">{{ group.items.length }} ca</span>
+                </div>
               </div>
-              <div class="text-muted small mb-2"><i class="bi bi-person-circle text-warning me-1"></i>Chủ nuôi: {{ card.customerName || 'Khách vãng lai' }}</div>
-              <div v-if="card.symptom" class="bg-light p-2 rounded text-muted small mb-2">{{ card.symptom }}</div>
-              
-              <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                <span class="small text-success fw-bold"><i class="bi bi-currency-dollar me-1"></i>Chờ thu ngân</span>
-                <span class="small text-muted">Bs. {{ getLastWord(card.doctorName) }}</span>
-              </div>
+              <div class="p-2 bg-white">
+                <div 
+                  v-for="(card, idx) in group.items" 
+                  :key="card.appointmentId"
+                  class="position-relative rounded-3 p-2 mb-2"
+                  :class="{'border-danger bg-danger bg-opacity-10': card.isEmergency, 'bg-light': !card.isEmergency}"
+                  style="border: 1px solid rgba(0,0,0,0.05);"
+                >
+                  <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div class="fw-bold text-dark" style="font-size: 0.85rem;">
+                      {{ getAnimalEmoji(card.species) }} {{ card.petName }}
+                    </div>
+                    <span class="badge bg-white text-secondary border rounded-pill" style="font-size: 0.7rem;">{{ formatQueueNumber(card.queueNumber) }}</span>
+                  </div>
+                  
+                  <div v-if="card.symptom" class="text-muted text-truncate w-100 mb-1" style="font-size: 0.75rem;" :title="card.symptom">
+                    <i class="bi bi-info-circle me-1"></i>{{ card.symptom }}
+                  </div>
+                  
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-success fw-bold" style="font-size: 0.75rem;"><i class="bi bi-currency-dollar me-1"></i>Chờ thu ngân</span>
+                    <span class="text-muted" style="font-size: 0.75rem;">Bs. {{ getLastWord(card.doctorName) }}</span>
+                  </div>
 
-              <!-- Quick Actions -->
-              <div class="d-flex gap-2 mt-3 pt-2 border-top">
-                <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger w-100 rounded-pill py-1 fw-bold" @click="openLinkCustomerModal(card)">
-                  <i class="bi bi-link-45deg"></i> Ghép Hồ Sơ
-                </button>
-                <button class="btn btn-sm btn-premium w-100 rounded-pill py-1 fw-bold" @click="goToInvoiceTab(card.appointmentId)">
-                  <i class="bi bi-cash-stack"></i> Thu Tiền
-                </button>
+                  <div class="d-flex gap-2">
+                    <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger flex-grow-1 rounded-pill py-1 fw-bold" style="font-size: 0.75rem;" @click="openLinkCustomerModal(card)">
+                      <i class="bi bi-link-45deg"></i> Ghép
+                    </button>
+                    <button class="btn btn-sm btn-primary flex-grow-1 rounded-pill py-1 fw-bold shadow-sm" style="font-size: 0.75rem;" @click.stop="goToInvoiceTab(card.appointmentId)">
+                      <i class="bi bi-receipt me-1"></i> Thanh toán
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -328,49 +377,67 @@
           <div v-if="previewAppointment">
             <!-- Preview Card -->
             <div class="text-center mb-4">
-              <div :class="['rounded-circle d-inline-flex align-items-center justify-content-center mb-3', previewAppointment.hasError ? 'bg-danger bg-opacity-10' : 'bg-success bg-opacity-10']" style="width: 70px; height: 70px;">
-                <i :class="['bi fs-1', previewAppointment.hasError ? 'bi-exclamation-triangle-fill text-danger' : 'bi-check-circle-fill text-success']"></i>
+              <div :class="['rounded-circle d-inline-flex align-items-center justify-content-center mb-3', previewAppointment.hasGlobalError ? 'bg-danger bg-opacity-10' : 'bg-success bg-opacity-10']" style="width: 70px; height: 70px;">
+                <i :class="['bi fs-1', previewAppointment.hasGlobalError ? 'bi-exclamation-triangle-fill text-danger' : 'bi-check-circle-fill text-success']"></i>
               </div>
-              <h5 :class="['fw-bold mb-1', previewAppointment.hasError ? 'text-danger' : 'text-success']">
-                {{ previewAppointment.hasError ? 'Mã Không Hợp Lệ!' : 'Mã Hợp Lệ!' }}
+              <h5 :class="['fw-bold mb-1', previewAppointment.hasGlobalError ? 'text-danger' : 'text-success']">
+                {{ previewAppointment.hasGlobalError ? 'Lỗi Check-in!' : 'Quét Thành Công!' }}
               </h5>
               <p class="text-muted small">
-                {{ previewAppointment.hasError ? 'Không thể check-in lúc này.' : 'Vui lòng xác nhận thông tin trước khi đưa vào hàng đợi' }}
+                {{ previewAppointment.hasGlobalError ? 'Không thể check-in lúc này.' : 'Vui lòng xác nhận danh sách và nhập cân nặng (tùy chọn) trước khi đưa vào hàng đợi.' }}
               </p>
             </div>
 
-            <div v-if="previewAppointment.hasError" class="alert alert-danger border-danger border-opacity-25 rounded-3 mb-4 text-start">
-              <i class="bi bi-info-circle-fill me-2"></i> <strong>Lưu ý:</strong> {{ previewAppointment.errorMessage }}
+            <div v-if="previewAppointment.hasGlobalError" class="alert alert-danger border-danger border-opacity-25 rounded-3 mb-4 text-start">
+              <i class="bi bi-info-circle-fill me-2"></i> <strong>Lưu ý:</strong> {{ previewAppointment.globalErrorMessage }}
             </div>
 
-            <div v-if="previewAppointment.appointmentId !== 0" class="card border-0 bg-light rounded-4 mb-4">
-              <div class="card-body p-3">
-                <div class="d-flex justify-content-between mb-2">
-                  <span class="text-muted small">Thời gian hẹn:</span>
-                  <span class="fw-bold text-dark">{{ previewAppointment.startTime ? previewAppointment.startTime.substring(0, 5) : formatTimeOnly(previewAppointment.appointmentDate) }} - {{ formatDate(previewAppointment.appointmentDate) }}</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span class="text-muted small">Khách hàng:</span>
-                  <span class="fw-bold text-dark">{{ previewAppointment.customerName }}</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span class="text-muted small">Thú cưng:</span>
-                  <span class="fw-bold text-dark">{{ previewAppointment.petName }} <span v-if="previewAppointment.petSpecies">({{ previewAppointment.petSpecies }})</span></span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span class="text-muted small">Bác sĩ:</span>
-                  <span class="fw-bold text-dark">{{ previewAppointment.doctorName || 'Tự động xếp' }}</span>
-                </div>
-                <div class="d-flex justify-content-between">
-                  <span class="text-muted small">Dịch vụ:</span>
-                  <span class="fw-bold text-dark">{{ previewAppointment.serviceName || 'Khám bệnh' }}</span>
+            <div v-if="previewAppointment.appointments && previewAppointment.appointments.length > 0" class="mb-4 text-start">
+              <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                <span class="fw-bold text-dark fs-6"><i class="bi bi-person-badge text-primary me-2"></i>{{ previewAppointment.customerName }}</span>
+                <span class="badge bg-primary rounded-pill">{{ previewAppointment.appointments.length }} Lịch Hẹn</span>
+              </div>
+              
+              <div style="max-height: 350px; overflow-y: auto; overflow-x: hidden;" class="pe-2">
+                <div v-for="appt in previewAppointment.appointments" :key="appt.appointmentId" class="card border border-opacity-25 bg-light rounded-4 mb-3" :class="appt.hasError ? 'border-danger' : 'border-success'">
+                  <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <div class="fw-bold text-dark fs-6">{{ appt.petName }} <span v-if="appt.petSpecies" class="text-muted fw-normal" style="font-size: 0.8rem;">({{ appt.petSpecies }})</span></div>
+                      <span v-if="appt.hasError" class="badge bg-danger rounded-pill"><i class="bi bi-x-circle me-1"></i>Lỗi</span>
+                      <span v-else class="badge bg-success rounded-pill"><i class="bi bi-check-circle me-1"></i>Sẵn sàng</span>
+                    </div>
+
+                    <div v-if="appt.hasError" class="text-danger small mb-2"><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ appt.errorMessage }}</div>
+                    
+                    <div class="d-flex justify-content-between mb-1">
+                      <span class="text-muted small">Khung giờ:</span>
+                      <span class="fw-bold text-dark small">{{ appt.startTime ? appt.startTime.substring(0, 5) : formatTimeOnly(appt.appointmentDate) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                      <span class="text-muted small">Bác sĩ:</span>
+                      <span class="fw-bold text-dark small">{{ appt.doctorName || 'Tự động xếp' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                      <span class="text-muted small">Dịch vụ:</span>
+                      <span class="fw-bold text-dark small text-truncate" style="max-width: 150px;" :title="appt.serviceName">{{ appt.serviceName || 'Khám bệnh' }}</span>
+                    </div>
+
+                    <!-- Input Cân Nặng -->
+                    <div class="mt-2" v-if="!appt.hasError">
+                      <label class="form-label small text-muted mb-1 fw-bold">Cân nặng hiện tại (kg)</label>
+                      <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0 text-success"><i class="bi bi-speedometer2"></i></span>
+                        <input type="number" v-model="appt.currentWeight" class="form-control border-start-0" placeholder="0.0" step="0.1" min="0">
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div class="d-flex gap-2">
               <button class="btn btn-light w-50 rounded-pill py-2.5 fw-bold" @click="cancelPreview">Hủy quét</button>
-              <button v-if="!previewAppointment.hasError" class="btn btn-success w-50 rounded-pill py-2.5 fw-bold shadow-sm" @click="confirmCheckIn">Vào Hàng Đợi <i class="bi bi-arrow-right ms-1"></i></button>
+              <button v-if="!previewAppointment.hasGlobalError" class="btn btn-success w-50 rounded-pill py-2.5 fw-bold shadow-sm" @click="confirmCheckIn">Check-in Tất Cả <i class="bi bi-arrow-right ms-1"></i></button>
               <button v-else class="btn btn-danger w-50 rounded-pill py-2.5 fw-bold shadow-sm" @click="closeQrModal">Đóng</button>
             </div>
           </div>
@@ -514,6 +581,31 @@ const filteredInProgress = computed(() => {
 const filteredReadyToPay = computed(() => {
   return filteredQueue.value.filter(item => item.status === 'ready_to_pay');
 });
+
+const groupItemsByCustomer = (items: any[]) => {
+  const groups = new Map();
+  items.forEach(item => {
+    const key = item.customerId && item.customerId !== '00000000-0000-0000-0000-000000000000' 
+                ? item.customerId 
+                : item.appointmentId.toString();
+    if (!groups.has(key)) {
+      groups.set(key, {
+        customerId: item.customerId,
+        customerName: item.customerName || 'Khách vãng lai',
+        isEmergency: false,
+        items: []
+      });
+    }
+    const group = groups.get(key);
+    group.items.push(item);
+    if (item.isEmergency) group.isEmergency = true;
+  });
+  return Array.from(groups.values());
+};
+
+const groupedWaiting = computed(() => groupItemsByCustomer(filteredWaiting.value));
+const groupedInProgress = computed(() => groupItemsByCustomer(filteredInProgress.value));
+const groupedReadyToPay = computed(() => groupItemsByCustomer(filteredReadyToPay.value));
 
 // Timers / Time helper
 const nowRef = ref(new Date());
@@ -923,6 +1015,11 @@ const previewCheckIn = async () => {
     const res = await api.get(`/receptionist/appointment-preview?qrToken=${token}`);
     if (res.data.success) {
       previewAppointment.value = res.data.data;
+      if (previewAppointment.value && previewAppointment.value.appointments) {
+        previewAppointment.value.appointments.forEach((a: any) => {
+          a.currentWeight = a.petWeight; // Initialize input with past weight
+        });
+      }
     } else {
       alert(res.data.message);
       if (isCameraActive.value) startScanner();
@@ -942,9 +1039,22 @@ const cancelPreview = () => {
 const confirmCheckIn = async () => {
   if (!previewAppointment.value) return;
   try {
+    // Collect valid items
+    const validItems = previewAppointment.value.appointments
+      .filter((a: any) => !a.hasError)
+      .map((a: any) => ({
+        appointmentId: a.appointmentId,
+        currentWeight: a.currentWeight || null
+      }));
+
+    if (validItems.length === 0) {
+      alert('Không có thú cưng nào hợp lệ để check-in.');
+      return;
+    }
+
     const res = await api.post('/receptionist/check-in', {
       qrToken: previewAppointment.value.qrToken,
-      isEmergency: false
+      items: validItems
     });
     if (res.data.success) {
       alert(res.data.message);

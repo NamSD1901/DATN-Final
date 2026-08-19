@@ -19,7 +19,7 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<IEnumerable<AppointmentDetailDto>> GetPetAppointmentsAsync(long petId);
         Task<IEnumerable<DoctorAvailableSlotsDto>> GetAvailableSlotsAsync(DateTime date, long? serviceId = null);
         Task<IEnumerable<EligibleDoctorDto>> GetSuitableDoctorsForAppointmentAsync(long appointmentId);
-        Task<AppointmentDetailDto?> CheckInAsync(CheckInRequestDto request);
+        Task<List<AppointmentDetailDto>> CheckInAsync(CheckInBulkRequestDto request);
         Task<IEnumerable<ServiceDto>> GetServicesAsync();
     }
 }

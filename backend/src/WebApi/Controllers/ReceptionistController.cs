@@ -190,13 +190,13 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("check-in")]
-        public async Task<IActionResult> CheckIn([FromBody] CheckInRequestDto request, [FromServices] IReceptionistAppointmentService receptionistAppointmentService)
+        public async Task<IActionResult> CheckIn([FromBody] CheckInBulkRequestDto request, [FromServices] IReceptionistAppointmentService receptionistAppointmentService)
         {
             try
             {
-                var appointment = await receptionistAppointmentService.CheckInAsync(request);
-                if (appointment != null)
-                    return Ok(new { success = true, message = "Check-in thành công. Đã xếp vào hàng đợi." });
+                var appointments = await receptionistAppointmentService.CheckInAsync(request);
+                if (appointments != null && appointments.Any())
+                    return Ok(new { success = true, message = $"Check-in thành công {appointments.Count} ca khám. Đã xếp vào hàng đợi." });
                 return BadRequest(new { success = false, message = "Check-in thất bại. Lỗi không xác định." });
             }
             catch (InvalidOperationException ex)

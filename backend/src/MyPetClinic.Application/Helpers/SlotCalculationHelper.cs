@@ -48,7 +48,7 @@ namespace MyPetClinic.Application.Helpers
         public static List<DateTime> GetAvailableSlots(
             DoctorSchedule schedule,
             IEnumerable<Appointment> existingAppointments,
-            IEnumerable<BlockTime> blockTimes = null,
+            IEnumerable<BlockTime>? blockTimes = null,
             int serviceDurationMinutes = 30)
         {
             if (schedule == null || !schedule.IsAvailable)

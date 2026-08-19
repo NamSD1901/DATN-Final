@@ -166,10 +166,27 @@
                 <span class="vital-label">Nhiệt độ</span>
                 <span class="vital-val">{{ selectedRecord.temperature ? selectedRecord.temperature + ' °C' : '—' }}</span>
               </div>
+              <template v-if="selectedRecord.recordType === 'Vaccination' && selectedVaccinationRecord">
+                <div class="vital-card shadow-sm" v-if="selectedVaccinationRecord.heartRate">
+                  <span class="vital-icon">💓</span>
+                  <span class="vital-label">Nhịp tim</span>
+                  <span class="vital-val">{{ selectedVaccinationRecord.heartRate }} l/p</span>
+                </div>
+                <div class="vital-card shadow-sm" v-if="selectedVaccinationRecord.respiratoryRate">
+                  <span class="vital-icon">😮‍💨</span>
+                  <span class="vital-label">Nhịp thở</span>
+                  <span class="vital-val">{{ selectedVaccinationRecord.respiratoryRate }} l/p</span>
+                </div>
+              </template>
             </div>
 
-            <!-- SOAP Details -->
-            <div class="medical-details-premium mb-4">
+            <div v-if="loadingModal" class="text-center py-5">
+              <div class="spinner-border text-success" role="status"></div>
+              <p class="text-muted mt-2">Đang tải chi tiết tiêm chủng...</p>
+            </div>
+
+            <!-- SOAP Details (Bệnh án thường) -->
+            <div v-if="!loadingModal && selectedRecord.recordType !== 'Vaccination'" class="medical-details-premium mb-4">
               
               <!-- Subjective (S) -->
               <div v-if="selectedRecord.medicalHistory" class="soap-block mb-4">
@@ -237,6 +254,91 @@
                 </div>
               </div>
             </div>
+
+            <!-- SOAP Details (Tiêm chủng) -->
+            <div v-if="!loadingModal && selectedRecord.recordType === 'Vaccination' && selectedVaccinationRecord" class="medical-details-premium mb-4">
+              
+              <!-- Subjective (S) -->
+              <div class="soap-block mb-4">
+                <div class="soap-header text-primary mb-2">
+                  <i class="bi bi-file-earmark-medical-fill me-2"></i>Tiền sử & Lý do khám (S)
+                </div>
+                <div class="soap-body bg-primary bg-opacity-10 border-start border-primary border-4 p-3 rounded-end-3">
+                  <div class="d-flex flex-wrap gap-2">
+                    <div class="soap-badge"><span class="text-muted fw-bold me-1">Lý do:</span><span class="text-dark fw-medium">{{ selectedVaccinationRecord.reasonForVisit || 'Tiêm cơ bản' }}</span></div>
+                    <div class="soap-badge"><span class="text-muted fw-bold me-1">Ăn uống:</span><span class="text-dark fw-medium">{{ selectedVaccinationRecord.eatingStatus || 'Bình thường' }}</span></div>
+                    <div v-if="selectedVaccinationRecord.hasVomitingOrDiarrhea" class="soap-badge bg-danger bg-opacity-10 border-danger"><span class="text-danger fw-bold">Nôn mửa / Tiêu chảy</span></div>
+                    <div v-if="selectedVaccinationRecord.hasCoughOrSneeze" class="soap-badge bg-warning bg-opacity-10 border-warning"><span class="text-warning-emphasis fw-bold">Ho / Hắt hơi</span></div>
+                    <div v-if="selectedVaccinationRecord.isAllergic" class="soap-badge bg-danger bg-opacity-10 border-danger"><span class="text-danger fw-bold me-1">Dị ứng:</span><span class="text-danger">{{ selectedVaccinationRecord.allergyDetails }}</span></div>
+                    <div v-if="selectedVaccinationRecord.previousVaccineHistory" class="soap-badge"><span class="text-muted fw-bold me-1">Tiền sử vắc-xin:</span><span class="text-dark fw-medium">{{ selectedVaccinationRecord.previousVaccineHistory }}</span></div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Objective (O) -->
+              <div class="soap-block mb-4">
+                <div class="soap-header text-info mb-2">
+                  <i class="bi bi-heart-pulse-fill me-2"></i>Khám lâm sàng (O)
+                </div>
+                <div class="soap-body bg-info bg-opacity-10 border-start border-info border-4 p-3 rounded-end-3">
+                  <div class="d-flex flex-wrap gap-2">
+                    <div class="soap-badge"><span class="text-muted fw-bold me-1">Tinh thần:</span><span class="text-dark fw-medium">{{ selectedVaccinationRecord.mentalStatus || 'Linh hoạt' }}</span></div>
+                    <div class="soap-badge"><span class="text-muted fw-bold me-1">Niêm mạc:</span><span class="text-dark fw-medium">{{ selectedVaccinationRecord.mucosaStatus || 'Hồng hào' }}</span></div>
+                    <div class="soap-badge" v-if="selectedVaccinationRecord.dehydrationPercent"><span class="text-muted fw-bold me-1">Mất nước:</span><span class="text-dark fw-medium">{{ selectedVaccinationRecord.dehydrationPercent }}%</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Assessment (A) -->
+              <div class="soap-block mb-4">
+                <div class="soap-header text-success mb-2">
+                  <i class="bi bi-shield-check me-2"></i>Đánh giá (A)
+                </div>
+                <div class="soap-body bg-success bg-opacity-10 border-start border-success border-4 p-3 rounded-end-3">
+                  <div class="d-flex flex-wrap gap-2">
+                    <div class="soap-badge" :class="{'bg-success bg-opacity-25 border-success': selectedVaccinationRecord.clinicalAssessment === 'Đủ điều kiện', 'bg-danger bg-opacity-25 border-danger': selectedVaccinationRecord.clinicalAssessment !== 'Đủ điều kiện'}">
+                      <span class="fw-bold me-1" :class="selectedVaccinationRecord.clinicalAssessment === 'Đủ điều kiện' ? 'text-success' : 'text-danger'">Kết luận:</span>
+                      <span class="text-dark fw-bold">{{ selectedVaccinationRecord.clinicalAssessment }}</span>
+                    </div>
+                    <div class="soap-badge" v-if="selectedVaccinationRecord.doctorRemarks"><span class="text-muted fw-bold me-1">Bác sĩ ghi chú:</span><span class="text-dark fw-medium">{{ selectedVaccinationRecord.doctorRemarks }}</span></div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Plan (P) -->
+              <div class="soap-block mb-4" v-if="selectedVaccinationRecord.vaccineName">
+                <div class="soap-header mb-2" style="color: #8b5cf6 !important;">
+                  <i class="bi bi-capsule me-2"></i>Kế hoạch tiêm (P)
+                </div>
+                <div class="soap-body bg-opacity-10 border-start border-4 p-3 rounded-end-3" style="background-color: rgba(139, 92, 246, 0.1); border-color: #8b5cf6 !important;">
+                  <div class="d-flex flex-column gap-2">
+                    <div class="soap-badge fs-6 py-2 px-3" style="border-left: 3px solid #8b5cf6;">
+                      <span class="fw-bold" style="color: #8b5cf6">Vắc-xin:</span> <span class="text-dark fw-bold ms-1">{{ selectedVaccinationRecord.vaccineName }}</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                      <div class="soap-badge"><span class="text-muted fw-bold me-1">Lô:</span><span class="text-dark fw-medium">{{ selectedVaccinationRecord.batchNumber || '—' }}</span></div>
+                      <div class="soap-badge"><span class="text-muted fw-bold me-1">Liều lượng:</span><span class="text-dark fw-medium">{{ selectedVaccinationRecord.dose || 1 }} ml</span></div>
+                      <div class="soap-badge"><span class="text-muted fw-bold me-1">Đường tiêm:</span><span class="text-dark fw-medium">{{ selectedVaccinationRecord.route || 'Dưới da (SC)' }}</span></div>
+                      <div class="soap-badge" v-if="selectedVaccinationRecord.injectionSite"><span class="text-muted fw-bold me-1">Vị trí:</span><span class="text-dark fw-medium">{{ selectedVaccinationRecord.injectionSite }}</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Attachments if any -->
+              <div v-if="selectedVaccinationRecord.attachments && selectedVaccinationRecord.attachments.length > 0" class="soap-block mt-4">
+                <div class="soap-header mb-2" style="color: #6366f1 !important;">
+                  <i class="bi bi-images me-2"></i>Hình ảnh đính kèm
+                </div>
+                <div class="d-flex flex-wrap gap-3 mt-2">
+                  <div v-for="(img, idx) in selectedVaccinationRecord.attachments" :key="idx" class="position-relative">
+                    <img :src="img" class="rounded-4 border shadow-sm" style="width: 120px; height: 120px; object-fit: cover;" alt="Attachment" />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
 
             <!-- Prescribed Medicines -->
             <div v-if="selectedRecord.prescribedMedicines && selectedRecord.prescribedMedicines.length > 0" class="medicine-section mb-4">
@@ -356,6 +458,8 @@ const errorMsg = ref('');
 // Modal state
 const medicalRecordModalRef = ref<HTMLElement | null>(null);
 const selectedRecord = ref<MedicalRecord | null>(null);
+const selectedVaccinationRecord = ref<any>(null);
+const loadingModal = ref(false);
 let modalInstance: Modal | null = null;
 
 const openRecordModal = async (record: MedicalRecord) => {
@@ -364,6 +468,20 @@ const openRecordModal = async (record: MedicalRecord) => {
     return;
   }
   selectedRecord.value = record;
+  selectedVaccinationRecord.value = null;
+
+  if (record.recordType === 'Vaccination') {
+    loadingModal.value = true;
+    try {
+      const res = await api.get(`/vaccinations/appointments/${record.appointmentId}`);
+      selectedVaccinationRecord.value = res.data;
+    } catch (e) {
+      console.error('Failed to fetch vaccination details', e);
+    } finally {
+      loadingModal.value = false;
+    }
+  }
+
   await nextTick();
   if (!modalInstance && medicalRecordModalRef.value) {
     modalInstance = new Modal(medicalRecordModalRef.value, { backdrop: true });

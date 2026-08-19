@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Repositories;
 using MyPetClinic.Application.Interfaces.Services;
@@ -34,79 +35,96 @@ namespace MyPetClinic.Application.Services
             return (startUtc, endUtc);
         }
 
-        public async Task<AppointmentPreviewDto> GetAppointmentPreviewByQrAsync(string qrToken)
+        public async Task<QrGroupPreviewDto> GetAppointmentPreviewByQrAsync(string qrToken)
         {
-            var appointment = await _unitOfWork.Appointments.GetFirstOrDefaultWithIncludesAsync(
-                a => a.QrToken == qrToken,
-                a => a.Pet!,
-                a => a.Pet!.Customer!,
-                a => a.Doctor!,
-                a => a.Service!
-            );
+            var appointments = await _unitOfWork.Appointments.Query()
+                .Include(a => a.Pet).ThenInclude(p => p.Customer)
+                .Include(a => a.Doctor)
+                .Include(a => a.Service)
+                .Where(a => a.QrToken == qrToken)
+                .ToListAsync();
 
-            if (appointment == null)
+            if (!appointments.Any())
             {
-                return new AppointmentPreviewDto
+                return new QrGroupPreviewDto
                 {
-                    AppointmentId = 0,
                     QrToken = qrToken,
                     CustomerName = "Không xác định",
                     CustomerPhone = "",
-                    PetName = "Không xác định",
-                    Status = "invalid",
-                    HasError = true,
-                    ErrorMessage = "Mã QR không hợp lệ hoặc không tồn tại trên hệ thống."
+                    HasGlobalError = true,
+                    GlobalErrorMessage = "Mã QR không hợp lệ hoặc không tồn tại trên hệ thống."
                 };
             }
 
-            bool hasError = false;
-            string? errorMessage = null;
+            var firstAppt = appointments.First();
+            var customerName = firstAppt.Pet?.Customer?.FullName ?? "Khách vãng lai";
+            var customerPhone = firstAppt.Pet?.Customer?.Phone ?? "";
 
-            if (appointment.Status == "cancelled")
+            var dto = new QrGroupPreviewDto
             {
-                hasError = true;
-                errorMessage = "Lịch hẹn này đã bị hủy, không thể Check-in.";
-            }
-            else if (appointment.Status == "completed")
-            {
-                hasError = true;
-                errorMessage = "Lịch hẹn này đã hoàn thành.";
-            }
-            else if (appointment.Status == "waiting" || appointment.Status == "in_progress" || appointment.Status == "ready_to_pay")
-            {
-                hasError = true;
-                errorMessage = "Khách hàng này đã nằm trong hàng đợi rồi.";
-            }
-            else
-            {
-                // Chỉ kiểm tra ngày khám nếu các trạng thái khác hợp lệ
-                var (todayStartUtc, todayEndUtc) = GetVietnamTodayUtcRange();
-                if (appointment.AppointmentDate < todayStartUtc || appointment.AppointmentDate >= todayEndUtc)
-                {
-                    var localApptDate = appointment.AppointmentDate.AddHours(7).Date;
-                    hasError = true;
-                    errorMessage = $"Lịch hẹn này dành cho ngày {localApptDate:dd/MM/yyyy}. Không thể Check-in hôm nay.";
-                }
-            }
-
-            return new AppointmentPreviewDto
-            {
-                AppointmentId = appointment.Id,
-                QrToken = appointment.QrToken!,
-                CustomerName = appointment.Pet?.Customer?.FullName ?? "Khách vãng lai",
-                CustomerPhone = appointment.Pet?.Customer?.Phone ?? "",
-                PetName = appointment.Pet?.Name ?? "Thú cưng",
-                PetSpecies = appointment.Pet?.Species,
-                PetWeight = (double?)appointment.Pet?.Weight,
-                DoctorName = appointment.Doctor?.FullName,
-                ServiceName = appointment.Service?.Name,
-                AppointmentDate = appointment.AppointmentDate,
-                StartTime = appointment.StartTime,
-                Status = appointment.Status,
-                Notes = appointment.Note,
-                HasError = hasError,
-                ErrorMessage = errorMessage
+                QrToken = qrToken,
+                CustomerName = customerName,
+                CustomerPhone = customerPhone,
+                HasGlobalError = false,
+                GlobalErrorMessage = null,
+                Appointments = new List<AppointmentPreviewItemDto>()
             };
+
+            var (todayStartUtc, todayEndUtc) = GetVietnamTodayUtcRange();
+
+            foreach (var a in appointments)
+            {
+                var itemDto = new AppointmentPreviewItemDto
+                {
+                    AppointmentId = a.Id,
+                    PetName = a.Pet?.Name ?? "Thú cưng",
+                    PetSpecies = a.Pet?.Species,
+                    PetWeight = (double?)a.Pet?.Weight,
+                    DoctorName = a.Doctor?.FullName,
+                    ServiceName = a.Service?.Name,
+                    AppointmentDate = a.AppointmentDate,
+                    StartTime = a.StartTime,
+                    Status = a.Status,
+                    Notes = a.Note,
+                    HasError = false,
+                    ErrorMessage = null
+                };
+
+                // 1. Kiểm tra trạng thái
+                if (a.Status == "cancelled")
+                {
+                    itemDto.HasError = true;
+                    itemDto.ErrorMessage = "Lịch hẹn này đã bị hủy.";
+                }
+                else if (a.Status == "completed")
+                {
+                    itemDto.HasError = true;
+                    itemDto.ErrorMessage = "Lịch hẹn này đã hoàn thành.";
+                }
+                else if (a.Status == "waiting" || a.Status == "in_progress" || a.Status == "ready_to_pay")
+                {
+                    itemDto.HasError = true;
+                    itemDto.ErrorMessage = "Đã nằm trong hàng đợi.";
+                }
+                // 2. Kiểm tra ngày giờ
+                else if (a.AppointmentDate < todayStartUtc || a.AppointmentDate >= todayEndUtc)
+                {
+                    var localApptDate = a.AppointmentDate.AddHours(7).Date;
+                    itemDto.HasError = true;
+                    itemDto.ErrorMessage = $"Lịch hẹn cho ngày {localApptDate:dd/MM/yyyy}.";
+                }
+
+                dto.Appointments.Add(itemDto);
+            }
+
+            // Nếu TẤT CẢ đều lỗi, thì set Global Error
+            if (dto.Appointments.All(x => x.HasError))
+            {
+                dto.HasGlobalError = true;
+                dto.GlobalErrorMessage = "Tất cả các lịch hẹn trong nhóm này đều không đủ điều kiện Check-in (sai ngày, đã hủy hoặc đã nằm trong hàng đợi).";
+            }
+
+            return dto;
         }
 
         public async Task<List<QueueItemDto>> GetTodayQueueAsync()
