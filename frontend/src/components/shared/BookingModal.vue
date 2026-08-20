@@ -413,7 +413,11 @@ import {
 import api from '../../services/api';
 import OfferSelectorModal from './OfferSelectorModal.vue';
 
-const props = defineProps<{ show: boolean }>();
+const props = defineProps<{ 
+  show: boolean;
+  initialPetId?: string | number;
+  initialServiceName?: string;
+}>();
 const emit = defineEmits(['close', 'success', 'error']);
 
 // Wizard State
@@ -706,9 +710,31 @@ onMounted(() => {
   selectDate(dateStr);
 });
 
-watch(() => props.show, (newVal) => {
-  if (newVal && pets.value.length === 0) {
-    fetchPets();
+watch(() => props.show, async (newVal) => {
+  if (newVal) {
+    if (pets.value.length === 0) {
+      await fetchPets();
+    }
+    if (predefinedServices.value.length === 0) {
+      await fetchServices();
+    }
+    
+    // Auto-select pet and service if provided
+    if (props.initialPetId && pets.value.length > 0) {
+      const p = pets.value.find(x => String(x.id) === String(props.initialPetId));
+      if (p) {
+        selectedPet.value = p;
+        step.value = 2;
+
+        if (props.initialServiceName && predefinedServices.value.length > 0) {
+          const s = predefinedServices.value.find(x => x.name.toLowerCase().includes(props.initialServiceName!.toLowerCase()));
+          if (s) {
+            selectedService.value = s;
+            step.value = 3;
+          }
+        }
+      }
+    }
   }
 });
 </script>

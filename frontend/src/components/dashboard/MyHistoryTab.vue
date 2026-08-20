@@ -195,7 +195,7 @@
                 </div>
                 <div class="soap-body bg-primary bg-opacity-10 border-start border-primary border-4 p-3 rounded-end-3">
                   <div class="d-flex flex-wrap gap-2">
-                    <div v-for="(item, idx) in parseSoapField(selectedRecord.medicalHistory, '|')" :key="idx"
+                    <div v-for="(item, idx) in parseSoapField(selectedRecord.medicalHistory)" :key="idx"
                          class="soap-badge" v-html="formatSoapItem(item)">
                     </div>
                   </div>
@@ -209,7 +209,7 @@
                 </div>
                 <div class="soap-body bg-success bg-opacity-10 border-start border-success border-4 p-3 rounded-end-3">
                   <div class="d-flex flex-wrap gap-2">
-                    <div v-for="(item, idx) in parseSoapField(selectedRecord.clinicalSigns, ',')" :key="idx"
+                    <div v-for="(item, idx) in parseSoapField(selectedRecord.clinicalSigns)" :key="idx"
                          class="soap-badge" v-html="formatSoapItem(item)">
                     </div>
                   </div>
@@ -223,7 +223,7 @@
                 </div>
                 <div class="soap-body bg-danger bg-opacity-10 border-start border-danger border-4 p-3 rounded-end-3">
                   <div class="d-flex flex-column gap-2">
-                    <div v-for="(item, idx) in parseSoapField(selectedRecord.diagnosis || 'Chưa có chẩn đoán', '|')" :key="idx"
+                    <div v-for="(item, idx) in parseSoapField(selectedRecord.diagnosis || 'Chưa có chẩn đoán')" :key="idx"
                          class="soap-badge fs-6 py-2 px-3" v-html="formatSoapItem(item)" style="border-left: 3px solid #ef4444;">
                     </div>
                   </div>
@@ -237,9 +237,21 @@
                 </div>
                 <div class="soap-body bg-info bg-opacity-10 border-start border-info border-4 p-3 rounded-end-3">
                   <div class="d-flex flex-wrap gap-2">
-                    <div v-for="(item, idx) in parseSoapField(selectedRecord.treatmentPlan, ',')" :key="idx"
+                    <div v-for="(item, idx) in parseSoapField(selectedRecord.treatmentPlan)" :key="idx"
                          class="soap-badge" v-html="formatSoapItem(item)">
                     </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Attachments if any -->
+              <div v-if="selectedRecord.attachments && selectedRecord.attachments.length > 0" class="soap-block mb-4">
+                <div class="soap-header mb-2" style="color: #6366f1 !important;">
+                  <i class="bi bi-images me-2"></i>Hình ảnh đính kèm (Cận lâm sàng)
+                </div>
+                <div class="d-flex flex-wrap gap-3 mt-2">
+                  <div v-for="(img, idx) in selectedRecord.attachments" :key="idx" class="position-relative">
+                    <img :src="getImageUrl(img)" class="rounded-4 border shadow-sm" style="width: 120px; height: 120px; object-fit: cover; cursor: zoom-in;" alt="Attachment" @click.stop="openLightbox(selectedRecord.attachments.map((u: string) => getImageUrl(u)), idx)" />
                   </div>
                 </div>
               </div>
@@ -332,7 +344,7 @@
                 </div>
                 <div class="d-flex flex-wrap gap-3 mt-2">
                   <div v-for="(img, idx) in selectedVaccinationRecord.attachments" :key="idx" class="position-relative">
-                    <img :src="img" class="rounded-4 border shadow-sm" style="width: 120px; height: 120px; object-fit: cover;" alt="Attachment" />
+                    <img :src="getImageUrl(img)" class="rounded-4 border shadow-sm" style="width: 120px; height: 120px; object-fit: cover; cursor: zoom-in;" alt="Attachment" @click.stop="openLightbox(selectedVaccinationRecord.attachments.map((u: string) => getImageUrl(u)), idx)" />
                   </div>
                 </div>
               </div>
@@ -385,6 +397,30 @@
     </div>
 
   </div>
+
+  <!-- ===== LIGHTBOX MODAL ===== -->
+  <Teleport to="body">
+    <Transition name="lightbox-fade">
+      <div v-if="lightbox.show" class="lightbox-overlay" @click.self="closeLightbox">
+        <button class="btn-close-lightbox" @click="closeLightbox"><i class="bi bi-x-lg"></i></button>
+        
+        <button class="btn-nav-lightbox prev" v-if="lightbox.images.length > 1" @click.stop="prevImage">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        
+        <div class="lightbox-content-wrapper" @click.self="closeLightbox">
+          <img :src="lightbox.images[lightbox.currentIndex]" class="lightbox-image" />
+          <div class="lightbox-counter" v-if="lightbox.images.length > 1">
+            {{ lightbox.currentIndex + 1 }} / {{ lightbox.images.length }}
+          </div>
+        </div>
+
+        <button class="btn-nav-lightbox next" v-if="lightbox.images.length > 1" @click.stop="nextImage">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -446,6 +482,7 @@ interface MedicalRecord {
   invoiceId?: number;
   invoiceStatus?: string;
   invoiceTotalAmount?: number;
+  attachments?: string[];
 }
 
 // ===== State =====
@@ -493,9 +530,74 @@ const closeModal = () => {
   modalInstance?.hide();
 };
 
-const parseSoapField = (text: string | undefined, separator: string = '|') => {
+// ===== Lightbox Logic =====
+const lightbox = ref({
+  show: false,
+  images: [] as string[],
+  currentIndex: 0
+});
+
+const openLightbox = (images: string[], index: number) => {
+  lightbox.value.images = images;
+  lightbox.value.currentIndex = index;
+  lightbox.value.show = true;
+  document.body.style.overflow = 'hidden';
+};
+
+const closeLightbox = () => {
+  lightbox.value.show = false;
+  document.body.style.overflow = '';
+};
+
+const prevImage = () => {
+  if (lightbox.value.currentIndex > 0) {
+    lightbox.value.currentIndex--;
+  } else {
+    lightbox.value.currentIndex = lightbox.value.images.length - 1;
+  }
+};
+
+const nextImage = () => {
+  if (lightbox.value.currentIndex < lightbox.value.images.length - 1) {
+    lightbox.value.currentIndex++;
+  } else {
+    lightbox.value.currentIndex = 0;
+  }
+};
+
+const getImageUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  let baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7284';
+  baseUrl = baseUrl.replace(/\/api$/, '');
+  return `${baseUrl}${url}`;
+};
+
+const parseSoapField = (text: string | undefined) => {
   if (!text) return [];
-  return text.split(separator).map(item => item.trim()).filter(item => item.length > 0);
+  if (text.includes('|')) {
+    return text.split('|').map(item => item.trim()).filter(item => item.length > 0);
+  }
+  
+  if (text.includes(', ') && (text.match(/:/g) || []).length > 1) {
+    const parts = text.split(', ');
+    const result: string[] = [];
+    
+    parts.forEach(part => {
+      if (part.includes(':') && part.split(':')[0].length < 30) {
+        result.push(part.trim());
+      } else {
+        if (result.length > 0) {
+          result[result.length - 1] += ', ' + part.trim();
+        } else {
+          result.push(part.trim());
+        }
+      }
+    });
+    return result.filter(s => s.length > 0);
+  }
+  
+  return [text.trim()];
 };
 
 const formatSoapItem = (item: string) => {
@@ -882,5 +984,102 @@ onMounted(() => {
 .soap-badge:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+/* ===== Lightbox ===== */
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.9);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+}
+.lightbox-content-wrapper {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lightbox-image {
+  max-width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.btn-close-lightbox {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10000;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-close-lightbox:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.1);
+}
+.btn-nav-lightbox {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  font-size: 2rem;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10000;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-nav-lightbox:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+.btn-nav-lightbox.prev {
+  left: 20px;
+}
+.btn-nav-lightbox.next {
+  right: 20px;
+}
+.lightbox-counter {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 1rem;
+  background: rgba(255,255,255,0.2);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+.lightbox-fade-enter-active,
+.lightbox-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.lightbox-fade-enter-from,
+.lightbox-fade-leave-to {
+  opacity: 0;
 }
 </style>

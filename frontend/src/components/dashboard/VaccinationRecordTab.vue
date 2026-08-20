@@ -339,16 +339,46 @@
     <!-- Tab 2: Lịch Sử Tiêm Phòng -->
     <div v-if="internalTab === 'pet-history'" class="flex-grow-1 overflow-auto">
       <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100 border">
-        <h6 class="fw-bold mb-4 pb-3 text-dark border-bottom"><i class="bi bi-shield-check text-success me-2"></i>Lịch sử tiêm chủng của bé</h6>
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom">
+          <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-shield-check text-success me-2"></i>Lịch sử tiêm chủng của bé</h6>
+          
+          <!-- Filters -->
+          <div class="d-flex flex-wrap gap-3 mt-3 mt-sm-0 align-items-center" v-if="vaccinationHistory.length > 0">
+            <!-- Bộ lọc Ngày tiêm -->
+            <div class="position-relative filter-wrapper">
+              <label class="position-absolute text-muted small px-2 bg-white" style="top: -8px; left: 16px; font-size: 0.7rem; z-index: 5; border-radius: 10px;">Lọc theo ngày</label>
+              <div class="input-group shadow-sm rounded-pill overflow-hidden transition-all filter-group" style="width: 220px; height: 42px;">
+                <span class="input-group-text border-0 bg-transparent text-success ps-3 pe-2"><i class="bi bi-calendar2-check-fill"></i></span>
+                <input type="date" v-model="vaccDateFilter" class="form-control border-0 bg-transparent text-dark fw-medium custom-date-input px-1" style="outline: none; box-shadow: none;">
+                <button v-if="vaccDateFilter" class="btn btn-link border-0 text-danger text-decoration-none px-3 d-flex align-items-center justify-content-center" @click="vaccDateFilter = ''" title="Xóa lọc">
+                  <i class="bi bi-x-circle-fill"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Bộ lọc Trạng thái -->
+            <div class="position-relative filter-wrapper">
+              <label class="position-absolute text-muted small px-2 bg-white" style="top: -8px; left: 16px; font-size: 0.7rem; z-index: 5; border-radius: 10px;">Đánh giá</label>
+              <div class="input-group shadow-sm rounded-pill overflow-hidden transition-all filter-group" style="width: 170px; height: 42px;">
+                <span class="input-group-text border-0 bg-transparent text-primary ps-3 pe-2"><i class="bi bi-funnel-fill"></i></span>
+                <select v-model="vaccStatusFilter" class="form-select border-0 bg-transparent text-dark fw-medium custom-select px-1" style="outline: none; box-shadow: none; cursor: pointer;">
+                  <option value="ALL">Tất cả</option>
+                  <option value="Đủ điều kiện">Đủ điều kiện</option>
+                  <option value="Hoãn tiêm">Hoãn tiêm</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
         
         <div v-if="loadingHistory" class="text-center py-5">
           <div class="spinner-border text-success" role="status"></div>
           <p class="text-muted small mt-3">Đang tải lịch sử tiêm...</p>
         </div>
 
-        <div v-else-if="vaccinationHistory.length === 0" class="text-center py-5 text-muted small">
+        <div v-else-if="filteredVaccHistory.length === 0" class="text-center py-5 text-muted small">
           <i class="bi bi-shield-x fs-1 d-block mb-3 text-black-50 opacity-25"></i>
-          Bé chưa có lịch sử tiêm chủng nào trong hệ thống.
+          Không tìm thấy lịch sử tiêm chủng phù hợp.
         </div>
 
         <div v-else class="table-responsive">
@@ -359,12 +389,11 @@
                 <th>Vắc-xin & Lô</th>
                 <th>Bác sĩ</th>
                 <th>Đánh giá</th>
-                <th>Ngày Nhắc Lại</th>
-                <th>Hình ảnh</th>
+                <th class="text-center">Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="record in vaccinationHistory" :key="record.id">
+              <tr v-for="record in paginatedVaccHistory" :key="record.id">
                 <td class="fw-bold text-dark">{{ formatDate(record.injectionDate) }}</td>
                 <td>
                   <span v-if="record.vaccineName" class="badge bg-primary rounded-pill px-3 py-1 mb-1">{{ record.vaccineName }}</span><br>
@@ -374,28 +403,191 @@
                 <td>
                   <span class="badge" :class="record.clinicalAssessment === 'Đủ điều kiện' ? 'bg-success' : 'bg-danger'">{{ record.clinicalAssessment }}</span>
                 </td>
-                <td class="fw-bold text-warning">{{ record.nextDueDate ? formatDate(record.nextDueDate) : '---' }}</td>
-                <td>
-                  <div v-if="record.attachments && record.attachments.length > 0" class="d-flex gap-1 flex-wrap">
-                    <img
-                      v-for="(imgUrl, imgIdx) in record.attachments"
-                      :key="imgIdx"
-                      :src="getImageUrl(imgUrl)"
-                      class="history-thumb"
-                      :alt="`Ảnh ${imgIdx + 1}`"
-                      @click="openVaccLightbox(record.attachments.map((u: string) => getImageUrl(u)), imgIdx)"
-                      title="Bấm để xem ảnh to"
-                    />
-                  </div>
-                  <span v-else class="text-muted small">—</span>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-success bg-gradient bg-opacity-75 rounded-pill px-3 shadow-sm border-0 fw-bold" style="font-size: 0.75rem;" @click="openSoapDetail(record)">
+                    <i class="bi bi-file-earmark-medical-fill me-1"></i> Bệnh án
+                  </button>
                 </td>
               </tr>
             </tbody>
           </table>
+
+          <!-- Pagination UI -->
+          <div class="d-flex justify-content-between align-items-center mt-3" v-if="vaccTotalPages > 1">
+            <span class="small text-muted">Đang xem <strong>{{ (vaccCurrentPage - 1) * vaccPageSize + 1 }}</strong> - <strong>{{ Math.min(vaccCurrentPage * vaccPageSize, filteredVaccHistory.length) }}</strong> trong tổng số <strong>{{ filteredVaccHistory.length }}</strong> kết quả</span>
+            <ul class="pagination pagination-sm mb-0 shadow-sm overflow-hidden">
+              <li class="page-item" :class="{ disabled: vaccCurrentPage === 1 }">
+                <a class="page-link text-success fw-bold" href="#" @click.prevent="vaccCurrentPage--"><i class="bi bi-chevron-left"></i></a>
+              </li>
+              <li class="page-item" v-for="p in vaccTotalPages" :key="p" :class="{ active: p === vaccCurrentPage }">
+                <a class="page-link bg-success border-success text-white fw-bold" v-if="p === vaccCurrentPage" href="#">{{ p }}</a>
+                <a class="page-link text-secondary fw-bold" v-else href="#" @click.prevent="vaccCurrentPage = p">{{ p }}</a>
+              </li>
+              <li class="page-item" :class="{ disabled: vaccCurrentPage === vaccTotalPages }">
+                <a class="page-link text-success fw-bold" href="#" @click.prevent="vaccCurrentPage++"><i class="bi bi-chevron-right"></i></a>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- ===== SOAP DETAIL MODAL ===== -->
+  <div v-if="showSoapModal" class="zalo-modal-overlay" style="z-index: 1055;" @click.self="closeSoapModal">
+    <div class="zalo-modal-card modal-lg max-w-700 bg-light border-0 shadow-lg" style="animation: fadeUp 0.3s ease-out; margin-top: 5vh; margin-bottom: 5vh; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="zalo-modal-header bg-white border-bottom border-success border-opacity-25 p-4 flex-shrink-0 d-flex justify-content-between align-items-center" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+        <h5 class="modal-title fw-bold text-success mb-0 d-flex align-items-center">
+          <div class="bg-success bg-opacity-10 p-2 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;"><i class="bi bi-shield-check fs-4"></i></div>
+          Hồ Sơ Bệnh Án Tiêm Chủng (S.O.A.P)
+        </h5>
+        <button class="btn-close shadow-none" @click="closeSoapModal"></button>
+      </div>
+      <div class="zalo-modal-body text-start p-4 bg-light overflow-auto flex-grow-1" v-if="selectedSoapRecord">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 p-3 bg-white rounded-4 shadow-sm border border-light">
+          <div class="d-flex align-items-center gap-3">
+            <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle fs-3"><i class="bi bi-calendar2-check-fill"></i></div>
+            <div>
+              <h6 class="fw-bold text-dark mb-1 fs-5">{{ formatDate(selectedSoapRecord.injectionDate) }}</h6>
+              <div class="small text-muted"><i class="bi bi-person-badge-fill me-1 text-secondary"></i> Bác sĩ: <span class="fw-bold text-dark">Bs. {{ selectedSoapRecord.doctorName }}</span></div>
+            </div>
+          </div>
+          <span class="badge rounded-pill px-4 py-2 fs-6 shadow-sm mt-3 mt-sm-0" :class="selectedSoapRecord.clinicalAssessment === 'Đủ điều kiện' ? 'bg-success bg-opacity-10 text-success border border-success border-opacity-25' : 'bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25'">
+            {{ selectedSoapRecord.clinicalAssessment }}
+          </span>
+        </div>
+
+        <div class="row g-4">
+          <!-- CỘT TRÁI -->
+          <div class="col-md-6 d-flex flex-column gap-4">
+            <!-- S - Subjective -->
+            <div class="p-4 bg-white rounded-4 shadow-sm border border-primary border-opacity-10 h-100 position-relative transition-all hover-lift">
+              <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-primary shadow-sm" style="width: 32px; height: 32px; line-height: 22px; font-size: 1rem;">S</span>
+              <h6 class="fw-bold text-primary mb-3 ms-2 border-bottom border-light pb-2"><i class="bi bi-person-lines-fill me-1"></i> Triệu Chứng Chủ Quan</h6>
+              <ul class="list-unstyled small mb-0 d-flex flex-column gap-3 text-dark mt-3">
+                <li class="d-flex justify-content-between border-bottom border-light pb-2"><strong class="text-secondary fw-semibold">Lý do tiêm:</strong> <span class="text-end fw-medium">{{ selectedSoapRecord.reasonForVisit || '—' }}</span></li>
+                <li class="d-flex justify-content-between border-bottom border-light pb-2"><strong class="text-secondary fw-semibold">Ăn uống:</strong> <span class="text-end fw-medium">{{ selectedSoapRecord.eatingStatus || '—' }}</span></li>
+                <li class="d-flex justify-content-between border-bottom border-light pb-2">
+                  <strong class="text-secondary fw-semibold">Nôn/Tiêu chảy:</strong> 
+                  <span class="text-end fw-bold" :class="selectedSoapRecord.hasVomitingOrDiarrhea ? 'text-danger' : 'text-success'"><i class="bi" :class="selectedSoapRecord.hasVomitingOrDiarrhea ? 'bi-exclamation-circle-fill' : 'bi-check-circle-fill'"></i> {{ selectedSoapRecord.hasVomitingOrDiarrhea ? 'Có' : 'Không' }}</span>
+                </li>
+                <li class="d-flex justify-content-between border-bottom border-light pb-2">
+                  <strong class="text-secondary fw-semibold">Ho/Hắt hơi:</strong> 
+                  <span class="text-end fw-bold" :class="selectedSoapRecord.hasCoughOrSneeze ? 'text-danger' : 'text-success'"><i class="bi" :class="selectedSoapRecord.hasCoughOrSneeze ? 'bi-exclamation-circle-fill' : 'bi-check-circle-fill'"></i> {{ selectedSoapRecord.hasCoughOrSneeze ? 'Có' : 'Không' }}</span>
+                </li>
+                <li class="d-flex justify-content-between align-items-start border-bottom border-light pb-2">
+                  <strong class="text-secondary fw-semibold">Dị ứng:</strong> 
+                  <span v-if="selectedSoapRecord.isAllergic" class="text-end text-danger fw-bold bg-danger bg-opacity-10 px-2 py-1 rounded">{{ selectedSoapRecord.allergyDetails }}</span>
+                  <span v-else class="text-end fw-bold text-success"><i class="bi bi-check-circle-fill"></i> Không</span>
+                </li>
+                <li v-if="selectedSoapRecord.previousVaccineHistory" class="d-flex flex-column bg-light p-2 rounded">
+                  <strong class="text-secondary fw-semibold mb-1">Tiền sử vắc-xin:</strong> 
+                  <span class="fst-italic">{{ selectedSoapRecord.previousVaccineHistory }}</span>
+                </li>
+              </ul>
+            </div>
+            
+            <!-- O - Objective -->
+            <div class="p-4 bg-white rounded-4 shadow-sm border border-info border-opacity-25 h-100 position-relative transition-all hover-lift">
+              <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-info text-white shadow-sm" style="width: 32px; height: 32px; line-height: 22px; font-size: 1rem;">O</span>
+              <h6 class="fw-bold text-info mb-3 ms-2 border-bottom border-light pb-2"><i class="bi bi-heart-pulse-fill me-1"></i> Khám Lâm Sàng</h6>
+              <div class="row g-3 small text-dark mt-1">
+                <div class="col-6 d-flex flex-column"><strong class="text-secondary fw-semibold mb-1">Cân nặng</strong> <span class="fs-6 fw-bold text-dark">{{ selectedSoapRecord.weight }} kg</span></div>
+                <div class="col-6 d-flex flex-column"><strong class="text-secondary fw-semibold mb-1">Nhiệt độ</strong> <span class="fs-6 fw-bold text-dark" :class="selectedSoapRecord.temperature > 39 ? 'text-danger' : ''">{{ selectedSoapRecord.temperature ? selectedSoapRecord.temperature + ' °C' : '—' }}</span></div>
+                <div class="col-6 d-flex flex-column"><strong class="text-secondary fw-semibold mb-1">Nhịp tim</strong> <span class="fs-6 fw-bold text-dark">{{ selectedSoapRecord.heartRate || '—' }} <small class="text-muted">lần/p</small></span></div>
+                <div class="col-6 d-flex flex-column"><strong class="text-secondary fw-semibold mb-1">Nhịp thở</strong> <span class="fs-6 fw-bold text-dark">{{ selectedSoapRecord.respiratoryRate || '—' }} <small class="text-muted">lần/p</small></span></div>
+                
+                <div class="col-12 border-top border-light pt-2 mt-2"></div>
+                
+                <div class="col-6 d-flex flex-column"><strong class="text-secondary fw-semibold mb-1">Tinh thần</strong> <span class="fw-medium badge bg-light text-dark border p-2">{{ selectedSoapRecord.mentalStatus || '—' }}</span></div>
+                <div class="col-6 d-flex flex-column"><strong class="text-secondary fw-semibold mb-1">Niêm mạc</strong> <span class="fw-medium badge bg-light text-dark border p-2">{{ selectedSoapRecord.mucosaStatus || '—' }}</span></div>
+                <div class="col-12 d-flex flex-column" v-if="selectedSoapRecord.dehydrationPercent"><strong class="text-secondary fw-semibold mb-1">Mất nước</strong> <span class="fw-medium badge bg-light text-dark border p-2">{{ selectedSoapRecord.dehydrationPercent }}%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CỘT PHẢI -->
+          <div class="col-md-6 d-flex flex-column gap-4">
+            <!-- A - Assessment -->
+            <div class="p-4 bg-white rounded-4 shadow-sm border border-success border-opacity-25 h-100 position-relative transition-all hover-lift">
+              <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-success shadow-sm" style="width: 32px; height: 32px; line-height: 22px; font-size: 1rem;">A</span>
+              <h6 class="fw-bold text-success mb-3 ms-2 border-bottom border-light pb-2"><i class="bi bi-clipboard-pulse me-1"></i> Đánh Giá & Vắc-xin</h6>
+              <div class="small text-dark d-flex flex-column gap-3 mt-3">
+                <div v-if="selectedSoapRecord.vaccineName" class="bg-success bg-opacity-10 p-3 rounded-4 border border-success border-opacity-25">
+                  <div class="fw-bold text-dark fs-6 text-success mb-2 d-flex align-items-center"><i class="bi bi-syringe fs-4 me-2 text-success"></i> {{ selectedSoapRecord.vaccineName }}</div>
+                  <div class="d-flex justify-content-between border-bottom border-success border-opacity-25 pb-2 mb-2">
+                    <span class="text-secondary fw-semibold">Lô Vắc-xin:</span> <span class="fw-bold">{{ selectedSoapRecord.batchNumber || '—' }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between border-bottom border-success border-opacity-25 pb-2 mb-2">
+                    <span class="text-secondary fw-semibold">Đường tiêm:</span> <span class="fw-medium">{{ selectedSoapRecord.route || '—' }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between" v-if="selectedSoapRecord.injectionSite">
+                    <span class="text-secondary fw-semibold">Vị trí:</span> <span class="fw-medium">{{ selectedSoapRecord.injectionSite }}</span>
+                  </div>
+                </div>
+                <div v-else-if="selectedSoapRecord.clinicalAssessment === 'Hoãn tiêm'" class="bg-danger bg-opacity-10 p-3 rounded-4 border border-danger border-opacity-25">
+                  <div class="fw-bold text-danger mb-1"><i class="bi bi-x-octagon-fill me-1"></i> Lý do hoãn tiêm:</div>
+                  <div class="text-dark fst-italic">{{ selectedSoapRecord.doctorRemarks }}</div>
+                </div>
+                <div v-else class="text-muted fst-italic text-center p-3 border rounded bg-light">
+                  <i class="bi bi-slash-circle me-1"></i> Không ghi nhận tiêm vắc-xin.
+                </div>
+              </div>
+            </div>
+
+            <!-- P - Plan -->
+            <div class="p-4 bg-white rounded-4 shadow-sm border border-warning border-opacity-50 h-100 position-relative transition-all hover-lift">
+              <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-warning text-dark shadow-sm" style="width: 32px; height: 32px; line-height: 22px; font-size: 1rem;">P</span>
+              <h6 class="fw-bold text-warning text-dark mb-3 ms-2 border-bottom border-light pb-2"><i class="bi bi-clipboard-check me-1"></i> Kế Hoạch & Dặn Dò</h6>
+              <div class="small text-dark mt-3">
+                <div class="d-flex align-items-center mb-3 p-3 bg-warning bg-opacity-10 rounded-4 border border-warning border-opacity-25">
+                  <div class="bg-white p-2 rounded-circle me-3 text-warning shadow-sm"><i class="bi bi-calendar-check-fill fs-5"></i></div>
+                  <div>
+                    <div class="text-secondary fw-semibold mb-1">Ngày nhắc lại vắc-xin:</div>
+                    <div class="fw-bold fs-6 text-dark" :class="!selectedSoapRecord.nextDueDate ? 'text-muted' : ''">
+                      {{ selectedSoapRecord.nextDueDate ? formatDate(selectedSoapRecord.nextDueDate) : 'Không có hẹn nhắc lại' }}
+                    </div>
+                  </div>
+                </div>
+                <div class="mb-2">
+                  <strong class="text-secondary fw-semibold d-block mb-2"><i class="bi bi-chat-square-text-fill text-warning me-1"></i> Lời dặn dò bác sĩ:</strong>
+                  <div class="bg-light p-3 rounded-4 text-dark border-start border-4 border-warning border-opacity-50 fst-italic d-flex align-items-start gap-2">
+                    <i class="bi bi-quote text-warning opacity-50 fs-3" style="line-height: 1;"></i>
+                    <span class="pt-1">{{ selectedSoapRecord.followUpInstructions || 'Bác sĩ không có dặn dò thêm.' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CẬN LÂM SÀNG (ATTACHMENTS) -->
+        <div v-if="selectedSoapRecord.attachments && selectedSoapRecord.attachments.length > 0" class="mt-4 p-4 bg-white rounded-4 shadow-sm border border-secondary border-opacity-10 position-relative transition-all hover-lift">
+          <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-secondary shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i class="bi bi-camera-fill"></i></span>
+          <h6 class="fw-bold text-dark mb-3 ms-2 border-bottom border-light pb-2"><i class="bi bi-images me-1"></i> Hình Ảnh Cận Lâm Sàng</h6>
+          <div class="d-flex gap-3 flex-wrap mt-3">
+            <img
+              v-for="(imgUrl, imgIdx) in selectedSoapRecord.attachments"
+              :key="imgIdx"
+              :src="getImageUrl(imgUrl)"
+              class="rounded-3 shadow-sm border border-light"
+              style="width: 120px; height: 120px; object-fit: cover; cursor: zoom-in; transition: transform 0.2s;"
+              onmouseover="this.style.transform='scale(1.05)'"
+              onmouseout="this.style.transform='scale(1)'"
+              @click.stop="openVaccLightbox(selectedSoapRecord.attachments.map((u: string) => getImageUrl(u)), imgIdx)"
+              title="Bấm để xem phóng to"
+              alt="Ảnh cận lâm sàng"
+            />
+          </div>
+        </div>
+
+      </div>
+      <div class="zalo-modal-footer bg-white border-top flex-shrink-0 p-3 d-flex justify-content-end rounded-bottom-4" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+        <button class="btn btn-light text-muted rounded-pill px-5 py-2 fw-bold shadow-sm border" @click="closeSoapModal">Đóng Lại</button>
+      </div>
+    </div>
+  </div>
+  <!-- ===== END SOAP DETAIL MODAL ===== -->
 
   <!-- ===== LIGHTBOX MODAL (VACCINATION) ===== -->
   <Teleport to="body">
@@ -445,7 +637,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import api from '../../services/api';
 
 const emit = defineEmits<{
@@ -501,6 +693,39 @@ const form = ref({
 const availableVaccines = ref<any[]>([]);
 const vaccinationHistory = ref<any[]>([]);
 
+// ===== Pagination & Filters =====
+const vaccDateFilter = ref('');
+const vaccStatusFilter = ref('ALL');
+const vaccCurrentPage = ref(1);
+const vaccPageSize = ref(5);
+
+const filteredVaccHistory = computed(() => {
+  let list = vaccinationHistory.value;
+  if (vaccStatusFilter.value !== 'ALL') {
+    list = list.filter((r: any) => r.clinicalAssessment === vaccStatusFilter.value);
+  }
+  if (vaccDateFilter.value) {
+    const selectedDate = vaccDateFilter.value;
+    list = list.filter((r: any) => {
+      if (!r.injectionDate) return false;
+      const recordDate = new Date(r.injectionDate).toISOString().split('T')[0];
+      return recordDate === selectedDate;
+    });
+  }
+  return list;
+});
+
+const vaccTotalPages = computed(() => Math.max(1, Math.ceil(filteredVaccHistory.value.length / vaccPageSize.value)));
+
+const paginatedVaccHistory = computed(() => {
+  const start = (vaccCurrentPage.value - 1) * vaccPageSize.value;
+  return filteredVaccHistory.value.slice(start, start + vaccPageSize.value);
+});
+
+watch([vaccDateFilter, vaccStatusFilter], () => {
+  vaccCurrentPage.value = 1;
+});
+
 const loadingHistory = ref(false);
 const submitting = ref(false);
 const errorMessage = ref('');
@@ -518,6 +743,20 @@ const vaccLightbox = ref<{ visible: boolean; urls: string[]; index: number }>({
   urls: [],
   index: 0
 });
+
+// ===== SOAP Modal State =====
+const showSoapModal = ref(false);
+const selectedSoapRecord = ref<any>(null);
+
+const openSoapDetail = (record: any) => {
+  selectedSoapRecord.value = record;
+  showSoapModal.value = true;
+};
+
+const closeSoapModal = () => {
+  showSoapModal.value = false;
+  selectedSoapRecord.value = null;
+};
 
 const openVaccLightbox = (urls: string[], index: number) => {
   vaccLightbox.value = { visible: true, urls, index };
@@ -697,7 +936,12 @@ const cancelTreatment = () => {
 const getImageUrl = (url: string) => {
   if (!url) return '';
   if (url.startsWith('http')) return url;
-  return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5062'}${url}`;
+  
+  // Lấy baseUrl từ env, nếu có đuôi /api thì cắt đi để ghép đúng path file tĩnh
+  let baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7284';
+  baseUrl = baseUrl.replace(/\/api$/, '');
+  
+  return `${baseUrl}${url}`;
 };
 
 const formatDate = (dateStr: string | null): string => {
@@ -707,8 +951,36 @@ const formatDate = (dateStr: string | null): string => {
 </script>
 
 <style scoped>
+/* ===== Premium Filters ===== */
+.filter-group {
+  border: 1.5px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+.filter-wrapper:hover .filter-group {
+  border-color: #10b981;
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15) !important;
+}
+.custom-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  padding: 5px;
+}
+.custom-date-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
 .medical-records-tab {
   padding: 0;
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
 }
 
 .bg-glass {

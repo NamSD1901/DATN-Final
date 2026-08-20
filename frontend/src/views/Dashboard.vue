@@ -298,7 +298,11 @@
 
           <!-- tab: Pet Profile (Customer) -->
           <div v-else-if="activeTab === 'pet-profile'" class="container-fluid p-0">
-            <PetProfile :pet-id="viewingPetId || undefined" @go-back="activeTab = 'my-pets'" />
+            <PetProfile 
+              :pet-id="viewingPetId || undefined" 
+              @go-back="activeTab = 'my-pets'" 
+              @book-appointment="handleBookFromProfile"
+            />
           </div>
 
           <!-- tab: My Appointments Tab (Customer) -->
@@ -478,6 +482,21 @@ const handleViewPetProfile = (petId: string | number) => {
   activeTab.value = 'pet-profile';
 };
 
+const handleBookFromProfile = (data: { petId: number, serviceName: string }) => {
+  activeTab.value = 'my-appointments';
+  let attempts = 0;
+  const checkInterval = setInterval(() => {
+    if (myAppointmentsTabRef.value && typeof myAppointmentsTabRef.value.openBookModal === 'function') {
+      myAppointmentsTabRef.value.openBookModal(data.petId, data.serviceName);
+      clearInterval(checkInterval);
+    }
+    attempts++;
+    if (attempts > 20) {
+      clearInterval(checkInterval);
+    }
+  }, 100);
+};
+
 const handleSelectInvoice = (id: number) => {
   selectedInvoiceId.value = id;
 };
@@ -495,16 +514,28 @@ const appointmentsTabRef = ref<any>(null);
 const handleSidebarBookNew = () => {
   if (role.value.toLowerCase() === 'customer') {
     activeTab.value = 'my-appointments';
-    setTimeout(() => {
+    let attempts = 0;
+    const checkInterval = setInterval(() => {
       if (myAppointmentsTabRef.value && typeof myAppointmentsTabRef.value.openBookModal === 'function') {
         myAppointmentsTabRef.value.openBookModal();
+        clearInterval(checkInterval);
+      }
+      attempts++;
+      if (attempts > 20) {
+        clearInterval(checkInterval);
       }
     }, 100);
   } else if (role.value.toLowerCase() === 'receptionist' || role.value.toLowerCase() === 'admin') {
     activeTab.value = 'appointments';
-    setTimeout(() => {
+    let attempts = 0;
+    const checkInterval = setInterval(() => {
       if (appointmentsTabRef.value && typeof appointmentsTabRef.value.openCreateModal === 'function') {
         appointmentsTabRef.value.openCreateModal();
+        clearInterval(checkInterval);
+      }
+      attempts++;
+      if (attempts > 20) {
+        clearInterval(checkInterval);
       }
     }, 100);
   } else {

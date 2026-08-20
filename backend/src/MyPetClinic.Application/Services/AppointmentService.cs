@@ -90,6 +90,20 @@ namespace MyPetClinic.Application.Services
 
                     // Sinh QR Token (Sử dụng lại QR cũ nếu có lịch hẹn cùng khung giờ)
                     var targetDateUtc = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc);
+                    
+                    // Thêm logic chặn đặt trùng lịch cùng 1 dịch vụ cho cùng 1 pet
+                    var isDuplicatePetService = _unitOfWork.Appointments.Query()
+                        .Any(a => a.PetId == dto.PetId
+                               && a.Status != "cancelled"
+                               && a.AppointmentDate == targetDateUtc
+                               && a.StartTime == appointmentDate.TimeOfDay
+                               && a.ServiceId == dto.ServiceId);
+
+                    if (isDuplicatePetService)
+                    {
+                        throw new InvalidOperationException("Thú cưng đã có lịch hẹn cho dịch vụ này vào khung giờ này. Vui lòng chọn giờ khác hoặc dịch vụ khác.");
+                    }
+
                     var existingAppointment = _unitOfWork.Appointments.Query()
                         .FirstOrDefault(a => a.CustomerId == dto.CustomerId
                                           && a.Status != "cancelled"

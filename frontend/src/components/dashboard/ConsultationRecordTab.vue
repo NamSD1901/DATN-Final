@@ -565,188 +565,99 @@
         <!-- History Timeline -->
         <div class="col-lg-8">
           <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100 border">
-            <h6 class="fw-bold mb-4 pb-3 text-dark border-bottom"><i class="bi bi-clock-history text-warning me-2"></i>Lịch sử khám & Điều trị (Timeline)</h6>
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom">
+              <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-history text-warning me-2"></i>Lịch sử khám & Điều trị (Timeline)</h6>
+              
+              <!-- Filters -->
+              <div class="d-flex flex-wrap gap-3 mt-3 mt-sm-0 align-items-center" v-if="medicalHistory.length > 0">
+                <!-- Date Filter -->
+                <div class="position-relative filter-wrapper">
+                  <label class="position-absolute text-muted small px-2 bg-white" style="top: -8px; left: 16px; font-size: 0.7rem; z-index: 5; border-radius: 10px;">Lọc theo ngày</label>
+                  <div class="input-group shadow-sm rounded-pill overflow-hidden transition-all filter-group" style="width: 200px; height: 38px;">
+                    <span class="input-group-text border-0 bg-transparent text-primary ps-3 pe-2"><i class="bi bi-calendar2-check-fill"></i></span>
+                    <input type="date" v-model="historyDateFilter" class="form-control border-0 bg-transparent text-dark fw-medium custom-date-input px-1" style="outline: none; box-shadow: none;">
+                    <button v-if="historyDateFilter" class="btn btn-link border-0 text-danger text-decoration-none px-2 d-flex align-items-center justify-content-center" @click="historyDateFilter = ''" title="Xóa lọc">
+                      <i class="bi bi-x-circle-fill"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Type Filter -->
+                <div class="position-relative filter-wrapper">
+                  <label class="position-absolute text-muted small px-2 bg-white" style="top: -8px; left: 16px; font-size: 0.7rem; z-index: 5; border-radius: 10px;">Loại phiếu</label>
+                  <div class="input-group shadow-sm rounded-pill overflow-hidden transition-all filter-group" style="width: 150px; height: 38px;">
+                    <span class="input-group-text border-0 bg-transparent text-primary ps-3 pe-2"><i class="bi bi-funnel-fill"></i></span>
+                    <select v-model="historyTypeFilter" class="form-select border-0 bg-transparent text-dark fw-medium custom-select px-1" style="outline: none; box-shadow: none; cursor: pointer;">
+                      <option value="ALL">Tất cả</option>
+                      <option value="Consultation">Khám bệnh</option>
+                      <option value="Vaccination">Tiêm phòng</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
             
             <div v-if="loadingHistory" class="text-center py-5">
               <div class="spinner-border text-warning" role="status"></div>
               <p class="text-muted small mt-3">Đang tải bệnh sử từ hệ thống...</p>
             </div>
 
-            <div v-else-if="medicalHistory.length === 0" class="text-center py-5 text-muted small">
-              <i class="bi bi-folder-x fs-1 d-block mb-3 text-black-50 opacity-25"></i>
-              Bé chưa có bất kỳ bệnh án lưu trữ nào trong hệ thống.
+            <div v-else-if="filteredMedicalHistory.length === 0" class="text-center py-5 text-muted small">
+              <i class="bi bi-search fs-1 d-block mb-3 text-black-50 opacity-25"></i>
+              Không tìm thấy hồ sơ nào phù hợp với bộ lọc.
             </div>
 
             <div v-else class="medical-history-timeline pe-2 overflow-auto mt-2" style="max-height: 650px;">
-              <div class="timeline-container accordion" id="doctorHistoryAccordion">
+              <div class="timeline-container">
                 <div v-for="record in paginatedHistory" :key="record.recordId" class="timeline-item position-relative ps-4 pb-4">
                   <!-- Timeline dot -->
                   <div class="timeline-line"></div>
                   <div class="timeline-circle shadow-sm" :class="record.recordType === 'Vaccination' ? 'bg-success border-success' : 'bg-primary border-primary'"></div>
                   
-                  <!-- Timeline content card (Accordion) -->
-                  <div class="timeline-content accordion-item border bg-transparent rounded-4 shadow-sm overflow-hidden">
-                    <h2 class="accordion-header card-header-main" :id="'heading' + record.recordId">
-                      <button 
-                        class="accordion-button shadow-none bg-white py-3 px-4" 
-                        :class="{ 'collapsed': !expandedRecords.includes(record.recordId) }"
-                        type="button" 
-                        @click="toggleRecord(record.recordId)"
-                      >
-                        <div class="d-flex flex-column w-100 pe-3">
-                          <div class="d-flex justify-content-between align-items-center w-100 mb-1">
-                            <span class="visit-date fw-bold text-dark fs-6">
-                              <i class="bi bi-calendar-check text-warning me-2"></i>{{ formatDate(record.visitDate) }}
-                            </span>
-                            <span class="badge rounded-pill px-3 py-1" :class="record.recordType === 'Vaccination' ? 'bg-success bg-opacity-10 text-success border border-success border-opacity-25' : 'bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25'">
-                              {{ record.recordType === 'Vaccination' ? 'Tiêm phòng' : 'Khám bệnh' }}
-                            </span>
-                          </div>
-                          <div class="d-flex justify-content-between align-items-center w-100 mt-2">
-                            <span class="doctor-badge mb-0 text-muted small">
-                              <i class="bi bi-person-badge me-1"></i>BS: <span class="fw-semibold text-dark">{{ record.doctorName || 'Chưa rõ' }}</span>
-                            </span>
-                            <span v-if="record.diagnosis" class="text-truncate text-muted small ms-2" style="max-width: 200px;">
-                              {{ getShortDiagnosis(record.diagnosis) }}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    </h2>
-
-                    <div 
-                      :id="'collapse' + record.recordId" 
-                      class="accordion-collapse collapse" 
-                      :class="{ 'show': expandedRecords.includes(record.recordId) }"
-                    >
-                      <div class="accordion-body card-body-main bg-light border-top border-light rounded-bottom-4 p-4">
-                        
-                        <!-- Vitals -->
-                        <div v-if="record.weight || record.temperature" class="row g-2 mb-4">
-                          <div v-if="record.weight" class="col-auto">
-                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill">
-                              <i class="bi bi-clipboard2-pulse me-1"></i>Cân nặng: <strong>{{ record.weight }} kg</strong>
-                            </span>
-                          </div>
-                          <div v-if="record.temperature" class="col-auto">
-                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill">
-                              <i class="bi bi-thermometer-half me-1"></i>Nhiệt độ: <strong>{{ record.temperature }} °C</strong>
-                            </span>
-                          </div>
-                        </div>
-
-                        <div class="row g-3 small">
-                          <!-- Medical History (Subjective) -->
-                          <div class="col-12">
-                            <div class="p-3 bg-white rounded-3 border border-dashed">
-                              <div class="text-muted mb-2 fw-bold"><i class="bi bi-person-lines-fill text-secondary me-1"></i>Bệnh sử & Lý do khám (S):</div>
-                              <div v-if="safeParseJSON(record.medicalHistory)" class="mt-2">
-                                <div class="row g-2 text-dark">
-                                  <div class="col-12" v-if="safeParseJSON(record.medicalHistory).chiefComplaint"><span class="text-muted fw-semibold">Lý do khám:</span> {{safeParseJSON(record.medicalHistory).chiefComplaint}}</div>
-                                  <div class="col-6" v-if="safeParseJSON(record.medicalHistory).appetite"><span class="text-muted">Ăn uống:</span> {{safeParseJSON(record.medicalHistory).appetite}}</div>
-                                  <div class="col-6" v-if="safeParseJSON(record.medicalHistory).urinationIssues"><span class="text-muted">Tiêu tiểu:</span> {{safeParseJSON(record.medicalHistory).urinationIssues}}</div>
-                                  <div class="col-6" v-if="safeParseJSON(record.medicalHistory).activityLevel"><span class="text-muted">Hoạt động:</span> {{safeParseJSON(record.medicalHistory).activityLevel}}</div>
-                                  <div class="col-12 mt-1" v-if="safeParseJSON(record.medicalHistory).petOwnerNotes"><span class="text-muted">Ghi chú:</span> {{safeParseJSON(record.medicalHistory).petOwnerNotes}}</div>
-                                </div>
-                              </div>
-                              <div v-else class="text-dark">{{ record.medicalHistory || 'Không ghi nhận' }}</div>
-                            </div>
-                          </div>
-
-                          <!-- Clinical Signs (Objective) -->
-                          <div class="col-12">
-                            <div class="p-3 bg-white rounded-3 border">
-                              <div class="text-muted mb-2 fw-bold"><i class="bi bi-heart-pulse-fill text-info me-1"></i>Khám lâm sàng (O):</div>
-                              <div v-if="safeParseJSON(record.clinicalSigns)" class="mt-2 text-dark">
-                                <div class="row g-2">
-                                  <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).heartRate"><span class="text-muted">Nhịp tim:</span> {{safeParseJSON(record.clinicalSigns).heartRate}} bpm</div>
-                                  <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).respiratoryRate"><span class="text-muted">Nhịp thở:</span> {{safeParseJSON(record.clinicalSigns).respiratoryRate}} l/p</div>
-                                  <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).mentation"><span class="text-muted">Tinh thần:</span> {{safeParseJSON(record.clinicalSigns).mentation}}</div>
-                                  <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).hydration"><span class="text-muted">Mất nước:</span> {{safeParseJSON(record.clinicalSigns).hydration}}</div>
-                                  <div class="col-6" v-if="safeParseJSON(record.clinicalSigns).bodyConditionScore"><span class="text-muted">BCS:</span> {{safeParseJSON(record.clinicalSigns).bodyConditionScore}}/9</div>
-                                </div>
-                              </div>
-                              <div v-else class="text-dark">{{ record.clinicalSigns || 'Không ghi nhận' }}</div>
-                            </div>
-                          </div>
-                          
-                          <!-- Diagnosis (Assessment) & Treatment Plan (Plan) -->
-                          <div class="col-md-6">
-                            <div class="p-3 bg-white rounded-3 border h-100">
-                              <div class="text-muted mb-2 fw-bold text-danger"><i class="bi bi-activity me-1"></i>Chẩn đoán y khoa (A):</div>
-                              <div v-if="safeParseJSON(record.diagnosis)" class="mt-2 text-dark">
-                                <div v-if="safeParseJSON(record.diagnosis).tentativeDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ sơ bộ:</span> {{safeParseJSON(record.diagnosis).tentativeDiagnosis}}</div>
-                                <div v-if="safeParseJSON(record.diagnosis).definitiveDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ xác định:</span> <span class="fw-bold text-danger">{{safeParseJSON(record.diagnosis).definitiveDiagnosis}}</span></div>
-                                <div v-if="safeParseJSON(record.diagnosis).differentialDiagnosis" class="mb-1"><span class="text-muted fw-semibold">CĐ phân biệt:</span> {{safeParseJSON(record.diagnosis).differentialDiagnosis}}</div>
-                                <div v-if="safeParseJSON(record.diagnosis).diseaseSeverity" class="mb-1 mt-2"><span class="badge bg-secondary">Mức độ: {{safeParseJSON(record.diagnosis).diseaseSeverity}}</span></div>
-                              </div>
-                              <div v-else class="fw-bold text-danger">{{ record.diagnosis || 'Chưa ghi nhận' }}</div>
-                            </div>
-                          </div>
-
-                          <div class="col-md-6">
-                            <div class="p-3 bg-white rounded-3 border h-100">
-                              <div class="text-muted mb-2 fw-bold text-primary"><i class="bi bi-journal-medical me-1"></i>Phác đồ & Điều trị (P):</div>
-                              <ul v-if="Array.isArray(safeParseJSON(record.treatmentPlan)) && safeParseJSON(record.treatmentPlan).length > 0" class="mt-2 mb-0 ps-3 text-dark">
-                                <li v-for="(step, idx) in safeParseJSON(record.treatmentPlan)" :key="idx" class="mb-1">{{ step }}</li>
-                              </ul>
-                              <div v-else-if="!safeParseJSON(record.treatmentPlan)" class="text-dark">{{ record.treatmentPlan || 'Chưa ghi nhận' }}</div>
-                              <div v-else class="text-dark">Chưa ghi nhận</div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Prescribed Medicine Detailed -->
-                        <div v-if="record.prescribedMedicines && record.prescribedMedicines.length > 0" class="mt-4 bg-white p-3 rounded-4 border shadow-sm">
-                          <span class="fw-bold text-success d-block small mb-3"><i class="bi bi-capsule-pill me-1"></i>Thuốc đã kê đơn ({{ record.prescribedMedicines.length }} loại):</span>
-                          <div class="row g-2">
-                            <div v-for="(med, mIdx) in record.prescribedMedicines" :key="mIdx" class="col-md-6">
-                              <div class="d-flex align-items-start gap-2 p-2 bg-success bg-opacity-10 rounded-3 border border-success border-opacity-25 h-100">
-                                <i class="bi bi-check-circle-fill text-success mt-1 flex-shrink-0" style="font-size: 0.8rem;"></i>
-                                <div class="small">
-                                  <div class="fw-bold text-dark">{{ med.medicineName }}</div>
-                                  <div class="text-muted mt-1">
-                                    <span v-if="med.quantity" class="me-2"><i class="bi bi-box me-1"></i>SL: <strong>{{ med.quantity }}</strong></span>
-                                    <span v-if="med.dosage" class="me-2"><i class="bi bi-eyedropper me-1"></i>{{ med.dosage }}</span>
-                                    <span v-if="med.frequency"><i class="bi bi-clock me-1"></i>{{ med.frequency }}</span>
-                                  </div>
-                                  <div v-if="med.instruction" class="text-muted fst-italic mt-1"><i class="bi bi-info-circle me-1"></i>{{ med.instruction }}</div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Note & Follow Up -->
-                        <div v-if="record.doctorNotes" class="mt-4 p-3 bg-warning bg-opacity-10 rounded-3 border border-warning border-opacity-25 d-flex gap-2">
-                          <i class="bi bi-chat-quote-fill text-warning mt-1 flex-shrink-0"></i>
-                          <div>
-                            <div class="fw-bold small text-dark mb-1">Dặn dò chăm sóc:</div>
-                            <div class="fst-italic text-muted small">{{ record.doctorNotes }}</div>
-                          </div>
-                        </div>
-                        <div v-if="record.followUpDate" class="mt-3 p-3 bg-success bg-opacity-10 rounded-3 border border-success border-opacity-25 d-flex align-items-center gap-2">
-                          <i class="bi bi-calendar-plus-fill text-success fs-5"></i>
-                          <span class="small text-dark fw-bold">Ngày tái khám / Tiêm nhắc: <span class="text-success">{{ formatDate(record.followUpDate) }}</span></span>
-                        </div>
-
-                      </div>
+                  <!-- Premium Card -->
+                  <div class="timeline-content bg-white border border-light rounded-4 shadow-sm p-4 transition-all hover-lift">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                       <span class="visit-date fw-bold text-dark fs-6 d-flex align-items-center">
+                         <i class="bi bi-calendar-check text-warning me-2 fs-5"></i>{{ formatDate(record.visitDate) }}
+                       </span>
+                       <span class="badge rounded-pill px-3 py-1 fw-bold border" :class="record.recordType === 'Vaccination' ? 'bg-success bg-opacity-10 text-success border-success' : 'bg-primary bg-opacity-10 text-primary border-primary'">
+                         {{ record.recordType === 'Vaccination' ? 'Tiêm phòng' : 'Khám bệnh' }}
+                       </span>
+                    </div>
+                    
+                    <div class="bg-light rounded-3 p-3 mb-3 d-flex flex-column gap-2">
+                       <div class="text-muted small d-flex align-items-center">
+                         <i class="bi bi-person-badge text-secondary me-2 fs-6"></i> Bác sĩ phụ trách: <strong class="text-dark ms-1">{{ record.doctorName || 'Chưa rõ' }}</strong>
+                       </div>
+                       <div v-if="record.diagnosis" class="text-muted small d-flex align-items-center">
+                         <i class="bi bi-activity text-danger me-2 fs-6"></i> Chẩn đoán: <span class="text-dark ms-1 text-truncate" style="max-width: 300px;">{{ getShortDiagnosis(record.diagnosis) }}</span>
+                       </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                       <button class="btn btn-sm btn-outline-primary bg-gradient rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center" @click="openSoapDetail(record)">
+                         <i class="bi bi-file-earmark-medical-fill me-2"></i> Xem Bệnh Án
+                       </button>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Pagination Controls -->
-              <div v-if="totalPages > 1" class="d-flex justify-content-center align-items-center mt-4 gap-3 pb-3 pt-3 border-top border-light">
-                <button class="btn btn-sm btn-light border rounded-pill px-3 shadow-sm" :class="{'disabled text-muted': currentPage === 1}" @click="prevPage">
-                  <i class="bi bi-chevron-left me-1"></i> Trước
-                </button>
-                <div class="small fw-bold text-dark px-3 py-1 bg-light rounded-pill border">
-                  Trang {{ currentPage }} / {{ totalPages }}
-                </div>
-                <button class="btn btn-sm btn-light border rounded-pill px-3 shadow-sm" :class="{'disabled text-muted': currentPage === totalPages}" @click="nextPage">
-                  Tiếp <i class="bi bi-chevron-right ms-1"></i>
-                </button>
+              <div class="d-flex justify-content-between align-items-center mt-3" v-if="totalPages > 1">
+                <span class="small text-muted">Đang xem <strong>{{ (currentPage - 1) * recordsPerPage + 1 }}</strong> - <strong>{{ Math.min(currentPage * recordsPerPage, filteredMedicalHistory.length) }}</strong> trong số <strong>{{ filteredMedicalHistory.length }}</strong> kết quả</span>
+                <ul class="pagination pagination-sm mb-0 shadow-sm overflow-hidden">
+                  <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                    <a class="page-link text-primary fw-bold" href="#" @click.prevent="currentPage--"><i class="bi bi-chevron-left"></i></a>
+                  </li>
+                  <li class="page-item" v-for="p in totalPages" :key="p" :class="{ active: p === currentPage }">
+                    <a class="page-link bg-primary border-primary text-white fw-bold" v-if="p === currentPage" href="#">{{ p }}</a>
+                    <a class="page-link text-secondary fw-bold" v-else href="#" @click.prevent="currentPage = p">{{ p }}</a>
+                  </li>
+                  <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                    <a class="page-link text-primary fw-bold" href="#" @click.prevent="currentPage++"><i class="bi bi-chevron-right"></i></a>
+                  </li>
+                </ul>
               </div>
 
             </div>
@@ -756,6 +667,195 @@
       </div>
     </div>
   </div>
+
+  <!-- ===== PREMIUM SOAP MODAL ===== -->
+  <div v-if="showSoapModal && selectedSoapRecord" class="zalo-modal-overlay" style="z-index: 1055;" @click.self="closeSoapModal">
+    <div class="zalo-modal-card modal-lg max-w-700 bg-light border-0 shadow-lg" style="animation: fadeUp 0.3s ease-out; margin-top: 5vh; margin-bottom: 5vh; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="zalo-modal-header bg-white border-bottom border-primary border-opacity-25 p-4 flex-shrink-0 d-flex justify-content-between align-items-center" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+        <h5 class="modal-title fw-bold text-primary mb-0 d-flex align-items-center">
+          <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;"><i class="bi bi-file-earmark-medical-fill fs-4"></i></div>
+          Hồ Sơ Bệnh Án {{ selectedSoapRecord.recordType === 'Vaccination' ? 'Tiêm Phòng' : 'Khám Bệnh' }}
+        </h5>
+        <button class="btn-close shadow-none" @click="closeSoapModal"></button>
+      </div>
+      
+      <div class="zalo-modal-body p-4 flex-grow-1 overflow-auto bg-light">
+        <!-- Vitals -->
+        <div v-if="selectedSoapRecord.weight || selectedSoapRecord.temperature" class="row g-2 mb-4">
+          <div v-if="selectedSoapRecord.weight" class="col-auto">
+            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill">
+              <i class="bi bi-clipboard2-pulse me-1"></i>Cân nặng: <strong class="fs-6">{{ selectedSoapRecord.weight }} kg</strong>
+            </span>
+          </div>
+          <div v-if="selectedSoapRecord.temperature" class="col-auto">
+            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill">
+              <i class="bi bi-thermometer-half me-1"></i>Nhiệt độ: <strong class="fs-6">{{ selectedSoapRecord.temperature }} °C</strong>
+            </span>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <!-- Medical History (Subjective) -->
+          <div class="col-md-6">
+            <div class="h-100 p-4 bg-white rounded-4 shadow-sm border border-secondary border-opacity-10 position-relative">
+              <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-dark shadow-sm" style="width: 32px; height: 32px; line-height: 22px; font-size: 1.1rem;">S</span>
+              <h6 class="fw-bold text-dark mb-3 ms-2 border-bottom pb-2"><i class="bi bi-person-lines-fill text-secondary me-1"></i> Bệnh sử (Subjective)</h6>
+              <div v-if="safeParseJSON(selectedSoapRecord.medicalHistory)" class="small text-dark mt-2">
+                <div class="mb-2" v-if="safeParseJSON(selectedSoapRecord.medicalHistory).chiefComplaint"><span class="text-muted fw-bold">Lý do khám:</span> <span class="text-primary fw-bold">{{safeParseJSON(selectedSoapRecord.medicalHistory).chiefComplaint}}</span></div>
+                <div class="mb-1" v-if="safeParseJSON(selectedSoapRecord.medicalHistory).appetite"><span class="text-muted">Ăn uống:</span> {{safeParseJSON(selectedSoapRecord.medicalHistory).appetite}}</div>
+                <div class="mb-1" v-if="safeParseJSON(selectedSoapRecord.medicalHistory).urinationIssues"><span class="text-muted">Tiêu tiểu:</span> {{safeParseJSON(selectedSoapRecord.medicalHistory).urinationIssues}}</div>
+                <div class="mb-1" v-if="safeParseJSON(selectedSoapRecord.medicalHistory).activityLevel"><span class="text-muted">Hoạt động:</span> {{safeParseJSON(selectedSoapRecord.medicalHistory).activityLevel}}</div>
+                <div class="mt-3 p-2 bg-light rounded-3" v-if="safeParseJSON(selectedSoapRecord.medicalHistory).petOwnerNotes"><span class="text-muted fw-bold d-block mb-1"><i class="bi bi-chat-left-text me-1"></i>Ghi chú:</span> <span class="fst-italic">{{safeParseJSON(selectedSoapRecord.medicalHistory).petOwnerNotes}}</span></div>
+              </div>
+              <div v-else class="small mt-3">
+                <div v-if="!selectedSoapRecord.medicalHistory" class="text-muted fst-italic">Không ghi nhận</div>
+                <div v-else v-for="(item, idx) in parseRawString(selectedSoapRecord.medicalHistory)" :key="idx" class="d-flex align-items-start mb-2 bg-light p-2 rounded-3 border">
+                  <i class="bi bi-caret-right-fill text-secondary me-2 mt-1" style="font-size: 0.75rem;"></i>
+                  <span class="text-dark lh-base" v-html="formatRawItem(item)"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clinical Signs (Objective) -->
+          <div class="col-md-6">
+            <div class="h-100 p-4 bg-white rounded-4 shadow-sm border border-secondary border-opacity-10 position-relative">
+              <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-info shadow-sm" style="width: 32px; height: 32px; line-height: 22px; font-size: 1.1rem;">O</span>
+              <h6 class="fw-bold text-dark mb-3 ms-2 border-bottom pb-2"><i class="bi bi-heart-pulse-fill text-info me-1"></i> Khám lâm sàng (Objective)</h6>
+              <div v-if="safeParseJSON(selectedSoapRecord.clinicalSigns)" class="small text-dark mt-2">
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  <span class="badge bg-light text-dark border" v-if="safeParseJSON(selectedSoapRecord.clinicalSigns).heartRate">Nhịp tim: <strong>{{safeParseJSON(selectedSoapRecord.clinicalSigns).heartRate}} bpm</strong></span>
+                  <span class="badge bg-light text-dark border" v-if="safeParseJSON(selectedSoapRecord.clinicalSigns).respiratoryRate">Nhịp thở: <strong>{{safeParseJSON(selectedSoapRecord.clinicalSigns).respiratoryRate}} l/p</strong></span>
+                  <span class="badge bg-light text-dark border" v-if="safeParseJSON(selectedSoapRecord.clinicalSigns).bodyConditionScore">BCS: <strong>{{safeParseJSON(selectedSoapRecord.clinicalSigns).bodyConditionScore}}/9</strong></span>
+                </div>
+                <div class="mb-1" v-if="safeParseJSON(selectedSoapRecord.clinicalSigns).mentation"><span class="text-muted">Tinh thần:</span> {{safeParseJSON(selectedSoapRecord.clinicalSigns).mentation}}</div>
+                <div class="mb-1" v-if="safeParseJSON(selectedSoapRecord.clinicalSigns).hydration"><span class="text-muted">Mất nước:</span> {{safeParseJSON(selectedSoapRecord.clinicalSigns).hydration}}</div>
+              </div>
+              <div v-else class="small mt-3">
+                <div v-if="!selectedSoapRecord.clinicalSigns" class="text-muted fst-italic">Không ghi nhận</div>
+                <div v-else v-for="(item, idx) in parseRawString(selectedSoapRecord.clinicalSigns)" :key="idx" class="d-flex align-items-start mb-2 bg-light p-2 rounded-3 border">
+                  <i class="bi bi-caret-right-fill text-info me-2 mt-1" style="font-size: 0.75rem;"></i>
+                  <span class="text-dark lh-base" v-html="formatRawItem(item)"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Diagnosis (Assessment) -->
+          <div class="col-md-6">
+            <div class="h-100 p-4 bg-white rounded-4 shadow-sm border border-secondary border-opacity-10 position-relative border-start border-4 border-danger">
+              <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-danger shadow-sm" style="width: 32px; height: 32px; line-height: 22px; font-size: 1.1rem;">A</span>
+              <h6 class="fw-bold text-dark mb-3 ms-2 border-bottom pb-2"><i class="bi bi-activity text-danger me-1"></i> Chẩn đoán (Assessment)</h6>
+              <div v-if="safeParseJSON(selectedSoapRecord.diagnosis)" class="small text-dark mt-2">
+                <div v-if="safeParseJSON(selectedSoapRecord.diagnosis).tentativeDiagnosis" class="mb-2"><span class="text-muted fw-bold d-block">Chẩn đoán sơ bộ:</span> {{safeParseJSON(selectedSoapRecord.diagnosis).tentativeDiagnosis}}</div>
+                <div v-if="safeParseJSON(selectedSoapRecord.diagnosis).definitiveDiagnosis" class="mb-2"><span class="text-muted fw-bold d-block">Chẩn đoán xác định:</span> <span class="fw-bold text-danger">{{safeParseJSON(selectedSoapRecord.diagnosis).definitiveDiagnosis}}</span></div>
+                <div v-if="safeParseJSON(selectedSoapRecord.diagnosis).differentialDiagnosis" class="mb-2"><span class="text-muted fw-bold d-block">Chẩn đoán phân biệt:</span> <span class="fst-italic">{{safeParseJSON(selectedSoapRecord.diagnosis).differentialDiagnosis}}</span></div>
+                <div v-if="safeParseJSON(selectedSoapRecord.diagnosis).diseaseSeverity" class="mt-3"><span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">Mức độ: {{safeParseJSON(selectedSoapRecord.diagnosis).diseaseSeverity}}</span></div>
+              </div>
+              <div v-else class="small mt-3">
+                <div v-if="!selectedSoapRecord.diagnosis" class="text-muted fst-italic">Chưa ghi nhận</div>
+                <div v-else v-for="(item, idx) in parseRawString(selectedSoapRecord.diagnosis)" :key="idx" class="d-flex align-items-start mb-2 bg-danger bg-opacity-10 p-2 rounded-3 border border-danger border-opacity-25">
+                  <i class="bi bi-caret-right-fill text-danger me-2 mt-1" style="font-size: 0.75rem;"></i>
+                  <span class="text-danger fw-bold lh-base" v-html="formatRawItem(item)"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Treatment Plan (Plan) -->
+          <div class="col-md-6">
+            <div class="h-100 p-4 bg-white rounded-4 shadow-sm border border-secondary border-opacity-10 position-relative border-start border-4 border-primary">
+              <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-primary shadow-sm" style="width: 32px; height: 32px; line-height: 22px; font-size: 1.1rem;">P</span>
+              <h6 class="fw-bold text-dark mb-3 ms-2 border-bottom pb-2"><i class="bi bi-journal-medical text-primary me-1"></i> Phác đồ & Điều trị (Plan)</h6>
+              <ul v-if="Array.isArray(safeParseJSON(selectedSoapRecord.treatmentPlan)) && safeParseJSON(selectedSoapRecord.treatmentPlan).length > 0" class="mt-2 mb-0 ps-3 text-dark small">
+                <li v-for="(step, idx) in safeParseJSON(selectedSoapRecord.treatmentPlan)" :key="idx" class="mb-2 fw-semibold text-primary"><i class="bi bi-check2 text-success me-1"></i> {{ step }}</li>
+              </ul>
+              <div v-else-if="!safeParseJSON(selectedSoapRecord.treatmentPlan)" class="small mt-3">
+                <div v-if="!selectedSoapRecord.treatmentPlan" class="text-muted fst-italic">Chưa ghi nhận</div>
+                <div v-else v-for="(item, idx) in parseRawString(selectedSoapRecord.treatmentPlan)" :key="idx" class="d-flex align-items-start mb-2 bg-primary bg-opacity-10 p-2 rounded-3 border border-primary border-opacity-25">
+                  <i class="bi bi-caret-right-fill text-primary me-2 mt-1" style="font-size: 0.75rem;"></i>
+                  <span class="text-dark fw-medium lh-base" v-html="formatRawItem(item)"></span>
+                </div>
+              </div>
+              <div v-else class="text-dark small">Chưa ghi nhận</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prescribed Medicine Detailed -->
+        <div v-if="selectedSoapRecord.prescribedMedicines && selectedSoapRecord.prescribedMedicines.length > 0" class="mt-4 bg-white p-4 rounded-4 shadow-sm border border-secondary border-opacity-10">
+          <h6 class="fw-bold text-success mb-3 border-bottom pb-2"><i class="bi bi-capsule-pill me-1"></i> Thuốc đã kê đơn ({{ selectedSoapRecord.prescribedMedicines.length }} loại)</h6>
+          <div class="row g-3">
+            <div v-for="(med, mIdx) in selectedSoapRecord.prescribedMedicines" :key="mIdx" class="col-md-6">
+              <div class="d-flex gap-3 p-3 bg-success bg-opacity-10 rounded-3 border border-success border-opacity-25 h-100 align-items-center">
+                <div class="bg-white rounded-circle p-2 shadow-sm flex-shrink-0"><i class="bi bi-prescription2 text-success fs-4"></i></div>
+                <div class="small w-100">
+                  <div class="fw-bold text-dark fs-6">{{ med.medicineName }}</div>
+                  <div class="d-flex justify-content-between border-bottom border-success border-opacity-25 pb-1 mb-1 mt-1">
+                    <span v-if="med.quantity" class="text-success"><i class="bi bi-box me-1"></i>SL: <strong>{{ med.quantity }}</strong></span>
+                    <span v-if="med.dosage" class="text-muted"><i class="bi bi-eyedropper me-1"></i>{{ med.dosage }}</span>
+                  </div>
+                  <div class="text-muted d-flex justify-content-between">
+                    <span v-if="med.frequency"><i class="bi bi-clock me-1"></i>{{ med.frequency }}</span>
+                    <span v-if="med.durationDays">{{ med.durationDays }} ngày</span>
+                  </div>
+                  <div v-if="med.instruction" class="text-muted fst-italic mt-2 p-2 bg-white rounded text-center w-100 border border-success border-opacity-25"><i class="bi bi-info-circle me-1"></i>{{ med.instruction }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attachments -->
+        <div v-if="selectedSoapRecord.attachments && selectedSoapRecord.attachments.length > 0" class="mt-4 p-4 bg-white rounded-4 shadow-sm border border-secondary border-opacity-10 position-relative">
+          <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-secondary shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i class="bi bi-camera-fill"></i></span>
+          <h6 class="fw-bold text-dark mb-3 ms-2 border-bottom border-light pb-2"><i class="bi bi-images me-1"></i> Hình Ảnh Cận Lâm Sàng</h6>
+          <div class="d-flex gap-3 flex-wrap mt-3">
+            <img
+              v-for="(imgUrl, imgIdx) in selectedSoapRecord.attachments"
+              :key="imgIdx"
+              :src="getImageUrl(imgUrl)"
+              class="rounded-3 shadow-sm border border-light"
+              style="width: 120px; height: 120px; object-fit: cover; cursor: zoom-in; transition: transform 0.2s;"
+              onmouseover="this.style.transform='scale(1.05)'"
+              onmouseout="this.style.transform='scale(1)'"
+              @click.stop="openLightbox(selectedSoapRecord.attachments.map((u: string) => getImageUrl(u)), imgIdx)"
+              title="Bấm để xem phóng to"
+              alt="Ảnh cận lâm sàng"
+            />
+          </div>
+        </div>
+
+        <!-- Note & Follow Up -->
+        <div class="row g-4 mt-1">
+          <div v-if="selectedSoapRecord.doctorNotes" class="col-md-6">
+            <div class="h-100 p-4 bg-warning bg-opacity-10 rounded-4 shadow-sm border border-warning border-opacity-25 d-flex gap-3 align-items-start">
+              <i class="bi bi-chat-quote-fill text-warning fs-3"></i>
+              <div>
+                <h6 class="fw-bold text-dark mb-2">Dặn dò chăm sóc:</h6>
+                <div class="fst-italic text-muted small lh-lg">{{ selectedSoapRecord.doctorNotes }}</div>
+              </div>
+            </div>
+          </div>
+          <div v-if="selectedSoapRecord.followUpDate" class="col-md-6">
+            <div class="h-100 p-4 bg-primary bg-opacity-10 rounded-4 shadow-sm border border-primary border-opacity-25 d-flex align-items-center gap-3">
+              <i class="bi bi-calendar-plus-fill text-primary fs-1"></i>
+              <div>
+                <h6 class="fw-bold text-dark mb-1">Ngày hẹn tiếp theo:</h6>
+                <span class="fs-5 text-primary fw-bold">{{ formatDate(selectedSoapRecord.followUpDate) }}</span>
+                <div class="small text-muted mt-1"><i class="bi bi-info-circle me-1"></i>(Tái khám / Tiêm nhắc)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="zalo-modal-footer bg-white border-top flex-shrink-0 p-3 d-flex justify-content-end rounded-bottom-4" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+        <button class="btn btn-light text-muted rounded-pill px-5 py-2 fw-bold shadow-sm border" @click="closeSoapModal">Đóng Lại</button>
+      </div>
+    </div>
+  </div>
+
     <!-- ===== LIGHTBOX MODAL ===== -->
     <Teleport to="body">
       <Transition name="lightbox-fade">
@@ -811,7 +911,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import api from '../../services/api';
 
 const emit = defineEmits<{
@@ -942,29 +1042,100 @@ const soapActiveTab = ref('subjective'); // subjective, objective, assessment, p
 const medicineOptions = ref<any[]>([]);
 const medicalHistory = ref<any[]>([]);
 
+// ===== Pagination & Filters =====
+const historyDateFilter = ref('');
+const historyTypeFilter = ref('ALL');
 const currentPage = ref(1);
 const recordsPerPage = 5;
 
+const filteredMedicalHistory = computed(() => {
+  let list = medicalHistory.value;
+  if (historyTypeFilter.value !== 'ALL') {
+    list = list.filter((r: any) => r.recordType === historyTypeFilter.value);
+  }
+  if (historyDateFilter.value) {
+    const selectedDate = historyDateFilter.value;
+    list = list.filter((r: any) => {
+      if (!r.visitDate) return false;
+      const recordDate = new Date(r.visitDate).toISOString().split('T')[0];
+      return recordDate === selectedDate;
+    });
+  }
+  return list;
+});
+
 const totalPages = computed(() => {
-  return Math.ceil(medicalHistory.value.length / recordsPerPage);
+  return Math.max(1, Math.ceil(filteredMedicalHistory.value.length / recordsPerPage));
 });
 
 const paginatedHistory = computed(() => {
   const start = (currentPage.value - 1) * recordsPerPage;
   const end = start + recordsPerPage;
-  return medicalHistory.value.slice(start, end);
+  return filteredMedicalHistory.value.slice(start, end);
 });
 
-const prevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--;
-  }
+watch([historyDateFilter, historyTypeFilter], () => {
+  currentPage.value = 1;
+});
+
+// ===== SOAP Modal Logic =====
+const showSoapModal = ref(false);
+const selectedSoapRecord = ref<any>(null);
+
+const openSoapDetail = (record: any) => {
+  selectedSoapRecord.value = record;
+  showSoapModal.value = true;
 };
 
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++;
+const closeSoapModal = () => {
+  showSoapModal.value = false;
+  selectedSoapRecord.value = null;
+};
+
+const getImageUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  let baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7284';
+  baseUrl = baseUrl.replace(/\/api$/, '');
+  return `${baseUrl}${url}`;
+};
+
+const parseRawString = (str: string | null) => {
+  if (!str) return [];
+  
+  if (str.includes('|')) {
+    return str.split('|').map(s => s.trim()).filter(s => s.length > 0);
   }
+  
+  if (str.includes(', ') && (str.match(/:/g) || []).length > 1) {
+    const parts = str.split(', ');
+    const result: string[] = [];
+    
+    parts.forEach(part => {
+      if (part.includes(':') && part.split(':')[0].length < 30) {
+        result.push(part.trim());
+      } else {
+        if (result.length > 0) {
+          result[result.length - 1] += ', ' + part.trim();
+        } else {
+          result.push(part.trim());
+        }
+      }
+    });
+    return result.filter(s => s.length > 0);
+  }
+  
+  return [str.trim()];
+};
+
+const formatRawItem = (item: string) => {
+  const parts = item.split(':');
+  if (parts.length > 1) {
+    const key = parts[0].trim();
+    const val = parts.slice(1).join(':').trim();
+    return `<span class="fw-bold text-muted">${key}:</span> <span class="fw-medium">${val}</span>`;
+  }
+  return `<span class="fw-medium">${item}</span>`;
 };
 
 const loadingHistory = ref(false);
@@ -1397,6 +1568,26 @@ const formatDate = (dateStr: string): string => {
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
   transform: scale(1.005);
 }
+/* ===== Premium Filters ===== */
+.filter-group {
+  border: 1.5px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+.filter-wrapper:hover .filter-group {
+  border-color: #0d6efd;
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15) !important;
+}
+.custom-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  padding: 5px;
+}
+.custom-date-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
 .img-preview-wrapper {
   width: 100px;
   height: 100px;

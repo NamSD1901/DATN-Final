@@ -548,7 +548,7 @@
                       <i class="bi bi-calendar3 me-2 text-muted"></i>
                       <span class="fw-medium">Đến hạn: {{ formatDate(vac.nextDueDate) }}</span>
                     </div>
-                    <button class="btn btn-outline-warning w-100 rounded-pill fw-bold" style="border-width: 2px;">Đặt lịch tiêm</button>
+                    <button @click="$emit('book-appointment', { petId: pet?.id, serviceName: 'Tiêm phòng' })" class="btn btn-outline-warning w-100 rounded-pill fw-bold" style="border-width: 2px;">Đặt lịch tiêm</button>
                   </div>
                 </div>
               </div>
@@ -1047,13 +1047,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+
 import Chart from 'chart.js/auto';
 import QrcodeVue from 'qrcode.vue';
 import Swal from 'sweetalert2';
 import api from '../services/api';
 
 const props = defineProps<{ petId?: string | number }>();
-const emit = defineEmits(['go-back']);
+const emit = defineEmits(['go-back', 'book-appointment']);
 
 const route = useRoute();
 const router = useRouter();

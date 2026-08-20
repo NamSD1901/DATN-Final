@@ -84,10 +84,10 @@
                   </div>
 
                   <div class="d-flex gap-2">
-                    <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger flex-grow-1 rounded-pill py-1 fw-bold" style="font-size: 0.75rem;" @click="openLinkCustomerModal(card)">
+                    <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger flex-grow-1 rounded py-1 fw-bold" style="font-size: 0.75rem;" @click="openLinkCustomerModal(card)">
                       <i class="bi bi-link-45deg"></i> Ghép
                     </button>
-                    <button class="btn btn-sm btn-warning flex-grow-1 rounded-pill py-1 fw-bold text-dark shadow-sm" style="font-size: 0.75rem;" @click.stop="updateStatus(card.appointmentId, 'in_progress')">
+                    <button class="btn btn-sm btn-warning flex-grow-1 rounded py-1 fw-bold text-dark shadow-sm" style="font-size: 0.75rem;" @click.stop="updateStatus(card.appointmentId, 'in_progress')">
                       <i class="bi bi-megaphone-fill me-1"></i> Gọi khám
                     </button>
                   </div>
@@ -154,10 +154,10 @@
                   </div>
 
                   <div class="d-flex gap-2">
-                    <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger flex-grow-1 rounded-pill py-1 fw-bold" style="font-size: 0.75rem;" @click="openLinkCustomerModal(card)">
+                    <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger flex-grow-1 rounded py-1 fw-bold" style="font-size: 0.75rem;" @click="openLinkCustomerModal(card)">
                       <i class="bi bi-link-45deg"></i> Ghép
                     </button>
-                    <button class="btn btn-sm btn-success flex-grow-1 rounded-pill py-1 fw-bold text-white shadow-sm" style="font-size: 0.75rem;" @click.stop="updateStatus(card.appointmentId, 'ready_to_pay')">
+                    <button class="btn btn-sm btn-success flex-grow-1 rounded py-1 fw-bold text-white shadow-sm" style="font-size: 0.75rem;" @click.stop="updateStatus(card.appointmentId, 'ready_to_pay')">
                       <i class="bi bi-check-circle me-1"></i> Xong
                     </button>
                   </div>
@@ -219,16 +219,16 @@
                   </div>
                   
                   <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-success fw-bold" style="font-size: 0.75rem;"><i class="bi bi-currency-dollar me-1"></i>Chờ thu ngân</span>
+                    <span class="text-success fw-bold" style="font-size: 0.75rem;">Chờ thu ngân</span>
                     <span class="text-muted" style="font-size: 0.75rem;">Bs. {{ getLastWord(card.doctorName) }}</span>
                   </div>
 
                   <div class="d-flex gap-2">
-                    <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger flex-grow-1 rounded-pill py-1 fw-bold" style="font-size: 0.75rem;" @click="openLinkCustomerModal(card)">
+                    <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger flex-grow-1 rounded py-1 fw-bold" style="font-size: 0.75rem;" @click="openLinkCustomerModal(card)">
                       <i class="bi bi-link-45deg"></i> Ghép
                     </button>
-                    <button class="btn btn-sm btn-primary flex-grow-1 rounded-pill py-1 fw-bold shadow-sm" style="font-size: 0.75rem;" @click.stop="goToInvoiceTab(card.appointmentId)">
-                      <i class="bi bi-receipt me-1"></i> Thanh toán
+                    <button class="btn btn-sm btn-primary flex-grow-1 rounded py-1 fw-bold shadow-sm" style="font-size: 0.75rem;" @click.stop="goToInvoiceTab(card.appointmentId)">
+                      Thanh toán
                     </button>
                   </div>
                 </div>

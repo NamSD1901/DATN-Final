@@ -298,6 +298,18 @@ namespace MyPetClinic.Application.Services
                     var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
                     var vnTime = TimeZoneInfo.ConvertTimeFromUtc(utcNow, vnTimeZone);
 
+                    // Thêm logic chặn đặt trùng lịch cùng 1 dịch vụ cho cùng 1 pet (áp dụng cho ca Walk-in)
+                    var isDuplicatePetService = _unitOfWork.Appointments.Query()
+                        .Any(a => a.PetId == pet.Id
+                               && (a.Status == "waiting" || a.Status == "in_progress" || a.Status == "ready_to_pay")
+                               && a.AppointmentDate.Date == vnTime.Date
+                               && a.ServiceId == request.ServiceId);
+
+                    if (isDuplicatePetService)
+                    {
+                        throw new InvalidOperationException("Thú cưng đang chờ khám hoặc đang khám dịch vụ này rồi. Vui lòng không xếp hàng thêm lần nữa.");
+                    }
+
                     // 5. Tạo Appointment với trạng thái Waiting luôn
                     var appointment = new Appointment
                     {

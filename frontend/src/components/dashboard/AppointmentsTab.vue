@@ -1105,8 +1105,16 @@ const doctorList = ref<any[]>([]);
 const serviceList = ref<any[]>([]);
 const eventsList = ref<any[]>([]);
 const filteredEventsList = computed(() => {
-  if (selectedStatus.value === 'ALL') return eventsList.value;
-  return eventsList.value.filter((evt: any) => evt.status === selectedStatus.value);
+  let list = [...eventsList.value];
+  if (selectedStatus.value !== 'ALL') {
+    list = list.filter((evt: any) => evt.status === selectedStatus.value);
+  }
+  // Sắp xếp các lịch hẹn theo thời gian (từ sáng đến chiều)
+  return list.sort((a, b) => {
+    const timeA = new Date(a.appointmentTime || a.start).getTime();
+    const timeB = new Date(b.appointmentTime || b.start).getTime();
+    return timeA - timeB;
+  });
 });
 
 // Pagination

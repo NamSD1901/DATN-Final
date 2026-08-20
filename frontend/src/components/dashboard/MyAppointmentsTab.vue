@@ -15,7 +15,7 @@
           <button class="btn btn-outline-success fw-bold rounded-pill px-3" style="border-width: 2px; border-color: #10b981; color: #10b981;" @click="openQrModal">
             <i class="bi bi-qr-code-scan me-2"></i>Mã QR Check-in
           </button>
-          <button class="btn btn-premium-appt" @click="openBookModal">
+          <button class="btn btn-premium-appt" @click="openBookModal()">
             <i class="bi bi-plus-circle-fill me-2"></i> Đặt lịch mới
           </button>
         </div>
@@ -53,7 +53,7 @@
         {{ activeFilter === 'all' ? 'Chưa có lịch hẹn nào' : `Không có lịch hẹn ${getStatusLabel(activeFilter)}` }}
       </h5>
       <p class="text-muted small mb-4">Đặt lịch ngay để được phục vụ nhanh hơn, không cần chờ đợi.</p>
-      <button class="btn btn-premium-appt" @click="openBookModal">
+      <button class="btn btn-premium-appt" @click="openBookModal()">
         <i class="bi bi-plus-circle-fill me-2"></i> Đặt lịch ngay
       </button>
     </div>
@@ -1611,7 +1611,7 @@ const cancelAppointment = async () => {
 };
 
 // ===== Modal controls =====
-const openBookModal = async () => {
+const openBookModal = async (initialPetId?: number | Event, initialServiceName?: string) => {
   bookForm.value = { petId: 0, serviceId: 0, appointmentDate: '', symptom: '', note: '', vaccineId: null, doctorId: null };
   selectedBookingDate.value = '';
   doctorAvailableSlots.value = [];
@@ -1624,6 +1624,30 @@ const openBookModal = async () => {
   await fetchPets();
   await fetchServices();
   await fetchVaccines();
+  
+  const parsedPetId = typeof initialPetId === 'object' ? null : Number(initialPetId);
+  
+  if (parsedPetId && !isNaN(parsedPetId)) {
+    const petExists = myPets.value.find(p => p.id === parsedPetId);
+    if (petExists) {
+      bookForm.value.petId = parsedPetId;
+      currentStep.value = 1;
+      
+      if (initialServiceName) {
+        const svcExists = services.value.find(s => s.name.toLowerCase().includes(initialServiceName.toLowerCase()));
+        if (svcExists) {
+          bookForm.value.serviceId = svcExists.id;
+          currentStep.value = 2;
+          
+          selectedBookingDate.value = toLocalDateStr(new Date());
+          currentMonth.value = new Date().getMonth();
+          currentYear.value = new Date().getFullYear();
+          onBookingDateChange();
+        }
+      }
+    }
+  }
+
   showBookModal.value = true;
 };
 
