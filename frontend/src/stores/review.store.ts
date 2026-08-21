@@ -88,12 +88,12 @@ export const useReviewStore = defineStore('review', {
             this.error = null;
             try {
                 const res = await ReviewService.getAllAdminReviews(page, this.adminPagination.limit);
-                this.adminReviews = res.items;
+                this.adminReviews = res.items || (res as any).Items || [];
                 this.adminPagination = {
-                    page: res.page,
-                    limit: res.limit,
-                    totalPages: res.totalPages,
-                    totalItems: res.totalItems
+                    page: res.page || (res as any).pageIndex || page,
+                    limit: res.limit || this.adminPagination.limit,
+                    totalPages: res.totalPages || (res as any).totalPages || 1,
+                    totalItems: res.totalItems ?? (res as any).totalCount ?? 0
                 };
             } catch (err: any) {
                 this.error = err.response?.data?.message || 'Lỗi tải danh sách quản lý.';

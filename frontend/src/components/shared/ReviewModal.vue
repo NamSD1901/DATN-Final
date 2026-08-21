@@ -121,7 +121,14 @@ const submit = async () => {
       const urls = await reviewStore.uploadImages(form.value.images);
       finalImageUrls = JSON.stringify(urls);
     }
+  } catch (err: any) {
+    console.error("Lỗi khi upload ảnh:", err);
+    alert(err.response?.data?.message || "Lỗi tải ảnh lên. Đánh giá chưa được gửi.");
+    loading.value = false;
+    return;
+  }
     
+  try {
     emit('submit', { 
       ...form.value, 
       imageUrls: finalImageUrls,
@@ -129,8 +136,7 @@ const submit = async () => {
       reviewId: props.initialData?.reviewId 
     });
   } catch (err) {
-    console.error("Lỗi khi upload ảnh:", err);
-    // You could show toast here if you want
+    console.error(err);
   } finally {
     loading.value = false;
   }

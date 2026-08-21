@@ -84,6 +84,14 @@
               <p class="text-muted mt-2 mb-0">Đang tải dữ liệu...</p>
             </td>
           </tr>
+          <tr v-else-if="reviewStore.error">
+            <td colspan="7" class="text-center py-5">
+              <div class="text-danger">
+                <i class="bi bi-exclamation-triangle fs-1 d-block mb-3 opacity-50"></i>
+                Lỗi: {{ reviewStore.error }}
+              </div>
+            </td>
+          </tr>
           <tr v-else-if="reviewStore.adminReviews.length === 0">
             <td colspan="7" class="text-center py-5">
               <div class="text-muted">

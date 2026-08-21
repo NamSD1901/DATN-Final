@@ -184,16 +184,39 @@
                   <span class="fw-bold text-dark">{{ formatCurrency(invoice.subtotal) }}</span>
                 </div>
                 
-                <div class="mb-3">
-                  <div class="input-group input-group-sm">
-                    <input type="text" class="form-control" placeholder="Mã giảm giá (nếu có)" v-model="voucherCode">
-                    <button class="btn btn-outline-warning" @click="applyVoucher" :disabled="!voucherCode || loadingVoucher">
-                      <span v-if="loadingVoucher" class="spinner-border spinner-border-sm"></span>
-                      <span v-else>Áp dụng</span>
+                <div class="voucher-wrapper bg-white p-3 rounded-4 border mb-3 shadow-sm position-relative overflow-hidden">
+                  <div class="d-flex align-items-center mb-2">
+                    <div class="bg-warning bg-opacity-10 p-1 rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                      <i class="bi bi-ticket-perforated-fill text-warning" style="font-size: 0.85rem;"></i>
+                    </div>
+                    <span class="fw-bold text-dark" style="font-size: 0.9rem;">Khuyến mãi / Voucher</span>
+                  </div>
+                  
+                  <div class="position-relative">
+                    <input 
+                      type="text" 
+                      class="form-control rounded-3 pe-5 py-2 fw-bold text-center" 
+                      style="background-color: #fffbeb; border: 2px dashed #f59e0b; color: #b45309; letter-spacing: 1px; font-size: 1.1rem;"
+                      placeholder="Nhập mã tại đây" 
+                      v-model="voucherCode"
+                      @keyup.enter="applyVoucher"
+                    >
+                    <button 
+                      class="btn btn-warning position-absolute shadow-sm" 
+                      style="top: 4px; right: 4px; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px;"
+                      @click="applyVoucher" 
+                      :disabled="!voucherCode || loadingVoucher"
+                      title="Áp dụng mã"
+                    >
+                      <span v-if="loadingVoucher" class="spinner-border spinner-border-sm text-white" style="width: 14px; height: 14px;"></span>
+                      <i v-else class="bi bi-arrow-right text-white fw-bold"></i>
                     </button>
                   </div>
-                  <div v-if="voucherMessage" class="small mt-1" :class="voucherError ? 'text-danger' : 'text-success'">
-                    {{ voucherMessage }}
+                  
+                  <div v-if="voucherMessage" class="mt-2 px-2 py-1.5 rounded small d-flex align-items-center gap-2 animate-fade-in" 
+                       :class="voucherError ? 'bg-danger bg-opacity-10 text-danger' : 'bg-success bg-opacity-10 text-success'">
+                    <i :class="voucherError ? 'bi bi-x-circle-fill' : 'bi bi-check-circle-fill'"></i>
+                    <span class="fw-bold" style="font-size: 0.8rem;">{{ voucherMessage }}</span>
                   </div>
                 </div>
 
@@ -638,7 +661,8 @@ const applyVoucher = async () => {
       code: voucherCode.value.trim(),
       orderAmount: invoice.value.subtotal,
       serviceIds: serviceIds,
-      servicePrices: servicePrices
+      servicePrices: servicePrices,
+      customerId: invoice.value.customerId
     });
     
     if (res.data.success && res.data.data.isValid) {

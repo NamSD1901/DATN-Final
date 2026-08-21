@@ -21,15 +21,7 @@ namespace MyPetClinic.Application.Services
 
         public async Task<PaginatedResultDto<ReviewDto>> GetReviewsAsync(int page, int limit, string? sortBy, short? rating, string? petType, long? serviceId, Guid? doctorId, bool? hasImages, bool includeDeleted = false)
         {
-            var query = _unitOfWork.Reviews.Query()
-                .Include(r => r.Customer)
-                .Include(r => r.Appointment)
-                    .ThenInclude(a => a.Service)
-                .Include(r => r.Appointment)
-                    .ThenInclude(a => a.Pet)
-                .Include(r => r.Appointment)
-                    .ThenInclude(a => a.Doctor)
-                .AsQueryable();
+            var query = _unitOfWork.Reviews.Query();
 
             if (includeDeleted)
             {
@@ -39,6 +31,16 @@ namespace MyPetClinic.Application.Services
             {
                 query = query.Where(r => r.DeletedAt == null);
             }
+
+            query = query
+                .Include(r => r.Customer)
+                .Include(r => r.Appointment)
+                    .ThenInclude(a => a.Service)
+                .Include(r => r.Appointment)
+                    .ThenInclude(a => a.Pet)
+                .Include(r => r.Appointment)
+                    .ThenInclude(a => a.Doctor)
+                .AsQueryable();
 
             if (rating.HasValue)
             {
@@ -120,7 +122,8 @@ namespace MyPetClinic.Application.Services
                 Rating = r.Rating,
                 Comment = r.Comment,
                 CreatedAt = r.CreatedAt,
-                DeletedAt = r.DeletedAt
+                DeletedAt = r.DeletedAt,
+                ImageUrls = r.ImageUrls
             }).ToList();
 
             return new PaginatedResultDto<ReviewDto>(dtos, totalItems, page, limit);
@@ -172,16 +175,16 @@ namespace MyPetClinic.Application.Services
 
         public async Task<ReviewDto> CreateReviewAsync(Guid customerId, CreateReviewDto dto)
         {
-            var appointment = await _unitOfWork.Appointments.GetFirstOrDefaultWithIncludesAsync(
-                a => a.Id == dto.AppointmentId && a.CustomerId == customerId,
-                a => a.Service);
+            var appointment = await _unitOfWork.Appointments.Query()
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(a => a.Id == dto.AppointmentId && a.CustomerId == customerId);
 
             if (appointment == null)
             {
                 throw new KeyNotFoundException($"Không tìm thấy lịch hẹn của bạn với Id: {dto.AppointmentId}");
             }
 
-            if (appointment.Status != "completed")
+            if (!string.Equals(appointment.Status, "completed", StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("Bạn chỉ có thể đánh giá sau khi lịch hẹn đã hoàn tất (Completed).");
             }
@@ -205,6 +208,7 @@ namespace MyPetClinic.Application.Services
                 AppointmentId = dto.AppointmentId,
                 Rating = dto.Rating,
                 Comment = dto.Comment,
+                ImageUrls = dto.ImageUrls,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -220,9 +224,11 @@ namespace MyPetClinic.Application.Services
                 CustomerName = customer?.FullName ?? "Unknown",
                 CustomerAvatarUrl = customer?.Avatar,
                 AppointmentId = review.AppointmentId,
-                ServiceName = appointment.Service?.Name,
+                ServiceName = await _unitOfWork.Services.Query().IgnoreQueryFilters()
+                    .Where(s => s.Id == appointment.ServiceId).Select(s => s.Name).FirstOrDefaultAsync(),
                 Rating = review.Rating,
                 Comment = review.Comment,
+                ImageUrls = review.ImageUrls,
                 CreatedAt = review.CreatedAt
             };
         }
@@ -250,7 +256,13 @@ namespace MyPetClinic.Application.Services
             _unitOfWork.Reviews.Update(review);
             await _unitOfWork.SaveChangesAsync();
 
-            var appointment = await _unitOfWork.Appointments.GetFirstOrDefaultWithIncludesAsync(a => a.Id == review.AppointmentId, a => a.Service);
+            var appointment = await _unitOfWork.Appointments.Query()
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(a => a.Id == review.AppointmentId);
+
+            var serviceName = appointment != null 
+                ? await _unitOfWork.Services.Query().IgnoreQueryFilters().Where(s => s.Id == appointment.ServiceId).Select(s => s.Name).FirstOrDefaultAsync() 
+                : null;
 
             return new ReviewDto
             {
@@ -259,7 +271,7 @@ namespace MyPetClinic.Application.Services
                 CustomerName = review.Customer?.FullName ?? "Unknown",
                 CustomerAvatarUrl = review.Customer?.Avatar,
                 AppointmentId = review.AppointmentId,
-                ServiceName = appointment?.Service?.Name,
+                ServiceName = serviceName,
                 Rating = review.Rating,
                 Comment = review.Comment,
                 CreatedAt = review.CreatedAt,

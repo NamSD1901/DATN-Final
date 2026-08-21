@@ -704,7 +704,8 @@ const onAutoReviewSubmitted = async (data: any) => {
     await reviewStore.submitReview({
       appointmentId: data.appointmentId,
       rating: data.rating,
-      comment: data.comment
+      comment: data.comment,
+      imageUrls: data.imageUrls
     });
     showAutoReviewModal.value = false;
     
@@ -735,6 +736,8 @@ const onAutoReviewSubmitted = async (data: any) => {
           localStorage.setItem('dismissedReviews', JSON.stringify(dismissedReviews));
         }
       } catch (e) {}
+    } else {
+      alert(err.response?.data?.message || "Lỗi khi gửi đánh giá. Vui lòng thử lại!");
     }
   }
 };

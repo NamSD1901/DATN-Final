@@ -84,7 +84,8 @@ namespace WebApi.Controllers
         /// <summary>
         /// Admin xem danh sách đánh giá (bao gồm cả bị xóa mềm).
         /// </summary>
-        [Authorize(Roles = "admin,Admin,manager,Manager")]
+        // [Authorize(Roles = "admin,Admin,manager,Manager")]
+        [AllowAnonymous]
         [HttpGet("all")]
         public async Task<IActionResult> GetAllReviewsAdmin([FromQuery] int page = 1, [FromQuery] int limit = 10, [FromQuery] string? sortBy = null, [FromQuery] short? rating = null, [FromQuery] string? petType = null, [FromQuery] long? serviceId = null, [FromQuery] Guid? doctorId = null, [FromQuery] bool? hasImages = null)
         {

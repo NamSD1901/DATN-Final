@@ -115,7 +115,6 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
         await ApplicationDbSeeder.SeedAsync(context);
-        try { await context.Database.ExecuteSqlRawAsync("UPDATE doctor_schedules SET end_time = '20:00:00'"); } catch {}
     }
     catch (Exception ex)
     {

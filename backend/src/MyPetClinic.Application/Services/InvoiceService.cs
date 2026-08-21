@@ -390,6 +390,16 @@ namespace MyPetClinic.Application.Services
                     
                     if (invoice.Appointment != null)
                     {
+                        var voucherString = $"[Áp dụng voucher: {offer.Code}]";
+                        if (string.IsNullOrEmpty(invoice.Appointment.Note))
+                        {
+                            invoice.Appointment.Note = voucherString;
+                        }
+                        else if (!invoice.Appointment.Note.Contains(voucherString, StringComparison.OrdinalIgnoreCase))
+                        {
+                            invoice.Appointment.Note += "\n" + voucherString;
+                        }
+
                         var customerUser = await _unitOfWork.Users.Query().FirstOrDefaultAsync(u => u.CustomerId == invoice.Appointment.CustomerId);
                         if (customerUser != null)
                         {
@@ -627,6 +637,7 @@ namespace MyPetClinic.Application.Services
                 CreatedAt = invoice.CreatedAt,
                 AppointmentDate = invoice.Appointment?.AppointmentDate,
                 StartTime = invoice.Appointment?.StartTime,
+                CustomerId = invoice.Appointment?.CustomerId,
                 CustomerName = invoice.Appointment?.Customer?.FullName ?? "Khách vãng lai",
                 CustomerPhone = invoice.Appointment?.Customer?.Phone ?? "",
                 PetName = invoice.Appointment?.Pet?.Name ?? "Thú cưng",

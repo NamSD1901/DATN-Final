@@ -1051,7 +1051,8 @@ const onReviewSubmitted = async (data: any) => {
     await reviewStore.submitReview({
       appointmentId: data.appointmentId,
       rating: data.rating,
-      comment: data.comment
+      comment: data.comment,
+      imageUrls: data.imageUrls
     });
     closeReviewModal();
     await reviewStore.fetchMyReviews(1);
@@ -1059,8 +1060,9 @@ const onReviewSubmitted = async (data: any) => {
     if (detailAppt.value) {
       showDetailModal.value = true;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Lỗi khi gửi đánh giá', error);
+    alert(error.response?.data?.message || 'Lỗi khi gửi đánh giá. Vui lòng thử lại!');
   }
 };
 

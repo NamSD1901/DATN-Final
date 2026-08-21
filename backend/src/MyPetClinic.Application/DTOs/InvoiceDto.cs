@@ -18,6 +18,7 @@ namespace MyPetClinic.Application.DTOs
         public TimeSpan? StartTime { get; set; }
 
         // Client & Patient details
+        public Guid? CustomerId { get; set; }
         public string CustomerName { get; set; } = null!;
         public string CustomerPhone { get; set; } = null!;
         public string PetName { get; set; } = null!;

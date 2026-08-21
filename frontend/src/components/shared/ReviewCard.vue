@@ -208,10 +208,19 @@ const handleLike = async () => {
 
 const parsedImages = computed<string[]>(() => {
   if (!props.review.imageUrls) return [];
+  
+  const getFullUrl = (url: string) => {
+    if (url.startsWith('http')) return url;
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7284/api';
+    const host = baseUrl.replace('/api', '');
+    return `${host}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   try {
-    return JSON.parse(props.review.imageUrls) as string[];
+    const urls = JSON.parse(props.review.imageUrls) as string[];
+    return urls.map(getFullUrl);
   } catch (e) {
-    return props.review.imageUrls.split(',').map((url: string) => url.trim()).filter((url: string) => url.length > 0);
+    return props.review.imageUrls.split(',').map((url: string) => url.trim()).filter((url: string) => url.length > 0).map(getFullUrl);
   }
 });
 
