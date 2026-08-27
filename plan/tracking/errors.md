@@ -262,3 +262,14 @@ Khi nhập thêm lô thuốc mới, API kiểm tra tính duy nhất của mã l�
 ### Giải pháp
 1. Cập nhật hàm `GetBatchByNumberAsync` thành `GetBatchByNumberAndMedicineAsync(string batchNumber, long medicineId)`.
 2. Kiểm tra tính duy nhất của mã lô kết hợp đồng thời với `medicineId` trong Repository và Service, đảm bảo các loại thuốc khác nhau có thể sử dụng chung một mã lô độc lập.
+
+## [BUG-OFFER-001] Lỗi không thể để trống Tổng số lượt dùng (Vô hạn) khi tạo Voucher
+- **Trạng thái:** FIXED
+- **Thời gian:** 25-08-2026
+### Nguyên nhân
+Khi người dùng xóa nội dung trong ô input Tổng số lượt dùng hoặc Giảm tối đa, Vue -model.number chuyển giá trị thành chuỗi rỗng "". Tại hàm saveOffer, đoạn code sanitize kiểm tra payload.totalQuantity === "" gây ra lỗi biên dịch TypeScript (vì kiểu dữ liệu là 
+umber | null), làm cho logic gán 
+ull (vô hạn) bị thất bại, hoặc không hoạt động chính xác nếu nhập 0.
+### Giải pháp
+Sửa đổi logic sanitize payload thành if (!payload.totalQuantity || payload.totalQuantity <= 0) để bỏ qua lỗi ép kiểu TypeScript, xử lý đồng thời chuỗi rỗng "" lẫn các giá trị không hợp lệ (<= 0). Các giá trị này đều được an toàn gán thành 
+ull (không giới hạn) trước khi gửi về Backend.

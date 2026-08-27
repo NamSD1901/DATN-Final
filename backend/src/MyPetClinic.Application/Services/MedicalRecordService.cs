@@ -420,6 +420,105 @@ namespace MyPetClinic.Application.Services
             return result;
         }
 
+        public async Task<IEnumerable<MedicalRecordDto>> GetCustomerMedicalHistoryAsync(Guid customerId)
+        {
+            // 1. Lấy tất cả bệnh án của khách hàng (thông qua Appointment)
+            var records = await _unitOfWork.MedicalRecords.FindWithIncludesAsync(
+                r => r.Appointment != null && r.Appointment.CustomerId == customerId,
+                r => r.Appointment!,
+                r => r.Appointment!.Pet!,
+                r => r.Doctor!
+            );
+
+            // Sắp xếp giảm dần theo CreatedAt (mới nhất lên đầu)
+            records = records.OrderByDescending(r => r.CreatedAt).ToList();
+
+            var recordIds = records.Select(r => r.Id).ToList();
+            if (!recordIds.Any())
+            {
+                return Enumerable.Empty<MedicalRecordDto>();
+            }
+
+            // 2. Lấy tất cả đơn thuốc của các bệnh án này
+            var prescriptions = await _unitOfWork.Prescriptions.FindWithIncludesAsync(
+                p => recordIds.Contains(p.MedicalRecordId)
+            );
+
+            var prescriptionIds = prescriptions.Select(p => p.Id).ToList();
+
+            // 3. Lấy tất cả chi tiết đơn thuốc kèm theo thuốc
+            var prescriptionItems = prescriptionIds.Any()
+                ? await _unitOfWork.PrescriptionItems.FindWithIncludesAsync(
+                    pi => prescriptionIds.Contains(pi.PrescriptionId),
+                    pi => pi.Medicine!
+                  )
+                : Enumerable.Empty<PrescriptionItem>();
+
+            var itemsGrouped = prescriptionItems.GroupBy(pi => pi.PrescriptionId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var prescriptionsGrouped = prescriptions.GroupBy(p => p.MedicalRecordId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var result = new List<MedicalRecordDto>();
+
+            foreach (var r in records)
+            {
+                var prescribedMedicines = new List<PrescribedMedicineDto>();
+                if (prescriptionsGrouped.TryGetValue(r.Id, out var recordPrescriptions))
+                {
+                    foreach (var p in recordPrescriptions)
+                    {
+                        if (itemsGrouped.TryGetValue(p.Id, out var items))
+                        {
+                            foreach (var pi in items)
+                            {
+                                prescribedMedicines.Add(new PrescribedMedicineDto
+                                {
+                                    MedicineName = pi.Medicine?.Name ?? "Thuốc",
+                                    Dosage = pi.Dosage,
+                                    Frequency = pi.Frequency,
+                                    DurationDays = pi.DurationDays,
+                                    Quantity = pi.Quantity,
+                                    Instruction = pi.Instruction
+                                });
+                            }
+                        }
+                    }
+                }
+
+                result.Add(new MedicalRecordDto
+                {
+                    RecordId = r.Id,
+                    AppointmentId = r.AppointmentId,
+                    PetId = r.PetId,
+                    PetName = r.Appointment?.Pet?.Name ?? string.Empty,
+                    VisitDate = r.CreatedAt,
+                    RecordType = r.RecordType,
+                    MedicalHistory = ExtractReadableSoap(r.MedicalHistory, "S"),
+                    RawMedicalHistory = r.MedicalHistory,
+                    Diagnosis = ExtractReadableSoap(r.Diagnosis, "A"),
+                    RawDiagnosis = r.Diagnosis,
+                    TreatmentPlan = ExtractReadableSoap(r.TreatmentPlan, "P"),
+                    RawTreatmentPlan = r.TreatmentPlan,
+                    DoctorName = r.Doctor?.FullName ?? string.Empty,
+                    DoctorId = r.DoctorId.ToString(),
+                    Weight = r.Weight,
+                    Temperature = r.Temperature,
+                    ClinicalSigns = ExtractReadableSoap(r.ClinicalSigns, "O"),
+                    RawClinicalSigns = r.ClinicalSigns,
+                    DoctorNotes = r.DoctorNotes ?? string.Empty,
+                    FollowUpDate = r.FollowUpDate,
+                    Attachments = string.IsNullOrWhiteSpace(r.Attachments) 
+                        ? new List<string>() 
+                        : JsonSerializer.Deserialize<List<string>>(r.Attachments) ?? new List<string>(),
+                    PrescribedMedicines = prescribedMedicines
+                });
+            }
+
+            return result;
+        }
+
         public async Task<MedicalRecordDto?> GetMedicalRecordByAppointmentAsync(long appointmentId)
         {
             var records = await _unitOfWork.MedicalRecords.FindWithIncludesAsync(

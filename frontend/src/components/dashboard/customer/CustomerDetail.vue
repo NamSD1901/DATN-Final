@@ -24,9 +24,7 @@
             {{ getAvatarLetters(detailData.customer.fullName) }}
           </div>
           <h4 class="fw-bold text-dark mb-1">{{ detailData.customer.fullName }}</h4>
-          <span class="badge bg-warning text-dark px-3 py-1.5 rounded-pill fw-bold text-uppercase small shadow-sm mb-4">
-            Khách hàng thân thiết
-          </span>
+
 
           <div class="text-start mt-3 border-top pt-3">
             <div class="mb-3">
@@ -125,9 +123,20 @@
           </div>
         </div>
 
+        <!-- Tabs Nav -->
+        <ul class="nav nav-pills mb-3 gap-2" id="customer-tabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill fw-bold" :class="{'active': activeDetailTab === 'appointments', 'bg-warning text-dark': activeDetailTab === 'appointments', 'text-muted': activeDetailTab !== 'appointments'}" @click="activeDetailTab = 'appointments'">Lịch sử Cuộc hẹn</button>
+          </li>
+
+          <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill fw-bold" :class="{'active': activeDetailTab === 'invoices', 'bg-warning text-dark': activeDetailTab === 'invoices', 'text-muted': activeDetailTab !== 'invoices'}" @click="activeDetailTab = 'invoices'">Lịch sử Hóa đơn</button>
+          </li>
+        </ul>
+
         <!-- Appointments / Clinical records timeline -->
-        <div class="card border-0 shadow-sm rounded-4 p-4 bg-light">
-          <h5 class="fw-bold text-dark mb-3"><i class="bi bi-clock-history text-warning me-2"></i>Lịch sử khám & Điều trị</h5>
+        <div v-if="activeDetailTab === 'appointments'" class="card border-0 shadow-sm rounded-4 p-4 bg-light animate-fade-in">
+          <h5 class="fw-bold text-dark mb-3"><i class="bi bi-clock-history text-warning me-2"></i>Lịch sử Cuộc hẹn</h5>
           <div class="table-responsive">
             <table class="table table-hover align-middle bg-white rounded-4 overflow-hidden mb-0">
               <thead class="table-light">
@@ -184,6 +193,46 @@
             </div>
           </div>
         </div>
+
+
+        <!-- Invoices Tab -->
+        <div v-if="activeDetailTab === 'invoices'" class="card border-0 shadow-sm rounded-4 p-4 bg-light animate-fade-in">
+          <div v-if="loadingInvoices" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-warning mb-2"></div><br>Đang tải dữ liệu...</div>
+          <div v-else-if="invoices.length === 0" class="text-center py-4 text-muted">Chưa có hóa đơn nào ghi nhận.</div>
+          <div v-else class="table-responsive">
+            <table class="table table-hover align-middle bg-white rounded-4 overflow-hidden mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Mã HĐ</th>
+                  <th>Ngày tạo</th>
+                  <th>Dịch vụ chính</th>
+                  <th>Tổng tiền</th>
+                  <th>Trạng thái</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="inv in invoices" :key="inv.id">
+                  <td class="fw-bold text-primary small">#{{ inv.id }}</td>
+                  <td class="small text-muted">{{ formatDateFull(inv.createdAt) }}</td>
+                  <td class="small fw-bold text-dark">{{ inv.items?.find(i => i.itemType === 'service')?.itemName || inv.items?.[0]?.itemName || '—' }}</td>
+                  <td class="fw-bold text-danger">{{ formatCurrency(inv.totalAmount) }}</td>
+                  <td>
+                    <span class="badge rounded-pill" :class="inv.paymentStatus === 'paid' ? 'bg-success' : 'bg-warning text-dark'">
+                      {{ inv.paymentStatus === 'paid' ? 'Đã thanh toán' : (inv.paymentStatus === 'pending' ? 'Chờ thanh toán' : inv.paymentStatus) }}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill fw-bold" @click="printInvoice(inv)" :disabled="inv.paymentStatus !== 'paid'">
+                      <i class="bi bi-printer"></i> In lại
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -201,6 +250,193 @@ const emit = defineEmits(['back', 'add-pet', 'edit-pet', 'view-pet-history']);
 
 const loading = ref(false);
 const detailData = ref<any>(null);
+
+const activeDetailTab = ref('appointments');
+const invoices = ref<any[]>([]);
+const loadingInvoices = ref(false);
+
+
+
+const fetchInvoices = async () => {
+  if (invoices.value.length > 0) return;
+  loadingInvoices.value = true;
+  try {
+    const res = await api.get(`/receptionist/customers/${props.customerId}/invoices`);
+    invoices.value = res.data;
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loadingInvoices.value = false;
+  }
+};
+
+watch(activeDetailTab, (newVal) => {
+  if (newVal === 'invoices') fetchInvoices();
+});
+
+const printInvoice = async (invInfo: any) => {
+  try {
+    const res = await api.get(`/invoice/${invInfo.appointmentId}`);
+    const invData = res.data;
+    
+    // Simple Print Window
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert("Trình duyệt đã chặn popup. Vui lòng cho phép popup để in hóa đơn.");
+      return;
+    }
+    const fmtCur = (v: number) => (v ?? 0).toLocaleString('vi-VN') + 'đ';
+    const now = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    
+    const total = Math.max(0, invData.subtotal - (invData.discountAmount || 0));
+    const payLabel = invData.paymentMethod === 'qr' ? 'Chuyển khoản VietQR' : 'Tiền mặt';
+
+    const itemsHtml = (invData.items || []).map((item: any, idx: number) => `
+    <tr>
+      <td style="text-align:center;color:#94a3b8;padding:9px 12px">${idx + 1}</td>
+      <td style="padding:9px 12px">
+        <div style="font-weight:600">${item.itemName}</div>
+        <div style="font-size:0.72rem;color:#94a3b8">${item.itemType === 'service' ? 'Dịch vụ y tế' : 'Thuốc / Vật tư'}</div>
+      </td>
+      <td style="text-align:center;padding:9px 12px">${item.quantity}</td>
+      <td style="text-align:right;padding:9px 12px">${fmtCur(item.unitPrice)}</td>
+      <td style="text-align:right;padding:9px 12px;font-weight:700">${fmtCur(item.totalPrice)}</td>
+    </tr>`).join('');
+
+    const discountRow = (invData.discountAmount > 0) ? `<tr style="border-bottom:1px dashed #e2e8f0"><td style="padding:5px 0;font-size:0.82rem;color:#475569">Giảm giá</td><td style="padding:5px 0;text-align:right;color:#ef4444">- ${fmtCur(invData.discountAmount)}</td></tr>` : '';
+
+    const invoiceHtml = `
+    <div class="invoice-page">
+      <div class="header">
+        <div class="logo-block">
+          <div class="logo-circle">🐾</div>
+          <div>
+            <div class="clinic-name">MYPET CLINIC</div>
+            <div class="clinic-sub">Hệ thống phòng khám thú y cao cấp</div>
+          </div>
+        </div>
+        <div>
+          <div class="inv-title">HÓA ĐƠN DỊCH VỤ (IN LẠI)</div>
+          <div class="inv-meta">Số: <strong>#INV-${String(invData.id).padStart(5,'0')}</strong></div>
+          <div class="inv-meta">Ngày: ${now}</div>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-box">
+          <div class="info-label">THÔNG TIN KHÁCH HÀNG</div>
+          <div class="info-line"><strong>${invData.customerName || invInfo.customerName || '—'}</strong></div>
+          <div class="info-line">Điện thoại: ${invData.customerPhone || invInfo.customerPhone || 'N/A'}</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">THÔNG TIN BỆNH NHÂN</div>
+          <div class="info-line"><strong>${invData.petName || '—'}</strong> (${invData.petSpecies || 'Thú cưng'})</div>
+          <div class="info-line">Bác sĩ phụ trách: ${invData.doctorName || '—'}</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">PHÒNG KHÁM</div>
+          <div class="info-line">MyPet Clinic - 124A Xuân Thủy</div>
+          <div class="info-line">P. An Khánh, TP. HCM | Hotline: 0905 090 629</div>
+        </div>
+      </div>
+
+      <table class="items">
+        <thead><tr>
+          <th style="width:40px">STT</th>
+          <th>Mô tả dịch vụ / sản phẩm</th>
+          <th style="text-align:center;width:55px">SL</th>
+          <th style="text-align:right;width:110px">Đơn giá</th>
+          <th style="text-align:right;width:120px">Thành tiền</th>
+        </tr></thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
+
+      <div class="totals">
+        <table>
+          <tr style="border-bottom:1px dashed #e2e8f0"><td style="padding:5px 0;font-size:0.82rem;color:#475569">Tạm tính</td><td style="padding:5px 0;text-align:right;font-size:0.82rem">${fmtCur(invData.subtotal)}</td></tr>
+          ${discountRow}
+          <tr class="total-final"><td style="padding:5px 0">TỔNG CỘNG</td><td style="text-align:right;padding:5px 0">${fmtCur(total)}</td></tr>
+          <tr><td style="padding:4px 0;font-size:0.75rem;color:#64748b" colspan="2">Hình thức: ${payLabel}</td></tr>
+        </table>
+      </div>
+
+      <div class="footer">
+        <div style="flex:1;font-size:0.78rem;color:#475569">
+          <div style="font-weight:700;margin-bottom:4px">Ghi chú:</div>
+          <div>Hóa đơn này là bản in lại hợp lệ tại MyPet Clinic.</div>
+        </div>
+        <div style="width:160px;text-align:center">
+          <div style="font-weight:700;margin-bottom:4px">Xác nhận của phòng khám</div>
+          <div class="sign-line"></div>
+          <div style="font-size:0.75rem;color:#64748b">Thu ngân</div>
+        </div>
+      </div>
+    </div>
+    `;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="vi">
+      <head>
+        <meta charset="UTF-8">
+        <title>In Hóa Đơn #${invData.id}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap');
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: 'Be Vietnam Pro', sans-serif; color: #0f172a; font-size: 13px; line-height: 1.5; padding: 0; background: #e2e8f0; }
+          
+          .invoice-page { 
+            background: white; 
+            margin: 0 auto 20px auto; 
+            padding: 20mm 18mm; 
+            width: 210mm;
+            min-height: 297mm;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          }
+          
+          .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14px; border-bottom: 3px solid #f59e0b; margin-bottom: 18px; }
+          .logo-block { display: flex; align-items: center; gap: 14px; }
+          .logo-circle { width: 54px; height: 54px; background: linear-gradient(135deg,#fef08a,#f59e0b); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+          .clinic-name { font-size: 1.25rem; font-weight: 800; letter-spacing: 1px; }
+          .clinic-sub { font-size: 0.72rem; color: #64748b; margin-top: 3px; }
+          .inv-title { font-size: 1.05rem; font-weight: 800; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px; text-align: right; }
+          .inv-meta { font-size: 0.78rem; color: #64748b; text-align: right; margin-top: 4px; }
+          
+          .info-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+          .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; }
+          .info-label { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; margin-bottom: 5px; }
+          .info-line { font-size: 0.78rem; color: #334155; }
+          table.items { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+          table.items thead tr { background: #0f172a; color: white; }
+          table.items thead th { padding: 9px 12px; font-weight: 600; text-align: left; font-size: 0.72rem; letter-spacing: 0.3px; }
+          table.items tbody tr { border-bottom: 1px solid #f1f5f9; }
+          table.items tbody tr:nth-child(even) { background: #f8fafc; }
+          .totals { margin-left: auto; width: 280px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; background: #f8fafc; margin-bottom: 24px; }
+          .totals table { width: 100%; }
+          .total-final td { font-weight: 800; font-size: 1rem; color: #0f172a; border-top: 2px solid #0f172a; padding-top: 8px !important; }
+          
+          .footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px dashed #cbd5e1; padding-top: 16px; margin-top: 8px; }
+          .sign-line { border-bottom: 1px solid #0f172a; height: 60px; margin: 8px 0; }
+          
+          @media print {
+            body { background: white; }
+            .invoice-page { margin: 0; padding: 0; box-shadow: none; width: 100%; min-height: auto; }
+            @page { size: A4 portrait; margin: 15mm; }
+          }
+        </style>
+      </head>
+      <body>
+        ${invoiceHtml}
+        <script>window.onload = function(){ setTimeout(() => { window.print(); window.onafterprint = function(){ window.close(); }; }, 500); }<\/script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  } catch (err) {
+    console.error('Lỗi khi lấy dữ liệu in hóa đơn', err);
+    alert('Có lỗi xảy ra khi lấy chi tiết hóa đơn để in.');
+  }
+};
 
 // Pagination
 const currentPage = ref(1);

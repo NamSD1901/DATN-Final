@@ -338,9 +338,9 @@ const openEditModal = (offer: any) => {
 const saveOffer = async () => {
   try {
     // Sanitize payload: convert empty strings to null for nullable number fields
-    const payload = { ...formData.value };
-    if (payload.totalQuantity === "") payload.totalQuantity = null;
-    if (payload.maxDiscount === "") payload.maxDiscount = null;
+    const payload: any = { ...formData.value };
+    if (!payload.totalQuantity || payload.totalQuantity <= 0) payload.totalQuantity = null;
+    if (!payload.maxDiscount || payload.maxDiscount <= 0) payload.maxDiscount = null;
     
     // Convert local datetime-local string to UTC ISO string before sending
     payload.startDate = new Date(formData.value.startDate).toISOString();

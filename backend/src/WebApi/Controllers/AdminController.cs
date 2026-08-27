@@ -29,32 +29,6 @@ namespace WebApi.Controllers
             return Ok(result);
         }
 
-        [HttpPut("users/{userId}/role")]
-        public async Task<IActionResult> UpdateUserRole(string userId, [FromBody] UpdateRoleDto dto)
-        {
-            try
-            {
-                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                await _adminService.UpdateUserRoleAsync(userId, dto, currentUserId!);
-                return Ok(new { message = "Cập nhật vai trò thành công." });
-            }
-            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
-            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
-        }
-
-        [HttpPut("users/{userId}/status")]
-        public async Task<IActionResult> ToggleUserStatus(string userId, [FromBody] ToggleStatusDto dto)
-        {
-            try
-            {
-                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                await _adminService.ToggleUserStatusAsync(userId, dto, currentUserId!);
-                return Ok(new { message = "Cập nhật trạng thái người dùng thành công." });
-            }
-            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
-            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
-        }
-
         // ================= SERVICE MANAGEMENT =================
         [HttpGet("services")]
         public async Task<IActionResult> GetServices()

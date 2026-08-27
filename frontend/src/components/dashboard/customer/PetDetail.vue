@@ -91,15 +91,32 @@
                           </div>
                         </div>
                         <div v-if="record.clinicalSigns" class="col-12 border-bottom pb-2">
-                          <div class="text-muted mb-1 fw-bold">Khám lâm sàng:</div>
-                          <div class="text-dark">{{ record.clinicalSigns }}</div>
+                          <div class="text-muted mb-2 fw-bold"><i class="bi bi-activity text-info me-1"></i>Khám lâm sàng:</div>
+                          <div class="d-flex flex-wrap gap-2">
+                            <span v-for="(sign, sIdx) in (record.clinicalSigns || '').split(',').map(s => s.trim()).filter(s => s)" :key="sIdx" 
+                                  class="badge bg-light text-dark border p-2 shadow-sm rounded-3 d-inline-block" 
+                                  style="font-size: 0.8rem; text-align: left; max-width: 100%; white-space: normal;">
+                              <span v-if="sign.includes(':')" class="fw-bold text-secondary">{{ sign.split(':')[0] }}:</span>
+                              <span v-if="sign.includes(':')">{{ sign.substring(sign.indexOf(':') + 1) }}</span>
+                              <span v-else>{{ sign }}</span>
+                            </span>
+                          </div>
                         </div>
+
+                        <!-- Cận lâm sàng / Hình ảnh -->
+                        <div v-if="record.attachments && record.attachments.length > 0" class="col-12 border-bottom pb-3">
+                          <div class="text-muted mb-2 fw-bold"><i class="bi bi-images text-primary me-1"></i>Cận lâm sàng (Hình ảnh):</div>
+                          <div class="d-flex gap-2 flex-wrap">
+                            <img v-for="(img, idx) in record.attachments" :key="idx" :src="img.startsWith('http') ? img : baseUrl + img" class="rounded shadow-sm" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #cbd5e1;" />
+                          </div>
+                        </div>
+                        
                         <div class="col-md-6 border-end">
-                          <div class="text-muted mb-1 fw-bold text-danger">Chẩn đoán:</div>
+                          <div class="text-muted mb-1 fw-bold text-danger"><i class="bi bi-exclamation-square text-danger me-1"></i>Chẩn đoán:</div>
                           <div class="fw-bold text-dark">{{ record.diagnosis }}</div>
                         </div>
                         <div class="col-md-6">
-                          <div class="text-muted mb-1 fw-bold text-primary">Phương pháp điều trị:</div>
+                          <div class="text-muted mb-1 fw-bold text-primary"><i class="bi bi-heart-pulse text-primary me-1"></i>Phương pháp điều trị:</div>
                           <div class="text-dark">{{ record.treatmentPlan }}</div>
                         </div>
                         <div v-if="record.doctorNotes" class="col-12 mt-2">
@@ -107,11 +124,23 @@
                         </div>
                       </div>
                       
-                      <div v-if="record.prescribedMedicines && record.prescribedMedicines.length > 0" class="mt-3 bg-light p-3 rounded-4 border shadow-sm">
+                      <div v-if="(record.prescribedMedicines || record.prescriptions) && (record.prescribedMedicines || record.prescriptions).length > 0" class="mt-3 bg-light p-3 rounded-4 border shadow-sm">
                         <span class="fw-bold text-success d-block small mb-2"><i class="bi bi-capsule-pill me-1"></i>Thuốc đã kê đơn:</span>
                         <ul class="list-unstyled mb-0 ps-2">
-                          <li v-for="(medStr, mIdx) in record.prescribedMedicines" :key="mIdx" class="text-dark small mb-2 d-flex align-items-start">
-                            <i class="bi bi-check-circle-fill text-success me-2 mt-1" style="font-size: 0.7rem;"></i> {{ medStr.medicineName }} - Số lượng: {{ medStr.quantity }}
+                          <li v-for="(med, mIdx) in (record.prescribedMedicines || record.prescriptions)" :key="mIdx" class="text-dark small mb-3 d-flex align-items-start pb-2 border-bottom border-secondary border-opacity-10">
+                            <i class="bi bi-check-circle-fill text-success me-2 mt-1" style="font-size: 0.7rem;"></i> 
+                            <div>
+                                <span class="fw-bold fs-6 text-dark">{{ med.medicineName }}</span> 
+                                <span class="badge bg-secondary ms-2 bg-opacity-10 text-secondary border">SL: {{ med.quantity }}</span>
+                                <div class="text-muted mt-1" style="font-size: 0.78rem;">
+                                    <span v-if="med.dosage"><i class="bi bi-droplet-half me-1"></i>Liều: <strong class="text-dark">{{ med.dosage }}</strong></span>
+                                    <span v-if="med.frequency" class="ms-2"><i class="bi bi-clock-history me-1"></i>Tần suất: <strong class="text-dark">{{ med.frequency }}</strong></span>
+                                    <span v-if="med.durationDays" class="ms-2"><i class="bi bi-calendar-range me-1"></i>Liệu trình: <strong class="text-dark">{{ med.durationDays }} ngày</strong></span>
+                                </div>
+                                <div v-if="med.instruction" class="mt-1 fst-italic text-secondary" style="font-size: 0.75rem;">
+                                    * HDSD: {{ med.instruction }}
+                                </div>
+                            </div>
                           </li>
                         </ul>
                       </div>
@@ -256,6 +285,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['close']);
 
+const baseUrl = api.defaults.baseURL?.replace('/api', '') || 'http://localhost:5031';
 const activeHistoryTab = ref('consultation');
 const loading = ref(false);
 const consultationHistory = ref<any[]>([]);

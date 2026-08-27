@@ -46,6 +46,34 @@ namespace WebApi.Controllers
             return Ok(viewModel);
         }
 
+        [HttpGet("customers/{customerId}/medical-records")]
+        public async Task<IActionResult> GetCustomerMedicalRecords(Guid customerId, [FromServices] IMedicalRecordService medicalRecordService)
+        {
+            try
+            {
+                var records = await medicalRecordService.GetCustomerMedicalHistoryAsync(customerId);
+                return Ok(records);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("customers/{customerId}/invoices")]
+        public async Task<IActionResult> GetCustomerInvoices(Guid customerId, [FromServices] IInvoiceService invoiceService)
+        {
+            try
+            {
+                var invoices = await invoiceService.GetCustomerInvoicesAsync(customerId);
+                return Ok(invoices);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPost("customers")]
         public async Task<IActionResult> CreateCustomer([FromBody] CustomerCreateDto model)
         {

@@ -38,45 +38,6 @@ namespace MyPetClinic.Application.Services
             });
         }
 
-        public async Task UpdateUserRoleAsync(string userId, UpdateRoleDto dto, string currentUserId)
-        {
-            if (currentUserId == userId)
-                throw new InvalidOperationException("Bạn không thể tự thay đổi vai trò của chính mình.");
-
-            if (!Guid.TryParse(userId, out var userGuid))
-                throw new InvalidOperationException("Id người dùng không hợp lệ.");
-
-            var users = await _unitOfWork.Users.FindAsync(u => u.Id == userGuid);
-            var user = users.FirstOrDefault() ?? throw new KeyNotFoundException("Không tìm thấy người dùng.");
-
-            var roles = await _unitOfWork.Roles.FindAsync(r => r.Name.ToLower() == dto.NewRole.ToLower());
-            var role = roles.FirstOrDefault() ?? throw new InvalidOperationException("Vai trò không hợp lệ.");
-
-            user.RoleId = role.Id;
-            _unitOfWork.Users.Update(user);
-            await _unitOfWork.SaveChangesAsync();
-
-            await _auditLogService.LogActionAsync(currentUserId, "ChangeRole", $"Đổi vai trò user {userId} thành {dto.NewRole}");
-        }
-
-        public async Task ToggleUserStatusAsync(string userId, ToggleStatusDto dto, string currentUserId)
-        {
-            if (currentUserId == userId)
-                throw new InvalidOperationException("Bạn không thể tự khóa tài khoản của chính mình.");
-
-            if (!Guid.TryParse(userId, out var userGuid))
-                throw new InvalidOperationException("Id người dùng không hợp lệ.");
-
-            var users = await _unitOfWork.Users.FindAsync(u => u.Id == userGuid);
-            var user = users.FirstOrDefault() ?? throw new KeyNotFoundException("Không tìm thấy người dùng.");
-
-            user.IsActive = dto.IsActive;
-            _unitOfWork.Users.Update(user);
-            await _unitOfWork.SaveChangesAsync();
-
-            await _auditLogService.LogActionAsync(currentUserId, dto.IsActive ? "ActivateUser" : "SuspendUser", $"Trạng thái hoạt động user {userId} đặt thành {dto.IsActive}");
-        }
-
         public async Task<IEnumerable<ServiceDto>> GetServicesAsync()
         {
             var services = await _unitOfWork.Services.GetAllAsync();

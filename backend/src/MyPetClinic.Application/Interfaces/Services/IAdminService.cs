@@ -10,8 +10,6 @@ namespace MyPetClinic.Application.Interfaces.Services
     {
         // Users
         Task<object> GetUsersAsync();
-        Task UpdateUserRoleAsync(string userId, UpdateRoleDto dto, string currentUserId);
-        Task ToggleUserStatusAsync(string userId, ToggleStatusDto dto, string currentUserId);
 
         // Services
         Task<IEnumerable<ServiceDto>> GetServicesAsync();

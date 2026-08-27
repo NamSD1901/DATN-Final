@@ -163,6 +163,8 @@ namespace MyPetClinic.Application.Services
         private EmployeeDto MapToDto(User user, EmployeeProfile profile, string roleName)
         {
             return new EmployeeDto
+
+        
             {
                 Id = user.Id,
                 Email = user.Email ?? "",
