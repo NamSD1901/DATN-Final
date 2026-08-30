@@ -17,13 +17,15 @@ namespace MyPetClinic.Application.Services
         private readonly INotificationService _notificationService;
         private readonly IEmailQueue _emailQueue;
         private static readonly System.Threading.SemaphoreSlim _queueSemaphore = new System.Threading.SemaphoreSlim(1, 1);
+        private readonly IAppointmentService _appointmentService;
 
-        public ReceptionistAppointmentService(IUnitOfWork unitOfWork, IVaccinationScheduleChecker vaccinationScheduleChecker, INotificationService notificationService, IEmailQueue emailQueue)
+        public ReceptionistAppointmentService(IUnitOfWork unitOfWork, IVaccinationScheduleChecker vaccinationScheduleChecker, INotificationService notificationService, IEmailQueue emailQueue, IAppointmentService appointmentService)
         {
             _unitOfWork = unitOfWork;
             _vaccinationScheduleChecker = vaccinationScheduleChecker;
             _notificationService = notificationService;
             _emailQueue = emailQueue;
+            _appointmentService = appointmentService;
         }
 
         private bool IsTransientConflict(Exception ex)
@@ -414,105 +416,7 @@ namespace MyPetClinic.Application.Services
 
         public async Task<bool> UpdateAppointmentStatusAsync(long id, string status, string? reason = null)
         {
-            var appointment = await _unitOfWork.Appointments.GetFirstOrDefaultWithIncludesAsync(
-                a => a.Id == id,
-                a => a.Customer!, a => a.Pet!, a => a.Doctor!);
-                
-            if (appointment == null) return false;
-
-            // Kiểm tra tính hợp lệ của việc chuyển đổi trạng thái (State Machine)
-            var currentStatus = appointment.Status.ToLower();
-            var newStatus = status.ToLower();
-
-            // Nếu đã completed thì không cho lùi về các trạng thái ban đầu
-            if (currentStatus == "completed" && newStatus != "completed")
-            {
-                throw new InvalidOperationException("Chuyển đổi trạng thái không hợp lệ.");
-            }
-            if (currentStatus == "cancelled" && newStatus != "cancelled")
-            {
-                throw new InvalidOperationException("Chuyển đổi trạng thái không hợp lệ.");
-            }
-
-            appointment.Status = newStatus;
-            
-            if (newStatus == "cancelled" && !string.IsNullOrWhiteSpace(reason))
-            {
-                appointment.CancelReason = reason;
-            }
-
-            // Nếu Check-in -> chuyển sang waiting và cấp số queue (logic giống Walk-in)
-            if (newStatus == "waiting" && appointment.QueueNumber == 0)
-            {
-                var today = DateTime.UtcNow.Date;
-                var todayAppointments = await _unitOfWork.Appointments.FindAsync(x => x.AppointmentDate.Date == today && x.QueueNumber > 0);
-                var lastQueue = todayAppointments.Any() ? todayAppointments.Max(x => (int?)x.QueueNumber) ?? 0 : 0;
-                
-                appointment.QueueNumber = lastQueue + 1;
-                appointment.CheckInTime = DateTime.UtcNow;
-            }
-
-            _unitOfWork.Appointments.Update(appointment);
-            await _unitOfWork.SaveChangesAsync();
-
-            // Gửi thông báo cho khách hàng
-            var message = newStatus == "confirmed" ? $"Lịch hẹn của bạn vào lúc {appointment.AppointmentDate.Add(appointment.StartTime):HH:mm dd/MM/yyyy} đã được phê duyệt."
-                        : newStatus == "cancelled" ? $"Lịch hẹn của bạn vào lúc {appointment.AppointmentDate.Add(appointment.StartTime):HH:mm dd/MM/yyyy} đã bị hủy."
-                        : newStatus == "completed" ? $"Lịch hẹn của bạn vào lúc {appointment.AppointmentDate.Add(appointment.StartTime):HH:mm dd/MM/yyyy} đã hoàn tất."
-                        : $"Trạng thái lịch hẹn của bạn đã thay đổi thành: {newStatus}.";
-
-            if (newStatus == "confirmed" || newStatus == "cancelled" || newStatus == "completed")
-            {
-                var customerUser = _unitOfWork.Users.Query().FirstOrDefault(u => u.CustomerId == appointment.CustomerId && u.IsActive == true);
-                if (customerUser != null)
-                {
-                    await _notificationService.CreateNotificationAsync(
-                        customerUser.Id,
-                        "Cập nhật lịch hẹn",
-                        message,
-                        "AppointmentUpdate"
-                    );
-
-                    // TH1 & TH2: Gửi email khi xác nhận hoặc hủy lịch
-                    if (!string.IsNullOrEmpty(customerUser.Email))
-                    {
-                        if (newStatus == "confirmed")
-                        {
-                            var emailHtml = MyPetClinic.Application.Utils.EmailTemplateBuilder.BuildAppointmentConfirmedEmail(
-                                customerName: appointment.Customer?.FullName ?? "Khách hàng",
-                                petName: appointment.Pet?.Name ?? "thú cưng",
-                                appointmentDate: appointment.AppointmentDate,
-                                doctorName: appointment.Doctor?.FullName ?? "Bác sĩ",
-                                timeSlot: appointment.StartTime.ToString(@"hh\:mm"),
-                                qrToken: appointment.QrToken
-                            );
-                            await _emailQueue.QueueEmailAsync(new MyPetClinic.Application.DTOs.Notification.EmailMessageDto
-                            {
-                                ToEmail = customerUser.Email,
-                                Subject = "MyPetClinic - Xác nhận đặt lịch khám thành công",
-                                BodyHtml = emailHtml
-                            });
-                        }
-                        else if (newStatus == "cancelled")
-                        {
-                            var emailHtml = MyPetClinic.Application.Utils.EmailTemplateBuilder.BuildAppointmentCancelledEmail(
-                                customerName: appointment.Customer?.FullName ?? "Khách hàng",
-                                petName: appointment.Pet?.Name ?? "thú cưng",
-                                appointmentDate: appointment.AppointmentDate,
-                                reason: appointment.CancelReason ?? "Lý do khác"
-                            );
-                            await _emailQueue.QueueEmailAsync(new MyPetClinic.Application.DTOs.Notification.EmailMessageDto
-                            {
-                                ToEmail = customerUser.Email,
-                                Subject = "MyPetClinic - Thông báo hủy lịch khám",
-                                BodyHtml = emailHtml
-                            });
-                        }
-                    }
-                }
-            }
-
-            return true;
+            return await _appointmentService.UpdateAppointmentStatusAsync(id, status, reason);
         }
 
         public async Task<bool> RescheduleAppointmentAsync(long id, DateTime newDate, bool force = false)

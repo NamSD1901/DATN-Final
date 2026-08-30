@@ -34,10 +34,7 @@ namespace MyPetClinic.Application.Services
 
         public async Task<long> BookAppointmentAsync(MyPetClinic.Application.DTOs.CustomerBookingDto dto, Guid customerId, Guid userId)
         {
-            if (dto.IsEmergency)
-            {
-                throw new InvalidOperationException("TRƯỜNG HỢP CẤP CỨU: Vui lòng KHÔNG đặt lịch online. Hãy đưa bé đến phòng khám ngay lập tức hoặc gọi Hotline khẩn cấp.");
-            }
+
 
             var users = await _unitOfWork.Users.FindAsync(u => u.Id == userId);
             var user = users.FirstOrDefault();

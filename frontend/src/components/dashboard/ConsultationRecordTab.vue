@@ -405,7 +405,6 @@
                     <label class="form-label small fw-bold text-secondary">Loại lịch hẹn <span class="text-danger">*</span></label>
                     <select v-model="form.plan.followUpType" class="form-select rounded-pill border-primary" required>
                       <option value="FollowUp">Tái khám</option>
-                      <option value="Revaccination">Tái tiêm</option>
                     </select>
                   </div>
                   <div class="col-md-4">
