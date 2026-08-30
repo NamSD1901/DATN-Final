@@ -47,14 +47,16 @@
               :key="'waiting-' + gIdx"
               class="card shadow-sm mb-2 border-0 rounded-4 overflow-hidden kanban-group-card"
             >
-              <div class="bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-                <div class="fw-bold text-dark d-flex align-items-center" style="font-size: 0.9rem;">
-                   <i class="bi bi-person-circle text-primary me-2"></i>
+              <div class="px-3 py-2 d-flex justify-content-between align-items-center" style="background: linear-gradient(to right, #f8fafc, #ffffff); border-bottom: 1px dashed #e2e8f0;">
+                <div class="fw-bold text-dark d-flex align-items-center" style="font-size: 0.95rem;">
+                   <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 28px; height: 28px;">
+                     <i class="bi bi-person-fill" style="font-size: 0.85rem;"></i>
+                   </div>
                    {{ group.customerName }}
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                  <span v-if="group.isEmergency" class="badge bg-danger text-white rounded-pill" style="font-size: 0.65rem;">CẤP CỨU</span>
-                  <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill" style="font-size: 0.75rem;">{{ group.items.length }} ca</span>
+                  <span v-if="group.isEmergency" class="badge bg-danger text-white rounded-pill shadow-sm" style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;">CẤP CỨU</span>
+                  <span class="badge bg-secondary text-white rounded-pill px-2 shadow-sm" style="font-size: 0.75rem;">{{ group.items.length }} ca</span>
                 </div>
               </div>
               <div class="p-2 bg-white">
@@ -119,14 +121,16 @@
               :key="'progress-' + gIdx"
               class="card shadow-sm mb-2 border-0 rounded-4 overflow-hidden kanban-group-card"
             >
-              <div class="bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-                <div class="fw-bold text-dark d-flex align-items-center" style="font-size: 0.9rem;">
-                   <i class="bi bi-person-circle text-warning me-2"></i>
+              <div class="px-3 py-2 d-flex justify-content-between align-items-center" style="background: linear-gradient(to right, #fffbeb, #ffffff); border-bottom: 1px dashed #fde68a;">
+                <div class="fw-bold text-dark d-flex align-items-center" style="font-size: 0.95rem;">
+                   <div class="bg-warning bg-opacity-25 text-warning-emphasis rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 28px; height: 28px;">
+                     <i class="bi bi-person-fill" style="font-size: 0.85rem;"></i>
+                   </div>
                    {{ group.customerName }}
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                  <span v-if="group.isEmergency" class="badge bg-danger text-white rounded-pill" style="font-size: 0.65rem;">CẤP CỨU</span>
-                  <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill" style="font-size: 0.75rem;">{{ group.items.length }} ca</span>
+                  <span v-if="group.isEmergency" class="badge bg-danger text-white rounded-pill shadow-sm" style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;">CẤP CỨU</span>
+                  <span class="badge bg-warning text-dark rounded-pill px-2 shadow-sm" style="font-size: 0.75rem; font-weight: 700;">{{ group.items.length }} ca</span>
                 </div>
               </div>
               <div class="p-2 bg-white">
@@ -153,14 +157,16 @@
                     <span class="text-muted fw-bold" style="font-size: 0.75rem;">Bs. {{ getLastWord(card.doctorName) }}</span>
                   </div>
 
-                  <div class="d-flex gap-2">
-                    <button v-if="isAnonymousEmergency(card)" class="btn btn-sm btn-outline-danger flex-grow-1 rounded py-1 fw-bold" style="font-size: 0.75rem;" @click="openLinkCustomerModal(card)">
+                  <div v-if="isAnonymousEmergency(card)" class="mt-2">
+                    <button class="btn btn-sm btn-outline-danger w-100 rounded py-1 fw-bold" style="font-size: 0.75rem;" @click="openLinkCustomerModal(card)">
                       <i class="bi bi-link-45deg"></i> Ghép
                     </button>
-                    <button class="btn btn-sm btn-success flex-grow-1 rounded py-1 fw-bold text-white shadow-sm" style="font-size: 0.75rem;" @click.stop="updateStatus(card.appointmentId, 'ready_to_pay')">
-                      <i class="bi bi-check-circle me-1"></i> Xong
-                    </button>
                   </div>
+                </div>
+                
+                <div class="bg-success bg-opacity-10 text-success rounded-3 p-2 text-center border border-success border-opacity-25 shadow-sm mt-1 mb-1 mx-1" style="font-size: 0.72rem; cursor: default;">
+                  <i class="bi bi-info-circle-fill me-1"></i> 
+                  <span class="fw-bold">Tự động chuyển sang hàng thanh toán<br>sau khi bác sĩ hoàn tất khám</span>
                 </div>
               </div>
             </div>
@@ -189,14 +195,16 @@
               :key="'ready-' + gIdx"
               class="card shadow-sm mb-2 border-0 rounded-4 overflow-hidden kanban-group-card"
             >
-              <div class="bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-                <div class="fw-bold text-dark d-flex align-items-center" style="font-size: 0.9rem;">
-                   <i class="bi bi-person-circle text-success me-2"></i>
+              <div class="px-3 py-2 d-flex justify-content-between align-items-center" style="background: linear-gradient(to right, #f0fdf4, #ffffff); border-bottom: 1px dashed #bbf7d0;">
+                <div class="fw-bold text-dark d-flex align-items-center" style="font-size: 0.95rem;">
+                   <div class="bg-success bg-opacity-25 text-success-emphasis rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 28px; height: 28px;">
+                     <i class="bi bi-person-fill" style="font-size: 0.85rem;"></i>
+                   </div>
                    {{ group.customerName }}
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                  <span v-if="group.isEmergency" class="badge bg-danger text-white rounded-pill" style="font-size: 0.65rem;">CẤP CỨU</span>
-                  <span class="badge bg-success bg-opacity-10 text-success rounded-pill" style="font-size: 0.75rem;">{{ group.items.length }} ca</span>
+                  <span v-if="group.isEmergency" class="badge bg-danger text-white rounded-pill shadow-sm" style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;">CẤP CỨU</span>
+                  <span class="badge bg-success text-white rounded-pill px-2 shadow-sm" style="font-size: 0.75rem; font-weight: 700;">{{ group.items.length }} ca</span>
                 </div>
               </div>
               <div class="p-2 bg-white">

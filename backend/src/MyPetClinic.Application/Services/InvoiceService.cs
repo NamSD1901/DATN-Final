@@ -439,7 +439,8 @@ namespace MyPetClinic.Application.Services
                             petName: invoice.Appointment?.Pet?.Name,
                             doctorName: invoice.Appointment?.Doctor?.FullName,
                             appointmentDate: invoice.Appointment?.AppointmentDate,
-                            items: itemsDto
+                            items: itemsDto,
+                            discountAmount: invoice.DiscountAmount
                         );
                         await _emailQueue.QueueEmailAsync(new MyPetClinic.Application.DTOs.Notification.EmailMessageDto
                         {
@@ -606,7 +607,8 @@ namespace MyPetClinic.Application.Services
                             petName: invoice.Appointment?.Pet?.Name,
                             doctorName: invoice.Appointment?.Doctor?.FullName,
                             appointmentDate: invoice.Appointment?.AppointmentDate,
-                            items: itemsDto
+                            items: itemsDto,
+                            discountAmount: invoice.DiscountAmount
                         );
                         await _emailQueue.QueueEmailAsync(new MyPetClinic.Application.DTOs.Notification.EmailMessageDto
                         {

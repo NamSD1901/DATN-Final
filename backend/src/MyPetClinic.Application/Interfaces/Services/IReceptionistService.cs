@@ -15,8 +15,6 @@ namespace MyPetClinic.Application.Interfaces.Services
         Task<List<QueueItemDto>> GetTodayQueueAsync();
 
         // Tạo nhanh Khách hàng mới + Thú cưng mới + Check-in ngay lập tức
-        Task<long> CreateWalkInAsync(WalkInRequestDto request, System.Guid createdBy);
-        
         // Cập nhật trạng thái kéo thả (Drag and Drop)
         Task<bool> UpdateQueueStatusAsync(long appointmentId, string newStatus);
 

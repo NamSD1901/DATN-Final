@@ -110,6 +110,28 @@
           </div>
         </div>
       </div>
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="d-flex justify-content-center mt-4">
+        <nav aria-label="Page navigation">
+          <ul class="pagination pagination-sm shadow-sm mb-0">
+            <li class="page-item" :class="{ disabled: currentPage === 1 }">
+              <button class="page-link border-0 text-secondary" @click="changePage(currentPage - 1)" :disabled="currentPage === 1">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+            </li>
+            <li v-for="page in totalPages" :key="page" class="page-item" :class="{ active: currentPage === page }">
+              <button class="page-link border-0 fw-medium" :class="currentPage === page ? 'bg-primary text-white' : 'text-dark'" @click="changePage(page)">
+                {{ page }}
+              </button>
+            </li>
+            <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+              <button class="page-link border-0 text-secondary" @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
     </div>
 
     <!-- Modal Chi Tiết Lịch Sử Y Tế -->
@@ -492,6 +514,11 @@ const records = ref<MedicalRecord[]>([]);
 const loading = ref(false);
 const errorMsg = ref('');
 
+// Pagination state
+const currentPage = ref(1);
+const totalPages = ref(1);
+const itemsPerPage = ref(10);
+
 // Modal state
 const medicalRecordModalRef = ref<HTMLElement | null>(null);
 const selectedRecord = ref<MedicalRecord | null>(null);
@@ -628,12 +655,21 @@ const fetchPets = async () => {
   }
 };
 
-const fetchMedicalHistory = async (petId: number) => {
+const fetchMedicalHistory = async (petId: number, page = 1) => {
   loading.value = true;
   errorMsg.value = '';
   try {
-    const res = await api.get(`/my-appointments/pets/${petId}/medical-history`);
-    records.value = res.data;
+    const res = await api.get(`/my-appointments/pets/${petId}/medical-history?page=${page}&pageSize=${itemsPerPage.value}`);
+    // Check if the response is paginated (has items property) or old format
+    if (res.data && res.data.items) {
+      records.value = res.data.items;
+      currentPage.value = res.data.pageIndex;
+      totalPages.value = res.data.totalPages || 1;
+    } else {
+      records.value = res.data;
+      currentPage.value = 1;
+      totalPages.value = 1;
+    }
   } catch (err: any) {
     errorMsg.value = 'Không thể tải lịch sử bệnh án. Vui lòng thử lại.';
   } finally {
@@ -643,7 +679,20 @@ const fetchMedicalHistory = async (petId: number) => {
 
 const selectPet = async (petId: number) => {
   selectedPetId.value = petId;
-  await fetchMedicalHistory(petId);
+  currentPage.value = 1;
+  await fetchMedicalHistory(petId, 1);
+};
+
+const changePage = async (page: number) => {
+  if (page < 1 || page > totalPages.value || page === currentPage.value) return;
+  if (selectedPetId.value) {
+    await fetchMedicalHistory(selectedPetId.value, page);
+    // Cuộn lên phần danh sách
+    const exportArea = document.getElementById('medical-records-export-area');
+    if (exportArea) {
+      exportArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 };
 
 // ===== Chart Logic =====

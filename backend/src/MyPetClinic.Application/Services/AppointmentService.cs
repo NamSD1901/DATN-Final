@@ -48,114 +48,96 @@ namespace MyPetClinic.Application.Services
                 throw new InvalidOperationException("Thời gian hẹn không thể nằm trong quá khứ hoặc quá sát giờ hiện tại. Vui lòng chọn khung giờ khác.");
             }
 
-            int retryCount = 3;
-            for (int i = 0; i < retryCount; i++)
+            var strategy = _unitOfWork.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                await _unitOfWork.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
-                try
+                int retryCount = 3;
+                for (int i = 0; i < retryCount; i++)
                 {
-                    var targetDateStart = appointmentDate.Date;
-                    var targetDateEnd = targetDateStart.AddDays(1);
-
-                    // 0. Kiểm tra ngày nghỉ lễ và khung giờ hoạt động chung của phòng khám
-                    var isHoliday = _unitOfWork.ClinicHolidays.Query()
-                        .Any(h => h.IsActive && h.StartDate <= targetDateStart && h.EndDate >= targetDateStart);
-                    if (isHoliday)
+                    await _unitOfWork.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+                    try
                     {
-                        throw new InvalidOperationException("Phòng khám đóng cửa vào ngày nghỉ lễ này. Vui lòng chọn ngày khác.");
-                    }
+                        var targetDateStart = appointmentDate.Date;
+                        var targetDateEnd = targetDateStart.AddDays(1);
 
-                    var clinicDay = _unitOfWork.ClinicOperatingDays.Query().FirstOrDefault(d => d.DayOfWeek == targetDateStart.DayOfWeek);
-                    if (clinicDay != null && !clinicDay.IsOpen)
-                    {
-                        throw new InvalidOperationException($"Phòng khám không hoạt động vào {targetDateStart.DayOfWeek}.");
-                    }
-
-                    if (clinicDay != null && clinicDay.IsOpen)
-                    {
-                        var appointmentTimeCheck = appointmentDate.TimeOfDay;
-                        var shifts = _unitOfWork.ClinicOperatingShifts.Query().Where(s => s.ClinicOperatingDayId == clinicDay.Id).ToList();
-                        if (shifts.Any())
+                        // 0. Kiểm tra ngày nghỉ lễ và khung giờ hoạt động chung của phòng khám
+                        var isHoliday = _unitOfWork.ClinicHolidays.Query()
+                            .Any(h => h.IsActive && h.StartDate <= targetDateStart && h.EndDate >= targetDateStart);
+                        if (isHoliday)
                         {
-                            var isInShift = shifts.Any(s => s.StartTime <= appointmentTimeCheck && s.EndTime >= appointmentTimeCheck.Add(TimeSpan.FromMinutes(30)));
-                            if (!isInShift)
+                            throw new InvalidOperationException("Phòng khám đóng cửa vào ngày nghỉ lễ này. Vui lòng chọn ngày khác.");
+                        }
+
+                        var clinicDay = _unitOfWork.ClinicOperatingDays.Query().FirstOrDefault(d => d.DayOfWeek == targetDateStart.DayOfWeek);
+                        if (clinicDay != null && !clinicDay.IsOpen)
+                        {
+                            throw new InvalidOperationException($"Phòng khám không hoạt động vào {targetDateStart.DayOfWeek}.");
+                        }
+
+                        if (clinicDay != null && clinicDay.IsOpen)
+                        {
+                            var appointmentTimeCheck = appointmentDate.TimeOfDay;
+                            var shifts = _unitOfWork.ClinicOperatingShifts.Query().Where(s => s.ClinicOperatingDayId == clinicDay.Id).ToList();
+                            if (shifts.Any())
                             {
-                                throw new InvalidOperationException("Thời gian hẹn không nằm trong khung giờ hoạt động của phòng khám.");
+                                var isInShift = shifts.Any(s => s.StartTime <= appointmentTimeCheck && s.EndTime >= appointmentTimeCheck.Add(TimeSpan.FromMinutes(30)));
+                                if (!isInShift)
+                                {
+                                    throw new InvalidOperationException("Thời gian hẹn không nằm trong khung giờ hoạt động của phòng khám.");
+                                }
                             }
                         }
-                    }
 
 
-                    var finalDoctorId = ResolveAndValidateDoctorId(dto.DoctorId, appointmentDate, dto.ServiceId);
+                        var finalDoctorId = ResolveAndValidateDoctorId(dto.DoctorId, appointmentDate, dto.ServiceId);
 
-                    // Sinh QR Token (Sử dụng lại QR cũ nếu có lịch hẹn cùng khung giờ)
-                    var targetDateUtc = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc);
-                    
-                    // Thêm logic chặn đặt trùng lịch cùng 1 dịch vụ cho cùng 1 pet
-                    var isDuplicatePetService = _unitOfWork.Appointments.Query()
-                        .Any(a => a.PetId == dto.PetId
-                               && a.Status != "cancelled"
-                               && a.AppointmentDate == targetDateUtc
-                               && a.StartTime == appointmentDate.TimeOfDay
-                               && a.ServiceId == dto.ServiceId);
+                        // Sinh QR Token (Sử dụng lại QR cũ nếu có lịch hẹn cùng khung giờ)
+                        var targetDateUtc = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc);
+                        
+                        // Thêm logic chặn đặt trùng lịch cùng 1 dịch vụ cho cùng 1 pet trong cùng 1 ngày (Active status)
+                        var activeStatuses = new[] { "pending", "confirmed", "waiting", "in_progress" };
+                        
+                        var requestedService = _unitOfWork.Services.Query().FirstOrDefault(s => s.Id == dto.ServiceId);
+                        if (requestedService == null) throw new InvalidOperationException("Dịch vụ không tồn tại.");
+                        
+                        var appointmentTimeCheck2 = appointmentDate.TimeOfDay;
+                        var isDuplicatePetService = _unitOfWork.Appointments.Query()
+                            .Include(a => a.Service)
+                            .Any(a => a.PetId == dto.PetId
+                                   && activeStatuses.Contains(a.Status.ToLower())
+                                   && a.AppointmentDate == targetDateUtc
+                                   && Math.Abs((a.StartTime - appointmentTimeCheck2).TotalMinutes) < 30
+                                   && a.Service != null
+                                   && a.Service.CategoryId == requestedService.CategoryId);
 
-                    if (isDuplicatePetService)
-                    {
-                        throw new InvalidOperationException("Thú cưng đã có lịch hẹn cho dịch vụ này vào khung giờ này. Vui lòng chọn giờ khác hoặc dịch vụ khác.");
-                    }
-
-                    var existingAppointment = _unitOfWork.Appointments.Query()
-                        .FirstOrDefault(a => a.CustomerId == dto.CustomerId
-                                          && a.Status != "cancelled"
-                                          && a.AppointmentDate == targetDateUtc
-                                          && a.StartTime == appointmentDate.TimeOfDay);
-
-                    string qrToken = string.Empty;
-                    if (existingAppointment != null && !string.IsNullOrEmpty(existingAppointment.QrToken))
-                    {
-                        qrToken = existingAppointment.QrToken; // Group QR
-                    }
-                    else
-                    {
-                        bool isQrUnique = false;
-                        for (int q = 0; q < 5 && !isQrUnique; q++)
+                        if (isDuplicatePetService)
                         {
-                            qrToken = "QR-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
-                            isQrUnique = !_unitOfWork.Appointments.Query().Any(a => a.QrToken == qrToken);
-                        }
-                        if (!isQrUnique)
-                        {
-                            throw new InvalidOperationException("Không thể tạo mã QR duy nhất cho lịch hẹn.");
-                        }
-                    }
-
-                    var appointment = new Appointment
-                    {
-                        CustomerId = dto.CustomerId,
-                        PetId = dto.PetId,
-                        ServiceId = dto.ServiceId,
-                        DoctorId = finalDoctorId,
-                        Symptom = dto.Symptom?.Trim(),
-                        Note = dto.Note?.Trim(),
-                        Status = "pending", // Mặc định là chờ xác nhận
-                        CreatedBy = createdBy,
-                        CreatedAt = DateTime.UtcNow,
-                        AppointmentDate = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc),
-                        StartTime = appointmentDate.TimeOfDay,
-                        QrToken = qrToken
-                    };
-
-                    if (dto.VaccineId.HasValue)
-                    {
-                        var vaccine = _unitOfWork.Vaccines.Query().FirstOrDefault(v => v.Id == dto.VaccineId.Value);
-                        if (vaccine == null)
-                        {
-                            throw new InvalidOperationException("Không tìm thấy vắc-xin y khoa yêu cầu.");
+                            throw new InvalidOperationException("Thú cưng đã có lịch hẹn cho cùng nhóm dịch vụ này vào khung giờ này. Vui lòng chọn khung giờ khác!");
                         }
 
-                        if (vaccine.StockQuantity <= 0)
+                        var existingAppointment = _unitOfWork.Appointments.Query()
+                            .FirstOrDefault(a => a.CustomerId == dto.CustomerId
+                                              && a.Status != "cancelled"
+                                              && a.AppointmentDate == targetDateUtc
+                                              && a.StartTime == appointmentDate.TimeOfDay);
+
+                        string qrToken = string.Empty;
+                        if (existingAppointment != null && !string.IsNullOrEmpty(existingAppointment.QrToken))
                         {
-                            throw new InvalidOperationException($"Vắc-xin {vaccine.Name} đã hết hàng trong kho.");
+                            qrToken = existingAppointment.QrToken; // Group QR
+                        }
+                        else
+                        {
+                            bool isQrUnique = false;
+                            for (int q = 0; q < 5 && !isQrUnique; q++)
+                            {
+                                qrToken = "QR-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+                                isQrUnique = !_unitOfWork.Appointments.Query().Any(a => a.QrToken == qrToken);
+                            }
+                            if (!isQrUnique)
+                            {
+                                throw new InvalidOperationException("Không thể tạo mã QR duy nhất cho lịch hẹn.");
+                            }
                         }
 
                         var pet = _unitOfWork.Pets.Query().FirstOrDefault(p => p.Id == dto.PetId);
@@ -163,62 +145,60 @@ namespace MyPetClinic.Application.Services
                         {
                             throw new InvalidOperationException("Không tìm thấy thông tin thú cưng.");
                         }
-
-                        var lastRecord = _unitOfWork.VaccinationRecords.Query()
-                            .Where(vr => vr.PetId == dto.PetId && vr.VaccineId == dto.VaccineId.Value)
-                            .OrderByDescending(vr => vr.InjectionDate)
-                            .FirstOrDefault();
-
-                        var validation = _vaccinationScheduleChecker.ValidateInterval(lastRecord, vaccine, appointmentDate, pet);
-                        if (!validation.IsValid)
+                        if (pet.CustomerId != dto.CustomerId)
                         {
-                            if (!validation.RequiresDoctorOverride)
-                            {
-                                throw new InvalidOperationException(validation.WarningMessage);
-                            }
-                            
-                            appointment.Note = string.IsNullOrEmpty(appointment.Note) 
-                                ? $"[CẢNH BÁO PHÁC ĐỒ] {validation.WarningMessage}"
-                                : $"[CẢNH BÁO PHÁC ĐỒ] {validation.WarningMessage}\n{appointment.Note}";
+                            throw new InvalidOperationException("Thú cưng không thuộc sở hữu của khách hàng này.");
                         }
 
-                        vaccine.StockQuantity -= 1;
-                        _unitOfWork.Vaccines.Update(vaccine);
-                        appointment.VaccineId = dto.VaccineId;
+                        var appointment = new Appointment
+                        {
+                            CustomerId = dto.CustomerId,
+                            PetId = dto.PetId,
+                            ServiceId = dto.ServiceId,
+                            DoctorId = finalDoctorId,
+                            Symptom = dto.Symptom?.Trim(),
+                            Note = dto.Note?.Trim(),
+                            Status = "pending", // Mặc định là chờ xác nhận
+                            CreatedBy = createdBy,
+                            CreatedAt = DateTime.UtcNow,
+                            AppointmentDate = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc),
+                            StartTime = appointmentDate.TimeOfDay,
+                            QrToken = qrToken
+                        };
+
+                        await _unitOfWork.Appointments.AddAsync(appointment);
+                        await _unitOfWork.SaveChangesAsync();
+
+                        // Gửi thông báo đặt lịch thành công cho khách hàng
+                        var statusMsg = appointment.Status == "pending_approval" ? "đang chờ được phê duyệt" : "đã được xác nhận";
+                        var customerUser = _unitOfWork.Users.Query().FirstOrDefault(u => u.CustomerId == appointment.CustomerId && u.IsActive == true);
+                        if (customerUser != null)
+                        {
+                            await _notificationService.CreateNotificationAsync(
+                                customerUser.Id,
+                                "Đặt lịch thành công",
+                                $"Lịch hẹn của bạn vào lúc {appointment.AppointmentDate.Add(appointment.StartTime):HH:mm dd/MM/yyyy} {statusMsg}.",
+                                "System"
+                            );
+                        }
+
+                        await _unitOfWork.CommitTransactionAsync();
+                        return appointment.Id;
                     }
-
-                    await _unitOfWork.Appointments.AddAsync(appointment);
-                    await _unitOfWork.SaveChangesAsync();
-
-                    // Gửi thông báo đặt lịch thành công cho khách hàng
-                    var statusMsg = appointment.Status == "pending_approval" ? "đang chờ được phê duyệt" : "đã được xác nhận";
-                    var customerUser = _unitOfWork.Users.Query().FirstOrDefault(u => u.CustomerId == appointment.CustomerId && u.IsActive == true);
-                    if (customerUser != null)
+                    catch (Exception ex) when (IsTransientConflict(ex) && i < retryCount - 1)
                     {
-                        await _notificationService.CreateNotificationAsync(
-                            customerUser.Id,
-                            "Đặt lịch thành công",
-                            $"Lịch hẹn của bạn vào lúc {appointment.AppointmentDate.Add(appointment.StartTime):HH:mm dd/MM/yyyy} {statusMsg}.",
-                            "System"
-                        );
+                        await _unitOfWork.RollbackTransactionAsync();
+                        await Task.Delay(new Random().Next(50, 150));
                     }
+                    catch
+                    {
+                        await _unitOfWork.RollbackTransactionAsync();
+                        throw;
+                    }
+                }
 
-                    await _unitOfWork.CommitTransactionAsync();
-                    return appointment.Id;
-                }
-                catch (Exception ex) when (IsTransientConflict(ex) && i < retryCount - 1)
-                {
-                    await _unitOfWork.RollbackTransactionAsync();
-                    await Task.Delay(new Random().Next(50, 150));
-                }
-                catch
-                {
-                    await _unitOfWork.RollbackTransactionAsync();
-                    throw;
-                }
-            }
-
-            throw new InvalidOperationException("Không thể hoàn tất đăng ký lịch hẹn do tranh chấp dữ liệu kéo dài.");
+                throw new InvalidOperationException("Không thể hoàn tất đăng ký lịch hẹn do tranh chấp dữ liệu kéo dài.");
+            });
         }
 
         public async Task<bool> UpdateAppointmentStatusAsync(long id, string status, string? reason = null)
@@ -652,6 +632,19 @@ namespace MyPetClinic.Application.Services
             var combinedList = mapped.Concat(vacMapped).OrderByDescending(r => r.VisitDate).ToList();
 
             return await Task.FromResult(combinedList);
+        }
+
+        public async Task<PaginatedResultDto<MedicalRecordDto>> GetPetMedicalHistoryPaginatedAsync(long petId, Guid CustomerId, int page, int pageSize)
+        {
+            var combinedList = await GetPetMedicalHistoryAsync(petId, CustomerId);
+            
+            var totalCount = combinedList.Count();
+            var pagedList = combinedList
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new PaginatedResultDto<MedicalRecordDto>(pagedList, totalCount, page, pageSize);
         }
 
         public async Task<IEnumerable<DoctorAvailableSlotsDto>> GetAvailableSlotsAsync(DateTime date, long? serviceId = null)

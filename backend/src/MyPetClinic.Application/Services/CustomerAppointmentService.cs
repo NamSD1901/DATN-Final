@@ -31,24 +31,6 @@ namespace MyPetClinic.Application.Services
             });
         }
 
-        public async Task<object> ValidateVaccineAsync(Guid customerId, long petId, long vaccineId, DateTime targetDate)
-        {
-            var pets = await _unitOfWork.Pets.FindAsync(p => p.Id == petId && p.CustomerId == customerId);
-            var pet = pets.FirstOrDefault();
-            if (pet == null)
-                throw new InvalidOperationException("Thú cưng không hợp lệ hoặc không thuộc về bạn.");
-
-            var vaccines = await _unitOfWork.Vaccines.FindAsync(v => v.Id == vaccineId);
-            var vaccine = vaccines.FirstOrDefault();
-            if (vaccine == null)
-                throw new KeyNotFoundException("Không tìm thấy vắc-xin.");
-
-            var lastRecords = await _unitOfWork.VaccinationRecords.FindAsync(vr => vr.PetId == petId && vr.VaccineId == vaccineId);
-            var lastRecord = lastRecords.OrderByDescending(vr => vr.InjectionDate).FirstOrDefault();
-
-            var checker = new VaccinationScheduleChecker();
-            return checker.ValidateInterval(lastRecord, vaccine, targetDate, pet);
-        }
 
         public async Task<long> BookAppointmentAsync(MyPetClinic.Application.DTOs.CustomerBookingDto dto, Guid customerId, Guid userId)
         {
@@ -122,8 +104,7 @@ namespace MyPetClinic.Application.Services
                 ServiceId = dto.ServiceId,
                 AppointmentDate = dto.AppointmentDate,
                 Symptom = dto.Symptom ?? string.Empty,
-                Note = dto.Note,
-                VaccineId = dto.VaccineId
+                Note = dto.Note
             };
 
             var appointmentId = await _appointmentService.CreateAppointmentAsync(createDto, userId);

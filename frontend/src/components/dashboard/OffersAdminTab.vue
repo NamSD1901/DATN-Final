@@ -336,6 +336,11 @@ const openEditModal = (offer: any) => {
 };
 
 const saveOffer = async () => {
+  if (formData.value.discountValue <= 0) {
+    alert('Mức giảm giá phải lớn hơn 0');
+    return;
+  }
+  
   try {
     // Sanitize payload: convert empty strings to null for nullable number fields
     const payload: any = { ...formData.value };

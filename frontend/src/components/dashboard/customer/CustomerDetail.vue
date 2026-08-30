@@ -289,7 +289,7 @@ const printInvoice = async (invInfo: any) => {
     const now = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     
     const total = Math.max(0, invData.subtotal - (invData.discountAmount || 0));
-    const payLabel = invData.paymentMethod === 'qr' ? 'Chuyển khoản VietQR' : 'Tiền mặt';
+    const payLabel = invData.paymentMethod === 'qr' ? 'Chuyển khoản' : 'Tiền mặt';
 
     const itemsHtml = (invData.items || []).map((item: any, idx: number) => `
     <tr>
@@ -537,7 +537,14 @@ const formatDate = (dateStr: string) => {
 
 const formatDateFull = (dateStr: string) => {
   if (!dateStr) return '—';
-  const d = new Date(dateStr);
+  
+  // Sửa lỗi +7 tiếng: Bỏ chữ Z để báo cho trình duyệt đây là giờ địa phương
+  let cleanDateStr = dateStr;
+  if (cleanDateStr.endsWith('Z')) {
+      cleanDateStr = cleanDateStr.replace('Z', '');
+  }
+
+  const d = new Date(cleanDateStr);
   return d.toLocaleString('vi-VN', {
     day: '2-digit',
     month: '2-digit',

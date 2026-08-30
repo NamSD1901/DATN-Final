@@ -245,7 +245,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("walk-in")]
-        public async Task<IActionResult> CreateWalkIn([FromBody] WalkInRequestDto request)
+        public async Task<IActionResult> CreateWalkIn([FromBody] WalkInRequestDto request, [FromServices] IReceptionistAppointmentService receptionistAppointmentService)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new { success = false, message = "Dữ liệu Walk-in không hợp lệ." });
@@ -255,7 +255,7 @@ namespace WebApi.Controllers
 
             try
             {
-                var appointmentId = await _receptionistService.CreateWalkInAsync(request, createdBy);
+                var appointmentId = await receptionistAppointmentService.CreateWalkInAppointmentAsync(request, createdBy);
                 return Ok(new { success = true, message = "Đã tạo ca Walk-in thành công và xếp vào hàng đợi.", appointmentId });
             }
             catch (Exception ex)

@@ -276,9 +276,9 @@
               </div>
 
               <!-- Discount display -->
-              <div class="d-flex justify-content-between mb-2 small text-warning fw-bold" v-if="discountAmount > 0">
-                <span>Voucher giảm giá</span>
-                <span>-{{ formatCurrency(discountAmount) }}</span>
+              <div class="d-flex justify-content-between mb-2 small text-warning fw-bold" v-if="(selectedInvoice.discountAmount > 0) || (discountAmount > 0)">
+                <span>Khuyến mãi / Voucher</span>
+                <span>-{{ formatCurrency(selectedInvoice.discountAmount || discountAmount) }}</span>
               </div>
               
               <div class="border-top border-secondary border-opacity-50 pt-3 mb-4 d-flex justify-content-between align-items-center">
@@ -338,6 +338,7 @@ interface InvoiceMock {
   medicineFee?: number;
   paymentMethod?: string;
   transactionId?: string;
+  discountAmount?: number;
   clinicalNotes?: string;
   nextAppointment?: string;
   items?: { description: string, descNote: string, icon: string, qty: number, price: number, total: number }[];
@@ -371,12 +372,23 @@ const fetchInvoices = async () => {
       let status = 'pending';
       if (inv.paymentStatus === 'paid') status = 'paid';
       if (inv.paymentStatus === 'cancelled') status = 'cancelled';
+      
+      let finalDate = inv.createdAt;
+      if (status === 'paid' && inv.paidAt) {
+          finalDate = inv.paidAt;
+      }
+      
+      // Sửa lỗi cộng thêm 7 tiếng do backend gửi ngày UTC ảo. 
+      // Bỏ chữ 'Z' ở cuối để trình duyệt không tự động cộng thêm múi giờ.
+      if (finalDate && finalDate.endsWith('Z')) {
+          finalDate = finalDate.replace('Z', '');
+      }
 
       return {
         id: `INV-${inv.id}`,
         serviceName,
         iconClass,
-        date: inv.appointmentDate ? `${inv.appointmentDate.split('T')[0]}T${inv.startTime || '00:00:00'}` : (inv.createdAt.endsWith('Z') ? inv.createdAt : inv.createdAt + 'Z'),
+        date: finalDate,
         petName: inv.petName,
         petSpecies: inv.petSpecies || 'Thú cưng',
         doctorName: inv.doctorName || 'Bác sĩ',
@@ -385,8 +397,9 @@ const fetchInvoices = async () => {
         totalAmount: inv.totalAmount,
         serviceFee,
         medicineFee,
-        paymentMethod: (inv.paymentMethod?.toLowerCase() === 'cash' ? 'Tiền mặt' : inv.paymentMethod) || (status === 'paid' ? 'Tiền mặt' : undefined),
+        paymentMethod: (inv.paymentMethod?.toLowerCase() === 'cash' ? 'Tiền mặt' : (inv.paymentMethod === 'VietQR' ? 'Chuyển khoản' : inv.paymentMethod)) || (status === 'paid' ? 'Tiền mặt' : undefined),
         transactionId: status === 'paid' ? `TXN_${inv.id}` : undefined,
+        discountAmount: inv.discountAmount || 0,
         items: inv.items?.map((i: any) => ({
           description: i.itemName,
           descNote: i.itemType === 'service' ? 'Dịch vụ y tế' : 'Thuốc/Vật tư',
@@ -465,7 +478,9 @@ const handleApplyVoucher = async (code: string) => {
       code,
       orderAmount: selectedInvoice.value?.totalAmount || 0,
       serviceIds: serviceIds,
-      servicePrices: servicePrices
+      servicePrices: servicePrices,
+      customerId: selectedInvoice.value?.customerId,
+      appointmentId: selectedInvoice.value?.appointmentId
     });
     if (res.data.success) {
       appliedVoucherCode.value = code;

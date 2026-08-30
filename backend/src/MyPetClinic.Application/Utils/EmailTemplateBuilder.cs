@@ -112,7 +112,8 @@ namespace MyPetClinic.Application.Utils
             string? petName,
             string? doctorName,
             DateTime? appointmentDate,
-            IEnumerable<(string ItemName, int Quantity, decimal TotalPrice)> items)
+            IEnumerable<(string ItemName, int Quantity, decimal TotalPrice)> items,
+            decimal discountAmount = 0)
         {
             var title = "Cảm Ơn Bạn Đã Sử Dụng Dịch Vụ";
             
@@ -130,6 +131,16 @@ namespace MyPetClinic.Application.Utils
             string dateStr = appointmentDate.HasValue ? appointmentDate.Value.ToString("dd/MM/yyyy") : "N/A";
             string doctorStr = string.IsNullOrEmpty(doctorName) ? "Chưa chỉ định" : doctorName;
             string petStr = string.IsNullOrEmpty(petName) ? "Không có" : petName;
+
+            string discountHtml = "";
+            if (discountAmount > 0)
+            {
+                discountHtml = $@"
+                        <tr>
+                            <td colspan='2' style='padding: 10px 15px; text-align: right; color: #2c3e50; font-size: 14px;'>Khuyến mãi / Voucher:</td>
+                            <td style='padding: 10px 15px; text-align: right; color: #27ae60; font-weight: bold;'>-{discountAmount:N0} đ</td>
+                        </tr>";
+            }
 
             var content = $@"
                 <p>Chào <b>{customerName}</b>,</p>
@@ -155,6 +166,7 @@ namespace MyPetClinic.Application.Utils
                         {itemsHtml}
                     </tbody>
                     <tfoot>
+                        {discountHtml}
                         <tr>
                             <td colspan='2' style='padding: 15px 15px; text-align: right; font-weight: bold; color: #2c3e50;'>Tổng thanh toán:</td>
                             <td style='padding: 15px 15px; text-align: right; font-weight: bold; color: #d35400; font-size: 16px;'>{totalAmount:N0} đ</td>

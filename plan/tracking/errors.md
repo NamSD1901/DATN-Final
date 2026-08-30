@@ -273,3 +273,11 @@ ull (vô hạn) bị thất bại, hoặc không hoạt động chính xác nế
 ### Giải pháp
 Sửa đổi logic sanitize payload thành if (!payload.totalQuantity || payload.totalQuantity <= 0) để bỏ qua lỗi ép kiểu TypeScript, xử lý đồng thời chuỗi rỗng "" lẫn các giá trị không hợp lệ (<= 0). Các giá trị này đều được an toàn gán thành 
 ull (không giới hạn) trước khi gửi về Backend.
+
+## [BUG-APPT-003] L? h?ng IDOR v� Dead Code trong ch?c nang �?t l?ch h?n
+- **Tr?ng th�i:** FIXED
+- **Th?i gian:** 29-08-2026
+### Nguy�n nh�n
+Frontend d� ?n t�nh nang ch?n V?c-xin khi d?t l?ch nhung m� Backend v?n gi? logic nh?n VaccineId, tr? kho v?c-xin ?o v� kh�ng ki?m tra quy?n s? h?u th� cung n?u truy?n sai VaccineId, d?n d?n l? h?ng b?o m?t IDOR c� th? b? khai th�c qua API.
+### Gi?i ph�p
+Lo?i b? ho�n to�n tru?ng VaccineId kh?i DTOs (CustomerBookingDto, AppointmentCreateDto). X�a s?ch block logic Vaccine t?i ReceptionistAppointmentService v� AppointmentService. B? sung ki?m tra b?t bu?c quy?n s? h?u th� cung (Pet.CustomerId == dto.CustomerId) d?i v?i t?t c? m?i lo?i l?ch h?n. D?n d?p s?ch s? API validate-vaccine th?a v� code template du th?a tr�n Frontend.

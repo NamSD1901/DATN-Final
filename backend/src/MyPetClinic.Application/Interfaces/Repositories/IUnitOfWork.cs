@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using MyPetClinic.Domain.Entities;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace MyPetClinic.Application.Interfaces.Repositories
 {
@@ -48,5 +49,6 @@ namespace MyPetClinic.Application.Interfaces.Repositories
         Task BeginTransactionAsync(System.Data.IsolationLevel isolationLevel);
         Task CommitTransactionAsync();
         Task RollbackTransactionAsync();
+        IExecutionStrategy CreateExecutionStrategy();
     }
 }

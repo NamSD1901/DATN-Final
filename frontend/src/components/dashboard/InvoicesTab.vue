@@ -274,7 +274,7 @@
                   >
                     <span v-if="notificationStore.isConnected" class="d-flex align-items-center gap-1">
                       <span class="live-dot"></span>
-                      <span>LIVE — Đang chờ thanh toán tự động</span>
+                      <span>Đang chờ thanh toán tự động</span>
                     </span>
                     <span v-else class="d-flex align-items-center gap-1">
                       <i class="bi bi-exclamation-triangle-fill"></i>
@@ -317,7 +317,7 @@
                     </div>
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="printMedicalCb" v-model="printMedicalRecordOpt">
-                      <label class="form-check-label small fw-bold text-dark cursor-pointer" for="printMedicalCb">In Bệnh án & Đơn thuốc (Premium)</label>
+                      <label class="form-check-label small fw-bold text-dark cursor-pointer" for="printMedicalCb">In Bệnh án & Đơn thuốc</label>
                     </div>
                   </div>
                 </div>
@@ -662,7 +662,8 @@ const applyVoucher = async () => {
       orderAmount: invoice.value.subtotal,
       serviceIds: serviceIds,
       servicePrices: servicePrices,
-      customerId: invoice.value.customerId
+      customerId: invoice.value.customerId,
+      appointmentId: invoice.value.appointmentId
     });
     
     if (res.data.success && res.data.data.isValid) {
@@ -694,7 +695,7 @@ const confirmPayment = async () => {
 
   const result = await Swal.fire({
     title: 'Xác nhận thanh toán?',
-    html: `Tổng cần thu: <strong class="text-primary">${finalTotal.value.toLocaleString('vi-VN')}đ</strong><br>Hình thức: <strong>${paymentMethod.value === 'cash' ? 'Tiền mặt' : 'VietQR'}</strong>`,
+    html: `Tổng cần thu: <strong class="text-primary">${finalTotal.value.toLocaleString('vi-VN')}đ</strong><br>Hình thức: <strong>${paymentMethod.value === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}</strong>`,
     icon: 'question',
     showCancelButton: true,
     confirmButtonText: '✅ Xác nhận & In hóa đơn',
@@ -760,7 +761,7 @@ const printInvoiceWindow = (inv: any, appt: any, soap: any, optInvoice: boolean,
   if (!inv) return;
   const discount = discountAmount.value;
   const total = Math.max(0, inv.subtotal - discount);
-  const payLabel = paymentMethod.value === 'cash' ? 'Tiền mặt' : 'Chuyển khoản VietQR';
+  const payLabel = paymentMethod.value === 'cash' ? 'Tiền mặt' : 'Chuyển khoản';
   const now = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const fmtCur = (v: number) => (v ?? 0).toLocaleString('vi-VN') + 'đ';
 

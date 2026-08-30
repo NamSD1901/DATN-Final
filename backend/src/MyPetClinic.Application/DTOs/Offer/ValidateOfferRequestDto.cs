@@ -9,6 +9,7 @@ namespace MyPetClinic.Application.DTOs.Offer
         public List<long> ServiceIds { get; set; } = new();
         public Dictionary<long, decimal> ServicePrices { get; set; } = new();
         public System.Guid? CustomerId { get; set; }
+        public long? AppointmentId { get; set; }
     }
     
     public class ValidateOfferResponseDto

@@ -209,43 +209,18 @@ namespace WebApi.Controllers
             }
         }
 
-        /// <summary>
-        /// Kiểm tra phác đồ tiêm chủng cho thú cưng trước khi đặt lịch.
-        /// </summary>
-        [HttpPost("validate-vaccine")]
-        public async Task<IActionResult> ValidateVaccine([FromBody] ValidateVaccineDto dto)
-        {
-            try
-            {
-                var customerId = await GetCurrentCustomerIdAsync();
-                var validation = await _customerAppointmentService.ValidateVaccineAsync(customerId, dto.PetId, dto.VaccineId, dto.TargetDate);
-                return Ok(validation);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
 
         /// <summary>
         /// Lấy lịch sử bệnh án khám của thú cưng thuộc sở hữu (chống IDOR).
         /// </summary>
         [HttpGet("pets/{petId:long}/medical-history")]
-        public async Task<IActionResult> GetPetMedicalHistory(long petId)
+        public async Task<IActionResult> GetPetMedicalHistory(long petId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             try
             {
                 var customerId = await GetCurrentCustomerIdAsync();
-                var history = await _appointmentService.GetPetMedicalHistoryAsync(petId, customerId);
-                var customerRecords = history.Select(r => new MedicalRecordCustomerViewDto
+                var historyPaginated = await _appointmentService.GetPetMedicalHistoryPaginatedAsync(petId, customerId, page, pageSize);
+                var customerRecords = historyPaginated.Items.Select(r => new MedicalRecordCustomerViewDto
                 {
                     RecordId = r.RecordId,
                     AppointmentId = r.AppointmentId,
@@ -266,7 +241,9 @@ namespace WebApi.Controllers
                     InvoiceStatus = r.InvoiceStatus,
                     InvoiceTotalAmount = r.InvoiceTotalAmount
                 }).ToList();
-                return Ok(customerRecords);
+                
+                var result = new PaginatedResultDto<MedicalRecordCustomerViewDto>(customerRecords, historyPaginated.TotalCount, historyPaginated.PageIndex, pageSize);
+                return Ok(result);
             }
             catch (UnauthorizedAccessException)
             {
@@ -299,13 +276,4 @@ namespace WebApi.Controllers
 
     // CustomerBookingDto đã được di chuyển sang MyPetClinic.Application.DTOs
 
-    /// <summary>
-    /// DTO kiểm tra phác đồ vắc-xin.
-    /// </summary>
-    public class ValidateVaccineDto
-    {
-        public long PetId { get; set; }
-        public long VaccineId { get; set; }
-        public DateTime TargetDate { get; set; }
-    }
 }

@@ -506,26 +506,8 @@
                     </div>
                   </div>
 
-                  <!-- Step 3: Choose Vaccine (Optional) -->
-                  <div v-else-if="isVaccinationService && currentStep === 3" class="step-content animate-fade-in">
-                    <h3 class="fw-bold text-dark mb-1">Chọn Vaccine</h3>
-                    <p class="text-muted mb-4">Vui lòng chọn loại vắc-xin cho bé <strong>{{ getSelectedPetName() }}</strong>.</p>
-                    
-                    <div class="row g-3">
-                      <div class="col-md-6" v-for="vac in filteredVaccines" :key="vac.id">
-                        <div class="service-card" :style="bookForm.vaccineId === vac.id ? 'background: #f8fbff; border-radius: 16px; border: 2px solid #0d6efd; padding: 20px; cursor: pointer;' : 'background: white; border-radius: 16px; border: 2px solid #dee2e6; padding: 20px; cursor: pointer;'" @click="selectVaccine(vac.id)">
-                          <h6 class="fw-bold mb-1">{{ vac.name }}</h6>
-                          <div class="small text-muted mb-2">{{ vac.description }}</div>
-                          <span class="badge bg-success-subtle text-success">Còn: {{ vac.stockQuantity }} liều</span>
-                        </div>
-                      </div>
-                    </div>
-
-
-                  </div>
-
-                  <!-- Step 4: Confirm -->
-                  <div v-else-if="currentStep === (isVaccinationService ? 4 : 3)" class="step-content animate-fade-in d-flex flex-column" style="min-height: min-content;">
+                  <!-- Step 3: Confirm -->
+                  <div v-else-if="currentStep === 3" class="step-content animate-fade-in d-flex flex-column" style="min-height: min-content;">
                     <div v-if="bookingError" class="alert alert-danger mb-2 border-0 rounded-3 small text-start py-2">
                       <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ bookingError }}
                     </div>
@@ -574,15 +556,14 @@
                             </div>
                             <div class="flex-grow-1">
                               <h6 class="fw-bold text-dark mb-0" style="font-size: 0.95rem;">
-                                {{ getSelectedServiceName() }}<template v-if="bookForm.vaccineId"> &amp; Tiêm phòng</template>
+                                {{ getSelectedServiceName() }}
                               </h6>
                               <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
-                                {{ bookForm.vaccineId ? getSelectedVaccineName() : ((services.find(s => s.id === bookForm.serviceId) as any)?.description || 'Gói khám dịch vụ') }}
+                                {{ ((services.find(s => s.id === bookForm.serviceId) as any)?.description || 'Gói khám dịch vụ') }}
                               </small>
                             </div>
                             <div class="fw-bold text-dark ms-2 text-end" style="font-size: 0.95rem;">
-                              {{ getSelectedServiceName().toLowerCase().includes('tiêm') ? 'Theo giá Vắc-xin' : (getSelectedServicePrice() ? formatCurrency(getSelectedServicePrice()) : 'Liên hệ') }}
-                              <div v-if="getSelectedServiceName().toLowerCase().includes('tiêm')" class="text-success fw-normal mt-1" style="font-size: 0.7rem;">(Miễn phí công tiêm)</div>
+                              {{ getSelectedServicePrice() ? formatCurrency(getSelectedServicePrice()) : 'Liên hệ' }}
                             </div>
                           </div>
                         </div>
@@ -634,7 +615,7 @@
                           <div class="receipt-body p-3 pt-2">
                             <h6 class="text-muted small fw-bold mb-1 tracking-wide" style="font-size: 0.75rem;">{{ $t('booking.serviceDetails') }}</h6>
                             <div class="d-flex justify-content-between mb-2">
-                              <span class="text-dark fw-medium" style="font-size: 0.85rem;">{{ getSelectedServiceName() }}<template v-if="bookForm.vaccineId"><br/><small class="text-muted">+ {{ getSelectedVaccineName() }}</small></template></span>
+                              <span class="text-dark fw-medium" style="font-size: 0.85rem;">{{ getSelectedServiceName() }}</span>
                               <span class="edit-link" @click="currentStep = 1">{{ $t('booking.edit') }}</span>
                             </div>
 
@@ -705,7 +686,7 @@
     </Teleport>
 
     <OfferSelectorModal 
-      v-if="currentStep === (isVaccinationService ? 4 : 3)"
+      v-if="currentStep === 3"
       :show="showOfferModal" 
       :order-amount="getSelectedServicePrice()"
       :current-selected-code="appliedVoucherCode"
@@ -907,7 +888,7 @@
                   <label class="form-label text-muted small fw-bold text-uppercase mb-2">CHỌN LỊCH HẸN</label>
                   <select v-model="selectedQrApptId" class="form-select form-select-lg shadow-sm fw-bold text-dark" style="border: 2px solid #0f766e; border-radius: 12px; cursor: pointer;">
                     <option v-for="appt in confirmedAppointments" :key="appt.id" :value="appt.id">
-                      #{{ appt.id }} · {{ formatTime(appt.appointmentDate) }} {{ formatDateOnly(appt.appointmentDate) }} — {{ appt.petName }}
+                      {{ formatTime(appt.appointmentDate) }} {{ formatDateOnly(appt.appointmentDate) }} — {{ appt.petName }}
                     </option>
                   </select>
                 </div>
@@ -1094,7 +1075,14 @@ const showQrListModal = ref(false);
 const selectedQrApptId = ref<number | null>(null);
 
 const confirmedAppointments = computed(() => {
-  return appointments.value.filter(a => a.status === 'confirmed' && a.qrToken);
+  const now = new Date();
+  return appointments.value.filter(a => {
+    if (a.status !== 'confirmed' || !a.qrToken) return false;
+    const apptDate = new Date(a.appointmentDate);
+    // Cho phép mã QR tồn tại thêm 30 phút sau giờ hẹn
+    const expiryTime = new Date(apptDate.getTime() + 30 * 60000);
+    return expiryTime > now;
+  });
 });
 
 const selectedQrAppt = computed(() => {
@@ -1121,7 +1109,6 @@ const bookForm = ref({
   appointmentDate: '',
   symptom: '',
   note: '',
-  vaccineId: null as number | null,
   doctorId: null as string | null,
 });
 
@@ -1148,36 +1135,14 @@ const computedAvailableSlots = computed(() => {
   }
 });
 
-// Bỏ bước chọn Vaccine: luôn trả về false để wizard chỉ có 4 bước (không có bước Vaccine)
-const isVaccinationService = computed(() => false);
 
 const bookingSteps = computed(() => [t('booking.step1'), t('booking.step2'), t('booking.step3'), t('booking.step4')]);
 
 const maxSteps = computed(() => 3);
 
-const vaccines = ref<Vaccine[]>([]);
-const vaccineValidation = ref<ValidationResult | null>(null);
-const checkingValidation = ref(false);
+
+
 const lastBookedAppt = ref<AppointmentDetail | null>(null);
-
-
-interface Vaccine {
-  id: number;
-  name: string;
-  manufacturer: string | null;
-  description: string | null;
-  stockQuantity: number;
-  targetSpecies: string | null;
-  minAgeWeeks: number | null;
-  intervalDays: number | null;
-}
-
-interface ValidationResult {
-  isValid: boolean;
-  warningMessage: string | null;
-  requiresDoctorOverride: boolean;
-  nextAvailableDate: string | null;
-}
 
 // ===== Filter Options =====
 const filterOptions = [
@@ -1412,7 +1377,6 @@ const petWarningDismissed = ref(false);
 const selectPet = (petId: number) => {
   if (bookForm.value.petId === petId) return; // deselect logic: keep selected
   bookForm.value.petId = petId;
-  bookForm.value.vaccineId = null;
   bookForm.value.symptom = '';
   bookForm.value.note = '';
   appliedVoucherCode.value = '';
@@ -1534,7 +1498,6 @@ const submitBooking = async () => {
       appointmentDate: bookForm.value.appointmentDate,
       symptom: bookForm.value.symptom,
       note: appliedVoucherCode.value ? `[Áp dụng voucher: ${appliedVoucherCode.value}]\n${bookForm.value.note || ''}` : bookForm.value.note,
-      vaccineId: bookForm.value.vaccineId,
       doctorId: bookForm.value.doctorId,
     });
     const appointmentId = res.data.id;
@@ -1614,18 +1577,18 @@ const cancelAppointment = async () => {
 
 // ===== Modal controls =====
 const openBookModal = async (initialPetId?: number | Event, initialServiceName?: string) => {
-  bookForm.value = { petId: 0, serviceId: 0, appointmentDate: '', symptom: '', note: '', vaccineId: null, doctorId: null };
+  bookForm.value = { petId: 0, serviceId: 0, appointmentDate: '', symptom: '', note: '', doctorId: null };
   selectedBookingDate.value = '';
   doctorAvailableSlots.value = [];
   currentStep.value = 0;
   bookingError.value = '';
   bookingSuccess.value = false;
-  vaccineValidation.value = null;
+
   lastBookedAppt.value = null;
   petWarningDismissed.value = false;
   await fetchPets();
   await fetchServices();
-  await fetchVaccines();
+
   
   const parsedPetId = typeof initialPetId === 'object' ? null : Number(initialPetId);
   
@@ -1661,7 +1624,7 @@ const closeBookModal = () => {
 const nextStep = () => {
   console.log('nextStep called. currentStep:', currentStep.value, 'maxSteps:', maxSteps.value, 'canProceed:', canProceed.value);
   console.log('bookForm.serviceId:', bookForm.value.serviceId, 'type:', typeof bookForm.value.serviceId);
-  console.log('isVaccinationService:', isVaccinationService.value);
+
   if (!canProceed.value) {
     console.log('Cannot proceed!');
     return;
@@ -1790,63 +1753,7 @@ const calculateAge = (birthDate: string): string => {
   return `${months} tháng`;
 };
 
-const getSelectedVaccineName = (): string => {
-  const vac = vaccines.value.find(v => v.id === bookForm.value.vaccineId);
-  return vac ? vac.name : '—';
-};
 
-const fetchVaccines = async () => {
-  try {
-    const res = await api.get('/my-appointments/vaccines');
-    vaccines.value = res.data;
-  } catch { /* silent */ }
-};
-
-const selectedPetSpecies = computed(() => {
-  const pet = myPets.value.find(p => p.id === bookForm.value.petId);
-  return pet?.species || '';
-});
-
-const filteredVaccines = computed(() => {
-  if (!selectedPetSpecies.value) return vaccines.value;
-  const petSpeciesLower = selectedPetSpecies.value.toLowerCase();
-  return vaccines.value.filter(v => {
-    if (!v.targetSpecies || v.targetSpecies.toLowerCase() === 'all') return true;
-    const targetLower = v.targetSpecies.toLowerCase();
-    return petSpeciesLower.includes(targetLower) || targetLower.includes(petSpeciesLower);
-  });
-});
-
-const selectVaccine = async (id: number) => {
-  bookForm.value.vaccineId = id;
-  await validateVaccineChoice();
-};
-
-const validateVaccineChoice = async () => {
-  if (!bookForm.value.petId || !bookForm.value.vaccineId || !bookForm.value.appointmentDate) {
-    vaccineValidation.value = null;
-    return;
-  }
-  checkingValidation.value = true;
-  vaccineValidation.value = null;
-  try {
-    const res = await api.post('/my-appointments/validate-vaccine', {
-      petId: bookForm.value.petId,
-      vaccineId: bookForm.value.vaccineId,
-      targetDate: bookForm.value.appointmentDate,
-    });
-    vaccineValidation.value = res.data;
-  } catch (err: any) {
-    vaccineValidation.value = {
-      isValid: false,
-      warningMessage: translateApiError(err, t, 'VACCINE_CHECK_FAILED'),
-      requiresDoctorOverride: false,
-      nextAvailableDate: null
-    };
-  } finally {
-    checkingValidation.value = false;
-  }
-};
 
 const extractVoucher = (text?: string | null): string | null => {
   if (!text) return null;

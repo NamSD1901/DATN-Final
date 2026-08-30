@@ -66,7 +66,7 @@
             <a href="#" @click.prevent="activeTab = 'settings-admin'"><i class="bi bi-gear-wide-connected text-warning opacity-75"></i> Cấu hình Phòng khám</a>
           </li>
           <li :class="{ 'active': activeTab === 'schedules-admin' }">
-            <a href="#" @click.prevent="activeTab = 'schedules-admin'"><i class="bi bi-clock-fill text-warning opacity-75"></i> Lịch trực Bác sĩ (Mới)</a>
+            <a href="#" @click.prevent="activeTab = 'schedules-admin'"><i class="bi bi-clock-fill text-warning opacity-75"></i> Lịch trực Bác sĩ</a>
           </li>
           <li :class="{ 'active': activeTab === 'medicines-admin' }">
             <a href="#" @click.prevent="activeTab = 'medicines-admin'"><i class="bi bi-capsule text-warning opacity-75"></i> Quản lý Kho thuốc</a>

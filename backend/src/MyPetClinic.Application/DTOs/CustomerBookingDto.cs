@@ -13,7 +13,7 @@ namespace MyPetClinic.Application.DTOs
         public DateTime? AppointmentDate { get; set; }
         public string? Symptom { get; set; }
         public string? Note { get; set; }
-        public long? VaccineId { get; set; }
+
         
         /// <summary>
         /// Đánh dấu xem đây có phải trường hợp cấp cứu không

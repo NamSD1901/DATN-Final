@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MyPetClinic.Application.Services
 {
-    public class ReceptionistAppointmentService : IReceptionistAppointmentService
+    public partial class ReceptionistAppointmentService : IReceptionistAppointmentService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IVaccinationScheduleChecker _vaccinationScheduleChecker;
@@ -83,8 +83,28 @@ namespace MyPetClinic.Application.Services
 
                     var finalDoctorId = ResolveAndValidateDoctorId(dto.DoctorId, appointmentDate, dto.ServiceId);
 
-                    // Sinh QR Token (Sử dụng lại QR cũ nếu có lịch hẹn cùng khung giờ)
                     var targetDateUtc = DateTime.SpecifyKind(appointmentDate.Date, DateTimeKind.Utc);
+                    var activeStatuses = new[] { "pending", "confirmed", "waiting", "in_progress" };
+                    
+                    var requestedService = _unitOfWork.Services.Query().FirstOrDefault(s => s.Id == dto.ServiceId);
+                    if (requestedService == null) throw new InvalidOperationException("Dịch vụ không tồn tại.");
+                    
+                    var appointmentTimeCheck2 = appointmentDate.TimeOfDay;
+                    var isDuplicatePetService = _unitOfWork.Appointments.Query()
+                        .Include(a => a.Service)
+                        .Any(a => a.PetId == dto.PetId
+                               && activeStatuses.Contains(a.Status.ToLower())
+                               && a.AppointmentDate == targetDateUtc
+                               && Math.Abs((a.StartTime - appointmentTimeCheck2).TotalMinutes) < 30
+                               && a.Service != null
+                               && a.Service.CategoryId == requestedService.CategoryId);
+
+                    if (isDuplicatePetService)
+                    {
+                        throw new InvalidOperationException("Thú cưng đã có lịch hẹn cho cùng nhóm dịch vụ này vào khung giờ này. Vui lòng chọn khung giờ khác!");
+                    }
+
+                    // Sinh QR Token (Sử dụng lại QR cũ nếu có lịch hẹn cùng khung giờ)
                     var existingAppointment = _unitOfWork.Appointments.Query()
                         .FirstOrDefault(a => a.CustomerId == dto.CustomerId
                                           && a.Status != "cancelled"
@@ -110,6 +130,16 @@ namespace MyPetClinic.Application.Services
                         }
                     }
 
+                    var pet = _unitOfWork.Pets.Query().FirstOrDefault(p => p.Id == dto.PetId);
+                    if (pet == null)
+                    {
+                        throw new InvalidOperationException("Không tìm thấy thông tin thú cưng.");
+                    }
+                    if (pet.CustomerId != dto.CustomerId)
+                    {
+                        throw new InvalidOperationException("Thú cưng không thuộc sở hữu của khách hàng này.");
+                    }
+
                     var appointment = new Appointment
                     {
                         CustomerId = dto.CustomerId,
@@ -125,48 +155,6 @@ namespace MyPetClinic.Application.Services
                         StartTime = appointmentDate.TimeOfDay,
                         QrToken = qrToken
                     };
-
-                    if (dto.VaccineId.HasValue)
-                    {
-                        var vaccine = _unitOfWork.Vaccines.Query().FirstOrDefault(v => v.Id == dto.VaccineId.Value);
-                        if (vaccine == null)
-                        {
-                            throw new InvalidOperationException("Không tìm thấy vắc-xin y khoa yêu cầu.");
-                        }
-
-                        if (vaccine.StockQuantity <= 0)
-                        {
-                            throw new InvalidOperationException($"Vắc-xin {vaccine.Name} đã hết hàng trong kho.");
-                        }
-
-                        var pet = _unitOfWork.Pets.Query().FirstOrDefault(p => p.Id == dto.PetId);
-                        if (pet == null)
-                        {
-                            throw new InvalidOperationException("Không tìm thấy thông tin thú cưng.");
-                        }
-
-                        var lastRecord = _unitOfWork.VaccinationRecords.Query()
-                            .Where(vr => vr.PetId == dto.PetId && vr.VaccineId == dto.VaccineId.Value)
-                            .OrderByDescending(vr => vr.InjectionDate)
-                            .FirstOrDefault();
-
-                        var validation = _vaccinationScheduleChecker.ValidateInterval(lastRecord, vaccine, appointmentDate, pet);
-                        if (!validation.IsValid)
-                        {
-                            if (!validation.RequiresDoctorOverride)
-                            {
-                                throw new InvalidOperationException(validation.WarningMessage);
-                            }
-                            
-                            appointment.Note = string.IsNullOrEmpty(appointment.Note) 
-                                ? $"[CẢNH BÁO PHÁC ĐỒ] {validation.WarningMessage}"
-                                : $"[CẢNH BÁO PHÁC ĐỒ] {validation.WarningMessage}\n{appointment.Note}";
-                        }
-
-                        vaccine.StockQuantity -= 1;
-                        _unitOfWork.Vaccines.Update(vaccine);
-                        appointment.VaccineId = dto.VaccineId;
-                    }
 
                     await _unitOfWork.Appointments.AddAsync(appointment);
                     await _unitOfWork.SaveChangesAsync();

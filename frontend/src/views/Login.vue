@@ -167,15 +167,42 @@
                   <input id="reset-otp" type="text" v-model="resetForm.otpCode" class="input-field" placeholder="Mã OTP" required />
                   <label for="reset-otp" class="input-label">Mã OTP</label>
                 </div>
-                <div class="input-group-custom">
-                  <span class="input-icon"><i class="bi bi-lock-fill"></i></span>
-                  <input id="new-password" type="password" v-model="resetForm.newPassword" class="input-field" placeholder="Mật khẩu mới" required />
-                  <label for="new-password" class="input-label">Mật khẩu mới</label>
+                <!-- New Password -->
+                <div class="password-field-wrapper" style="margin-bottom: 1.25rem;">
+                  <div class="input-group-custom" style="margin-bottom: 0;">
+                    <span class="input-icon"><i class="bi bi-lock-fill"></i></span>
+                    <input id="new-password" type="password" v-model="resetForm.newPassword" class="input-field" placeholder="Mật khẩu mới" required />
+                    <label for="new-password" class="input-label">Mật khẩu mới</label>
+                  </div>
+                  
+                  <!-- Password Strength Meter -->
+                  <div class="password-strength-container" v-if="resetForm.newPassword">
+                    <div class="strength-bar-wrapper">
+                      <div class="strength-bar" :style="{ width: passwordStrength.width, backgroundColor: passwordStrength.color }"></div>
+                    </div>
+                    <div class="strength-text" :style="{ color: passwordStrength.color }">
+                      Độ mạnh: {{ passwordStrength.text }}
+                    </div>
+                    <ul class="password-hints" v-if="passwordErrors.length > 0">
+                      <li v-for="(error, index) in passwordErrors" :key="index"><i class="bi bi-x-circle text-danger"></i> {{ error }}</li>
+                    </ul>
+                    <ul class="password-hints" v-else>
+                      <li><i class="bi bi-check-circle text-success"></i> Mật khẩu đạt yêu cầu</li>
+                    </ul>
+                  </div>
                 </div>
-                <div class="input-group-custom">
-                  <span class="input-icon"><i class="bi bi-shield-lock-fill"></i></span>
-                  <input id="confirm-password" type="password" v-model="resetForm.confirmPassword" class="input-field" placeholder="Xác nhận mật khẩu" required />
-                  <label for="confirm-password" class="input-label">Xác nhận mật khẩu</label>
+
+                <!-- Confirm Password -->
+                <div class="password-field-wrapper" style="margin-bottom: 1.25rem;">
+                  <div class="input-group-custom" style="margin-bottom: 0;">
+                    <span class="input-icon"><i class="bi bi-shield-lock-fill"></i></span>
+                    <input id="confirm-password" type="password" v-model="resetForm.confirmPassword" class="input-field" placeholder="Xác nhận mật khẩu" required />
+                    <label for="confirm-password" class="input-label">Xác nhận mật khẩu</label>
+                  </div>
+                  <div class="match-hint" v-if="resetForm.confirmPassword">
+                    <span v-if="passwordsMatch" class="text-success"><i class="bi bi-check-circle"></i> Mật khẩu khớp</span>
+                    <span v-else class="text-danger"><i class="bi bi-x-circle"></i> Mật khẩu chưa khớp</span>
+                  </div>
                 </div>
                 <button type="submit" :disabled="loading" class="btn-auth-submit">
                   <span v-if="!loading">Đổi mật khẩu <i class="bi bi-check-circle ms-1"></i></span>
@@ -192,7 +219,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onUnmounted } from 'vue';
+import { ref, reactive, computed, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../services/api';
 import { 
@@ -269,6 +296,37 @@ const resetForm = reactive({
   otpCode: '',
   newPassword: '',
   confirmPassword: ''
+});
+
+const passwordStrength = computed(() => {
+  const pwd = resetForm.newPassword;
+  let score = 0;
+  if (!pwd) return { score: 0, text: '', color: '#e2e8f0', width: '0%' };
+
+  if (pwd.length >= 8) score += 1;
+  if (/[A-Z]/.test(pwd)) score += 1;
+  if (/[a-z]/.test(pwd)) score += 1;
+  if (/[0-9]/.test(pwd)) score += 1;
+  if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
+
+  if (score <= 2) return { score, text: 'Yếu', color: '#ef4444', width: '33%' };
+  if (score <= 4) return { score, text: 'Trung bình', color: '#f59e0b', width: '66%' };
+  return { score, text: 'Mạnh', color: '#10b981', width: '100%' };
+});
+
+const passwordErrors = computed(() => {
+  const pwd = resetForm.newPassword;
+  const errors = [];
+  if (pwd && pwd.length < 8) errors.push('Tối thiểu 8 ký tự');
+  if (pwd && !/[A-Z]/.test(pwd)) errors.push('Cần ít nhất 1 chữ hoa');
+  if (pwd && !/[a-z]/.test(pwd)) errors.push('Cần ít nhất 1 chữ thường');
+  if (pwd && !/[0-9]/.test(pwd)) errors.push('Cần ít nhất 1 chữ số');
+  if (pwd && !/[^A-Za-z0-9]/.test(pwd)) errors.push('Cần ít nhất 1 ký tự đặc biệt (@, $, #, ...)');
+  return errors;
+});
+
+const passwordsMatch = computed(() => {
+  return resetForm.newPassword && resetForm.confirmPassword && resetForm.newPassword === resetForm.confirmPassword;
 });
 
 // Resend OTP Countdown logic
@@ -369,7 +427,11 @@ const handleForgotPassword = async () => {
 };
 
 const handleResetPassword = async () => {
-  if (resetForm.newPassword !== resetForm.confirmPassword) {
+  if (passwordErrors.value.length > 0) {
+    showErrorToast('Mật khẩu chưa đủ mạnh. Vui lòng kiểm tra lại các yêu cầu.');
+    return;
+  }
+  if (!passwordsMatch.value) {
     showErrorToast('Mật khẩu xác nhận không khớp.');
     return;
   }
@@ -989,4 +1051,66 @@ onUnmounted(() => {
   opacity: 0;
   transform: translateY(-20px);
 }
+</style>
+
+<style scoped>
+/* Password Strength & Match Hints */
+.password-strength-container {
+  margin-top: 0.25rem;
+  padding: 0 0.25rem;
+  text-align: left;
+}
+
+.strength-bar-wrapper {
+  height: 4px;
+  background-color: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.strength-bar {
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.strength-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.password-hints {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.75rem;
+  color: #64748b;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.password-hints li {
+  margin-bottom: 0.15rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.password-hints li:last-child {
+  margin-bottom: 0;
+}
+
+.match-hint {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  padding: 0 0.25rem;
+  text-align: left;
+}
+
+.text-danger { color: #ef4444 !important; }
+.text-success { color: #10b981 !important; }
 </style>

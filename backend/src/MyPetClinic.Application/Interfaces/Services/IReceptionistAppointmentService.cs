@@ -9,6 +9,7 @@ namespace MyPetClinic.Application.Interfaces.Services
     {
         Task<long> CreateAppointmentAsync(AppointmentCreateDto dto, Guid createdBy);
         Task<long> CreateAppointmentWithNewCustomerAsync(AppointmentWithNewCustomerDto dto, Guid createdBy);
+        Task<long> CreateWalkInAppointmentAsync(WalkInRequestDto dto, Guid createdBy);
         Task<IEnumerable<CalendarEventDto>> GetCalendarEventsAsync(DateTime start, DateTime end, Guid? doctorId);
         Task<bool> UpdateAppointmentStatusAsync(long id, string status, string? reason = null);
         Task<bool> RescheduleAppointmentAsync(long id, DateTime newStart, bool force = false);

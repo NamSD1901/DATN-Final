@@ -155,6 +155,11 @@ namespace MyPetClinic.Infrastructure.Repositories
             }
         }
 
+        public IExecutionStrategy CreateExecutionStrategy()
+        {
+            return _context.Database.CreateExecutionStrategy();
+        }
+
         public void Dispose()
         {
             _context.Dispose();

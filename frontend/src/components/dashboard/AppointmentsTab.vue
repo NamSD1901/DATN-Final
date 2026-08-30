@@ -204,7 +204,7 @@
                             <li v-if="['pending', 'confirmed', 'waiting'].includes(evt.status)"><a class="dropdown-item" href="#" @click.prevent.stop="openRescheduleModal(evt)"><i class="bi bi-calendar-range text-warning me-2"></i>Dời lịch khám</a></li>
                             
                             <!-- No show -->
-                            <li v-if="['pending', 'confirmed', 'waiting'].includes(evt.status) && isPastDue(evt)"><a class="dropdown-item" href="#" @click.prevent.stop="markNoShow(evt.id)"><i class="bi bi-person-x text-secondary me-2"></i>Khách vắng mặt</a></li>
+                            <li v-if="['pending', 'confirmed'].includes(evt.status) && isPastDue(evt)"><a class="dropdown-item" href="#" @click.prevent.stop="markNoShow(evt.id)"><i class="bi bi-person-x text-secondary me-2"></i>Khách vắng mặt</a></li>
                             
                             <!-- Cancel -->
                             <li v-if="['pending', 'confirmed', 'waiting'].includes(evt.status)"><hr class="dropdown-divider"></li>
@@ -449,7 +449,7 @@
                 <select v-model="formPayload.serviceId" class="form-select form-select-lg border-gray-200 rounded-3 shadow-sm fs-6" style="box-shadow: none;" required>
                   <option value="">-- Chọn dịch vụ khám --</option>
                   <option v-for="srv in serviceList" :key="srv.id" :value="srv.id">
-                    {{ srv.name }} ({{ formatCurrency(srv.price) }})
+                    {{ srv.name }}
                   </option>
                 </select>
               </div>
@@ -490,7 +490,7 @@
                     </div>
                     <div v-else class="d-flex flex-column gap-4">
                       <!-- Morning Slots -->
-                      <div>
+                      <div v-if="displayMorningSlots.length > 0">
                         <h6 class="text-muted fw-bold mb-3 small d-flex align-items-center gap-2">
                           <span class="badge bg-warning text-dark rounded-pill px-3 py-1.5"><i class="bi bi-brightness-alt-high me-1"></i> BUỔI SÁNG</span>
                         </h6>
@@ -521,7 +521,7 @@
                       </div>
                       
                       <!-- Afternoon Slots -->
-                      <div>
+                      <div v-if="displayAfternoonSlots.length > 0">
                         <h6 class="text-muted fw-bold mb-3 small d-flex align-items-center gap-2">
                           <span class="badge bg-secondary bg-opacity-25 text-dark rounded-pill px-3 py-1.5"><i class="bi bi-brightness-alt-low me-1"></i> BUỔI CHIỀU</span>
                         </h6>
@@ -857,6 +857,35 @@
                       <div class="d-flex flex-wrap gap-2">
                         <button
                           v-for="slot in displayRescheduleAfternoonSlots"
+                          :key="slot.time"
+                          type="button"
+                          class="time-slot-btn"
+                          :class="{
+                            'slot-selected': rescheduleTime === slot.time,
+                            'slot-past': slot.isPast,
+                            'slot-too-soon': slot.isTooSoon,
+                            'slot-booked': slot.isBooked,
+                            'slot-available': slot.isAvailable
+                          }"
+                          :disabled="!slot.isAvailable"
+                          :title="slot.isPast ? 'Giờ đã qua' : (slot.isTooSoon ? 'Cần dời trước ít nhất 15 phút' : (slot.isBooked ? 'Khung giờ này đã được đặt hoặc ngoài giờ' : ''))"
+                          @click="slot.isAvailable && (rescheduleTime = slot.time)"
+                        >
+                          <span class="slot-time-text">{{ slot.time }}</span>
+                          <i v-if="rescheduleTime === slot.time" class="bi bi-check-circle-fill ms-1"></i>
+                          <span v-if="slot.isPast" class="slot-badge-label">Đã qua</span>
+                          <span v-else-if="slot.isTooSoon" class="slot-badge-label">Quá gần</span>
+                          <span v-else-if="slot.isBooked" class="slot-badge-label">Đã hết</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Evening Slots -->
+                    <div v-if="displayRescheduleEveningSlots.length > 0">
+                      <h6 class="text-muted fw-bold mb-2 small" style="letter-spacing: 1px;"><i class="bi bi-moon-stars me-1"></i> BUỔI TỐI</h6>
+                      <div class="d-flex flex-wrap gap-2">
+                        <button
+                          v-for="slot in displayRescheduleEveningSlots"
                           :key="slot.time"
                           type="button"
                           class="time-slot-btn"
@@ -1621,6 +1650,10 @@ const handleSearchCustomer = async () => {
   }
 };
 
+const validateDuplicateAppointment = (petId: string | number, serviceId: string | number) => {
+  return true;
+};
+
 const submitPrebookedAppointment = async () => {
   if (activeBookingTab.value !== 'prebooked') return;
   
@@ -1657,6 +1690,8 @@ const submitPrebookedAppointment = async () => {
           showToast('Lỗi khi thêm thú cưng mới!', 'danger');
           return;
         }
+      } else {
+        if (!validateDuplicateAppointment(finalPetId, formPayload.value.serviceId)) return;
       }
 
       const payload: any = {
@@ -1740,6 +1775,7 @@ const submitWalkInAppointment = async () => {
           showToast('Vui lòng chọn thú cưng!', 'warning');
           return;
         }
+        if (!validateDuplicateAppointment(formPayload.value.petId, formPayload.value.serviceId)) return;
         const pet = customerPets.value.find(p => p.id === formPayload.value.petId);
         if (pet) {
             payload.petName = pet.name;

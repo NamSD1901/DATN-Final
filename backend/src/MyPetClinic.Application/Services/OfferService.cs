@@ -156,6 +156,8 @@ namespace MyPetClinic.Application.Services
             if (existingCode) throw new InvalidOperationException("Mã giảm giá đã tồn tại.");
 
             if (dto.StartDate >= dto.EndDate) throw new InvalidOperationException("Ngày kết thúc phải lớn hơn ngày bắt đầu.");
+            if (dto.DiscountValue <= 0) throw new InvalidOperationException("Mức giảm giá phải lớn hơn 0.");
+            if (dto.UsageLimitPerUser <= 0) dto.UsageLimitPerUser = 1;
 
             var offer = new Offer
             {
@@ -294,8 +296,15 @@ namespace MyPetClinic.Application.Services
                         .CountAsync(log => log.OfferId == offer.Id && log.UserId == userUserId.Value && log.Status == "APPLIED");
                 }
                 
-                var customerAppointments = await _unitOfWork.Appointments.Query()
-                    .Where(a => a.CustomerId == customerId.Value && a.Status != "cancelled" && a.Note != null)
+                var customerAppointmentsQuery = _unitOfWork.Appointments.Query()
+                    .Where(a => a.CustomerId == customerId.Value && a.Status != "cancelled" && a.Note != null);
+                    
+                if (request.AppointmentId.HasValue)
+                {
+                    customerAppointmentsQuery = customerAppointmentsQuery.Where(a => a.Id != request.AppointmentId.Value);
+                }
+
+                var customerAppointments = await customerAppointmentsQuery
                     .Select(a => new { a.Status, a.Note })
                     .ToListAsync();
                     
