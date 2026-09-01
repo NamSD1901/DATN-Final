@@ -36,11 +36,10 @@
             
             <div class="mt-3" v-if="lowStockList.length > 0">
               <div class="small fw-semibold mb-2 text-muted">Cần nhập kho ngay:</div>
-              <div class="d-flex flex-wrap gap-2">
-                <span v-for="item in lowStockList.slice(0, 3)" :key="item.id" class="modern-badge bg-danger text-white shadow-sm">
+              <div class="d-flex flex-wrap gap-2 custom-scrollbar" style="max-height: 90px; overflow-y: auto; padding-right: 5px;">
+                <span v-for="item in lowStockList" :key="item.id" class="modern-badge bg-danger text-white shadow-sm">
                   {{ item.name }} <span class="badge-qty ms-1">còn {{ item.stockQuantity }}</span>
                 </span>
-                <span v-if="lowStockList.length > 3" class="small text-muted align-self-center fw-medium">+{{ lowStockList.length - 3 }} loại khác</span>
               </div>
             </div>
           </div>
@@ -64,11 +63,10 @@
             
             <div class="mt-3" v-if="expiringList.length > 0">
               <div class="small fw-semibold mb-2 text-muted">Cần thanh lý/huỷ lô:</div>
-              <div class="d-flex flex-wrap gap-2">
-                <span v-for="item in expiringList.slice(0, 3)" :key="item.batchId" class="modern-badge bg-warning-light text-warning-dark shadow-sm">
+              <div class="d-flex flex-wrap gap-2 custom-scrollbar" style="max-height: 90px; overflow-y: auto; padding-right: 5px;">
+                <span v-for="item in expiringList" :key="item.batchId" class="modern-badge bg-warning-light text-warning-dark shadow-sm">
                   {{ item.medicineName }} (Lô {{ item.batchNumber }}) <span class="badge-qty text-muted ms-1">HSD: {{ formatDate(item.expiryDate) }}</span>
                 </span>
-                <span v-if="expiringList.length > 3" class="small text-muted align-self-center fw-medium">+{{ expiringList.length - 3 }} loại khác</span>
               </div>
             </div>
           </div>
@@ -328,7 +326,7 @@
                           </span>
                         </td>
                         <td class="text-end pe-4 d-flex justify-content-end gap-2">
-                          <button class="btn btn-sm btn-light text-success rounded-circle action-icon-btn" @click="handleAddMoreStock(batch)" title="Nhập thêm (Cộng dồn)">
+                          <button class="btn btn-sm btn-light text-success rounded-circle action-icon-btn" @click="handleAddMoreStock(batch)" title="Nhập thêm (Cộng dồn)" :disabled="isExpired(batch.expiryDate)">
                             <i class="bi bi-plus-lg"></i>
                           </button>
                           <button class="btn btn-sm btn-light text-danger rounded-circle action-icon-btn" @click="handleDeleteBatch(batch.id)" title="Xoá Lô">
@@ -625,6 +623,15 @@ const isExpiring = (dateStr: string) => {
   const diffTime = expiry.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return diffDays <= 30;
+};
+
+const isExpired = (dateStr: string) => {
+  if (!dateStr) return false;
+  const expiry = new Date(dateStr);
+  const today = new Date();
+  expiry.setHours(0,0,0,0);
+  today.setHours(0,0,0,0);
+  return expiry.getTime() < today.getTime();
 };
 
 const formatDate = (dateStr: string) => {
