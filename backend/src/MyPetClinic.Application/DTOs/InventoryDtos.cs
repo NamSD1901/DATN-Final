@@ -47,6 +47,7 @@ namespace MyPetClinic.Application.DTOs
     {
         public long MedicineId { get; set; }
         public int Quantity { get; set; }
+        public int DurationDays { get; set; } = 0;
         public string? Notes { get; set; }
         public string? ReferenceCode { get; set; }
     }

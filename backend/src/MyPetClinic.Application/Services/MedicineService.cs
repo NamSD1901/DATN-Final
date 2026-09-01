@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using MyPetClinic.Application.DTOs;
 using MyPetClinic.Application.Interfaces.Repositories;
 using MyPetClinic.Application.Interfaces.Services;
@@ -65,7 +66,7 @@ namespace MyPetClinic.Application.Services
                 Id = medicine.Id,
                 Name = medicine.Name,
                 Unit = medicine.Unit,
-                StockQuantity = medicine.StockQuantity,
+                StockQuantity = medicine.Batches.Where(b => b.ExpiryDate.ToUniversalTime() > DateTime.UtcNow).Sum(b => b.CurrentQuantity),
                 SellPrice = medicine.SellPrice,
                 MedicineCode = medicine.MedicineCode,
                 CategoryId = medicine.CategoryId,
@@ -94,7 +95,7 @@ namespace MyPetClinic.Application.Services
             {
                 Id = medicine.Id,
                 Name = medicine.Name,
-                StockQuantity = medicine.StockQuantity,
+                StockQuantity = medicine.Batches.Where(b => b.ExpiryDate.ToUniversalTime() > DateTime.UtcNow).Sum(b => b.CurrentQuantity),
                 ImportPrice = medicine.ImportPrice,
                 Unit = medicine.Unit,
                 SellPrice = medicine.SellPrice
@@ -104,7 +105,9 @@ namespace MyPetClinic.Application.Services
         public async Task<IEnumerable<MedicineDto>> GetLowStockMedicinesAsync()
         {
             var medicines = await _medicineRepo.GetMedicinesWithStockAsync();
-            return medicines.Where(m => m.StockQuantity <= m.MinStockLevel).Select(m => new MedicineDto
+            var lowStock = medicines.Where(m => m.StockQuantity <= m.MinStockLevel).ToList();
+
+            return lowStock.Select(m => new MedicineDto
             {
                 Id = m.Id,
                 Name = m.Name,
@@ -117,7 +120,10 @@ namespace MyPetClinic.Application.Services
 
         public async Task ImportMedicineAsync(ImportMedicineDto dto, Guid userId)
         {
-            await _unitOfWork.BeginTransactionAsync();
+            var strategy = _unitOfWork.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
+            {
+                await _unitOfWork.BeginTransactionAsync();
             try
             {
                 var medicine = await _unitOfWork.Medicines.GetByIdAsync(dto.MedicineId);
@@ -178,20 +184,24 @@ namespace MyPetClinic.Application.Services
                 await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
+            });
         }
 
         public async Task ExportMedicineAsync(ExportMedicineDto dto, Guid userId)
         {
-            await _unitOfWork.BeginTransactionAsync();
+            var strategy = _unitOfWork.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
+            {
+                await _unitOfWork.BeginTransactionAsync();
             try
             {
                 var medicine = await _medicineRepo.GetMedicineWithBatchesAsync(dto.MedicineId);
-                if (medicine == null) throw new Exception("Thuốc không tồn tại.");
+                if (medicine == null) throw new KeyNotFoundException("Thuốc không tồn tại.");
 
                 if (medicine.StockQuantity < dto.Quantity)
-                    throw new Exception("Tồn kho không đủ để xuất.");
+                    throw new InvalidOperationException("Tồn kho tổng không đủ để xuất.");
 
-                var availableBatches = await _batchRepo.GetAvailableBatchesAsync(dto.MedicineId);
+                var availableBatches = await _batchRepo.GetAvailableBatchesAsync(dto.MedicineId, dto.DurationDays);
                 int remainingToExport = dto.Quantity;
 
                 foreach (var batch in availableBatches)
@@ -219,7 +229,7 @@ namespace MyPetClinic.Application.Services
                 }
 
                 if (remainingToExport > 0)
-                    throw new Exception($"Lỗi hệ thống: Số lượng lô không đủ để xuất ({remainingToExport} thiếu). Vui lòng kiểm kê lại kho.");
+                    throw new InvalidOperationException($"Số lượng lô thuốc đủ hạn sử dụng không đủ để xuất (cần thêm {remainingToExport}). Hãy kiểm tra lại số ngày uống hoặc hạn sử dụng của thuốc trong kho.");
 
                 medicine.StockQuantity -= dto.Quantity;
                 _unitOfWork.Medicines.Update(medicine);
@@ -231,11 +241,15 @@ namespace MyPetClinic.Application.Services
                 await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
+            });
         }
 
         public async Task AdjustMedicineStockAsync(AdjustMedicineDto dto, Guid userId)
         {
-            await _unitOfWork.BeginTransactionAsync();
+            var strategy = _unitOfWork.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
+            {
+                await _unitOfWork.BeginTransactionAsync();
             try
             {
                 var batch = await _batchRepo.GetBatchWithMedicineAsync(dto.BatchId);
@@ -275,6 +289,7 @@ namespace MyPetClinic.Application.Services
                 await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
+            });
         }
 
         public async Task<IEnumerable<InventoryTransactionDto>> GetMedicineTransactionsAsync(long medicineId)

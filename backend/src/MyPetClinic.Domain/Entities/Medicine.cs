@@ -27,7 +27,7 @@ namespace MyPetClinic.Domain.Entities
         public ICollection<InventoryTransaction> InventoryTransactions { get; set; } = new List<InventoryTransaction>();
 
         [NotMapped]
-        public int StockQuantity { get { return Batches?.Sum(b => b.CurrentQuantity) ?? 0; } set { } }
+        public int StockQuantity { get { return Batches?.Where(b => b.ExpiryDate.ToUniversalTime() > DateTime.UtcNow).Sum(b => b.CurrentQuantity) ?? 0; } set { } }
         [NotMapped]
         public DateTime? ExpiryDate { get { return Batches?.OrderBy(b => b.ExpiryDate).FirstOrDefault()?.ExpiryDate; } set { } }
     }

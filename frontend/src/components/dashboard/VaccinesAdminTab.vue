@@ -346,14 +346,58 @@
                         </td>
                         <td class="fw-bold text-primary">{{ formatCurrency(batch.sellingPrice) }}</td>
                         <td class="text-end pe-4">
-                          <button class="btn btn-sm btn-light text-danger rounded-circle action-icon-btn" @click="handleDeleteBatch(batch.id)" title="Xoá Lô">
-                            <i class="bi bi-trash3-fill"></i>
-                          </button>
+                          <div class="d-flex justify-content-end gap-2">
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold" @click="handleAddMoreStock(batch)" title="Cộng dồn thêm số lượng vào lô này">
+                              <i class="bi bi-plus-lg"></i> Thêm
+                            </button>
+                            <button class="btn btn-sm btn-light text-danger rounded-circle action-icon-btn" @click="handleDeleteBatch(batch.id)" title="Xoá Lô">
+                              <i class="bi bi-trash3-fill"></i>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+    <!-- Add More Stock Modal -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showAddMoreModal" class="premium-modal-overlay" @click.self="showAddMoreModal = false">
+          <div class="premium-modal-card max-w-400 animate-slide-up">
+            <div class="modal-header-elegant">
+              <h5 class="fw-extrabold mb-0 text-dark">
+                <i class="bi bi-plus-circle text-primary me-2"></i> Cộng Dồn Số Lượng
+              </h5>
+              <button class="btn-close-elegant" @click="showAddMoreModal = false"><i class="bi bi-x"></i></button>
+            </div>
+            <div class="modal-body-elegant">
+              <div class="alert alert-primary bg-primary bg-opacity-10 border-0 rounded-3 mb-4">
+                <div class="d-flex gap-2">
+                  <i class="bi bi-info-circle-fill text-primary mt-1"></i>
+                  <div>
+                    <h6 class="fw-bold text-primary mb-1">Lô {{ batchToAddMore?.batchNumber }}</h6>
+                    <p class="small mb-0 text-primary opacity-75">Tồn kho hiện tại: <strong>{{ batchToAddMore?.stockQuantity }} liều</strong></p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="modern-form-group mb-4">
+                <input type="number" v-model="addMoreQuantity" class="modern-input text-center fs-4 fw-bold text-primary" required min="1" id="addMoreQty" placeholder=" " />
+                <label for="addMoreQty" class="modern-label">Số lượng nhập thêm *</label>
+              </div>
+
+              <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" @click="showAddMoreModal = false">Hủy</button>
+                <button type="button" class="btn btn-modern-primary px-4 py-2 rounded-pill fw-bold shadow-sm" @click="confirmAddMoreStock" :disabled="isSubmittingAddMore">
+                  <span v-if="isSubmittingAddMore" class="spinner-border spinner-border-sm me-2"></span>
+                  <i v-else class="bi bi-check2-circle me-1"></i> Xác nhận
+                </button>
               </div>
             </div>
           </div>
@@ -381,6 +425,11 @@ const currentVaccineId = ref<number | null>(null);
 
 const showBatchesModal = ref(false);
 const currentVaccine = ref<any>(null);
+
+const showAddMoreModal = ref(false);
+const isSubmittingAddMore = ref(false);
+const batchToAddMore = ref<any>(null);
+const addMoreQuantity = ref(10);
 
 const vaccineForm = ref({
   name: '',
@@ -572,6 +621,41 @@ const handleDeleteBatch = async (batchId: number) => {
     await loadWarnings();
   } catch (err: any) {
     alert(err.response?.data?.message || 'Lỗi khi xoá lô vắc-xin.');
+  }
+};
+
+const handleAddMoreStock = (batch: any) => {
+  batchToAddMore.value = batch;
+  addMoreQuantity.value = 10;
+  showAddMoreModal.value = true;
+};
+
+const confirmAddMoreStock = async () => {
+  if (!batchToAddMore.value || !currentVaccine.value) return;
+  if (addMoreQuantity.value <= 0) {
+    alert('Số lượng nhập thêm không hợp lệ.');
+    return;
+  }
+  
+  isSubmittingAddMore.value = true;
+  try {
+    const payload = {
+      batchNumber: batchToAddMore.value.batchNumber,
+      expirationDate: batchToAddMore.value.expirationDate,
+      importDate: new Date().toISOString(),
+      stockQuantity: addMoreQuantity.value,
+      importPrice: batchToAddMore.value.importPrice || 0,
+      sellingPrice: batchToAddMore.value.sellingPrice || 0
+    };
+    await api.post(`/admin/vaccines/${currentVaccine.value.id}/batches`, payload);
+    showAddMoreModal.value = false;
+    alert('Nhập thêm thành công!');
+    await loadVaccines();
+    await loadWarnings();
+  } catch (err: any) {
+    alert(err.response?.data?.message || 'Có lỗi xảy ra khi nhập thêm.');
+  } finally {
+    isSubmittingAddMore.value = false;
   }
 };
 

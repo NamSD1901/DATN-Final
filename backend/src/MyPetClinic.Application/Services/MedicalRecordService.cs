@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Data;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace MyPetClinic.Application.Services
 {
@@ -24,202 +25,207 @@ namespace MyPetClinic.Application.Services
 
         public async Task<long> CreateMedicalRecordAsync(CreateMedicalRecordDto dto, Guid doctorId)
         {
-            await _unitOfWork.BeginTransactionAsync(IsolationLevel.RepeatableRead);
-            try
+            var strategy = _unitOfWork.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                // 1. Lấy thông tin cuộc hẹn
-                var appointments = await _unitOfWork.Appointments.FindWithIncludesAsync(a => a.Id == dto.AppointmentId, a => a.Pet!);
-                var appointment = appointments.FirstOrDefault();
-                if (appointment == null)
+                await _unitOfWork.BeginTransactionAsync(IsolationLevel.RepeatableRead);
+                try
                 {
-                    throw new KeyNotFoundException("Không tìm thấy cuộc hẹn.");
-                }
-
-                // 2. Tạo MedicalRecord chuẩn SOAP
-                var medicalRecord = new MedicalRecord
-                {
-                    AppointmentId = dto.AppointmentId,
-                    DoctorId = doctorId,
-                    PetId = dto.PetId == 0 ? appointment.PetId : dto.PetId, // Fallback to appointment's pet
-                    RecordType = string.IsNullOrWhiteSpace(dto.RecordType) ? "Consultation" : dto.RecordType,
-                    MedicalHistory = dto.MedicalHistory,
-                    Weight = dto.Weight,
-                    Temperature = dto.Temperature,
-                    ClinicalSigns = dto.ClinicalSigns,
-                    Diagnosis = dto.Diagnosis,
-                    TreatmentPlan = dto.TreatmentPlan,
-                    DoctorNotes = dto.DoctorNotes,
-                    FollowUpDate = dto.FollowUpDate,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                await _unitOfWork.MedicalRecords.AddAsync(medicalRecord);
-                await _unitOfWork.SaveChangesAsync(); // Lưu để có ID của MedicalRecord
-
-                // 3. Nếu có đơn thuốc, tạo Prescription
-                if (dto.Prescriptions != null && dto.Prescriptions.Any())
-                {
-                    var prescription = new Prescription
+                    // 1. Lấy thông tin cuộc hẹn
+                    var appointments = await _unitOfWork.Appointments.FindWithIncludesAsync(a => a.Id == dto.AppointmentId, a => a.Pet!);
+                    var appointment = appointments.FirstOrDefault();
+                    if (appointment == null)
                     {
-                        MedicalRecordId = medicalRecord.Id,
+                        throw new KeyNotFoundException("Không tìm thấy cuộc hẹn.");
+                    }
+
+                    // 2. Tạo MedicalRecord chuẩn SOAP
+                    var medicalRecord = new MedicalRecord
+                    {
+                        AppointmentId = dto.AppointmentId,
                         DoctorId = doctorId,
-                        Note = dto.DoctorNotes,
+                        PetId = dto.PetId == 0 ? appointment.PetId : dto.PetId, // Fallback to appointment's pet
+                        RecordType = string.IsNullOrWhiteSpace(dto.RecordType) ? "Consultation" : dto.RecordType,
+                        MedicalHistory = dto.MedicalHistory,
+                        Weight = dto.Weight,
+                        Temperature = dto.Temperature,
+                        ClinicalSigns = dto.ClinicalSigns,
+                        Diagnosis = dto.Diagnosis,
+                        TreatmentPlan = dto.TreatmentPlan,
+                        DoctorNotes = dto.DoctorNotes,
+                        FollowUpDate = dto.FollowUpDate,
                         CreatedAt = DateTime.UtcNow
                     };
 
-                    await _unitOfWork.Prescriptions.AddAsync(prescription);
-                    await _unitOfWork.SaveChangesAsync(); // Lưu để có ID của Prescription
+                    await _unitOfWork.MedicalRecords.AddAsync(medicalRecord);
+                    await _unitOfWork.SaveChangesAsync(); // Lưu để có ID của MedicalRecord
 
-                    // Validate all stock first
-                    foreach (var item in dto.Prescriptions)
+                    // 3. Nếu có đơn thuốc, tạo Prescription
+                    if (dto.Prescriptions != null && dto.Prescriptions.Any())
                     {
-                        var medicine = await _medicineService.GetMedicineStockAsync(item.MedicineId);
-                        if (medicine == null)
+                        var prescription = new Prescription
                         {
-                            throw new KeyNotFoundException($"Không tìm thấy thuốc với ID {item.MedicineId}");
-                        }
-
-                        if (medicine.StockQuantity < item.Quantity)
-                        {
-                            throw new InvalidOperationException($"Thuốc '{medicine.Name}' không đủ tồn kho. Yêu cầu: {item.Quantity}, Hiện có: {medicine.StockQuantity}");
-                        }
-                    }
-
-                    // Process export and add prescription items
-                    foreach (var item in dto.Prescriptions)
-                    {
-
-                        // Xuất kho tự động áp dụng FEFO qua MedicineService
-                        await _medicineService.ExportMedicineAsync(new ExportMedicineDto
-                        {
-                            MedicineId = item.MedicineId,
-                            Quantity = item.Quantity,
-                            ReferenceCode = $"MR-{medicalRecord.Id}",
-                            Notes = $"Kê đơn từ hồ sơ khám bệnh #{medicalRecord.Id}"
-                        }, doctorId);
-
-                        var prescriptionItem = new PrescriptionItem
-                        {
-                            PrescriptionId = prescription.Id,
-                            MedicineId = item.MedicineId,
-                            Dosage = item.Dosage,
-                            Frequency = item.Frequency,
-                            DurationDays = item.DurationDays,
-                            Quantity = item.Quantity,
-                            Instruction = item.Instruction
+                            MedicalRecordId = medicalRecord.Id,
+                            DoctorId = doctorId,
+                            Note = dto.DoctorNotes,
+                            CreatedAt = DateTime.UtcNow
                         };
 
-                        await _unitOfWork.PrescriptionItems.AddAsync(prescriptionItem);
-                    }
-                }
+                        await _unitOfWork.Prescriptions.AddAsync(prescription);
+                        await _unitOfWork.SaveChangesAsync(); // Lưu để có ID của Prescription
 
-                // 4. Đồng bộ trạng thái cuộc hẹn
-                appointment.Status = "ready_to_pay";
-                _unitOfWork.Appointments.Update(appointment);
-
-                // 5. Tự động sinh lịch hẹn tái khám nếu có yêu cầu
-                if (dto.CreateFollowUpAppointment && dto.FollowUpDate.HasValue)
-                {
-                    string qrToken = string.Empty;
-                    bool isQrUnique = false;
-                    for (int q = 0; q < 5 && !isQrUnique; q++)
-                    {
-                        qrToken = "QR-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
-                        isQrUnique = !_unitOfWork.Appointments.Query().Any(a => a.QrToken == qrToken);
-                    }
-                    if (!isQrUnique) throw new InvalidOperationException("Không thể tạo mã QR duy nhất cho lịch hẹn tái khám.");
-
-                    var followUpApt = new Appointment
-                    {
-                        CustomerId = appointment.CustomerId,
-                        PetId = medicalRecord.PetId,
-                        ServiceId = dto.FollowUpServiceId ?? appointment.ServiceId,
-                        DoctorId = dto.FollowUpDoctorId ?? doctorId,
-                        Symptom = "Tái khám / Tái tiêm theo chỉ định",
-                        Note = dto.FollowUpNote,
-                        Status = "pending",
-                        CreatedBy = doctorId,
-                        CreatedAt = DateTime.UtcNow,
-                        AppointmentDate = DateTime.SpecifyKind(dto.FollowUpDate.Value.Date, DateTimeKind.Utc),
-                        StartTime = dto.FollowUpDate.Value.TimeOfDay,
-                        QrToken = qrToken,
-                        Type = string.IsNullOrWhiteSpace(dto.FollowUpType) ? "FollowUp" : dto.FollowUpType,
-                        IsSystemGenerated = true,
-                        ReferenceRecordId = medicalRecord.Id,
-                        ReminderStatus = "Pending"
-                    };
-
-                    // ---- VALIDATION: CHECK IF DOCTOR IS AVAILABLE FOR FOLLOW-UP ----
-                    var targetDateStart = followUpApt.AppointmentDate.Date;
-                    var targetDateUtc = DateTime.SpecifyKind(targetDateStart, DateTimeKind.Utc);
-                    var appointmentTimeCheck = followUpApt.StartTime;
-
-                    // 1. Kiểm tra ngày nghỉ lễ và khung giờ hoạt động chung
-                    var isHoliday = _unitOfWork.ClinicHolidays.Query().Any(h => h.IsActive && h.StartDate <= targetDateStart && h.EndDate >= targetDateStart);
-                    if (isHoliday) throw new InvalidOperationException("Phòng khám đóng cửa vào ngày nghỉ lễ này. Vui lòng chọn ngày khác.");
-
-                    var fullAppointmentTime = targetDateStart.Add(appointmentTimeCheck);
-                    if (fullAppointmentTime < DateTime.Now.AddMinutes(5))
-                    {
-                        throw new InvalidOperationException("Thời gian tái khám không thể nằm trong quá khứ hoặc quá sát giờ hiện tại. Vui lòng chọn khung giờ khác.");
-                    }
-
-                    var clinicDay = _unitOfWork.ClinicOperatingDays.Query().FirstOrDefault(d => d.DayOfWeek == targetDateStart.DayOfWeek);
-                    if (clinicDay != null && !clinicDay.IsOpen) throw new InvalidOperationException($"Phòng khám không hoạt động vào {targetDateStart.DayOfWeek}.");
-
-                    if (clinicDay != null && clinicDay.IsOpen)
-                    {
-                        var shifts = _unitOfWork.ClinicOperatingShifts.Query().Where(s => s.ClinicOperatingDayId == clinicDay.Id).ToList();
-                        if (shifts.Any())
+                        // Validate all stock first
+                        foreach (var item in dto.Prescriptions)
                         {
-                            var isInShift = shifts.Any(s => s.StartTime <= appointmentTimeCheck && s.EndTime >= appointmentTimeCheck.Add(TimeSpan.FromMinutes(30)));
-                            if (!isInShift) throw new InvalidOperationException("Thời gian hẹn không nằm trong khung giờ hoạt động của phòng khám.");
+                            var medicine = await _medicineService.GetMedicineStockAsync(item.MedicineId);
+                            if (medicine == null)
+                            {
+                                throw new KeyNotFoundException($"Không tìm thấy thuốc với ID {item.MedicineId}");
+                            }
+
+                            if (medicine.StockQuantity < item.Quantity)
+                            {
+                                throw new InvalidOperationException($"Thuốc '{medicine.Name}' không đủ tồn kho. Yêu cầu: {item.Quantity}, Hiện có: {medicine.StockQuantity}");
+                            }
+                        }
+
+                        // Process export and add prescription items
+                        foreach (var item in dto.Prescriptions)
+                        {
+
+                            // Xuất kho tự động áp dụng FEFO qua MedicineService
+                            await _medicineService.ExportMedicineAsync(new ExportMedicineDto
+                            {
+                                MedicineId = item.MedicineId,
+                                Quantity = item.Quantity,
+                                DurationDays = item.DurationDays ?? 0,
+                                ReferenceCode = $"MR-{medicalRecord.Id}",
+                                Notes = $"Kê đơn từ hồ sơ khám bệnh #{medicalRecord.Id}"
+                            }, doctorId);
+
+                            var prescriptionItem = new PrescriptionItem
+                            {
+                                PrescriptionId = prescription.Id,
+                                MedicineId = item.MedicineId,
+                                Dosage = item.Dosage,
+                                Frequency = item.Frequency,
+                                DurationDays = item.DurationDays,
+                                Quantity = item.Quantity,
+                                Instruction = item.Instruction
+                            };
+
+                            await _unitOfWork.PrescriptionItems.AddAsync(prescriptionItem);
                         }
                     }
 
-                    // 2. Kiểm tra bác sĩ có lịch trực không
-                    var docSchedule = _unitOfWork.DoctorSchedules.Query()
-                        .Where(s => s.DoctorId == followUpApt.DoctorId && s.WorkDate == targetDateUtc && s.IsAvailable)
-                        .ToList();
-                    
-                    if (!docSchedule.Any()) throw new InvalidOperationException("Bác sĩ không có lịch trực vào ngày này. Vui lòng chọn giờ khác.");
+                    // 4. Đồng bộ trạng thái cuộc hẹn
+                    appointment.Status = "ready_to_pay";
+                    _unitOfWork.Appointments.Update(appointment);
 
-                    // 3. Kiểm tra xem bác sĩ đã bị đặt lịch trùng giờ chưa
-                    var doctorApts = _unitOfWork.Appointments.Query()
-                        .Where(a => a.DoctorId == followUpApt.DoctorId
-                                    && a.Status != "cancelled"
-                                    && a.AppointmentDate == targetDateUtc)
-                        .Select(a => a.StartTime)
-                        .ToList();
+                    // 5. Tự động sinh lịch hẹn tái khám nếu có yêu cầu
+                    if (dto.CreateFollowUpAppointment && dto.FollowUpDate.HasValue)
+                    {
+                        string qrToken = string.Empty;
+                        bool isQrUnique = false;
+                        for (int q = 0; q < 5 && !isQrUnique; q++)
+                        {
+                            qrToken = "QR-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+                            isQrUnique = !_unitOfWork.Appointments.Query().Any(a => a.QrToken == qrToken);
+                        }
+                        if (!isQrUnique) throw new InvalidOperationException("Không thể tạo mã QR duy nhất cho lịch hẹn tái khám.");
 
-                    var isDoctorDoubleBooked = doctorApts.Any(startTime => Math.Abs((startTime - appointmentTimeCheck).TotalMinutes) < 30);
-                    if (isDoctorDoubleBooked) throw new InvalidOperationException("Khung giờ tái khám này đã có khách hàng khác đặt. Vui lòng chọn giờ trống khác.");
+                        var followUpApt = new Appointment
+                        {
+                            CustomerId = appointment.CustomerId,
+                            PetId = medicalRecord.PetId,
+                            ServiceId = dto.FollowUpServiceId ?? appointment.ServiceId,
+                            DoctorId = dto.FollowUpDoctorId ?? doctorId,
+                            Symptom = "Tái khám / Tái tiêm theo chỉ định",
+                            Note = dto.FollowUpNote,
+                            Status = "pending",
+                            CreatedBy = doctorId,
+                            CreatedAt = DateTime.UtcNow,
+                            AppointmentDate = DateTime.SpecifyKind(dto.FollowUpDate.Value.Date, DateTimeKind.Utc),
+                            StartTime = dto.FollowUpDate.Value.TimeOfDay,
+                            QrToken = qrToken,
+                            Type = string.IsNullOrWhiteSpace(dto.FollowUpType) ? "FollowUp" : dto.FollowUpType,
+                            IsSystemGenerated = true,
+                            ReferenceRecordId = medicalRecord.Id,
+                            ReminderStatus = "Pending"
+                        };
 
-                    // 4. Kiểm tra khách hàng có bị trùng lịch không
-                    var customerSameDayApts = _unitOfWork.Appointments.Query()
-                        .Where(a => a.CustomerId == followUpApt.CustomerId
-                                    && a.Status != "cancelled"
-                                    && a.AppointmentDate == targetDateUtc)
-                        .Select(a => a.StartTime)
-                        .ToList();
+                        // ---- VALIDATION: CHECK IF DOCTOR IS AVAILABLE FOR FOLLOW-UP ----
+                        var targetDateStart = followUpApt.AppointmentDate.Date;
+                        var targetDateUtc = DateTime.SpecifyKind(targetDateStart, DateTimeKind.Utc);
+                        var appointmentTimeCheck = followUpApt.StartTime;
 
-                    var isCustomerDoubleBooked = customerSameDayApts.Any(startTime => Math.Abs((startTime - appointmentTimeCheck).TotalMinutes) < 30);
-                    if (isCustomerDoubleBooked) throw new InvalidOperationException("Khách hàng đã có một lịch hẹn khác trong khung giờ này.");
-                    // -----------------------------------------------------------------
+                        // 1. Kiểm tra ngày nghỉ lễ và khung giờ hoạt động chung
+                        var isHoliday = _unitOfWork.ClinicHolidays.Query().Any(h => h.IsActive && h.StartDate <= targetDateStart && h.EndDate >= targetDateStart);
+                        if (isHoliday) throw new InvalidOperationException("Phòng khám đóng cửa vào ngày nghỉ lễ này. Vui lòng chọn ngày khác.");
 
-                    await _unitOfWork.Appointments.AddAsync(followUpApt);
+                        var fullAppointmentTime = targetDateStart.Add(appointmentTimeCheck);
+                        if (fullAppointmentTime < DateTime.Now.AddMinutes(5))
+                        {
+                            throw new InvalidOperationException("Thời gian tái khám không thể nằm trong quá khứ hoặc quá sát giờ hiện tại. Vui lòng chọn khung giờ khác.");
+                        }
+
+                        var clinicDay = _unitOfWork.ClinicOperatingDays.Query().FirstOrDefault(d => d.DayOfWeek == targetDateStart.DayOfWeek);
+                        if (clinicDay != null && !clinicDay.IsOpen) throw new InvalidOperationException($"Phòng khám không hoạt động vào {targetDateStart.DayOfWeek}.");
+
+                        if (clinicDay != null && clinicDay.IsOpen)
+                        {
+                            var shifts = _unitOfWork.ClinicOperatingShifts.Query().Where(s => s.ClinicOperatingDayId == clinicDay.Id).ToList();
+                            if (shifts.Any())
+                            {
+                                var isInShift = shifts.Any(s => s.StartTime <= appointmentTimeCheck && s.EndTime >= appointmentTimeCheck.Add(TimeSpan.FromMinutes(30)));
+                                if (!isInShift) throw new InvalidOperationException("Thời gian hẹn không nằm trong khung giờ hoạt động của phòng khám.");
+                            }
+                        }
+
+                        // 2. Kiểm tra bác sĩ có lịch trực không
+                        var docSchedule = _unitOfWork.DoctorSchedules.Query()
+                            .Where(s => s.DoctorId == followUpApt.DoctorId && s.WorkDate == targetDateUtc && s.IsAvailable)
+                            .ToList();
+                        
+                        if (!docSchedule.Any()) throw new InvalidOperationException("Bác sĩ không có lịch trực vào ngày này. Vui lòng chọn giờ khác.");
+
+                        // 3. Kiểm tra xem bác sĩ đã bị đặt lịch trùng giờ chưa
+                        var doctorApts = _unitOfWork.Appointments.Query()
+                            .Where(a => a.DoctorId == followUpApt.DoctorId
+                                        && a.Status != "cancelled"
+                                        && a.AppointmentDate == targetDateUtc)
+                            .Select(a => a.StartTime)
+                            .ToList();
+
+                        var isDoctorDoubleBooked = doctorApts.Any(startTime => Math.Abs((startTime - appointmentTimeCheck).TotalMinutes) < 30);
+                        if (isDoctorDoubleBooked) throw new InvalidOperationException("Khung giờ tái khám này đã có khách hàng khác đặt. Vui lòng chọn giờ trống khác.");
+
+                        // 4. Kiểm tra khách hàng có bị trùng lịch không
+                        var customerSameDayApts = _unitOfWork.Appointments.Query()
+                            .Where(a => a.CustomerId == followUpApt.CustomerId
+                                        && a.Status != "cancelled"
+                                        && a.AppointmentDate == targetDateUtc)
+                            .Select(a => a.StartTime)
+                            .ToList();
+
+                        var isCustomerDoubleBooked = customerSameDayApts.Any(startTime => Math.Abs((startTime - appointmentTimeCheck).TotalMinutes) < 30);
+                        if (isCustomerDoubleBooked) throw new InvalidOperationException("Khách hàng đã có một lịch hẹn khác trong khung giờ này.");
+                        // -----------------------------------------------------------------
+
+                        await _unitOfWork.Appointments.AddAsync(followUpApt);
+                    }
+
+                    await _unitOfWork.SaveChangesAsync();
+                    await _unitOfWork.CommitTransactionAsync();
+
+                    return medicalRecord.Id;
                 }
-
-                await _unitOfWork.SaveChangesAsync();
-                await _unitOfWork.CommitTransactionAsync();
-
-                return medicalRecord.Id;
-            }
-            catch (Exception)
-            {
-                await _unitOfWork.RollbackTransactionAsync();
-                throw;
-            }
+                catch (Exception)
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw;
+                }
+            });
         }
 
         public string ExtractReadableSoap(string? jsonStr, string fieldType)
@@ -608,198 +614,203 @@ namespace MyPetClinic.Application.Services
         }
         public async Task<long> CreateSoapMedicalRecordAsync(MedicalRecordSoapRequestDto dto, Guid doctorId)
         {
-            await _unitOfWork.BeginTransactionAsync(IsolationLevel.RepeatableRead);
-            try
+            var strategy = _unitOfWork.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                var appointments = await _unitOfWork.Appointments.FindWithIncludesAsync(a => a.Id == dto.AppointmentId, a => a.Pet!);
-                var appointment = appointments.FirstOrDefault();
-                if (appointment == null) throw new KeyNotFoundException("Không tìm thấy cuộc hẹn.");
-
-                var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true };
-                
-                var medicalRecord = new MedicalRecord
+                await _unitOfWork.BeginTransactionAsync(IsolationLevel.RepeatableRead);
+                try
                 {
-                    AppointmentId = dto.AppointmentId,
-                    DoctorId = doctorId,
-                    PetId = dto.PetId == 0 ? appointment.PetId : dto.PetId,
-                    RecordType = "Consultation",
-                    MedicalHistory = JsonSerializer.Serialize(dto.Subjective, options),
-                    Weight = dto.Objective.Weight,
-                    Temperature = dto.Objective.Temperature ?? 0,
-                    ClinicalSigns = JsonSerializer.Serialize(dto.Objective, options),
-                    Diagnosis = JsonSerializer.Serialize(dto.Assessment, options),
-                    TreatmentPlan = JsonSerializer.Serialize(dto.Plan.TreatmentDirections, options),
-                    DoctorNotes = dto.Plan.CareInstructions,
-                    FollowUpDate = dto.Plan.FollowUpDate,
-                    CreatedAt = DateTime.UtcNow,
-                    Attachments = dto.Objective.Attachments != null && dto.Objective.Attachments.Any() 
-                        ? JsonSerializer.Serialize(dto.Objective.Attachments, options) 
-                        : null
-                };
+                    var appointments = await _unitOfWork.Appointments.FindWithIncludesAsync(a => a.Id == dto.AppointmentId, a => a.Pet!);
+                    var appointment = appointments.FirstOrDefault();
+                    if (appointment == null) throw new KeyNotFoundException("Không tìm thấy cuộc hẹn.");
 
-                await _unitOfWork.MedicalRecords.AddAsync(medicalRecord);
-                
-                // Cập nhật ưu tiên cân nặng từ Bác sĩ
-                if (appointment.Pet != null && dto.Objective.Weight > 0)
-                {
-                    appointment.Pet.Weight = dto.Objective.Weight;
-                    _unitOfWork.Pets.Update(appointment.Pet);
-                }
-
-                await _unitOfWork.SaveChangesAsync(); 
-
-                if (dto.Plan.Prescriptions != null && dto.Plan.Prescriptions.Any())
-                {
-                    var prescription = new Prescription
+                    var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true };
+                    
+                    var medicalRecord = new MedicalRecord
                     {
-                        MedicalRecordId = medicalRecord.Id,
+                        AppointmentId = dto.AppointmentId,
                         DoctorId = doctorId,
-                        Note = dto.Plan.CareInstructions,
-                        CreatedAt = DateTime.UtcNow
+                        PetId = dto.PetId == 0 ? appointment.PetId : dto.PetId,
+                        RecordType = "Consultation",
+                        MedicalHistory = JsonSerializer.Serialize(dto.Subjective, options),
+                        Weight = dto.Objective.Weight,
+                        Temperature = dto.Objective.Temperature ?? 0,
+                        ClinicalSigns = JsonSerializer.Serialize(dto.Objective, options),
+                        Diagnosis = JsonSerializer.Serialize(dto.Assessment, options),
+                        TreatmentPlan = JsonSerializer.Serialize(dto.Plan.TreatmentDirections, options),
+                        DoctorNotes = dto.Plan.CareInstructions,
+                        FollowUpDate = dto.Plan.FollowUpDate,
+                        CreatedAt = DateTime.UtcNow,
+                        Attachments = dto.Objective.Attachments != null && dto.Objective.Attachments.Any() 
+                            ? JsonSerializer.Serialize(dto.Objective.Attachments, options) 
+                            : null
                     };
-                    await _unitOfWork.Prescriptions.AddAsync(prescription);
+
+                    await _unitOfWork.MedicalRecords.AddAsync(medicalRecord);
+                    
+                    // Cập nhật ưu tiên cân nặng từ Bác sĩ
+                    if (appointment.Pet != null && dto.Objective.Weight > 0)
+                    {
+                        appointment.Pet.Weight = dto.Objective.Weight;
+                        _unitOfWork.Pets.Update(appointment.Pet);
+                    }
+
                     await _unitOfWork.SaveChangesAsync(); 
 
-                    // Validate all stock first
-                    foreach (var item in dto.Plan.Prescriptions)
+                    if (dto.Plan.Prescriptions != null && dto.Plan.Prescriptions.Any())
                     {
-                        var medicine = await _medicineService.GetMedicineStockAsync(item.MedicineId);
-                        if (medicine == null) throw new KeyNotFoundException($"Không tìm thấy thuốc với ID {item.MedicineId}");
-                        if (medicine.StockQuantity < item.Quantity) throw new InvalidOperationException($"Thuốc '{medicine.Name}' không đủ tồn kho.");
-                    }
-
-                    // Process export
-                    foreach (var item in dto.Plan.Prescriptions)
-                    {
-
-                        // Xuất kho tự động áp dụng FEFO
-                        await _medicineService.ExportMedicineAsync(new ExportMedicineDto
+                        var prescription = new Prescription
                         {
-                            MedicineId = item.MedicineId,
-                            Quantity = item.Quantity,
-                            ReferenceCode = $"MR-{medicalRecord.Id}",
-                            Notes = $"Kê đơn SOAP #{medicalRecord.Id}"
-                        }, doctorId);
+                            MedicalRecordId = medicalRecord.Id,
+                            DoctorId = doctorId,
+                            Note = dto.Plan.CareInstructions,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        await _unitOfWork.Prescriptions.AddAsync(prescription);
+                        await _unitOfWork.SaveChangesAsync(); 
 
-                        await _unitOfWork.PrescriptionItems.AddAsync(new PrescriptionItem
+                        // Validate all stock first
+                        foreach (var item in dto.Plan.Prescriptions)
                         {
-                            PrescriptionId = prescription.Id,
-                            MedicineId = item.MedicineId,
-                            Dosage = item.Dosage,
-                            Frequency = item.Frequency,
-                            DurationDays = item.DurationDays,
-                            Quantity = item.Quantity,
-                            Instruction = item.Instruction
-                        });
-                    }
-                }
+                            var medicine = await _medicineService.GetMedicineStockAsync(item.MedicineId);
+                            if (medicine == null) throw new KeyNotFoundException($"Không tìm thấy thuốc với ID {item.MedicineId}");
+                            if (medicine.StockQuantity < item.Quantity) throw new InvalidOperationException($"Thuốc '{medicine.Name}' không đủ tồn kho.");
+                        }
 
-                appointment.Status = "ready_to_pay";
-                _unitOfWork.Appointments.Update(appointment);
-
-                // 5. Tự động sinh lịch hẹn tái khám nếu có yêu cầu (SOAP)
-                if (dto.Plan.CreateFollowUpAppointment && dto.Plan.FollowUpDate.HasValue)
-                {
-                    string qrToken = string.Empty;
-                    bool isQrUnique = false;
-                    for (int q = 0; q < 5 && !isQrUnique; q++)
-                    {
-                        qrToken = "QR-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
-                        isQrUnique = !_unitOfWork.Appointments.Query().Any(a => a.QrToken == qrToken);
-                    }
-                    if (!isQrUnique) throw new InvalidOperationException("Không thể tạo mã QR duy nhất cho lịch hẹn tái khám.");
-
-                    var followUpApt = new Appointment
-                    {
-                        CustomerId = appointment.CustomerId,
-                        PetId = medicalRecord.PetId,
-                        ServiceId = dto.Plan.FollowUpServiceId ?? appointment.ServiceId,
-                        DoctorId = dto.Plan.FollowUpDoctorId ?? doctorId,
-                        Symptom = "Tái khám / Tái tiêm theo chỉ định",
-                        Note = dto.Plan.FollowUpNote,
-                        Status = "pending",
-                        CreatedBy = doctorId,
-                        CreatedAt = DateTime.UtcNow,
-                        AppointmentDate = DateTime.SpecifyKind(dto.Plan.FollowUpDate.Value.Date, DateTimeKind.Utc),
-                        StartTime = dto.Plan.FollowUpDate.Value.TimeOfDay,
-                        QrToken = qrToken,
-                        Type = string.IsNullOrWhiteSpace(dto.Plan.FollowUpType) ? "FollowUp" : dto.Plan.FollowUpType,
-                        IsSystemGenerated = true,
-                        ReferenceRecordId = medicalRecord.Id,
-                        ReminderStatus = "Pending"
-                    };
-
-                    // ---- VALIDATION: CHECK IF DOCTOR IS AVAILABLE FOR FOLLOW-UP ----
-                    var targetDateStart = followUpApt.AppointmentDate.Date;
-                    var targetDateUtc = DateTime.SpecifyKind(targetDateStart, DateTimeKind.Utc);
-                    var appointmentTimeCheck = followUpApt.StartTime;
-
-                    // 1. Kiểm tra ngày nghỉ lễ và khung giờ hoạt động chung
-                    var isHoliday = _unitOfWork.ClinicHolidays.Query().Any(h => h.IsActive && h.StartDate <= targetDateStart && h.EndDate >= targetDateStart);
-                    if (isHoliday) throw new InvalidOperationException("Phòng khám đóng cửa vào ngày nghỉ lễ này. Vui lòng chọn ngày khác.");
-
-                    var fullAppointmentTime = targetDateStart.Add(appointmentTimeCheck);
-                    if (fullAppointmentTime < DateTime.Now.AddMinutes(5))
-                    {
-                        throw new InvalidOperationException("Thời gian tái khám không thể nằm trong quá khứ hoặc quá sát giờ hiện tại. Vui lòng chọn khung giờ khác.");
-                    }
-
-                    var clinicDay = _unitOfWork.ClinicOperatingDays.Query().FirstOrDefault(d => d.DayOfWeek == targetDateStart.DayOfWeek);
-                    if (clinicDay != null && !clinicDay.IsOpen) throw new InvalidOperationException($"Phòng khám không hoạt động vào {targetDateStart.DayOfWeek}.");
-
-                    if (clinicDay != null && clinicDay.IsOpen)
-                    {
-                        var shifts = _unitOfWork.ClinicOperatingShifts.Query().Where(s => s.ClinicOperatingDayId == clinicDay.Id).ToList();
-                        if (shifts.Any())
+                        // Process export
+                        foreach (var item in dto.Plan.Prescriptions)
                         {
-                            var isInShift = shifts.Any(s => s.StartTime <= appointmentTimeCheck && s.EndTime >= appointmentTimeCheck.Add(TimeSpan.FromMinutes(30)));
-                            if (!isInShift) throw new InvalidOperationException("Thời gian hẹn không nằm trong khung giờ hoạt động của phòng khám.");
+
+                            // Xuất kho tự động áp dụng FEFO
+                            await _medicineService.ExportMedicineAsync(new ExportMedicineDto
+                            {
+                                MedicineId = item.MedicineId,
+                                Quantity = item.Quantity,
+                                DurationDays = item.DurationDays ?? 0,
+                                ReferenceCode = $"MR-{medicalRecord.Id}",
+                                Notes = $"Kê đơn SOAP #{medicalRecord.Id}"
+                            }, doctorId);
+
+                            await _unitOfWork.PrescriptionItems.AddAsync(new PrescriptionItem
+                            {
+                                PrescriptionId = prescription.Id,
+                                MedicineId = item.MedicineId,
+                                Dosage = item.Dosage,
+                                Frequency = item.Frequency,
+                                DurationDays = item.DurationDays,
+                                Quantity = item.Quantity,
+                                Instruction = item.Instruction
+                            });
                         }
                     }
 
-                    // 2. Kiểm tra bác sĩ có lịch trực không
-                    var docSchedule = _unitOfWork.DoctorSchedules.Query()
-                        .Where(s => s.DoctorId == followUpApt.DoctorId && s.WorkDate == targetDateUtc && s.IsAvailable)
-                        .ToList();
-                    
-                    if (!docSchedule.Any()) throw new InvalidOperationException("Bác sĩ không có lịch trực vào ngày này. Vui lòng chọn giờ khác.");
+                    appointment.Status = "ready_to_pay";
+                    _unitOfWork.Appointments.Update(appointment);
 
-                    // 3. Kiểm tra xem bác sĩ đã bị đặt lịch trùng giờ chưa
-                    var doctorApts = _unitOfWork.Appointments.Query()
-                        .Where(a => a.DoctorId == followUpApt.DoctorId
-                                    && a.Status != "cancelled"
-                                    && a.AppointmentDate == targetDateUtc)
-                        .Select(a => a.StartTime)
-                        .ToList();
+                    // 5. Tự động sinh lịch hẹn tái khám nếu có yêu cầu (SOAP)
+                    if (dto.Plan.CreateFollowUpAppointment && dto.Plan.FollowUpDate.HasValue)
+                    {
+                        string qrToken = string.Empty;
+                        bool isQrUnique = false;
+                        for (int q = 0; q < 5 && !isQrUnique; q++)
+                        {
+                            qrToken = "QR-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+                            isQrUnique = !_unitOfWork.Appointments.Query().Any(a => a.QrToken == qrToken);
+                        }
+                        if (!isQrUnique) throw new InvalidOperationException("Không thể tạo mã QR duy nhất cho lịch hẹn tái khám.");
 
-                    var isDoctorDoubleBooked = doctorApts.Any(startTime => Math.Abs((startTime - appointmentTimeCheck).TotalMinutes) < 30);
-                    if (isDoctorDoubleBooked) throw new InvalidOperationException("Khung giờ tái khám này đã có khách hàng khác đặt. Vui lòng chọn giờ trống khác.");
+                        var followUpApt = new Appointment
+                        {
+                            CustomerId = appointment.CustomerId,
+                            PetId = medicalRecord.PetId,
+                            ServiceId = dto.Plan.FollowUpServiceId ?? appointment.ServiceId,
+                            DoctorId = dto.Plan.FollowUpDoctorId ?? doctorId,
+                            Symptom = "Tái khám / Tái tiêm theo chỉ định",
+                            Note = dto.Plan.FollowUpNote,
+                            Status = "pending",
+                            CreatedBy = doctorId,
+                            CreatedAt = DateTime.UtcNow,
+                            AppointmentDate = DateTime.SpecifyKind(dto.Plan.FollowUpDate.Value.Date, DateTimeKind.Utc),
+                            StartTime = dto.Plan.FollowUpDate.Value.TimeOfDay,
+                            QrToken = qrToken,
+                            Type = string.IsNullOrWhiteSpace(dto.Plan.FollowUpType) ? "FollowUp" : dto.Plan.FollowUpType,
+                            IsSystemGenerated = true,
+                            ReferenceRecordId = medicalRecord.Id,
+                            ReminderStatus = "Pending"
+                        };
 
-                    // 4. Kiểm tra khách hàng có bị trùng lịch không
-                    var customerSameDayApts = _unitOfWork.Appointments.Query()
-                        .Where(a => a.CustomerId == followUpApt.CustomerId
-                                    && a.Status != "cancelled"
-                                    && a.AppointmentDate == targetDateUtc)
-                        .Select(a => a.StartTime)
-                        .ToList();
+                        // ---- VALIDATION: CHECK IF DOCTOR IS AVAILABLE FOR FOLLOW-UP ----
+                        var targetDateStart = followUpApt.AppointmentDate.Date;
+                        var targetDateUtc = DateTime.SpecifyKind(targetDateStart, DateTimeKind.Utc);
+                        var appointmentTimeCheck = followUpApt.StartTime;
 
-                    var isCustomerDoubleBooked = customerSameDayApts.Any(startTime => Math.Abs((startTime - appointmentTimeCheck).TotalMinutes) < 30);
-                    if (isCustomerDoubleBooked) throw new InvalidOperationException("Khách hàng đã có một lịch hẹn khác trong khung giờ này.");
-                    // -----------------------------------------------------------------
+                        // 1. Kiểm tra ngày nghỉ lễ và khung giờ hoạt động chung
+                        var isHoliday = _unitOfWork.ClinicHolidays.Query().Any(h => h.IsActive && h.StartDate <= targetDateStart && h.EndDate >= targetDateStart);
+                        if (isHoliday) throw new InvalidOperationException("Phòng khám đóng cửa vào ngày nghỉ lễ này. Vui lòng chọn ngày khác.");
 
-                    await _unitOfWork.Appointments.AddAsync(followUpApt);
+                        var fullAppointmentTime = targetDateStart.Add(appointmentTimeCheck);
+                        if (fullAppointmentTime < DateTime.Now.AddMinutes(5))
+                        {
+                            throw new InvalidOperationException("Thời gian tái khám không thể nằm trong quá khứ hoặc quá sát giờ hiện tại. Vui lòng chọn khung giờ khác.");
+                        }
+
+                        var clinicDay = _unitOfWork.ClinicOperatingDays.Query().FirstOrDefault(d => d.DayOfWeek == targetDateStart.DayOfWeek);
+                        if (clinicDay != null && !clinicDay.IsOpen) throw new InvalidOperationException($"Phòng khám không hoạt động vào {targetDateStart.DayOfWeek}.");
+
+                        if (clinicDay != null && clinicDay.IsOpen)
+                        {
+                            var shifts = _unitOfWork.ClinicOperatingShifts.Query().Where(s => s.ClinicOperatingDayId == clinicDay.Id).ToList();
+                            if (shifts.Any())
+                            {
+                                var isInShift = shifts.Any(s => s.StartTime <= appointmentTimeCheck && s.EndTime >= appointmentTimeCheck.Add(TimeSpan.FromMinutes(30)));
+                                if (!isInShift) throw new InvalidOperationException("Thời gian hẹn không nằm trong khung giờ hoạt động của phòng khám.");
+                            }
+                        }
+
+                        // 2. Kiểm tra bác sĩ có lịch trực không
+                        var docSchedule = _unitOfWork.DoctorSchedules.Query()
+                            .Where(s => s.DoctorId == followUpApt.DoctorId && s.WorkDate == targetDateUtc && s.IsAvailable)
+                            .ToList();
+                        
+                        if (!docSchedule.Any()) throw new InvalidOperationException("Bác sĩ không có lịch trực vào ngày này. Vui lòng chọn giờ khác.");
+
+                        // 3. Kiểm tra xem bác sĩ đã bị đặt lịch trùng giờ chưa
+                        var doctorApts = _unitOfWork.Appointments.Query()
+                            .Where(a => a.DoctorId == followUpApt.DoctorId
+                                        && a.Status != "cancelled"
+                                        && a.AppointmentDate == targetDateUtc)
+                            .Select(a => a.StartTime)
+                            .ToList();
+
+                        var isDoctorDoubleBooked = doctorApts.Any(startTime => Math.Abs((startTime - appointmentTimeCheck).TotalMinutes) < 30);
+                        if (isDoctorDoubleBooked) throw new InvalidOperationException("Khung giờ tái khám này đã có khách hàng khác đặt. Vui lòng chọn giờ trống khác.");
+
+                        // 4. Kiểm tra khách hàng có bị trùng lịch không
+                        var customerSameDayApts = _unitOfWork.Appointments.Query()
+                            .Where(a => a.CustomerId == followUpApt.CustomerId
+                                        && a.Status != "cancelled"
+                                        && a.AppointmentDate == targetDateUtc)
+                            .Select(a => a.StartTime)
+                            .ToList();
+
+                        var isCustomerDoubleBooked = customerSameDayApts.Any(startTime => Math.Abs((startTime - appointmentTimeCheck).TotalMinutes) < 30);
+                        if (isCustomerDoubleBooked) throw new InvalidOperationException("Khách hàng đã có một lịch hẹn khác trong khung giờ này.");
+                        // -----------------------------------------------------------------
+
+                        await _unitOfWork.Appointments.AddAsync(followUpApt);
+                    }
+
+                    await _unitOfWork.SaveChangesAsync();
+                    await _unitOfWork.CommitTransactionAsync();
+
+                    return medicalRecord.Id;
                 }
-
-                await _unitOfWork.SaveChangesAsync();
-                await _unitOfWork.CommitTransactionAsync();
-
-                return medicalRecord.Id;
-            }
-            catch (Exception)
-            {
-                await _unitOfWork.RollbackTransactionAsync();
-                throw;
-            }
+                catch (Exception)
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw;
+                }
+            });
         }
 
         public async Task<MedicalRecordSoapResponseDto?> GetSoapMedicalRecordByAppointmentAsync(long appointmentId)

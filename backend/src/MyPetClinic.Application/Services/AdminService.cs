@@ -307,15 +307,47 @@ namespace MyPetClinic.Application.Services
         {
             var batch = await _unitOfWork.MedicineBatches.GetByIdAsync(batchId) ?? throw new KeyNotFoundException("Không tìm thấy lô thuốc.");
             
-            if (batch.CurrentQuantity > 0)
+            var transactions = await _unitOfWork.InventoryTransactions.FindAsync(t => t.BatchId == batchId);
+            
+            // Nếu đã từng xuất kho, không được xoá hẳn mà chỉ xả kho (set tồn = 0)
+            if (transactions.Any(t => t.Type != InventoryTransactionType.GoodsReceipt))
             {
-                throw new InvalidOperationException("Không thể xoá lô thuốc vẫn còn tồn kho. Hãy dùng tính năng xuất kho/điều chỉnh nếu cần.");
+                int remainingQty = batch.CurrentQuantity;
+                batch.CurrentQuantity = 0;
+                _unitOfWork.MedicineBatches.Update(batch);
+                
+                if (remainingQty > 0)
+                {
+                    // Sinh phiếu điều chỉnh kho (Adjustment) để sổ sách kế toán kho luôn cân bằng
+                    var adjustmentTx = new InventoryTransaction
+                    {
+                        TransactionDate = DateTime.UtcNow,
+                        Type = InventoryTransactionType.Adjustment,
+                        MedicineId = batch.MedicineId,
+                        BatchId = batch.Id,
+                        QuantityChange = -remainingQty,
+                        CreatedByUserId = Guid.Parse(currentUserId),
+                        Notes = "Thanh lý tự động do xóa lô từ giao diện"
+                    };
+                    await _unitOfWork.InventoryTransactions.AddAsync(adjustmentTx);
+                }
+                
+                await _auditLogService.LogActionAsync(currentUserId, "DisposeMedicineBatch", $"Xả kho (set 0) lô thuốc ID {batchId} vì đã có giao dịch xuất");
+            }
+            else
+            {
+                // Chỉ mới nhập kho (hoặc chưa làm gì), an toàn để xoá
+                foreach(var t in transactions) 
+                {
+                    _unitOfWork.InventoryTransactions.Remove(t);
+                }
+                _unitOfWork.MedicineBatches.Remove(batch);
+                await _auditLogService.LogActionAsync(currentUserId, "DeleteMedicineBatch", $"Xoá lô thuốc ID {batchId}");
             }
 
-            _unitOfWork.MedicineBatches.Remove(batch);
+            // Trigger medicine update is not strictly needed since StockQuantity is [NotMapped] and dynamically computed
+            // but we call SaveChanges
             await _unitOfWork.SaveChangesAsync();
-
-            await _auditLogService.LogActionAsync(currentUserId, "DeleteMedicineBatch", $"Xoá lô thuốc ID {batchId}");
         }
 
         // ================= VACCINES MANAGEMENT =================
@@ -426,27 +458,37 @@ namespace MyPetClinic.Application.Services
         {
             var vaccine = await _unitOfWork.Vaccines.GetByIdAsync(vaccineId) ?? throw new KeyNotFoundException("Không tìm thấy vắc-xin.");
 
-            var batch = new VaccineBatch
-            {
-                VaccineId = vaccineId,
-                BatchNumber = dto.BatchNumber,
-                ExpirationDate = DateTime.SpecifyKind(dto.ExpirationDate, DateTimeKind.Utc),
-                ImportDate = dto.ImportDate.HasValue ? DateTime.SpecifyKind(dto.ImportDate.Value, DateTimeKind.Utc) : DateTime.UtcNow,
-                StockQuantity = dto.StockQuantity,
-                ImportPrice = dto.ImportPrice,
-                SellingPrice = dto.SellingPrice
-            };
+            var existingBatches = await _unitOfWork.VaccineBatches.FindAsync(b => b.VaccineId == vaccineId && b.BatchNumber == dto.BatchNumber);
+            var batch = existingBatches.FirstOrDefault();
 
-            await _unitOfWork.VaccineBatches.AddAsync(batch);
+            if (batch != null)
+            {
+                batch.StockQuantity += dto.StockQuantity;
+                _unitOfWork.VaccineBatches.Update(batch);
+                await _auditLogService.LogActionAsync(currentUserId, "UpdateVaccineBatch", $"Cộng dồn {dto.StockQuantity} liều vào lô {dto.BatchNumber} cho vắc-xin ID {vaccineId}");
+            }
+            else
+            {
+                batch = new VaccineBatch
+                {
+                    VaccineId = vaccineId,
+                    BatchNumber = dto.BatchNumber,
+                    ExpirationDate = DateTime.SpecifyKind(dto.ExpirationDate, DateTimeKind.Utc),
+                    ImportDate = dto.ImportDate.HasValue ? DateTime.SpecifyKind(dto.ImportDate.Value, DateTimeKind.Utc) : DateTime.UtcNow,
+                    StockQuantity = dto.StockQuantity,
+                    ImportPrice = dto.ImportPrice,
+                    SellingPrice = dto.SellingPrice
+                };
+
+                await _unitOfWork.VaccineBatches.AddAsync(batch);
+                await _auditLogService.LogActionAsync(currentUserId, "CreateVaccineBatch", $"Nhập lô vắc-xin mới {dto.BatchNumber} cho vắc-xin ID {vaccineId}");
+            }
             
-            // Update aggregate stock
-            vaccine.StockQuantity += batch.StockQuantity;
+            // Note: vaccine.StockQuantity is computed dynamically in Vaccine.cs, so we don't need to manually update it here.
             _unitOfWork.Vaccines.Update(vaccine);
 
             await _unitOfWork.SaveChangesAsync();
 
-            await _auditLogService.LogActionAsync(currentUserId, "CreateVaccineBatch", $"Nhập lô vắc-xin mới {dto.BatchNumber} cho vắc-xin ID {vaccineId}");
-            
             return new VaccineBatchAdminDto
             {
                 Id = batch.Id,
@@ -464,15 +506,28 @@ namespace MyPetClinic.Application.Services
         {
             var batch = await _unitOfWork.VaccineBatches.GetByIdAsync(batchId) ?? throw new KeyNotFoundException("Không tìm thấy lô vắc-xin.");
             
-            if (batch.StockQuantity > 0)
+            var usage = await _unitOfWork.VaccinationRecords.FindAsync(r => r.VaccineBatchId == batchId);
+            
+            if (usage.Any())
             {
-                throw new InvalidOperationException("Không thể xoá lô vắc-xin vẫn còn tồn kho. Hãy dùng tính năng huỷ hàng hỏng/hết hạn nếu cần.");
+                batch.StockQuantity = 0;
+                _unitOfWork.VaccineBatches.Update(batch);
+                await _auditLogService.LogActionAsync(currentUserId, "DisposeVaccineBatch", $"Xả kho (set 0) lô vắc-xin ID {batchId} vì đã có dữ liệu tiêm chủng");
+            }
+            else
+            {
+                _unitOfWork.VaccineBatches.Remove(batch);
+                await _auditLogService.LogActionAsync(currentUserId, "DeleteVaccineBatch", $"Xoá lô vắc-xin ID {batchId}");
             }
 
-            _unitOfWork.VaccineBatches.Remove(batch);
-            await _unitOfWork.SaveChangesAsync();
+            var vaccine = await _unitOfWork.Vaccines.GetByIdAsync(batch.VaccineId);
+            if (vaccine != null)
+            {
+                // Dynamic aggregate stock handles the update
+                _unitOfWork.Vaccines.Update(vaccine);
+            }
 
-            await _auditLogService.LogActionAsync(currentUserId, "DeleteVaccineBatch", $"Xoá lô vắc-xin ID {batchId}");
+            await _unitOfWork.SaveChangesAsync();
         }
 
 

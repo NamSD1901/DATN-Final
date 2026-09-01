@@ -281,3 +281,45 @@ ull (khÃ´ng giá»›i háº¡n) trÆ°á»›c khi gá»­i vá» Backend.
 Frontend dã ?n tính nang ch?n V?c-xin khi d?t l?ch nhung mã Backend v?n gi? logic nh?n VaccineId, tr? kho v?c-xin ?o và không ki?m tra quy?n s? h?u thú cung n?u truy?n sai VaccineId, d?n d?n l? h?ng b?o m?t IDOR có th? b? khai thác qua API.
 ### Gi?i pháp
 Lo?i b? hoàn toàn tru?ng VaccineId kh?i DTOs (CustomerBookingDto, AppointmentCreateDto). Xóa s?ch block logic Vaccine t?i ReceptionistAppointmentService và AppointmentService. B? sung ki?m tra b?t bu?c quy?n s? h?u thú cung (Pet.CustomerId == dto.CustomerId) d?i v?i t?t c? m?i lo?i l?ch h?n. D?n d?p s?ch s? API validate-vaccine th?a và code template du th?a trên Frontend.
+
+## [BUG-INV-001] Không th? xóa lô v?c-xin/thu?c khi còn t?n kho (k? c? h?t h?n)
+- **Tr?ng thái:** FIXED
+- **Th?i gian:** 01-09-2026
+### Nguyên nhân
+Backend có logic ch?n không cho phép xóa lô v?c-xin và lô thu?c n?u s? lu?ng t?n kho > 0 (gây ra ngo?i l? InvalidOperationException). Ði?u này gây khó khan khi ngu?i dùng mu?n xóa h?n các lô dã h?t h?n nhung v?n còn t?n kho trên h? th?ng.
+### Gi?i pháp
+B? ch?n ki?m tra t?n kho khi xóa lô thu?c và lô v?c-xin trong AdminService. Ð?i v?i lô v?c-xin, b? sung logic tr? di StockQuantity c?a V?c-xin g?c d? d?m b?o t?ng s? lu?ng t?n kho du?c c?p nh?t chính xác sau khi xóa lô.
+
+## [BUG-MED-002] Kê don thu?c xu?t nh?m lô dã h?t h?n
+- **Tr?ng thái:** FIXED
+- **Th?i gian:** 01-09-2026
+### Nguyên nhân
+Trong MedicineBatchRepository.cs, hàm GetAvailableBatchesAsync s? d?ng logic FEFO (l?y lô có h?n s? d?ng g?n nh?t tru?c) nhung l?i thi?u di?u ki?n l?c b? các lô dã quá h?n (ch? ki?m tra CurrentQuantity > 0). Ði?u này d?n d?n vi?c h? th?ng uu tiên b?c chính các lô dã h?t h?n d? xu?t cho khách hàng.
+### Gi?i pháp
+B? sung di?u ki?n .ExpiryDate == null || b.ExpiryDate > System.DateTime.UtcNow vào truy v?n LINQ d? lo?i b? hoàn toàn các lô thu?c h?t h?n kh?i danh sách xu?t kho.
+
+## [BUG-UI-002] T? d?ng gán c?ng cách dùng 'Sau an' và không có ô nh?p s? ngày u?ng
+- **Tr?ng thái:** FIXED
+- **Th?i gian:** 01-09-2026
+### Nguyên nhân:
+File ConsultationRecordTab.vue t? gán d? li?u c?ng khi d?i thu?c và ?n tru?ng instruction.
+### Gi?i pháp:
+- Xóa logic t? di?n c?ng d? li?u ? frontend.
+- Thêm ô nh?p S? ngày u?ng trên UI.
+- Truy?n tham s? DurationDays xu?ng Backend và b? sung l?c kho ExpiryDate > Now.AddDays(DurationDays) t?i MedicineBatchRepository.
+
+## [BUG-INV-002] L?i h? th?ng khi kê don thu?c do t?n kho d? nhung h?n s? d?ng ng?n
+- **Tr?ng thái:** FIXED
+- **Th?i gian:** 01-09-2026
+### Nguyên nhân:
+Khi kê don, MedicineService ném ra base Exception n?u các lô d? h?n s? d?ng không d? s? lu?ng xu?t (dù t?ng t?n kho v?n d?). Frontend nh?n du?c mã l?i 500 nên ch? hi?n 'Ðã x?y ra l?i h? th?ng'.
+### Gi?i pháp:
+Ð?i Exception thành InvalidOperationException v?i câu thông báo chi ti?t hon d? API tr? v? mã l?i 400 cùng câu c?nh báo rõ ràng cho bác si.
+
+## [BUG-DB-001] L?i NpgsqlRetryingExecutionStrategy khi nh?p/xu?t kho
+- **Tr?ng thái:** FIXED
+- **Th?i gian:** 01-09-2026
+### Nguyên nhân:
+H? th?ng g?i tr?c ti?p \_unitOfWork.BeginTransactionAsync()\ trong khi DbContext dang du?c c?u hình s? d?ng Execution Strategy (Retry on failure) c?a PostgreSQL. Ði?u này vi ph?m nguyên t?c qu?n lý giao d?ch c?a EF Core.
+### Gi?i pháp:
+B?c các thao tác giao d?ch trong \MedicineService.cs\ (Import/Export/Adjust) b?ng \ar strategy = _unitOfWork.CreateExecutionStrategy(); await strategy.ExecuteAsync(...)\.

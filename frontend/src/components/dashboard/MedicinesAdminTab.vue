@@ -327,7 +327,10 @@
                             {{ batch.currentQuantity }} {{ currentMedicine.unit }}
                           </span>
                         </td>
-                        <td class="text-end pe-4">
+                        <td class="text-end pe-4 d-flex justify-content-end gap-2">
+                          <button class="btn btn-sm btn-light text-success rounded-circle action-icon-btn" @click="handleAddMoreStock(batch)" title="Nhập thêm (Cộng dồn)">
+                            <i class="bi bi-plus-lg"></i>
+                          </button>
                           <button class="btn btn-sm btn-light text-danger rounded-circle action-icon-btn" @click="handleDeleteBatch(batch.id)" title="Xoá Lô">
                             <i class="bi bi-trash3-fill"></i>
                           </button>
@@ -337,6 +340,39 @@
                   </table>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+    <!-- Add More Stock Modal -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showAddMoreModal" class="premium-modal-overlay" style="z-index: 1300;" @click.self="showAddMoreModal = false">
+          <div class="premium-modal-card max-w-500 animate-slide-up">
+            <div class="modal-header-elegant border-bottom border-light">
+              <h5 class="fw-extrabold mb-0 text-dark">
+                <span class="icon-box bg-success bg-opacity-10 text-success me-2"><i class="bi bi-plus-circle"></i></span>
+                Nhập Thêm Số Lượng
+              </h5>
+              <button class="btn-close-elegant" @click="showAddMoreModal = false"><i class="bi bi-x"></i></button>
+            </div>
+            <div class="modal-body-elegant text-center py-4">
+              <div class="mb-3">
+                <p class="text-muted mb-1">Đang nhập thêm cho lô:</p>
+                <h5 class="fw-bold text-primary">{{ batchToAddMore?.batchNumber }}</h5>
+              </div>
+              <div class="modern-form-group mx-auto" style="max-width: 200px;">
+                <input type="number" v-model="addMoreQuantity" class="modern-input text-center fs-4 fw-bold" required min="1" placeholder="0" />
+                <label class="modern-label text-center w-100">Số lượng ({{ currentMedicine?.unit || 'viên' }})</label>
+              </div>
+            </div>
+            <div class="modal-footer border-top-0 d-flex justify-content-center pb-4 gap-2">
+              <button type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" @click="showAddMoreModal = false">Hủy</button>
+              <button type="button" class="btn btn-modern-primary px-4 py-2 rounded-pill fw-bold shadow-sm" @click="confirmAddMoreStock" :disabled="!addMoreQuantity || addMoreQuantity <= 0 || isSubmittingAddMore">
+                <span v-if="isSubmittingAddMore" class="spinner-border spinner-border-sm me-2"></span>
+                <i v-else class="bi bi-check2-circle me-1"></i> Xác Nhận
+              </button>
             </div>
           </div>
         </div>
@@ -363,6 +399,11 @@ const currentMedicineId = ref<number | null>(null);
 
 const showBatchesModal = ref(false);
 const currentMedicine = ref<any>(null);
+
+const showAddMoreModal = ref(false);
+const addMoreQuantity = ref(0);
+const batchToAddMore = ref<any>(null);
+const isSubmittingAddMore = ref(false);
 
 const form = ref({
   name: '',
@@ -515,6 +556,41 @@ const submitBatchForm = async () => {
     await loadWarnings();
   } catch (err: any) {
     alert(err.response?.data?.message || 'Có lỗi xảy ra khi thêm lô dược phẩm.');
+  }
+};
+
+const handleAddMoreStock = (batch: any) => {
+  batchToAddMore.value = batch;
+  addMoreQuantity.value = 10;
+  showAddMoreModal.value = true;
+};
+
+const confirmAddMoreStock = async () => {
+  if (!batchToAddMore.value) return;
+  if (addMoreQuantity.value <= 0) {
+    alert('Số lượng nhập thêm không hợp lệ.');
+    return;
+  }
+  
+  isSubmittingAddMore.value = true;
+  try {
+    const payload = {
+      medicineId: currentMedicine.value.id,
+      batchNumber: batchToAddMore.value.batchNumber,
+      manufactureDate: batchToAddMore.value.manufactureDate,
+      expiryDate: batchToAddMore.value.expiryDate,
+      quantity: addMoreQuantity.value,
+      notes: "Nhập thêm (Cộng dồn) trực tiếp từ danh sách"
+    };
+    await api.post('/medicines/import', payload);
+    showAddMoreModal.value = false;
+    alert('Nhập thêm thành công!');
+    await loadMedicines();
+    await loadWarnings();
+  } catch (err: any) {
+    alert(err.response?.data?.message || 'Có lỗi xảy ra khi nhập thêm.');
+  } finally {
+    isSubmittingAddMore.value = false;
   }
 };
 

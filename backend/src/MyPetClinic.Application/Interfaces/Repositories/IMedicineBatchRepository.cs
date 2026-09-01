@@ -6,7 +6,7 @@ namespace MyPetClinic.Application.Interfaces.Repositories
 {
     public interface IMedicineBatchRepository
     {
-        Task<IEnumerable<MedicineBatch>> GetAvailableBatchesAsync(long medicineId);
+        Task<IEnumerable<MedicineBatch>> GetAvailableBatchesAsync(long medicineId, int durationDays = 0);
         Task<MedicineBatch?> GetBatchWithMedicineAsync(long id);
         Task<MedicineBatch?> GetBatchByNumberAndMedicineAsync(string batchNumber, long medicineId);
     }

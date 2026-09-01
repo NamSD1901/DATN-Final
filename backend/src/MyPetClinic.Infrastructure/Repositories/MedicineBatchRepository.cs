@@ -17,10 +17,11 @@ namespace MyPetClinic.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<MedicineBatch>> GetAvailableBatchesAsync(long medicineId)
+        public async Task<IEnumerable<MedicineBatch>> GetAvailableBatchesAsync(long medicineId, int durationDays = 0)
         {
+            var now = System.DateTime.UtcNow;
             return await _context.MedicineBatches
-                .Where(b => b.MedicineId == medicineId && b.CurrentQuantity > 0)
+                .Where(b => b.MedicineId == medicineId && b.CurrentQuantity > 0 && (b.ExpiryDate == null || b.ExpiryDate > now.AddDays(durationDays)))
                 .OrderBy(b => b.ExpiryDate) // FEFO order
                 .ToListAsync();
         }

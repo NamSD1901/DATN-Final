@@ -343,9 +343,10 @@
                                   </div>
                                 </div>
                                 <div class="row g-2">
-                                  <div class="col-4"><label class="small text-muted" style="font-size:0.7rem">Số lượng</label><input type="number" min="1" v-model.number="pres.quantity" class="form-control form-control-sm"></div>
-                                  <div class="col-8"><label class="small text-muted" style="font-size:0.7rem">Liều lượng</label><input type="text" v-model="pres.dosage" class="form-control form-control-sm"></div>
-                                  <div class="col-12"><label class="small text-muted" style="font-size:0.7rem">Cách dùng</label><input type="text" v-model="pres.frequency" class="form-control form-control-sm"></div>
+                                  <div class="col-3"><label class="small text-muted" style="font-size:0.7rem">Số lượng</label><input type="number" min="1" v-model.number="pres.quantity" class="form-control form-control-sm"></div>
+                                  <div class="col-4"><label class="small text-muted" style="font-size:0.7rem">Số ngày uống</label><input type="number" min="0" v-model.number="pres.durationDays" placeholder="Trống = 0" class="form-control form-control-sm"></div>
+                                  <div class="col-5"><label class="small text-muted" style="font-size:0.7rem">Liều lượng</label><input type="text" v-model="pres.dosage" class="form-control form-control-sm" placeholder="VD: 1 viên/lần"></div>
+                                  <div class="col-12"><label class="small text-muted" style="font-size:0.7rem">Cách dùng chi tiết</label><input type="text" v-model="pres.instruction" class="form-control form-control-sm" placeholder="VD: Uống ngày 2 lần, sau ăn"></div>
                                 </div>
                                 <div v-if="pres.medicineId" class="mt-2 text-end">
                                   <span v-if="pres.stockQuantity === 0" class="text-danger small fw-bold"><i class="bi bi-x-circle"></i> Hết hàng</span>
@@ -1359,7 +1360,7 @@ const addPrescriptionLine = () => {
     quantity: 1,
     dosage: '',
     frequency: '',
-    durationDays: 5,
+    durationDays: null,
     instruction: '',
     stockQuantity: 9999,
     unit: 'đơn vị'
@@ -1376,9 +1377,9 @@ const onMedicineChange = (idx: number, medicineId: number | null) => {
   if (match) {
     form.value.plan.prescriptions[idx].stockQuantity = match.stockQuantity;
     form.value.plan.prescriptions[idx].unit = match.unit || 'đơn vị';
-    form.value.plan.prescriptions[idx].dosage = '1 viên';
-    form.value.plan.prescriptions[idx].frequency = '2 lần/ngày';
-    form.value.plan.prescriptions[idx].instruction = 'Sau ăn';
+    form.value.plan.prescriptions[idx].dosage = '';
+    form.value.plan.prescriptions[idx].frequency = '';
+    form.value.plan.prescriptions[idx].instruction = '';
   }
 };
 

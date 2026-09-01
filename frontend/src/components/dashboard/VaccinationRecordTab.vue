@@ -112,25 +112,23 @@
                     </div>
                   </div>
                   <div class="col-6">
-                    <div class="form-check form-switch">
+                    <div class="form-check form-switch mb-2">
                       <input class="form-check-input" type="checkbox" v-model="form.isAllergic" id="allergy">
                       <label class="form-check-label small text-danger fw-bold" for="allergy">Dị ứng</label>
                     </div>
+                    <div v-if="form.isAllergic">
+                      <input type="text" v-model="form.allergyDetails" class="form-control form-control-sm border-danger text-danger bg-danger bg-opacity-10" placeholder="Chi tiết tình trạng dị ứng..." required>
+                    </div>
                   </div>
                   <div class="col-6">
-                    <div class="form-check form-switch">
+                    <div class="form-check form-switch mb-2">
                       <input class="form-check-input" type="checkbox" v-model="form.hasPreviousReaction" id="reaction">
                       <label class="form-check-label small text-danger fw-bold" for="reaction">Sốc/Phản ứng tiêm cũ</label>
                     </div>
+                    <div v-if="form.hasPreviousReaction">
+                      <input type="text" v-model="form.previousReactionDetails" class="form-control form-control-sm border-danger text-danger bg-danger bg-opacity-10" placeholder="Triệu chứng phản vệ lần trước..." required>
+                    </div>
                   </div>
-                </div>
-
-                <!-- Fields conditional on switches -->
-                <div v-if="form.isAllergic" class="mb-3">
-                  <input type="text" v-model="form.allergyDetails" class="form-control form-control-sm border-danger text-danger bg-danger bg-opacity-10" placeholder="Chi tiết tình trạng dị ứng..." required>
-                </div>
-                <div v-if="form.hasPreviousReaction" class="mb-3">
-                  <input type="text" v-model="form.previousReactionDetails" class="form-control form-control-sm border-danger text-danger bg-danger bg-opacity-10" placeholder="Triệu chứng phản vệ lần trước..." required>
                 </div>
               </div>
 

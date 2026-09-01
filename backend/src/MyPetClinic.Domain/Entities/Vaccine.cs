@@ -8,7 +8,8 @@ namespace MyPetClinic.Domain.Entities
         public string Name { get; set; } = string.Empty;
         public string? Manufacturer { get; set; }
         public string? Description { get; set; }
-        public int StockQuantity { get; set; } = 0; // Aggregated from batches
+        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+        public int StockQuantity { get { return VaccineBatches?.Where(b => b.ExpirationDate.ToUniversalTime() > System.DateTime.UtcNow).Sum(b => b.StockQuantity) ?? 0; } set { } }
         public string? TargetSpecies { get; set; } // "Dog", "Cat", or "All"
         public int? MinAgeWeeks { get; set; }
         public int? IntervalDays { get; set; }
