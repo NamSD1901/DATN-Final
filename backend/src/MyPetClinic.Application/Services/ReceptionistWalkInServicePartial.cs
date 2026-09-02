@@ -62,18 +62,36 @@ namespace MyPetClinic.Application.Services
                             await _unitOfWork.Pets.AddAsync(pet);
                         }
 
-                        // 3. Resolve Doctor (Auto-Assign)
-                        var targetRole = "";
-                        var serviceEntity = _unitOfWork.Services.Query()
+                        // 2.5 Kiểm tra trùng lịch Walk-in trong cùng một ngày (Cùng Pet, Cùng Ngày, Cùng Nhóm Dịch vụ)
+                        var activeStatuses = new[] { "pending", "confirmed", "waiting", "in_progress" };
+                        
+                        var requestedServiceInfo = _unitOfWork.Services.Query()
                             .Where(s => s.Id == dto.ServiceId)
-                            .Select(s => new { CategoryName = s.Category != null ? s.Category.Name : null })
+                            .Select(s => new { s.Id, s.CategoryId, CategoryName = s.Category != null ? s.Category.Name : null })
                             .FirstOrDefault();
 
-                        if (serviceEntity != null && serviceEntity.CategoryName != null)
+                        if (requestedServiceInfo == null) throw new InvalidOperationException("Dịch vụ không tồn tại.");
+
+                        var isDuplicatePetService = _unitOfWork.Appointments.Query()
+                            .Include(a => a.Service)
+                            .Any(a => a.PetId == pet.Id
+                                   && activeStatuses.Contains(a.Status.ToLower())
+                                   && a.AppointmentDate == targetDateStart
+                                   && a.Service != null
+                                   && a.Service.CategoryId == requestedServiceInfo.CategoryId);
+
+                        if (isDuplicatePetService)
                         {
-                            if (serviceEntity.CategoryName.Equals("Khám bệnh", StringComparison.OrdinalIgnoreCase))
+                            throw new InvalidOperationException("Thú cưng đang có một lịch hẹn chưa hoàn tất cho dịch vụ này trong ngày hôm nay.");
+                        }
+
+                        // 3. Resolve Doctor (Auto-Assign)
+                        var targetRole = "";
+                        if (requestedServiceInfo.CategoryName != null)
+                        {
+                            if (requestedServiceInfo.CategoryName.Equals("Khám bệnh", StringComparison.OrdinalIgnoreCase))
                                 targetRole = "clinical_doctor";
-                            else if (serviceEntity.CategoryName.Equals("Tiêm phòng", StringComparison.OrdinalIgnoreCase))
+                            else if (requestedServiceInfo.CategoryName.Equals("Tiêm phòng", StringComparison.OrdinalIgnoreCase))
                                 targetRole = "vaccination_doctor";
                         }
 

@@ -7,9 +7,6 @@
         <p class="text-muted small mb-0">Thiết lập ca trực với giao diện Timeline Grid Glassmorphism Độc Bản</p>
       </div>
       <div class="d-flex flex-wrap justify-content-end gap-2">
-        <button class="btn btn-premium px-3 py-2 rounded-pill shadow-sm" @click="openCreateScheduleModal">
-          <i class="bi bi-calendar-plus-fill me-1"></i> Phân Ca
-        </button>
         <button class="btn btn-danger px-3 py-2 rounded-pill shadow-sm" @click="openCreateBlockModal">
           <i class="bi bi-calendar-x-fill me-1"></i> Khóa Lịch
         </button>
