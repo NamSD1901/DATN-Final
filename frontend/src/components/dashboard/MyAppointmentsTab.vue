@@ -845,15 +845,19 @@
         <div v-if="showCancelModal && apptToCancel" class="appt-modal-overlay" @click.self="showCancelModal = false">
           <div class="appt-modal-card" style="max-width: 420px;">
             <div class="appt-modal-header">
-              <h5 class="fw-bold mb-0"><i class="bi bi-info-circle-fill text-warning me-2"></i>Không thể tự huỷ lịch</h5>
+              <h5 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Xác nhận huỷ lịch</h5>
               <button class="modal-close-btn" @click="showCancelModal = false"><i class="bi bi-x-lg"></i></button>
             </div>
             <div class="appt-modal-body text-center">
-              <div style="font-size: 3.5rem; margin-bottom: 1rem;">📞</div>
-              <p class="text-muted mb-4">Chức năng tự huỷ lịch trên hệ thống đã được tắt để đảm bảo công tác điều phối phòng khám.<br><br>
-              Để huỷ lịch hẹn <strong>{{ formatDateFull(apptToCancel.appointmentDate) }}</strong>, quý khách vui lòng liên hệ trực tiếp với phòng khám qua Hotline: <strong>1900 1234</strong>.</p>
+              <div style="font-size: 3.5rem; margin-bottom: 1rem;">🗑️</div>
+              <p class="text-muted mb-4">Bạn có chắc chắn muốn huỷ lịch hẹn lúc <strong>{{ formatDateFull(apptToCancel.appointmentDate) }}</strong> không?<br><br>
+              Hành động này không thể hoàn tác.</p>
               <div class="d-flex gap-2 justify-content-center">
-                <button class="btn btn-warning text-dark rounded-pill px-4 fw-bold" @click="showCancelModal = false">Đã hiểu</button>
+                <button class="btn btn-outline-secondary rounded-pill px-4 fw-bold" @click="showCancelModal = false" :disabled="cancelLoading">Đóng</button>
+                <button class="btn btn-danger rounded-pill px-4 fw-bold" @click="cancelAppointment" :disabled="cancelLoading">
+                  <span v-if="cancelLoading" class="spinner-border spinner-border-sm me-2"></span>
+                  Đồng ý huỷ
+                </button>
               </div>
             </div>
           </div>
@@ -1662,7 +1666,7 @@ const confirmCancelFromDetail = (appt: AppointmentDetail) => {
 
 // ===== Helpers =====
 const canCancel = (status: string | null): boolean => {
-  return status === 'pending' || status === 'confirmed';
+  return status === 'pending';
 };
 
 const getStatusLabel = (status: string | null): string => {

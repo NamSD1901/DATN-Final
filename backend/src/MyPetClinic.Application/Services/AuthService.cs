@@ -282,6 +282,23 @@ namespace MyPetClinic.Application.Services
             return new AuthResult { Success = true };
         }
 
+        public async Task<AuthResult> CheckInvitationTokenAsync(string token)
+        {
+            var invitations = await _unitOfWork.Invitations.FindAsync(i => i.Token == token);
+            var invitation = invitations.FirstOrDefault();
+
+            if (invitation == null)
+                return new AuthResult { Success = false, ErrorMessage = "Link kích hoạt không tồn tại hoặc không hợp lệ." };
+
+            if (invitation.IsUsed)
+                return new AuthResult { Success = false, ErrorMessage = "Link kích hoạt này đã được sử dụng." };
+
+            if (invitation.ExpireAt < DateTime.UtcNow)
+                return new AuthResult { Success = false, ErrorMessage = "Link kích hoạt này đã hết hạn." };
+
+            return new AuthResult { Success = true };
+        }
+
         public async Task<AuthResult> ActivateAccountAsync(ActivateAccountRequest request)
         {
             var invitations = await _unitOfWork.Invitations.FindWithIncludesAsync(i => i.Token == request.Token, i => i.User!);

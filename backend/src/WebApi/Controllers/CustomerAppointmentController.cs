@@ -151,9 +151,24 @@ namespace WebApi.Controllers
         [HttpPut("{id:long}/cancel")]
         public async Task<IActionResult> CancelAppointment(long id)
         {
-            // Chức năng tự huỷ lịch đã bị vô hiệu hoá theo PRD mới.
-            // Khách hàng phải liên hệ Lễ tân để huỷ lịch.
-            return BadRequest(new { message = "Chức năng tự huỷ lịch trên hệ thống đã được tắt. Vui lòng liên hệ trực tiếp với phòng khám để huỷ lịch hẹn của bạn." });
+            try
+            {
+                var customerId = await GetCurrentCustomerIdAsync();
+                var appt = await _appointmentService.GetAppointmentDetailAsync(id);
+
+                if (appt == null || appt.CustomerId != customerId)
+                    return NotFound(new { message = "Không tìm thấy lịch hẹn hợp lệ." });
+
+                if (appt.Status != "pending")
+                    return BadRequest(new { message = "Chỉ có thể huỷ lịch hẹn đang ở trạng thái chờ xác nhận." });
+
+                var success = await _appointmentService.UpdateAppointmentStatusAsync(id, "cancelled");
+                return Ok(new { success, message = "Đã huỷ lịch hẹn thành công." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = "Huỷ lịch thất bại: " + ex.Message });
+            }
         }
 
         /// <summary>

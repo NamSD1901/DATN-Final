@@ -39,6 +39,18 @@ namespace WebApi.Controllers
             return Ok(new { success = true, email = result.Email, message = "Đăng ký thành công. Vui lòng kiểm tra email để nhận mã OTP." });
         }
 
+        [HttpGet("check-invitation")]
+        public async Task<IActionResult> CheckInvitationToken([FromQuery] string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return BadRequest(new { message = "Token không được để trống." });
+
+            var result = await _authService.CheckInvitationTokenAsync(token);
+            if (!result.Success) return BadRequest(new { message = result.ErrorMessage });
+
+            return Ok(new { success = true, message = "Token hợp lệ." });
+        }
+
         [HttpPost("activate")]
         public async Task<IActionResult> ActivateAccount([FromBody] ActivateAccountRequest request)
         {

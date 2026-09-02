@@ -34,9 +34,9 @@
             <p class="text-muted small">Nhập mật khẩu mới để kích hoạt tài khoản nhân viên của bạn.</p>
           </div>
 
-          <div v-if="loading" class="my-5 text-center">
+          <div v-if="loading || isCheckingToken" class="my-5 text-center">
             <div class="spinner-border text-warning" role="status"></div>
-            <div class="mt-2 text-muted small fw-bold">Đang xử lý...</div>
+            <div class="mt-2 text-muted small fw-bold">{{ isCheckingToken ? 'Đang kiểm tra liên kết...' : 'Đang xử lý...' }}</div>
           </div>
           
           <div v-else-if="success" class="my-5 text-center">
@@ -44,6 +44,13 @@
             <h4 class="text-success fw-bold mt-3">Kích hoạt thành công!</h4>
             <p class="text-muted small mt-2">Tài khoản của bạn đã sẵn sàng sử dụng.</p>
             <router-link to="/login" class="btn btn-warning fw-bold px-5 py-2 mt-3 rounded-pill shadow-sm">Đến Trang Đăng Nhập</router-link>
+          </div>
+
+          <div v-else-if="!isTokenValid" class="my-5 text-center">
+            <i class="bi bi-x-circle-fill text-danger" style="font-size: 4rem;"></i>
+            <h4 class="text-danger fw-bold mt-3">Lỗi Kích Hoạt</h4>
+            <p class="text-muted mt-2">{{ errorMsg }}</p>
+            <router-link to="/login" class="btn btn-outline-secondary fw-bold px-4 py-2 mt-3 rounded-pill shadow-sm">Về trang Đăng Nhập</router-link>
           </div>
 
           <form v-else @submit.prevent="handleActivate" class="text-start">
@@ -115,13 +122,24 @@ const showConfirmPassword = ref(false);
 const loading = ref(false);
 const success = ref(false);
 const errorMsg = ref('');
+const isCheckingToken = ref(true);
+const isTokenValid = ref(false);
 
-onMounted(() => {
+onMounted(async () => {
   const queryToken = route.query.token as string;
   if (!queryToken) {
     errorMsg.value = 'Link kích hoạt không hợp lệ hoặc bị thiếu Token.';
+    isCheckingToken.value = false;
   } else {
     token.value = queryToken;
+    try {
+      await api.get(`/account/check-invitation?token=${queryToken}`);
+      isTokenValid.value = true;
+    } catch (err: any) {
+      errorMsg.value = err.response?.data?.message || 'Link kích hoạt không hợp lệ hoặc đã hết hạn.';
+    } finally {
+      isCheckingToken.value = false;
+    }
   }
 });
 

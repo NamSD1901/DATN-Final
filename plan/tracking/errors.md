@@ -323,3 +323,8 @@ Khi k� don, MedicineService n�m ra base Exception n?u c�c l� d? h?n s? d?ng kh�n
 H? th?ng g?i tr?c ti?p \_unitOfWork.BeginTransactionAsync()\ trong khi DbContext dang du?c c?u h�nh s? d?ng Execution Strategy (Retry on failure) c?a PostgreSQL. �i?u n�y vi ph?m nguy�n t?c qu?n l� giao d?ch c?a EF Core.
 ### Gi?i ph�p:
 B?c c�c thao t�c giao d?ch trong \MedicineService.cs\ (Import/Export/Adjust) b?ng \ar strategy = _unitOfWork.CreateExecutionStrategy(); await strategy.ExecuteAsync(...)\.
+
+### [02-09-2026] Fix UX Issue - Reusing Activation Token
+- **Error:** Người dùng có thể nhìn thấy form nhập mật khẩu khi truy cập bằng token kích hoạt đã được sử dụng hoặc quá hạn 24 giờ. Mặc dù backend chặn khi submit, nhưng UI vẫn hiển thị form gây nhầm lẫn.
+- **Root Cause:** Frontend component (Activate.vue) không validate token bằng API ở hook onMounted, mà chỉ đọc từ URL query.
+- **Solution:** Tạo endpoint [HttpGet("check-invitation")] trong AccountController.cs và gọi ở onMounted của Activate.vue. Nếu token vô hiệu, báo lỗi ngay và ẩn form mật khẩu.
