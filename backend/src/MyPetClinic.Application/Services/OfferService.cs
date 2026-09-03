@@ -203,10 +203,22 @@ namespace MyPetClinic.Application.Services
 
             if (offer == null) throw new InvalidOperationException("Không tìm thấy mã giảm giá.");
 
+            if (dto.StartDate >= dto.EndDate) throw new InvalidOperationException("Ngày kết thúc phải lớn hơn ngày bắt đầu.");
+            if (dto.DiscountValue <= 0) throw new InvalidOperationException("Mức giảm giá phải lớn hơn 0.");
+            if (dto.UsageLimitPerUser <= 0) dto.UsageLimitPerUser = 1;
+
             offer.Name = dto.Name;
             offer.Description = dto.Description;
             offer.Status = string.IsNullOrEmpty(dto.Status) ? offer.Status : dto.Status;
+            
+            offer.DiscountType = dto.DiscountType;
+            offer.DiscountValue = dto.DiscountValue;
+            offer.MaxDiscount = dto.MaxDiscount;
+            offer.MinOrderValue = dto.MinOrderValue;
+            
             offer.TotalQuantity = dto.TotalQuantity;
+            offer.UsageLimitPerUser = dto.UsageLimitPerUser;
+            offer.StartDate = dto.StartDate;
             offer.EndDate = dto.EndDate;
             offer.IsPublic = dto.IsPublic;
             offer.UpdatedAt = DateTime.UtcNow;

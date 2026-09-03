@@ -289,12 +289,6 @@ const navItems: NavItem[] = [
     labelKey: 'settings.nav.account',
     descKey: 'settings.nav.accountDesc',
   },
-  {
-    key: 'security',
-    icon: 'bi bi-shield-lock',
-    labelKey: 'settings.nav.security',
-    descKey: 'settings.nav.securityDesc',
-  },
 ];
 
 const currentNavItem = computed(() =>

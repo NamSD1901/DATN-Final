@@ -60,6 +60,9 @@ namespace MyPetClinic.Application.Services
             {
                 Id        = prescription.Id,
                 Diagnosis = prescription.MedicalRecord?.Diagnosis ?? string.Empty,
+                MedicalHistory = prescription.MedicalRecord?.MedicalHistory,
+                ClinicalSigns = prescription.MedicalRecord?.ClinicalSigns,
+                TreatmentPlan = prescription.MedicalRecord?.TreatmentPlan,
                 Date      = prescription.CreatedAt,
                 Doctor    = prescription.Doctor != null ? $"BS. {prescription.Doctor.FullName}" : "Bác sĩ thú y",
                 Notes     = prescription.Note,

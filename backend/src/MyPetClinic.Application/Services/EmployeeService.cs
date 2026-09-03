@@ -110,11 +110,23 @@ namespace MyPetClinic.Application.Services
                 if (existingPhone) throw new Exception("Số điện thoại đã tồn tại.");
             }
 
+            var validRoles = new[] { "admin", "clinical_doctor", "vaccination_doctor", "receptionist" };
+            if (!validRoles.Contains(request.RoleName))
+                throw new Exception("Chức vụ không hợp lệ.");
+
+            var roles = await _unitOfWork.Roles.FindAsync(r => r.Name == request.RoleName);
+            var role = roles.FirstOrDefault();
+            if (role == null) throw new Exception("Role không tồn tại trong Database.");
+
+            user.RoleId = role.Id;
+            user.Role = role;
+
             user.FullName = request.FullName;
             user.Phone = request.Phone;
             user.Gender = request.Gender;
             user.DateOfBirth = request.DateOfBirth;
             user.Address = request.Address;
+            user.EmployeeProfile!.Position = request.RoleName;
 
             user.EmployeeProfile!.IsResigned = request.IsResigned;
             if (request.IsResigned)

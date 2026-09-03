@@ -41,6 +41,9 @@ namespace MyPetClinic.Application.DTOs
         public DateTime DateOfBirth { get; set; }
         public string? Address { get; set; }
 
+        [Required(ErrorMessage = "Chức vụ/Quyền là bắt buộc")]
+        public string RoleName { get; set; } = string.Empty;
+
         public bool IsResigned { get; set; }
     }
 

@@ -33,6 +33,7 @@ export interface UpdateEmployeeRequest {
     gender?: number;
     dateOfBirth: string;
     address?: string;
+    roleName: string;
     isResigned: boolean;
 }
 

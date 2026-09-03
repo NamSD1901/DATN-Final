@@ -35,7 +35,7 @@
 
             <div class="col-md-6">
               <label class="form-label small fw-bold text-muted mb-1">Vai trò / Chức vụ <span class="text-danger">*</span></label>
-              <select v-model="form.roleName" class="form-select form-select-sm border-warning-subtle" :disabled="isEdit" required>
+              <select v-model="form.roleName" class="form-select form-select-sm border-warning-subtle" required>
                 <option value="clinical_doctor">Bác sĩ khám bệnh</option>
                 <option value="vaccination_doctor">Bác sĩ tiêm chủng</option>
                 <option value="receptionist">Lễ tân</option>
@@ -152,6 +152,7 @@ const handleSubmit = async () => {
         gender: form.value.gender,
         dateOfBirth: new Date(form.value.dateOfBirth).toISOString(),
         address: form.value.address,
+        roleName: form.value.roleName,
         isResigned: form.value.isResigned
       };
       await employeeStore.updateEmployee(props.editData.id, updateData);

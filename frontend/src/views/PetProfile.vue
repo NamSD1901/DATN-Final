@@ -717,7 +717,9 @@
                           <thead class="border-bottom">
                             <tr>
                               <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Tên thuốc</th>
-                              <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Liều lượng</th>
+                              <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Liều dùng</th>
+                              <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Tần suất</th>
+                              <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Liệu trình</th>
                               <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Cách dùng</th>
                               <th class="text-muted fw-semibold pb-3 text-end" style="font-size: 0.85rem; width: 90px;">Số lượng</th>
                             </tr>
@@ -728,12 +730,51 @@
                                 <div class="fw-bold text-primary">{{ med.name }}</div>
                                 <div class="small text-muted" style="font-size: 0.75rem;">{{ med.activeIngredient }}</div>
                               </td>
-                              <td class="py-3 fw-medium text-dark" style="font-size: 0.9rem;">{{ med.dosage }}</td>
-                              <td class="py-3 text-dark" style="font-size: 0.9rem;">{{ med.usage }}</td>
+                              <td class="py-3 fw-medium text-dark" style="font-size: 0.9rem;">{{ med.dosage || '—' }}</td>
+                              <td class="py-3 text-dark" style="font-size: 0.9rem;">{{ med.frequency || '—' }}</td>
+                              <td class="py-3 text-dark" style="font-size: 0.9rem;">{{ med.durationDays ? med.durationDays + ' ngày' : '—' }}</td>
+                              <td class="py-3 text-dark" style="font-size: 0.9rem;">{{ med.usage || '—' }}</td>
                               <td class="py-3 text-end fw-bold text-dark">{{ med.quantity }} {{ med.unit }}</td>
                             </tr>
                           </tbody>
                       </table>
+                      </div>
+                    </div>
+
+                    <!-- SOAP Details -->
+                    <div class="px-4 pb-3" v-if="rx.medicalHistory || rx.clinicalSigns || rx.diagnosis || rx.treatmentPlan">
+                      <div class="row g-3">
+                        <!-- S - Subjective -->
+                        <div class="col-md-6" v-if="rx.medicalHistory">
+                          <div class="p-3 rounded-3 h-100" style="background-color: rgba(13, 110, 253, 0.05); border-left: 3px solid #0d6efd;">
+                            <div class="small fw-bold mb-1 text-primary"><i class="bi bi-file-earmark-medical-fill me-1"></i>Tiền sử & Lý do (S)</div>
+                            <div class="small text-dark">{{ formatMedicalHistoryText(rx.medicalHistory) }}</div>
+                          </div>
+                        </div>
+                        
+                        <!-- O - Objective -->
+                        <div class="col-md-6" v-if="rx.clinicalSigns">
+                          <div class="p-3 rounded-3 h-100" style="background-color: rgba(25, 135, 84, 0.05); border-left: 3px solid #198754;">
+                            <div class="small fw-bold mb-1 text-success"><i class="bi bi-heart-pulse-fill me-1"></i>Khám lâm sàng (O)</div>
+                            <div class="small text-dark">{{ formatClinicalSignsText(rx.clinicalSigns) }}</div>
+                          </div>
+                        </div>
+
+                        <!-- A - Assessment -->
+                        <div class="col-md-6" v-if="rx.diagnosis">
+                          <div class="p-3 rounded-3 h-100" style="background-color: rgba(220, 53, 69, 0.05); border-left: 3px solid #dc3545;">
+                            <div class="small fw-bold mb-1 text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Chẩn đoán (A)</div>
+                            <div class="small text-dark">{{ formatDiagnosisText(rx.diagnosis) }}</div>
+                          </div>
+                        </div>
+
+                        <!-- P - Plan -->
+                        <div class="col-md-6" v-if="rx.treatmentPlan">
+                          <div class="p-3 rounded-3 h-100" style="background-color: rgba(13, 202, 240, 0.05); border-left: 3px solid #0dcaf0;">
+                            <div class="small fw-bold mb-1 text-info"><i class="bi bi-capsule me-1"></i>Kế hoạch điều trị (P)</div>
+                            <div class="small text-dark">{{ formatTreatmentPlanText(rx.treatmentPlan) }}</div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -1099,6 +1140,49 @@ const formatDiagnosisText = (diagnosisStr: string | undefined | null): string =>
     }
   }
   return diagnosisStr;
+};
+
+const formatMedicalHistoryText = (jsonStr: string | undefined | null): string => {
+  if (!jsonStr) return '';
+  if (jsonStr.trim().startsWith('{')) {
+    const parsed = safeParseJSON(jsonStr);
+    if (parsed) {
+      const parts = [];
+      if (parsed.chiefComplaint) parts.push(parsed.chiefComplaint);
+      if (parsed.symptoms) parts.push(`Triệu chứng: ${parsed.symptoms}`);
+      return parts.length > 0 ? parts.join(' - ') : 'Không có chi tiết';
+    }
+  }
+  return jsonStr;
+};
+
+const formatClinicalSignsText = (jsonStr: string | undefined | null): string => {
+  if (!jsonStr) return '';
+  if (jsonStr.trim().startsWith('{')) {
+    const parsed = safeParseJSON(jsonStr);
+    if (parsed) {
+      const notes = [];
+      const sysNames: any = { eyes:'Mắt', ears:'Tai', nose:'Mũi', mouth:'Miệng', skinCoat:'Da/Lông', gastrointestinal:'Tiêu hóa', respiratory:'Hô hấp' };
+      ['eyes', 'ears', 'nose', 'mouth', 'skinCoat', 'gastrointestinal', 'respiratory'].forEach(sys => {
+         if (parsed[sys] && !parsed[sys].isNormal) notes.push(`${sysNames[sys]}: ${parsed[sys].note || 'Bất thường'}`);
+      });
+      if (notes.length > 0) return notes.join(', ');
+      if (parsed.mentation) return `Tri giác: ${parsed.mentation}`;
+      return 'Bình thường';
+    }
+  }
+  return jsonStr;
+};
+
+const formatTreatmentPlanText = (jsonStr: string | undefined | null): string => {
+  if (!jsonStr) return '';
+  if (jsonStr.trim().startsWith('[')) {
+    const parsed = safeParseJSON(jsonStr);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.join('; ');
+    }
+  }
+  return jsonStr;
 };
 
 const goBack = () => {

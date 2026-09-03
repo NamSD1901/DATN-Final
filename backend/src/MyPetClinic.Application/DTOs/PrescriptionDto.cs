@@ -11,6 +11,9 @@ namespace MyPetClinic.Application.DTOs
         public string? Doctor { get; set; } // Map from Doctor.FullName
         public string? Notes { get; set; }
         public string Status { get; set; } = "completed"; // "active" or "completed"
+        public string? MedicalHistory { get; set; } // Map from MedicalRecord.MedicalHistory (S)
+        public string? ClinicalSigns { get; set; } // Map from MedicalRecord.ClinicalSigns (O)
+        public string? TreatmentPlan { get; set; } // Map from MedicalRecord.TreatmentPlan (P)
         public List<PrescriptionItemDto> Medicines { get; set; } = new List<PrescriptionItemDto>();
     }
 }
