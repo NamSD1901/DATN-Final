@@ -10,11 +10,13 @@ namespace MyPetClinic.Infrastructure.Services;
 public class AiChatbotService : IAiChatbotService
 {
     private readonly string _apiKey;
+    private readonly string _modelId;
     private static readonly HttpClient _httpClient = new HttpClient();
 
     public AiChatbotService(IConfiguration config)
     {
         _apiKey = config["GroqAI:ApiKey"] ?? string.Empty;
+        _modelId = config["GroqAI:ModelId"] ?? "openai/gpt-oss-20b";
     }
 
     public async Task<string> ChatAsync(string userMessage)
@@ -23,7 +25,7 @@ public class AiChatbotService : IAiChatbotService
 
         var requestBody = new
         {
-            model = "llama-3.3-70b-versatile", // Cập nhật sang model Llama 3.3 70B mới nhất của Groq
+            model = _modelId, // Lấy model từ config hoặc dùng mặc định
             messages = new[]
             {
                 new { role = "system", content = "Bạn là một trợ lý ảo tư vấn y tế cho phòng khám thú y MyPetClinic. Hãy trả lời bằng tiếng Việt, thật ngắn gọn, thân thiện và chuyên nghiệp." },

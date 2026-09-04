@@ -792,7 +792,6 @@ const printInvoiceWindow = (inv: any, appt: any, soap: any, optInvoice: boolean,
         detailsHtml = `
           <div style="font-size: 0.78rem; color: #475569; margin-top: 6px; border-top: 1px dashed #e2e8f0; padding-top: 6px;">
             ${pDetail.dosage ? `<div style="margin-bottom: 2px;">Liều dùng: <strong style="color: #0f172a;">${pDetail.dosage}</strong></div>` : ''}
-            ${pDetail.frequency ? `<div style="margin-bottom: 2px;">Tần suất: <strong style="color: #0f172a;">${pDetail.frequency}</strong></div>` : ''}
             ${pDetail.durationDays ? `<div style="margin-bottom: 2px;">Liệu trình: <strong style="color: #0f172a;">${pDetail.durationDays} ngày</strong></div>` : ''}
             ${pDetail.instruction ? `<div><em>${pDetail.instruction}</em></div>` : ''}
           </div>

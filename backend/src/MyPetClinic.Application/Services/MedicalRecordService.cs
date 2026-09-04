@@ -93,15 +93,8 @@ namespace MyPetClinic.Application.Services
                         foreach (var item in dto.Prescriptions)
                         {
 
-                            // Xuất kho tự động áp dụng FEFO qua MedicineService
-                            await _medicineService.ExportMedicineAsync(new ExportMedicineDto
-                            {
-                                MedicineId = item.MedicineId,
-                                Quantity = item.Quantity,
-                                DurationDays = item.DurationDays ?? 0,
-                                ReferenceCode = $"MR-{medicalRecord.Id}",
-                                Notes = $"Kê đơn từ hồ sơ khám bệnh #{medicalRecord.Id}"
-                            }, doctorId);
+                            // Ghi chú: Không trừ tồn kho ngay khi kê đơn.
+                            // Việc xuất kho sẽ được thực hiện khi lễ tân thanh toán hóa đơn.
 
                             var prescriptionItem = new PrescriptionItem
                             {
@@ -681,15 +674,8 @@ namespace MyPetClinic.Application.Services
                         foreach (var item in dto.Plan.Prescriptions)
                         {
 
-                            // Xuất kho tự động áp dụng FEFO
-                            await _medicineService.ExportMedicineAsync(new ExportMedicineDto
-                            {
-                                MedicineId = item.MedicineId,
-                                Quantity = item.Quantity,
-                                DurationDays = item.DurationDays ?? 0,
-                                ReferenceCode = $"MR-{medicalRecord.Id}",
-                                Notes = $"Kê đơn SOAP #{medicalRecord.Id}"
-                            }, doctorId);
+                            // Ghi chú: Không trừ tồn kho ngay khi kê đơn SOAP.
+                            // Việc xuất kho sẽ được thực hiện khi lễ tân thanh toán hóa đơn.
 
                             await _unitOfWork.PrescriptionItems.AddAsync(new PrescriptionItem
                             {

@@ -231,6 +231,8 @@ namespace MyPetClinic.Application.Services
                 });
             }
 
+            // Không trừ tồn kho khi mới thêm vào hóa đơn, chỉ trừ khi thanh toán
+
             invoice.Subtotal = invoice.InvoiceItems.Sum(ii => ii.TotalPrice);
             invoice.TotalAmount = invoice.Subtotal - invoice.DiscountAmount;
 
@@ -258,11 +260,14 @@ namespace MyPetClinic.Application.Services
             {
                 throw new InvalidOperationException("Không thể chỉnh sửa hóa đơn đã thanh toán.");
             }
+            
+            var invoiceId = invoice.Id;
+            
+            // Không hoàn tồn kho ở đây, vì chưa trừ lúc thêm
 
             _unitOfWork.InvoiceItems.Remove(item);
             await _unitOfWork.SaveChangesAsync();
 
-            var invoiceId = invoice.Id;
             var freshInvoice = await _unitOfWork.Invoices.GetFirstOrDefaultWithIncludesAsync(
                 i => i.Id == invoiceId,
                 i => i.InvoiceItems
@@ -315,6 +320,8 @@ namespace MyPetClinic.Application.Services
                 }
             }
 
+            // Không cập nhật tồn kho ở đây, chỉ cập nhật khi thanh toán
+
             item.Quantity = quantity;
             item.TotalPrice = quantity * item.UnitPrice;
 
@@ -362,22 +369,10 @@ namespace MyPetClinic.Application.Services
                 invoice.Appointment.CheckOutTime = DateTime.UtcNow;
             }
 
-            // Deduct medicine stock quantity if items are medicines
-            var invoiceItems = await _unitOfWork.InvoiceItems.FindAsync(
-                ii => ii.InvoiceId == invoiceId && ii.ItemType == "medicine"
-            );
-
-            foreach (var item in invoiceItems)
+            // Trừ tồn kho sau khi đã thanh toán thành công
+            foreach (var item in invoice.InvoiceItems.Where(i => i.ItemType == "medicine" && i.ItemId.HasValue))
             {
-                if (item.ItemId.HasValue)
-                {
-                    var medicine = await _unitOfWork.Medicines.GetByIdAsync(item.ItemId.Value);
-                    if (medicine != null)
-                    {
-                        medicine.StockQuantity -= item.Quantity;
-                        if (medicine.StockQuantity < 0) medicine.StockQuantity = 0; // prevent negative stock
-                    }
-                }
+                await SyncInventoryAsync(item.ItemId.Value, item.Quantity);
             }
 
             // Consume Voucher if provided
@@ -533,7 +528,7 @@ namespace MyPetClinic.Application.Services
             if (string.IsNullOrEmpty(payload.Content)) return false;
 
             // Dùng Regex tìm MPC + Id hóa đơn (VD: MPC12345)
-            var match = System.Text.RegularExpressions.Regex.Match(payload.Content, @"MPC(\d+)");
+            var match = System.Text.RegularExpressions.Regex.Match(payload.Content, @"MPC(\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             if (!match.Success) return false;
 
             if (!long.TryParse(match.Groups[1].Value, out long invoiceId)) return false;
@@ -567,22 +562,10 @@ namespace MyPetClinic.Application.Services
                 invoice.Appointment.CheckOutTime = DateTime.UtcNow;
             }
 
-            // Trừ kho
-            var invoiceItems = await _unitOfWork.InvoiceItems.FindAsync(
-                ii => ii.InvoiceId == invoiceId && ii.ItemType == "medicine"
-            );
-
-            foreach (var item in invoiceItems)
+            // Trừ tồn kho sau khi webhook thanh toán thành công
+            foreach (var item in invoice.InvoiceItems.Where(i => i.ItemType == "medicine" && i.ItemId.HasValue))
             {
-                if (item.ItemId.HasValue)
-                {
-                    var medicine = await _unitOfWork.Medicines.GetByIdAsync(item.ItemId.Value);
-                    if (medicine != null)
-                    {
-                        medicine.StockQuantity -= item.Quantity;
-                        if (medicine.StockQuantity < 0) medicine.StockQuantity = 0;
-                    }
-                }
+                await SyncInventoryAsync(item.ItemId.Value, item.Quantity);
             }
 
             await _unitOfWork.SaveChangesAsync();
@@ -658,6 +641,41 @@ namespace MyPetClinic.Application.Services
                     TotalPrice = ii.TotalPrice
                 }).OrderBy(ii => ii.ItemType).ThenBy(ii => ii.ItemName).ToList()
             };
+        }
+
+        private async Task SyncInventoryAsync(long medicineId, int quantityChange)
+        {
+            if (quantityChange == 0) return;
+
+            var medicine = await _unitOfWork.Medicines.Query().Include(m => m.Batches).FirstOrDefaultAsync(m => m.Id == medicineId);
+            if (medicine == null) return;
+
+            if (quantityChange > 0)
+            {
+                // Export (deduct stock) using FEFO
+                var availableBatches = medicine.Batches.Where(b => b.ExpiryDate > DateTime.UtcNow && b.CurrentQuantity > 0).OrderBy(b => b.ExpiryDate).ToList();
+                int remaining = quantityChange;
+                foreach (var batch in availableBatches)
+                {
+                    if (remaining <= 0) break;
+                    int take = Math.Min(batch.CurrentQuantity, remaining);
+                    batch.CurrentQuantity -= take;
+                    remaining -= take;
+                }
+                medicine.StockQuantity -= quantityChange;
+            }
+            else
+            {
+                // Restore (add stock)
+                int restoreAmount = -quantityChange;
+                // Add to the most recent batch that is not expired
+                var batch = medicine.Batches.Where(b => b.ExpiryDate > DateTime.UtcNow).OrderByDescending(b => b.ExpiryDate).FirstOrDefault();
+                if (batch != null)
+                {
+                    batch.CurrentQuantity += restoreAmount;
+                }
+                medicine.StockQuantity += restoreAmount;
+            }
         }
     }
 }

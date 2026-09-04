@@ -328,3 +328,12 @@ B?c c�c thao t�c giao d?ch trong \MedicineService.cs\ (Import/Export/Adjust) b?n
 - **Error:** Người dùng có thể nhìn thấy form nhập mật khẩu khi truy cập bằng token kích hoạt đã được sử dụng hoặc quá hạn 24 giờ. Mặc dù backend chặn khi submit, nhưng UI vẫn hiển thị form gây nhầm lẫn.
 - **Root Cause:** Frontend component (Activate.vue) không validate token bằng API ở hook onMounted, mà chỉ đọc từ URL query.
 - **Solution:** Tạo endpoint [HttpGet("check-invitation")] trong AccountController.cs và gọi ở onMounted của Activate.vue. Nếu token vô hiệu, báo lỗi ngay và ẩn form mật khẩu.
+
+## [BUG-INV-003] Lỗi trừ kho 2 lần và không đồng bộ kho khi thay đổi số lượng thuốc trong hóa đơn
+- **Trạng thái:** FIXED
+- **Thời gian:** 03-09-2026
+### Nguyên nhân
+Khi bác sĩ kê đơn, MedicalRecordService đã trừ ngay tồn kho (cả Medicine.StockQuantity và Batch.CurrentQuantity bằng ExportMedicineAsync). Tuy nhiên, ở bước thanh toán hóa đơn InvoiceService.ProcessPaymentAsync, hệ thống lại tiếp tục trừ toàn bộ số lượng thuốc trong hóa đơn vào Medicine.StockQuantity mà không đụng đến Batches, gây ra lỗi trừ kho 2 lần và làm sai lệch tổng tồn kho giữa Batch và Medicine. Hơn nữa, nếu lễ tân sửa đổi số lượng thuốc (ví dụ: từ 5 thành 6) trên hóa đơn, hệ thống không gọi API cập nhật tồn kho.
+### Giải pháp
+1. Xóa hoàn toàn đoạn code trừ kho StockQuantity trong ProcessPaymentAsync và ProcessSePayWebhookAsync của InvoiceService.cs vì tồn kho thuốc kê đơn đã được trừ ở bước bác sĩ.
+2. Thêm logic SyncInventoryAsync(medicineId, quantityChange) chạy ngầm vào các hàm AddInvoiceItemAsync, UpdateInvoiceItemQtyAsync, và RemoveInvoiceItemAsync của InvoiceService để đồng bộ kho (bao gồm trừ/cộng lại Batch FEFO) ngay khi có sự thay đổi số lượng thuốc từ lễ tân.

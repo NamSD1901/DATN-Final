@@ -1092,6 +1092,12 @@ const closeSoapModal = () => {
   selectedSoapRecord.value = null;
 };
 
+watch(internalTab, () => {
+  if (showSoapModal.value) {
+    closeSoapModal();
+  }
+});
+
 const getImageUrl = (url: string) => {
   if (!url) return '';
   if (url.startsWith('http')) return url;
@@ -1908,6 +1914,21 @@ const formatDate = (dateStr: string): string => {
 }
 .accordion-button:focus {
   box-shadow: none;
+}
+
+.zalo-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
+  z-index: 1200;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
 }
 
 </style>

@@ -140,7 +140,6 @@
                                 <span class="badge bg-secondary ms-2 bg-opacity-10 text-secondary border">SL: {{ med.quantity }}</span>
                                 <div class="text-muted mt-1" style="font-size: 0.78rem;">
                                     <span v-if="med.dosage"><i class="bi bi-droplet-half me-1"></i>Liều: <strong class="text-dark">{{ med.dosage }}</strong></span>
-                                    <span v-if="med.frequency" class="ms-2"><i class="bi bi-clock-history me-1"></i>Tần suất: <strong class="text-dark">{{ med.frequency }}</strong></span>
                                     <span v-if="med.durationDays" class="ms-2"><i class="bi bi-calendar-range me-1"></i>Liệu trình: <strong class="text-dark">{{ med.durationDays }} ngày</strong></span>
                                 </div>
                                 <div v-if="med.instruction" class="mt-1 fst-italic text-secondary" style="font-size: 0.75rem;">
@@ -480,7 +479,6 @@ const printRecord = async (record: any) => {
         detailsHtml = `
           <div style="font-size: 0.78rem; color: #475569; margin-top: 6px; border-top: 1px dashed #e2e8f0; padding-top: 6px;">
             ${m.dosage ? `<div style="margin-bottom: 2px;">Liều dùng: <strong style="color: #0f172a;">${m.dosage}</strong></div>` : ''}
-            ${m.frequency ? `<div style="margin-bottom: 2px;">Tần suất: <strong style="color: #0f172a;">${m.frequency}</strong></div>` : ''}
             ${m.durationDays ? `<div style="margin-bottom: 2px;">Liệu trình: <strong style="color: #0f172a;">${m.durationDays} ngày</strong></div>` : ''}
             ${m.instruction ? `<div><em>* HDSD: ${m.instruction}</em></div>` : ''}
           </div>
@@ -532,16 +530,20 @@ const printRecord = async (record: any) => {
         <title>Hồ Sơ Bệnh Án - ${props.pet?.name}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-          body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fff; margin: 0; padding: 20px 40px; color: #1e293b; line-height: 1.5; }
+          
+          /* Web Preview Styles */
+          body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; margin: 0; padding: 20px 40px; color: #1e293b; line-height: 1.5; }
+          .medical-record-page { max-width: 800px; margin: 0 auto; background: #fff; padding: 40px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border-radius: 16px; }
+          
           .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #0ea5e9; padding-bottom: 15px; margin-bottom: 25px; }
           .logo-block { display: flex; align-items: center; gap: 12px; }
           .logo-circle { width: 50px; height: 50px; background: #0ea5e9; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; }
-          .clinic-name { font-size: 24px; font-weight: 800; color: #0ea5e9; letter-spacing: -0.5px; line-height: 1.2; }
+          .clinic-name { font-size: 24px; font-weight: 800; color: #0ea5e9; letter-spacing: -0.5px; line-height: 1.2; text-transform: uppercase; }
           .clinic-sub { font-size: 13px; color: #64748b; font-weight: 500; }
-          .inv-title { font-size: 20px; font-weight: 800; color: #0284c7; text-align: right; letter-spacing: 0.5px; }
+          .inv-title { font-size: 20px; font-weight: 800; color: #0284c7; text-align: right; letter-spacing: 0.5px; text-transform: uppercase; }
           .inv-meta { font-size: 13px; color: #64748b; text-align: right; margin-top: 2px; }
           
-          .premium-box { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+          .premium-box { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
           .patient-info-box { display: flex; gap: 20px; background: #f8fafc; border-color: #cbd5e1; }
           .info-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; color: #64748b; margin-bottom: 4px; }
           .info-value { font-weight: 800; color: #0f172a; }
@@ -553,7 +555,7 @@ const printRecord = async (record: any) => {
           .section-title { font-size: 1.05rem; font-weight: 800; color: #0284c7; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
           .clinical-grid { display: flex; flex-direction: column; gap: 12px; }
           .clinical-item { background: #f8fafc; padding: 12px 15px; border-radius: 8px; border: 1px solid #f1f5f9; }
-          .clinical-label { font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 2px; }
+          .clinical-label { font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
           .clinical-text { font-size: 0.95rem; color: #0f172a; }
           
           .rx-box { border-left: 5px solid #8b5cf6; }
@@ -563,9 +565,49 @@ const printRecord = async (record: any) => {
           .rx-qty { font-size: 0.8rem; color: #64748b; }
           
           .footer { margin-top: 40px; }
-          .sign-area { display: flex; justify-content: space-between; }
-          .sign-line { border-bottom: 1px dashed #cbd5e1; width: 100%; height: 50px; margin-bottom: 5px; }
-          @media print { body { padding: 0; } .premium-box { box-shadow: none; border-color: #cbd5e1; } }
+          .sign-area { display: flex; justify-content: space-between; margin-top: 50px; }
+          .sign-line { border-bottom: 1px dashed #cbd5e1; width: 100%; height: 60px; margin-bottom: 10px; }
+          
+          /* Print Styles */
+          @media print {
+            @page { size: A4; margin: 12mm 15mm; }
+            body { background: #fff; padding: 0; margin: 0; font-size: 12pt; color: #000; }
+            .medical-record-page { max-width: 100%; padding: 0; box-shadow: none; border-radius: 0; }
+            
+            /* Allow breaking inside the page to prevent huge gaps */
+            .premium-box { 
+              page-break-inside: auto; 
+              break-inside: auto; 
+              border: none !important; 
+              padding: 0 !important; 
+              margin-bottom: 25px !important; 
+              background: transparent !important;
+            }
+            .patient-info-box { border-bottom: 2px dashed #cbd5e1 !important; padding-bottom: 15px !important; margin-bottom: 25px !important; }
+            
+            /* Remove thick left borders in print, use underlines for sections instead */
+            .section-title { border-bottom: 2px solid #0ea5e9; padding-bottom: 6px; margin-bottom: 15px; color: #000 !important; }
+            .rx-box .section-title { border-bottom-color: #8b5cf6; }
+            
+            /* Ensure items don't break inside themselves */
+            .clinical-item, .rx-item, .sign-area {
+              page-break-inside: avoid;
+              break-inside: avoid;
+              border: 1px solid #cbd5e1 !important;
+              background: #fff !important;
+              margin-bottom: 12px;
+            }
+            
+            .header { border-bottom: 2px solid #000; margin-bottom: 25px; padding-bottom: 15px; }
+            .clinic-name { color: #000 !important; }
+            .inv-title { color: #000 !important; }
+            
+            /* Ensure images print well */
+            img { max-width: 100%; page-break-inside: avoid; break-inside: avoid; }
+            
+            /* Force background colors to print if needed */
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          }
         </style>
       </head>
       <body>

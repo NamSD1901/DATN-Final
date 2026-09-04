@@ -224,7 +224,7 @@ public class AiChatbotService : IAiChatbotService
 
         var requestBody = new
         {
-            model = "llama-3.3-70b-versatile",
+            model = "openai/gpt-oss-20b",
             messages = new[]
             {
                 new { role = "system", content = "Bạn là một trợ lý ảo tư vấn y tế cho phòng khám thú y MyPetClinic. Hãy trả lời bằng tiếng Việt, thật ngắn gọn, thân thiện và chuyên nghiệp." },

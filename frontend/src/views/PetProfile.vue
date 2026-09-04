@@ -211,12 +211,7 @@
                         <i class="bi bi-person-badge"></i> {{ latestMedicalRecord.doctorName ? `Bs. ${latestMedicalRecord.doctorName}` : 'Chưa cập nhật bác sĩ' }}
                       </div>
                       
-                      <div class="p-3 rounded-3" style="background-color: var(--primary-cream); border-left: 4px solid var(--primary-gold);">
-                        <div class="small fw-bold mb-1" style="color: var(--primary-dark);">Ghi chú lâm sàng:</div>
-                        <div class="small fw-medium font-italic" style="color: var(--text-dark);">
-                          "{{ latestMedicalRecord.notes || latestMedicalRecord.diagnosis || 'Không có ghi chú đặc biệt.' }}"
-                        </div>
-                      </div>
+
                     </div>
 
                     <button class="btn-premium-outline w-100 mt-4 hover-arrow" @click="activeTab = 'history'">
@@ -718,7 +713,6 @@
                             <tr>
                               <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Tên thuốc</th>
                               <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Liều dùng</th>
-                              <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Tần suất</th>
                               <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Liệu trình</th>
                               <th class="text-muted fw-semibold pb-3" style="font-size: 0.85rem;">Cách dùng</th>
                               <th class="text-muted fw-semibold pb-3 text-end" style="font-size: 0.85rem; width: 90px;">Số lượng</th>
@@ -731,7 +725,6 @@
                                 <div class="small text-muted" style="font-size: 0.75rem;">{{ med.activeIngredient }}</div>
                               </td>
                               <td class="py-3 fw-medium text-dark" style="font-size: 0.9rem;">{{ med.dosage || '—' }}</td>
-                              <td class="py-3 text-dark" style="font-size: 0.9rem;">{{ med.frequency || '—' }}</td>
                               <td class="py-3 text-dark" style="font-size: 0.9rem;">{{ med.durationDays ? med.durationDays + ' ngày' : '—' }}</td>
                               <td class="py-3 text-dark" style="font-size: 0.9rem;">{{ med.usage || '—' }}</td>
                               <td class="py-3 text-end fw-bold text-dark">{{ med.quantity }} {{ med.unit }}</td>
@@ -998,7 +991,6 @@
                     <tr>
                       <th>Tên thuốc</th>
                       <th>Liều dùng</th>
-                      <th>Tần suất</th>
                       <th>Liệu trình</th>
                       <th>Cách dùng</th>
                     </tr>
@@ -1007,7 +999,6 @@
                     <tr v-for="(med, idx) in selectedMedicalRecord.prescriptions" :key="idx">
                       <td class="fw-bold text-primary">{{ med.medicineName }}</td>
                       <td>{{ med.dosage || '—' }}</td>
-                      <td>{{ med.frequency || '—' }}</td>
                       <td>{{ med.durationDays ? med.durationDays + ' ngày' : '—' }}</td>
                       <td class="text-muted small fst-italic">{{ med.instruction || '—' }}</td>
                     </tr>
